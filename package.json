@@ -1,0 +1,40 @@
+{
+  "name": "maw-foundation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable foundation for MAW products — one shared auth + RBAC + kernel core driving React Native mobile, React/Next web, and Node backends.",
+  "//workspaces-note": "ui-native and sample-mobile are real code but live outside the root install because they need the Expo/React Native toolchain — install & run them separately (see their READMEs). Everything else installs and verifies from the root.",
+  "workspaces": [
+    "packages/sdk",
+    "packages/platform",
+    "packages/rbac-core",
+    "packages/auth-core",
+    "packages/server-express",
+    "packages/server-hono",
+    "packages/api-client",
+    "packages/theme",
+    "packages/ui-web",
+    "apps/sample-server",
+    "apps/sample-web"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run lint && npm run test",
+    "sample:server": "npm run -w @maw/sample-server dev",
+    "sample:web": "npm run -w @maw/sample-web dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^24.7.0",
+    "eslint": "^9.39.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

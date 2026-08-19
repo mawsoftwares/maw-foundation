@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": [
+    "packages/sdk/src",
+    "packages/platform/src",
+    "packages/rbac-core/src",
+    "packages/auth-core/src",
+    "packages/server-express/src",
+    "packages/server-hono/src",
+    "packages/api-client/src",
+    "packages/theme/src",
+    "packages/ui-web/src",
+    "apps/sample-server/src",
+    "apps/sample-web/src"
+  ],
+  "exclude": ["**/node_modules", "**/dist", "**/*.test.ts", "**/*.test.tsx"]
+}

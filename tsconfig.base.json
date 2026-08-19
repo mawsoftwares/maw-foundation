@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "sourceMap": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@maw/sdk": ["packages/sdk/src/index.ts"],
+      "@maw/sdk/*": ["packages/sdk/src/*"],
+      "@maw/platform": ["packages/platform/src/index.ts"],
+      "@maw/platform/*": ["packages/platform/src/*"],
+      "@maw/rbac-core": ["packages/rbac-core/src/index.ts"],
+      "@maw/rbac-core/*": ["packages/rbac-core/src/*"],
+      "@maw/auth-core": ["packages/auth-core/src/index.ts"],
+      "@maw/auth-core/*": ["packages/auth-core/src/*"],
+      "@maw/server-express": ["packages/server-express/src/index.ts"],
+      "@maw/server-express/*": ["packages/server-express/src/*"],
+      "@maw/server-hono": ["packages/server-hono/src/index.ts"],
+      "@maw/server-hono/*": ["packages/server-hono/src/*"],
+      "@maw/api-client": ["packages/api-client/src/index.ts"],
+      "@maw/api-client/*": ["packages/api-client/src/*"],
+      "@maw/theme": ["packages/theme/src/index.ts"],
+      "@maw/theme/*": ["packages/theme/src/*"],
+      "@maw/ui-web": ["packages/ui-web/src/index.ts"],
+      "@maw/ui-web/*": ["packages/ui-web/src/*"],
+      "@maw/ui-native": ["packages/ui-native/src/index.ts"],
+      "@maw/ui-native/*": ["packages/ui-native/src/*"]
+    }
+  }
+}

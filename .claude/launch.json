@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sample-server",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "apps/sample-server/src/main.ts"],
+      "port": 4000
+    },
+    {
+      "name": "sample-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "apps/sample-web/vite.config.ts", "--port", "5173"],
+      "port": 5173
+    }
+  ]
+}
