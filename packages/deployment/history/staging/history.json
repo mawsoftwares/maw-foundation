@@ -1,0 +1,396 @@
+[
+  {
+    "id": "deploy-1783410935128",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-07T07:55:35.124Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8100/health",
+      "attempts": 1
+    },
+    "completedAt": "2026-07-07T07:56:05.085Z"
+  },
+  {
+    "id": "deploy-1784618259016",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-21T07:17:39.011Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8100/health",
+      "attempts": 2
+    },
+    "completedAt": "2026-07-21T07:18:09.721Z"
+  },
+  {
+    "id": "deploy-1784619857492",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-21T07:44:17.488Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8100/health",
+      "attempts": 1
+    },
+    "completedAt": "2026-07-21T07:44:43.350Z"
+  },
+  {
+    "id": "deploy-1784619921116",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-21T07:45:21.113Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-21T07:45:39.431Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/classroom/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:uat"
+  },
+  {
+    "id": "deploy-1785479894281",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T06:38:14.276Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T06:38:32.185Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && npm run build"
+  },
+  {
+    "id": "deploy-1785481166134",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T06:59:26.129Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T06:59:42.118Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && npm run build"
+  },
+  {
+    "id": "deploy-1785484703096",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T07:58:23.091Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T07:58:39.256Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env node scripts/test-db-connection.js"
+  },
+  {
+    "id": "deploy-1785484762940",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T07:59:22.935Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T07:59:39.305Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env node scripts/test-db-connection.js"
+  },
+  {
+    "id": "deploy-1785485017004",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:03:36.999Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:03:54.702Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env node scripts/test-db-connection.js"
+  },
+  {
+    "id": "deploy-1785485241402",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:07:21.396Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:07:40.522Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:uat"
+  },
+  {
+    "id": "deploy-1785485320847",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:08:40.844Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:09:00.270Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate"
+  },
+  {
+    "id": "deploy-1785485350683",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:09:10.679Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:09:30.652Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate"
+  },
+  {
+    "id": "deploy-1785485615085",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:13:35.080Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:13:55.242Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:server"
+  },
+  {
+    "id": "deploy-1785485730478",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:15:30.473Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:15:53.372Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:server"
+  },
+  {
+    "id": "deploy-1785485818580",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T08:16:58.575Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T08:17:20.962Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:server"
+  },
+  {
+    "id": "deploy-1785490201735",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T09:30:01.730Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-31T09:30:26.899Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:server"
+  },
+  {
+    "id": "deploy-1785491988360",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-07-31T09:59:48.357Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:3030/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-07-31T10:00:11.796Z"
+  },
+  {
+    "id": "deploy-1786686270050",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-08-14T05:44:30.046Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-14T05:44:46.002Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/billingapp/backend && npm run build"
+  },
+  {
+    "id": "deploy-1786686288284",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-08-14T05:44:48.280Z",
+    "branch": "release/staging",
+    "deployPath": "/home/deploy/staging/billingapp/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/OwnProduct/billingapp/src/backend/deployment/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:3030/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-08-14T05:45:16.651Z"
+  }
+]

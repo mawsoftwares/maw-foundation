@@ -1,0 +1,74 @@
+{
+  "name": "production",
+  "type": "production",
+  "hosting": {
+    "topology": "dedicated-domain"
+  },
+  "branch": "release/production",
+  "server": "66.116.243.198",
+  "deployPath": "/home/deploy/prod/sushmapet/backend",
+  "generatedSubPath": "deployment-config",
+  "processManager": {
+    "name": "sushmapet-production"
+  },
+  "ports": {
+    "backend": 4003,
+    "frontend": 3300
+  },
+  "domain": "api.sushmapet.apps.mawsoftwares.in",
+  "nginx": {
+    "enabled": true,
+    "autoInstall": true,
+    "confirmBeforeInstall": true,
+    "failOnError": false,
+    "vhostDir": "/home/deploy/nginx/vhosts-enabled",
+    "sitesEnabled": "/etc/nginx/sites-enabled",
+    "certbot": {
+      "email": "ops@mawsoftwares.in"
+    },
+    "ssl": {
+      "enabled": true,
+      "listenPort": 443,
+      "certificate": "/etc/letsencrypt/live/api.sushmapet.apps.mawsoftwares.in/fullchain.pem",
+      "certificateKey": "/etc/letsencrypt/live/api.sushmapet.apps.mawsoftwares.in/privkey.pem",
+      "redirectHttp": true,
+      "acmeChallengeRoot": "/home/deploy/prod/sushmapet/acme-challenge"
+    }
+  },
+  "database": {
+    "name": "sushmapet_prod_user",
+    "host": "103.211.202.236",
+    "port": 5432
+  },
+  "features": {
+    "inventory": true,
+    "billing": true
+  },
+  "runtime": {
+    "startScript": "dist/server.js",
+    "instances": 1,
+    "execMode": "fork",
+    "maxMemoryRestart": "500M"
+  },
+  "ssh": {
+    "user": "deploy",
+    "keyPath": "~/.ssh/mac_to_doserver",
+    "shellInit": "source ~/.nvm/nvm.sh"
+  },
+  "deployment": {
+    "projectRoot": "/home/deploy/prod/sushmapet/backend",
+    "repoUrl": "git@bitbucket.org:maw2025/backend_sushmapet_mfg.git",
+    "pm2Command": "pm2 startOrReload {{ecosystemPath}}",
+    "commands": {
+      "pull": "git fetch origin && git checkout -B release/production origin/release/production",
+      "install": "npm install",
+      "build": "npm run build",
+      "migrate": "node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate",
+      "seed": "node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run seed:server"
+    }
+  },
+  "health": {
+    "protocol": "http",
+    "endpoint": "/health"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "production",
+  "type": "production",
+  "branch": "release/production",
+  "server": "66.116.243.198",
+  "deployPath": "/home/deploy/prod/classroom/backend",
+  "generatedSubPath": "deployment-config",
+  "hosting": {
+    "topology": "proxied-subpath"
+  },
+  "processManager": {
+    "name": "vidyalaya-production"
+  },
+  "ports": {
+    "backend": 8200,
+    "frontend": 3300
+  },
+  "domain": "apps.mawsoftwares.in",
+  "database": {
+    "name": "classroom_prod_user",
+    "host": "your_db_host",
+    "port": 5432
+  },
+  "features": {
+    "inventory": true,
+    "billing": true
+  },
+  "runtime": {
+    "startScript": "dist/server.js",
+    "instances": 1,
+    "execMode": "fork",
+    "maxMemoryRestart": "500M"
+  },
+  "ssh": {
+    "user": "deploy",
+    "keyPath": "~/.ssh/mac_to_doserver",
+    "shellInit": "source ~/.nvm/nvm.sh"
+  },
+  "deployment": {
+    "projectRoot": "/home/deploy/prod/classroom/backend",
+    "repoUrl": "git@bitbucket.org:maw2025/coaching_institute_backend.git",
+    "pm2Command": "pm2 startOrReload {{ecosystemPath}}",
+    "commands": {
+      "pull": "git checkout release/production && git pull origin release/production",
+      "install": "npm install",
+      "build": "npm run build",
+      "migrate": "node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:prod"
+    }
+  },
+  "health": {
+    "protocol": "http",
+    "endpoint": "/health"
+  }
+}

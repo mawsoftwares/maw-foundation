@@ -1,0 +1,871 @@
+[
+  {
+    "id": "deploy-1783418255310",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T09:57:35.307Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T09:58:22.839Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes root@66.116.243.198 cd /home/deploy/prod/classroom/backend && git checkout release/production && git pull origin release/production"
+  },
+  {
+    "id": "deploy-1783418332653",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T09:58:52.650Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T09:58:53.646Z",
+    "error": "Command failed: scp -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes /Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js deploy@66.116.243.198:/home/deploy/prod/classroom/backend/deployment-config/ecosystem.config.js"
+  },
+  {
+    "id": "deploy-1783418465367",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T10:01:05.365Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T10:01:06.670Z",
+    "error": "Command failed: scp -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes /Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js deploy@66.116.243.198:/home/deploy/prod/classroom/backend/deployment-config/ecosystem.config.js"
+  },
+  {
+    "id": "deploy-1783418705387",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T10:05:05.384Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T10:05:06.949Z",
+    "error": "Command failed: scp -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes /Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js deploy@66.116.243.198:/home/deploy/prod/classroom/backend/deployment-config/ecosystem.config.js"
+  },
+  {
+    "id": "deploy-1783418791418",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T10:06:31.416Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T10:06:32.852Z",
+    "error": "Command failed: scp -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes /Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js deploy@66.116.243.198:/home/deploy/prod/classroom/backend/deployment-config/ecosystem.config.js"
+  },
+  {
+    "id": "deploy-1783419994204",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T10:26:34.200Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T10:26:35.636Z",
+    "error": "Direct SCP upload failed for \"/home/deploy/prod/classroom/backend/deployment-config/ecosystem.config.js\" and non-interactive sudo is not available. Grant write permission to the destination or configure passwordless sudo for deployment."
+  },
+  {
+    "id": "deploy-1783420532008",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T10:35:32.004Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T10:35:39.892Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 cd /home/deploy/prod/classroom/backend && npm install"
+  },
+  {
+    "id": "deploy-1783421132846",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-07T10:45:32.843Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-07T10:46:05.457Z",
+    "error": "Health check failed after 5 attempts at https://66.116.243.198:8200/health: write EPROTO 801DA0EC01000000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:78:\n"
+  },
+  {
+    "id": "deploy-1784616024361",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": true,
+    "timestamp": "2026-07-21T06:40:24.359Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "completedAt": "2026-07-21T06:40:24.362Z"
+  },
+  {
+    "id": "deploy-1784625034020",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T09:10:34.015Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-21T09:11:06.168Z",
+    "error": "Health check failed after 5 attempts at https://66.116.243.198:8200/health: write EPROTO 809D38EF01000000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:78:\n"
+  },
+  {
+    "id": "deploy-1784634631907",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T11:50:31.901Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-21T11:51:04.386Z",
+    "error": "Health check failed after 5 attempts at https://66.116.243.198:8200/health: write EPROTO 809D38EF01000000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:78:\n"
+  },
+  {
+    "id": "deploy-1784634836399",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T11:53:56.395Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-21T11:54:28.723Z",
+    "error": "Health check failed after 5 attempts at https://66.116.243.198:8200/health: write EPROTO 809D38EF01000000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:78:\n"
+  },
+  {
+    "id": "deploy-1784634872215",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T11:54:32.209Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-07-21T11:55:03.589Z",
+    "error": "Health check failed after 5 attempts at https://66.116.243.198:8200/health: write EPROTO 809D38EF01000000:error:0A00010B:SSL routines:tls_validate_record_header:wrong version number:../deps/openssl/openssl/ssl/record/methods/tlsany_meth.c:78:\n"
+  },
+  {
+    "id": "deploy-1784635003837",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T11:56:43.833Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "completedAt": "2026-07-21T11:57:07.501Z"
+  },
+  {
+    "id": "deploy-1784635397588",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": true,
+    "timestamp": "2026-07-21T12:03:17.583Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": false,
+      "setupHttps": true,
+      "certbot": {
+        "dryRun": true,
+        "domain": "api.classroom.mawsoftwares.in",
+        "issued": false
+      },
+      "bootstrap": {
+        "dryRun": true,
+        "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.classroom.mawsoftwares.in.conf",
+        "enabledLink": "/etc/nginx/sites-enabled/api.classroom.mawsoftwares.in.conf",
+        "reloadOk": false
+      },
+      "ssl": {
+        "dryRun": true,
+        "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.classroom.mawsoftwares.in.conf",
+        "enabledLink": "/etc/nginx/sites-enabled/api.classroom.mawsoftwares.in.conf",
+        "reloadOk": false
+      },
+      "template": "nginx-ssl.template.conf"
+    },
+    "completedAt": "2026-07-21T12:03:17.593Z"
+  },
+  {
+    "id": "deploy-1784635721986",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T12:08:41.976Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "setupHttps": true,
+      "bootstrap": {
+        "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.classroom.mawsoftwares.in.conf",
+        "enabledLink": "/etc/nginx/sites-enabled/api.classroom.mawsoftwares.in.conf",
+        "writeOk": true,
+        "symlinkOk": false,
+        "reloadOk": true
+      },
+      "error": "Certbot failed for api.classroom.mawsoftwares.in. Ensure DNS points here, HTTP bootstrap nginx is live, and deploy has passwordless sudo for certbot/nginx."
+    },
+    "completedAt": "2026-07-21T12:09:13.807Z"
+  },
+  {
+    "id": "deploy-1784636277119",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T12:17:57.114Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "setupHttps": true,
+      "bootstrap": {
+        "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.classroom.mawsoftwares.in.conf",
+        "enabledLink": "/etc/nginx/sites-enabled/api.classroom.mawsoftwares.in.conf",
+        "writeOk": true,
+        "symlinkOk": false,
+        "reloadOk": true
+      },
+      "error": "Certbot failed for api.classroom.mawsoftwares.in. Ensure DNS points here, HTTP bootstrap nginx is live, and deploy has passwordless sudo for certbot/nginx."
+    },
+    "completedAt": "2026-07-21T12:18:27.455Z"
+  },
+  {
+    "id": "deploy-1784636781160",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T12:26:21.150Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "phase": "ssl",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.classroom.mawsoftwares.in.conf",
+      "enabledLink": "/etc/nginx/sites-enabled/api.classroom.mawsoftwares.in.conf",
+      "writeOk": true,
+      "symlinkOk": false,
+      "reloadOk": true,
+      "template": "nginx-ssl.template.conf"
+    },
+    "completedAt": "2026-07-21T12:26:50.319Z"
+  },
+  {
+    "id": "deploy-1784638478539",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T12:54:38.535Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "setupHttps": true,
+      "bootstrap": {
+        "vhostPath": "/home/deploy/nginx/vhosts-enabled/app-api.businessvidyalay.com.conf",
+        "enabledLink": "/etc/nginx/sites-enabled/app-api.businessvidyalay.com.conf",
+        "writeOk": true,
+        "symlinkOk": false,
+        "reloadOk": true
+      },
+      "error": "Certbot failed for app-api.businessvidyalay.com. Ensure DNS points here, HTTP bootstrap nginx is live, and deploy has passwordless sudo for certbot/nginx."
+    },
+    "completedAt": "2026-07-21T12:55:08.438Z"
+  },
+  {
+    "id": "deploy-1784638599185",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-21T12:56:39.181Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "phase": "bootstrap",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/app-api.businessvidyalay.com.conf",
+      "enabledLink": "/etc/nginx/sites-enabled/app-api.businessvidyalay.com.conf",
+      "writeOk": true,
+      "symlinkOk": false,
+      "reloadOk": true,
+      "template": "nginx-bootstrap.template.conf",
+      "hint": "After DNS works, run: npm run deploy -- production --setup-https"
+    },
+    "completedAt": "2026-07-22T05:55:02.162Z"
+  },
+  {
+    "id": "deploy-1785059722733",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-26T09:55:22.728Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "phase": "ssl",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/app-api.businessvidyalay.com.conf",
+      "enabledLink": "/etc/nginx/sites-enabled/app-api.businessvidyalay.com.conf",
+      "writeOk": true,
+      "symlinkOk": false,
+      "reloadOk": true,
+      "template": "nginx-ssl.template.conf"
+    },
+    "completedAt": "2026-07-26T09:56:05.837Z"
+  },
+  {
+    "id": "deploy-1785060768593",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-26T10:12:48.588Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "setupHttps": true,
+      "bootstrap": {
+        "vhostPath": "/home/deploy/nginx/vhosts-enabled/app-api.businessvidyalay.com.conf",
+        "enabledLink": "/etc/nginx/sites-enabled/app-api.businessvidyalay.com.conf",
+        "writeOk": true,
+        "symlinkOk": false,
+        "reloadOk": true
+      },
+      "error": "Certbot failed for app-api.businessvidyalay.com. Ensure DNS points here, HTTP bootstrap nginx is live, and deploy has passwordless sudo for certbot/nginx."
+    },
+    "completedAt": "2026-07-26T10:13:16.187Z"
+  },
+  {
+    "id": "deploy-1785061087736",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-07-26T10:18:07.732Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/classroom/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/classroom/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://66.116.243.198:8200/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": false,
+      "phase": "ssl",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/app-api.businessvidyalay.com.conf",
+      "enabledLink": "/etc/nginx/sites-enabled/app-api.businessvidyalay.com.conf",
+      "writeOk": true,
+      "symlinkOk": false,
+      "reloadOk": true,
+      "template": "nginx-ssl.template.conf"
+    },
+    "completedAt": "2026-07-26T10:18:35.350Z"
+  },
+  {
+    "id": "deploy-1787042225673",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T08:37:05.668Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T08:37:09.962Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 git clone --branch \"release/production\" \"git@bitbucket.org:maw2025/backend_sushmapet_mfg.git\" \"/home/deploy/prod/sushmapet/backend\""
+  },
+  {
+    "id": "deploy-1787042324514",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T08:38:44.510Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T08:38:44.527Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 mkdir -p /home/deploy/prod/sushmapet/backend"
+  },
+  {
+    "id": "deploy-1787042330820",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": true,
+    "timestamp": "2026-08-18T08:38:50.818Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-08-18T08:38:50.822Z"
+  },
+  {
+    "id": "deploy-1787042269105",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T08:37:49.101Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T08:40:07.095Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 cd /home/deploy/prod/sushmapet/backend && npm install"
+  },
+  {
+    "id": "deploy-1787047938861",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:12:18.857Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:13:02.200Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/prod/sushmapet/backend && npm run build"
+  },
+  {
+    "id": "deploy-1787048036056",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:13:56.052Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:14:16.569Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/prod/sushmapet/backend && npm run build"
+  },
+  {
+    "id": "deploy-1787048191201",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:16:31.197Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:16:54.776Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/prod/sushmapet/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate:prod"
+  },
+  {
+    "id": "deploy-1787048254523",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:17:34.519Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:17:57.555Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/prod/sushmapet/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run migrate"
+  },
+  {
+    "id": "deploy-1787048593679",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:23:13.673Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:23:41.935Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/prod/sushmapet/backend && node deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run seed"
+  },
+  {
+    "id": "deploy-1787048698046",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:24:58.042Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:25:36.358Z",
+    "error": "Health check failed after 5 attempts at http://66.116.243.198:4003/health: connect ECONNREFUSED 66.116.243.198:4003"
+  },
+  {
+    "id": "deploy-1787048818473",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:26:58.470Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:27:06.072Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/prod/sushmapet/backend && git fetch origin && git checkout -B release/production origin/release/production"
+  },
+  {
+    "id": "deploy-1787048895889",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:28:15.884Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:28:51.685Z",
+    "error": "Health check failed after 5 attempts at http://66.116.243.198:4003/health: connect ECONNREFUSED 66.116.243.198:4003"
+  },
+  {
+    "id": "deploy-1787049053020",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:30:53.015Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": false,
+    "completedAt": "2026-08-18T10:31:33.327Z",
+    "error": "Health check failed after 5 attempts at http://66.116.243.198:4003/health: connect ECONNREFUSED 66.116.243.198:4003"
+  },
+  {
+    "id": "deploy-1787049318317",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": false,
+    "timestamp": "2026-08-18T10:35:18.311Z",
+    "branch": "release/production",
+    "deployPath": "/home/deploy/prod/sushmapet/backend",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/ClientProject/sushmapet/src/backend/deployment/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://127.0.0.1:4003/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-08-18T10:35:51.120Z"
+  }
+]

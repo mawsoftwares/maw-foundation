@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  api:
+    container_name: sushmapet-production
+    build:
+      context: /home/deploy/prod/sushmapet/backend
+      dockerfile: Dockerfile
+    ports:
+      - "4003:4003"
+    env_file:
+      - .env
+    restart: unless-stopped

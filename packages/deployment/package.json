@@ -1,0 +1,14 @@
+{
+  "name": "@maw/deploy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configuration-driven deployment engine — shared scripts + templates, per-project config",
+  "bin": {
+    "maw-deploy": "bin/maw-deploy.js"
+  },
+  "scripts": {
+    "deploy": "node bin/maw-deploy.js",
+    "test": "node scripts/utils/deployEnv.test.mjs"
+  },
+  "keywords": ["deployment", "devops", "pm2", "nginx"]
+}
