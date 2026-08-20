@@ -9,6 +9,7 @@ const alias = pkgs.flatMap((p) => [
 ]);
 
 export default defineConfig({
+  root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [react()],
   resolve: { alias },
   server: { port: 5173 },

@@ -38,6 +38,7 @@ export const TENANT_ROLE_POLICY: TenantRolePolicy = {
 
 /** Seeded users. Password for everyone: "password123". */
 export const USERS: readonly UserRow[] = [
+  { id: 'u-superadmin', tenantId: TENANT, email: 'superadmin@demo.test', role: 'super_admin', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: null },
   { id: 'u-owner', tenantId: TENANT, email: 'owner@demo.test', role: 'owner', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: null },
   { id: 'u-manager', tenantId: TENANT, email: 'manager@demo.test', role: 'manager', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: 'plant-1' },
   { id: 'u-clerk', tenantId: TENANT, email: 'clerk@demo.test', role: 'clerk', audience: 'operator', passwordHash: hashPassword('password123'), scopeId: 'plant-1' },

@@ -6,6 +6,8 @@ import {
   type UserAccessContext,
   type EffectiveAccess,
   type AuthzContext,
+  type MasterCache,
+  checkPermissionDynamic,
 } from '@maw/rbac-core';
 
 /** What the middleware attaches to the request once authenticated. */
@@ -97,6 +99,116 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
   const audienceGuard =
     (audience: string): RequestHandler =>
     (req: AuthedRequest, res: Response, next: NextFunction) => {
+      if (req.maw?.claims.audience !== undefined && req.maw.claims.audience !== audience) {
+        res.status(403).json({ error: 'wrong audience', expected: audience });
+        return;
+      }
+      next();
+    };
+
+  const csrfProtection: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+    if (!UNSAFE_METHODS.includes(req.method)) {
+      next();
+      return;
+    }
+    const cookieHeader = req.headers.cookie ?? '';
+    const cookie = /(?:^|;\s*)maw_csrf=([^;]+)/.exec(cookieHeader)?.[1];
+    const header = req.headers['x-csrf-token'];
+    if (csrfTokensMatch(cookie, typeof header === 'string' ? header : undefined)) {
+      next();
+    } else {
+      res.status(403).json({ error: 'invalid csrf token' });
+    }
+  };
+
+  return { requireAuth, requirePermission, audienceGuard, csrfProtection };
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic RBAC adapter — uses MasterCache + DB-backed permissions
+// ---------------------------------------------------------------------------
+
+export interface DynamicAuthState {
+  claims: AuthClaims;
+  roleId?: number;
+  permissions?: string[];
+}
+
+export interface DynamicAuthedRequest extends Request {
+  maw?: DynamicAuthState;
+}
+
+export interface DynamicExpressAuthOptions {
+  readonly jwtSecret: string;
+  readonly cache: MasterCache;
+  readonly superuserRoles?: readonly string[];
+  readonly loadUserContext?: (claims: AuthClaims) => Promise<{ roleId?: number; permissions?: string[] }>;
+}
+
+export interface DynamicExpressAuth {
+  requireAuth: RequestHandler;
+  requirePermission: (permission: string) => RequestHandler;
+  audienceGuard: (audience: string) => RequestHandler;
+  csrfProtection: RequestHandler;
+}
+
+export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): DynamicExpressAuth {
+  const requireAuth: RequestHandler = (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
+    const token = bearer(req);
+    if (token === null) {
+      res.status(401).json({ error: 'missing bearer token' });
+      return;
+    }
+    try {
+      const claims = verifyAccessToken(token, options.jwtSecret);
+      req.maw = { claims };
+      next();
+    } catch {
+      res.status(401).json({ error: 'invalid or expired token' });
+    }
+  };
+
+  const requirePermission =
+    (permission: string): RequestHandler =>
+    (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
+      if (req.maw === undefined) {
+        res.status(401).json({ error: 'not authenticated' });
+        return;
+      }
+
+      const maw = req.maw;
+      const run = async () => {
+        if (options.loadUserContext !== undefined && maw.roleId === undefined) {
+          const ctx = await options.loadUserContext(maw.claims);
+          maw.roleId = ctx.roleId;
+          maw.permissions = ctx.permissions;
+        }
+
+        // Superuser bypass via static config
+        if (options.superuserRoles?.includes(maw.claims.role)) {
+          next();
+          return;
+        }
+
+        const result = await checkPermissionDynamic(
+          { userId: maw.claims.userId, roleId: maw.roleId, permissions: maw.permissions },
+          permission,
+          options.cache,
+        );
+
+        if (result.granted) {
+          next();
+        } else {
+          res.status(403).json({ error: 'forbidden', permission, reason: result.reason });
+        }
+      };
+
+      run().catch(() => res.status(500).json({ error: 'permission check failed' }));
+    };
+
+  const audienceGuard =
+    (audience: string): RequestHandler =>
+    (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
       if (req.maw?.claims.audience !== undefined && req.maw.claims.audience !== audience) {
         res.status(403).json({ error: 'wrong audience', expected: audience });
         return;

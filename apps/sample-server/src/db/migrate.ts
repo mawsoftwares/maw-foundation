@@ -10,21 +10,31 @@ if (!DATABASE_URL) {
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const sql = readFileSync(resolve(__dirname, '../../migrations/001_auth_rbac.sql'), 'utf-8');
+const migrations = [
+  '001_auth_rbac.sql',
+  '002_dynamic_rbac.sql',
+  '003_audit_logs.sql',
+];
 
 const client = new pg.Client({ connectionString: DATABASE_URL });
 await client.connect();
 
 try {
-  await client.query(sql);
-  console.log('[migrate] Tables created successfully.');
-} catch (err: unknown) {
-  const pgErr = err as { code?: string; message?: string };
-  if (pgErr.code === '42P07') {
-    console.log('[migrate] Tables already exist — skipping.');
-  } else {
-    throw err;
+  for (const file of migrations) {
+    const sql = readFileSync(resolve(__dirname, '../../migrations', file), 'utf-8');
+    try {
+      await client.query(sql);
+      console.log(`[migrate] ${file} — applied.`);
+    } catch (err: unknown) {
+      const pgErr = err as { code?: string };
+      if (pgErr.code === '42P07') {
+        console.log(`[migrate] ${file} — tables already exist, skipping.`);
+      } else {
+        throw err;
+      }
+    }
   }
+  console.log('[migrate] All migrations complete.');
 } finally {
   await client.end();
 }

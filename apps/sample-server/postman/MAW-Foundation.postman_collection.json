@@ -1,0 +1,919 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-4789-abcd-maw-foundation-01",
+    "name": "MAW Foundation — Sample Server",
+    "description": "Dynamic RBAC sample-server (`createDynamicExpressAuth` + module registry).\n\n**Setup**\n1. `npm run sample:server`\n2. Import this collection + `local.postman_environment.json`\n3. Select **MAW Foundation — Local**\n4. Run **Login as Owner** (or Manager / Clerk) — tests persist `accessToken` / `refreshToken` on the **collection**\n\nProtected routes send `Authorization: Bearer {{accessToken}}`.\n\nPermission codes are `Action_Module` (e.g. `Read_Reports`). Owner is a superuser and bypasses checks. Manager/clerk use the seeded role map.\n\n**Seeded users** (password `password123`)\n| Email | Role | Audience | `/reports` | `/orders` | `/inventory` | `GET /billing` | `POST /billing` | `GET /audit-logs` | `GET /audit-logs/export` | `/admin/users` |\n|---|---|---|---|---|---|---|---|---|---|---|\n| owner@demo.test | owner | admin | 200 | 200 | 200 | 200 | 200 | 200 | 200 | 200 |\n| manager@demo.test | manager | admin | 200 | 200 | 200 | 403 (no `Read_Billing`) | 200 | 200 | 403 (no `Export_AuditLogs`) | 403 (no `Read_Users`) |\n| clerk@demo.test | clerk | operator | 403 | 200 | 403 | 403 (no `Read_Billing`) | 200 | 403 (wrong audience) | 403 (wrong audience) | 403 (wrong audience) |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "sessionRole", "value": "" },
+    { "key": "userId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('baseUrl')) {",
+          "  pm.collectionVariables.set('baseUrl', 'http://localhost:4000');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health & catalog",
+      "item": [
+        {
+          "name": "GET Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('server is up', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().ok).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Liveness check. No auth."
+          }
+        },
+        {
+          "name": "GET Modules",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns registered modules', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.modules).to.be.an('array').and.not.empty;",
+                  "  const keys = body.modules.map((m) => m.key);",
+                  "  pm.expect(keys).to.include.members(['users', 'reports', 'orders', 'inventory', 'billing', 'audit-logs']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules",
+              "host": ["{{baseUrl}}"],
+              "path": ["modules"]
+            },
+            "description": "Module registry dump (no auth): key, name, audience, permission codes, feature code. This is the catalog the sync engine upserts on boot."
+          },
+          "response": [
+            {
+              "name": "200 Catalog",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"modules\": [\n    {\n      \"key\": \"users\",\n      \"name\": \"Users\",\n      \"audience\": \"admin\",\n      \"permissions\": [\"Read_Users\", \"Create_Users\", \"Update_Users\", \"Delete_Users\"],\n      \"feature\": \"users\"\n    },\n    {\n      \"key\": \"reports\",\n      \"name\": \"Reports\",\n      \"audience\": \"admin\",\n      \"permissions\": [\"Read_Reports\", \"Create_Reports\"],\n      \"feature\": \"reports\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication",
+      "description": "Login / logout, JWT access token, rotating refresh token. Login also returns `permissions` (`Action_Module`) and `modules` for the UI.",
+      "item": [
+        {
+          "name": "POST Login as Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionRole', body.session.role);",
+                  "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.test('session + token pair + catalog', function () {",
+                  "    pm.expect(body.session.role).to.eql('owner');",
+                  "    pm.expect(body.session.audience).to.eql('admin');",
+                  "    pm.expect(body.tokens.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.tokens.refreshToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.permissions).to.be.an('array');",
+                  "    pm.expect(body.modules).to.be.an('array').and.not.empty;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@demo.test\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Owner is a superuser (`superuserRoles: ['owner']`) and maps to the admin role, so permission checks are bypassed. `permissions` is empty because admin does not need an explicit grant list."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"session\": {\n    \"userId\": \"u-owner\",\n    \"tenantId\": \"demo-tenant\",\n    \"role\": \"owner\",\n    \"audience\": \"admin\",\n    \"entitlements\": [\"users\", \"reports\", \"orders\", \"inventory\", \"billing\"],\n    \"capabilities\": [],\n    \"rolePermissions\": {}\n  },\n  \"tokens\": {\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"refreshToken\": \"<hex>\"\n  },\n  \"permissions\": [],\n  \"modules\": [{ \"key\": \"users\", \"name\": \"Users\", \"audience\": \"admin\" }]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST Login as Manager",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionRole', body.session.role);",
+                  "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.test('manager grants', function () {",
+                  "    pm.expect(body.session.role).to.eql('manager');",
+                  "    pm.expect(body.session.audience).to.eql('admin');",
+                  "    pm.expect(body.permissions).to.include.members(['Read_Reports', 'Read_Orders', 'Create_Orders', 'Read_Inventory', 'Create_Billing', 'Read_AuditLogs']);",
+                  "    pm.expect(body.permissions).to.not.include('Read_Users');",
+                  "    pm.expect(body.permissions).to.not.include('Read_Billing');",
+                  "    pm.expect(body.permissions).to.not.include('Export_AuditLogs');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager@demo.test\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Grants: Read_Reports, Create_Reports, Read_Orders, Create_Orders, Update_Orders, Read_Inventory, Create_Billing, Read_AuditLogs. No Read_Users, no Read_Billing, no Export_AuditLogs."
+          }
+        },
+        {
+          "name": "POST Login as Clerk",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionRole', body.session.role);",
+                  "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.test('clerk grants', function () {",
+                  "    pm.expect(body.session.role).to.eql('clerk');",
+                  "    pm.expect(body.session.audience).to.eql('operator');",
+                  "    pm.expect(body.permissions).to.include.members(['Read_Orders', 'Create_Orders', 'Create_Billing']);",
+                  "    pm.expect(body.permissions).to.not.include('Read_Reports');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"clerk@demo.test\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Operator audience. Grants: `Read_Orders`, `Create_Orders`, `Create_Billing`."
+          }
+        },
+        {
+          "name": "POST Login (invalid credentials)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects bad password', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json().error).to.eql('invalid credentials');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@demo.test\",\n  \"password\": \"wrong-password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "POST Refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refresh succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.test('rotated tokens only', function () {",
+                  "    pm.expect(body.tokens.refreshToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.session).to.be.undefined;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Rotates the refresh token. Response is `{ tokens }` only (no session). Run a login first. Reusing the old refresh token returns 401."
+          }
+        },
+        {
+          "name": "POST Refresh (invalid token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects unknown refresh token', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json().error).to.eql('invalid refresh token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"never-issued\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "POST Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logout acknowledged', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().ok).to.eql(true);",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', '');",
+                  "pm.collectionVariables.set('refreshToken', '');",
+                  "pm.collectionVariables.set('sessionRole', '');",
+                  "pm.collectionVariables.set('userId', '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Revokes the refresh token. The access JWT stays valid until expiry — this script clears local collection tokens."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. User",
+      "description": "`GET /me` returns the current user plus their `permissions` list (UI permission payload). `GET /admin/users` is the admin user list, gated by `Read_Users` + admin audience.",
+      "item": [
+        {
+          "name": "GET Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns current user + permissions', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.userId).to.be.a('string');",
+                  "  pm.expect(body.tenantId).to.be.a('string');",
+                  "  pm.expect(body.role).to.be.a('string');",
+                  "  pm.expect(body.permissions).to.be.an('array');",
+                  "  pm.collectionVariables.set('sessionRole', body.role);",
+                  "  pm.collectionVariables.set('userId', body.userId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "Requires Bearer token. Payload: `{ userId, tenantId, role, audience, permissions }`. Use `permissions` for UI gates (`Action_Module` codes)."
+          },
+          "response": [
+            {
+              "name": "200 Manager",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"userId\": \"u-manager\",\n  \"tenantId\": \"demo-tenant\",\n  \"role\": \"manager\",\n  \"audience\": \"admin\",\n  \"permissions\": [\"Read_Reports\", \"Create_Reports\", \"Read_Orders\", \"Create_Orders\", \"Update_Orders\", \"Read_Inventory\", \"Create_Billing\", \"Read_AuditLogs\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Me (no token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('requires bearer token', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json().error).to.eql('missing bearer token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            }
+          }
+        },
+        {
+          "name": "GET Admin Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const code = pm.response.code;",
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "pm.test('200 or 403', function () {",
+                  "  pm.expect([200, 403]).to.include(code);",
+                  "});",
+                  "if (role === 'owner') {",
+                  "  pm.test('owner can read users', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().users).to.be.an('array');",
+                  "  });",
+                  "} else if (role === 'manager') {",
+                  "  pm.test('manager lacks Read_Users', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().permission).to.eql('Read_Users');",
+                  "  });",
+                  "} else if (role === 'clerk') {",
+                  "  pm.test('clerk is wrong audience', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().error).to.eql('wrong audience');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"]
+            },
+            "description": "`requireAuth` + `audienceGuard('admin')` + `requirePermission('Read_Users')`.\n\n- Owner → 200 (superuser bypass)\n- Manager → 403 `{ error, permission: \"Read_Users\", reason }`\n- Clerk → 403 `{ error: \"wrong audience\", expected: \"admin\" }`"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. RBAC / modules",
+      "description": "Each route is gated with `requirePermission('Action_Module')` from the module registry. Run a login first, then hit these with that role.",
+      "item": [
+        {
+          "name": "GET Reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "const code = pm.response.code;",
+                  "pm.test('200 or 403', function () {",
+                  "  pm.expect([200, 403]).to.include(code);",
+                  "});",
+                  "if (role === 'clerk') {",
+                  "  pm.test('clerk denied Read_Reports', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().permission).to.eql('Read_Reports');",
+                  "  });",
+                  "} else if (role === 'owner' || role === 'manager') {",
+                  "  pm.test(role + ' can read reports', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().report).to.be.a('string');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports"]
+            },
+            "description": "`requirePermission('Read_Reports')`. Owner/manager → 200. Clerk → 403."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"report\": \"Q3 numbers\",\n  \"rows\": [{ \"label\": \"Revenue\", \"value\": 128000 }]\n}"
+            },
+            {
+              "name": "403 Clerk",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"forbidden\",\n  \"permission\": \"Read_Reports\",\n  \"reason\": \"denied\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('all seeded roles can Read_Orders', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().orders).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "`requirePermission('Read_Orders')`. Owner, manager, and clerk all have this grant."
+          }
+        },
+        {
+          "name": "POST Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create_Orders allowed for seeded roles', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().created).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": \"Widget C\",\n  \"qty\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "`requirePermission('Create_Orders')`. Echoes the request body as `{ created: true, order }`."
+          }
+        },
+        {
+          "name": "GET Inventory",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "if (role === 'clerk') {",
+                  "  pm.test('clerk denied Read_Inventory', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().permission).to.eql('Read_Inventory');",
+                  "  });",
+                  "} else if (role === 'owner' || role === 'manager') {",
+                  "  pm.test(role + ' can read inventory', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().items).to.be.an('array');",
+                  "  });",
+                  "} else {",
+                  "  pm.test('200 or 403', function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory"]
+            },
+            "description": "`requirePermission('Read_Inventory')`. Owner/manager → 200. Clerk → 403."
+          }
+        },
+        {
+          "name": "GET Billing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "if (role === 'owner') {",
+                  "  pm.test('owner can read billing', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().bills).to.be.an('array');",
+                  "  });",
+                  "} else if (role === 'manager' || role === 'clerk') {",
+                  "  pm.test(role + ' lacks Read_Billing', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().permission).to.eql('Read_Billing');",
+                  "  });",
+                  "} else {",
+                  "  pm.test('200 or 403', function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/billing",
+              "host": ["{{baseUrl}}"],
+              "path": ["billing"]
+            },
+            "description": "`requirePermission('Read_Billing')`. Only owner (superuser) has it. Manager and clerk have `Create_Billing` but not read."
+          }
+        },
+        {
+          "name": "POST Billing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create_Billing allowed for seeded roles', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().created).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 9900,\n  \"status\": \"open\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/billing",
+              "host": ["{{baseUrl}}"],
+              "path": ["billing"]
+            },
+            "description": "`requirePermission('Create_Billing')`. Owner, manager, and clerk all have this grant."
+          }
+        },
+        {
+          "name": "GET Audit Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "if (role === 'owner' || role === 'manager') {",
+                  "  pm.test(role + ' can read audit logs', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().logs).to.be.an('array');",
+                  "  });",
+                  "} else if (role === 'clerk') {",
+                  "  pm.test('clerk is wrong audience', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().error).to.eql('wrong audience');",
+                  "  });",
+                  "} else {",
+                  "  pm.test('200 or 403', function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs"],
+              "query": [
+                { "key": "limit", "value": "50", "description": "Max rows (default 50)" },
+                { "key": "userId", "value": "", "disabled": true, "description": "Filter by actor, e.g. u-manager" },
+                { "key": "resource", "value": "", "disabled": true, "description": "Filter by path, e.g. /reports" }
+              ]
+            },
+            "description": "`audienceGuard('admin')` + `requirePermission('Read_AuditLogs')`.\n\nAuthenticated mutating/read routes (except `/health` and `/auth/*`) append an audit row. Hit `/reports` or `/orders` first so there is something to list.\n\n- Owner → 200 (superuser)\n- Manager → 200\n- Clerk → 403 wrong audience\n\nOptional query: `userId`, `resource`, `limit`."
+          }
+        },
+        {
+          "name": "GET Audit Logs (filter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "if (role === 'owner' || role === 'manager') {",
+                  "  pm.test('filtered audit query', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().logs).to.be.an('array');",
+                  "  });",
+                  "} else if (role === 'clerk') {",
+                  "  pm.test('clerk is wrong audience', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs?userId={{userId}}&resource=/reports&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs"],
+              "query": [
+                { "key": "userId", "value": "{{userId}}" },
+                { "key": "resource", "value": "/reports" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Same gate as GET Audit Logs. Filters by the logged-in `userId` and resource `/reports`."
+          }
+        },
+        {
+          "name": "GET Audit Logs Export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "if (role === 'owner') {",
+                  "  pm.test('owner can export CSV', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                  "    pm.expect(pm.response.text()).to.include('id,timestamp,userId');",
+                  "  });",
+                  "} else if (role === 'manager') {",
+                  "  pm.test('manager lacks Export_AuditLogs', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().permission).to.eql('Export_AuditLogs');",
+                  "  });",
+                  "} else if (role === 'clerk') {",
+                  "  pm.test('clerk is wrong audience', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().error).to.eql('wrong audience');",
+                  "  });",
+                  "} else {",
+                  "  pm.test('200 or 403', function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs", "export"]
+            },
+            "description": "`audienceGuard('admin')` + `requirePermission('Export_AuditLogs')`. Returns `text/csv`.\n\n- Owner → 200 CSV\n- Manager → 403 (has `Read_AuditLogs` but not export)\n- Clerk → 403 wrong audience"
+          }
+        },
+        {
+          "name": "GET Admin Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const role = pm.collectionVariables.get('sessionRole');",
+                  "if (role === 'owner') {",
+                  "  pm.test('owner can read users', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "} else if (role === 'manager') {",
+                  "  pm.test('manager lacks Read_Users', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().permission).to.eql('Read_Users');",
+                  "  });",
+                  "} else if (role === 'clerk') {",
+                  "  pm.test('clerk is wrong audience', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().error).to.eql('wrong audience');",
+                  "  });",
+                  "} else {",
+                  "  pm.test('200 or 403', function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"]
+            },
+            "description": "Same route as User → GET Admin Users. Included here so a Collection Runner can cover all module gates in one folder."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -144,7 +144,18 @@ export class ApiClient implements IAccountAuth {
 
   private async parse<T>(res: Response): Promise<T> {
     const text = await res.text();
-    const data = text.length > 0 ? (JSON.parse(text) as unknown) : undefined;
+    const ct = res.headers.get('content-type') ?? '';
+    const looksJson = ct.includes('application/json') || (text.startsWith('{') || text.startsWith('['));
+    let data: unknown;
+    if (text.length > 0 && looksJson) {
+      try {
+        data = JSON.parse(text) as unknown;
+      } catch {
+        data = text;
+      }
+    } else {
+      data = text.length > 0 ? text : undefined;
+    }
     if (!res.ok) {
       const message =
         typeof data === 'object' && data !== null && 'error' in data
