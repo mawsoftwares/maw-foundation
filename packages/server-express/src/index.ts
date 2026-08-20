@@ -9,6 +9,7 @@ import {
   type MasterCache,
   checkPermissionDynamic,
 } from '@maw/rbac-core';
+import { HttpStatus } from '@maw/sdk';
 
 /** What the middleware attaches to the request once authenticated. */
 export interface MawAuthState {
@@ -62,14 +63,14 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
   const requireAuth: RequestHandler = (req: AuthedRequest, res: Response, next: NextFunction) => {
     const token = bearer(req);
     if (token === null) {
-      res.status(401).json({ error: 'missing bearer token' });
+      res.status(HttpStatus.UNAUTHORIZED).json({ error: 'missing bearer token' });
       return;
     }
     try {
       req.maw = { claims: verifyAccessToken(token, options.jwtSecret) };
       next();
     } catch {
-      res.status(401).json({ error: 'invalid or expired token' });
+      res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid or expired token' });
     }
   };
 
@@ -90,7 +91,7 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
           if (access.can(permission, context?.(req))) {
             next();
           } else {
-            res.status(403).json({ error: 'forbidden', permission });
+            res.status(HttpStatus.FORBIDDEN).json({ error: 'forbidden', permission });
           }
         })
         .catch(() => res.status(401).json({ error: 'not authenticated' }));
@@ -100,7 +101,7 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
     (audience: string): RequestHandler =>
     (req: AuthedRequest, res: Response, next: NextFunction) => {
       if (req.maw?.claims.audience !== undefined && req.maw.claims.audience !== audience) {
-        res.status(403).json({ error: 'wrong audience', expected: audience });
+        res.status(HttpStatus.FORBIDDEN).json({ error: 'wrong audience', expected: audience });
         return;
       }
       next();
@@ -117,7 +118,7 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
     if (csrfTokensMatch(cookie, typeof header === 'string' ? header : undefined)) {
       next();
     } else {
-      res.status(403).json({ error: 'invalid csrf token' });
+      res.status(HttpStatus.FORBIDDEN).json({ error: 'invalid csrf token' });
     }
   };
 
@@ -156,7 +157,7 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
   const requireAuth: RequestHandler = (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
     const token = bearer(req);
     if (token === null) {
-      res.status(401).json({ error: 'missing bearer token' });
+      res.status(HttpStatus.UNAUTHORIZED).json({ error: 'missing bearer token' });
       return;
     }
     try {
@@ -164,7 +165,7 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
       req.maw = { claims };
       next();
     } catch {
-      res.status(401).json({ error: 'invalid or expired token' });
+      res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid or expired token' });
     }
   };
 
@@ -172,7 +173,7 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
     (permission: string): RequestHandler =>
     (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
       if (req.maw === undefined) {
-        res.status(401).json({ error: 'not authenticated' });
+        res.status(HttpStatus.UNAUTHORIZED).json({ error: 'not authenticated' });
         return;
       }
 
@@ -199,18 +200,18 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
         if (result.granted) {
           next();
         } else {
-          res.status(403).json({ error: 'forbidden', permission, reason: result.reason });
+          res.status(HttpStatus.FORBIDDEN).json({ error: 'forbidden', permission, reason: result.reason });
         }
       };
 
-      run().catch(() => res.status(500).json({ error: 'permission check failed' }));
+      run().catch(() => res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'permission check failed' }));
     };
 
   const audienceGuard =
     (audience: string): RequestHandler =>
     (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
       if (req.maw?.claims.audience !== undefined && req.maw.claims.audience !== audience) {
-        res.status(403).json({ error: 'wrong audience', expected: audience });
+        res.status(HttpStatus.FORBIDDEN).json({ error: 'wrong audience', expected: audience });
         return;
       }
       next();
@@ -227,7 +228,7 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
     if (csrfTokensMatch(cookie, typeof header === 'string' ? header : undefined)) {
       next();
     } else {
-      res.status(403).json({ error: 'invalid csrf token' });
+      res.status(HttpStatus.FORBIDDEN).json({ error: 'invalid csrf token' });
     }
   };
 

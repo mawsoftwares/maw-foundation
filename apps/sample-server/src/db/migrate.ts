@@ -2,12 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { getRequiredEnv, createLogger } from '@maw/sdk';
 
-const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) {
-  console.error('Set DATABASE_URL first. Example: postgresql://user:pass@localhost:5432/maw_dev');
-  process.exit(1);
-}
+const log = createLogger('migrate');
+const DATABASE_URL = getRequiredEnv('DATABASE_URL');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrations = [
@@ -24,17 +22,17 @@ try {
     const sql = readFileSync(resolve(__dirname, '../../migrations', file), 'utf-8');
     try {
       await client.query(sql);
-      console.log(`[migrate] ${file} — applied.`);
+      log.info(`${file} — applied.`);
     } catch (err: unknown) {
       const pgErr = err as { code?: string };
       if (pgErr.code === '42P07') {
-        console.log(`[migrate] ${file} — tables already exist, skipping.`);
+        log.info(`${file} — tables already exist, skipping.`);
       } else {
         throw err;
       }
     }
   }
-  console.log('[migrate] All migrations complete.');
+  log.info('All migrations complete.');
 } finally {
   await client.end();
 }

@@ -1,12 +1,10 @@
 import pg from 'pg';
 import { hashPassword } from '@maw/auth-core';
+import { getRequiredEnv, createLogger } from '@maw/sdk';
 import { registry } from '../modules/index';
 
-const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) {
-  console.error('Set DATABASE_URL first.');
-  process.exit(1);
-}
+const log = createLogger('seed');
+const DATABASE_URL = getRequiredEnv('DATABASE_URL');
 
 const TENANT = 'demo-tenant';
 
@@ -57,7 +55,7 @@ try {
       [u.id, TENANT, u.email, u.role, u.audience, hashPassword('password123'), u.scopeId],
     );
   }
-  console.log(`[seed] ${users.length} users upserted.`);
+  log.info('Users upserted', { count: users.length });
 
   // --- Static role permissions (001 tables) ---
   const staticPerms: Record<string, string[]> = {
@@ -77,7 +75,7 @@ try {
       permCount++;
     }
   }
-  console.log(`[seed] ${permCount} static role-permission rows upserted.`);
+  log.info('Static role-permission rows upserted', { count: permCount });
 
   // --- Dynamic RBAC: master_roles (002 tables) ---
   const roleIdMap: Record<string, number> = {};
@@ -91,7 +89,7 @@ try {
     );
     roleIdMap[r.code] = rows[0]!.id;
   }
-  console.log(`[seed] ${roles.length} master roles upserted.`);
+  log.info('Master roles upserted', { count: roles.length });
 
   // --- Dynamic RBAC: master_permissions (from module registry) ---
   const allPerms = registry.getAllPermissions();
@@ -107,7 +105,7 @@ try {
     );
     permIdMap[p.code] = rows[0]!.id;
   }
-  console.log(`[seed] ${allPerms.length} master permissions upserted.`);
+  log.info('Master permissions upserted', { count: allPerms.length });
 
   // --- Dynamic RBAC: master_modules ---
   const moduleIdMap: Record<string, number> = {};
@@ -121,7 +119,7 @@ try {
     );
     moduleIdMap[m.key] = rows[0]!.id;
   }
-  console.log(`[seed] ${registry.getAll().length} master modules upserted.`);
+  log.info('Master modules upserted', { count: registry.getAll().length });
 
   // --- Dynamic RBAC: role_permissions ---
   let rpCount = 0;
@@ -140,10 +138,10 @@ try {
       rpCount++;
     }
   }
-  console.log(`[seed] ${rpCount} role-permission assignments upserted.`);
+  log.info('Role-permission assignments upserted', { count: rpCount });
 
   await client.query('COMMIT');
-  console.log('[seed] Done.');
+  log.info('Seed complete.');
 } catch (err) {
   await client.query('ROLLBACK');
   throw err;

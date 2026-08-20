@@ -16,6 +16,14 @@ import {
 import { createDynamicExpressAuth, type DynamicAuthedRequest } from '@maw/server-express';
 import type { Session } from '@maw/sdk/contracts/identity';
 import {
+  createLogger,
+  getEnv,
+  getEnvInt,
+  HttpStatus,
+  createHealthChecker,
+  pgCheck,
+} from '@maw/sdk';
+import {
   MemoryRefreshStore,
   findUserByEmail,
   findUserById,
@@ -25,9 +33,11 @@ import { registry } from './modules/index';
 import { MemorySyncStore, MemoryCacheStore } from './dynamic-stores';
 import { recordAudit as recordAuditMemory, queryAuditLogs as queryAuditLogsMemory, type AuditEntry } from './audit';
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-only-secret-change-me';
-const PORT = Number(process.env.PORT ?? 4000);
-const DATABASE_URL = process.env.DATABASE_URL;
+const log = createLogger('sample-server');
+
+const JWT_SECRET = getEnv('JWT_SECRET', 'dev-only-secret-change-me')!;
+const PORT = getEnvInt('PORT', 4000);
+const DATABASE_URL = getEnv('DATABASE_URL');
 const USE_PG = DATABASE_URL !== undefined && DATABASE_URL !== '';
 
 // ---------------------------------------------------------------------------
@@ -86,7 +96,7 @@ async function buildDataLayer(): Promise<DataLayer> {
     const userRepo = createPgUserRepo(pool);
     const auditStore = createPgAuditStore(pool);
 
-    console.log('[boot] Using Postgres data layer');
+    log.info('Using Postgres data layer');
     return {
       syncStore: new PgSyncStore(pool),
       cacheStore: new PgCacheStore(pool),
@@ -120,29 +130,25 @@ const data = await buildDataLayer();
 // Step 1: Registry is already populated (see ./modules/index.ts)
 // ---------------------------------------------------------------------------
 
-console.log(`[boot] Registry: ${registry.getAll().length} modules, ${registry.getAllPermissions().length} permissions`);
+log.info('Registry loaded', { modules: registry.getAll().length, permissions: registry.getAllPermissions().length });
 
 // ---------------------------------------------------------------------------
 // Step 2: Sync engine — auto-upsert permissions to the store on boot
 // ---------------------------------------------------------------------------
 
-const consoleLogger = {
-  info: (msg: string) => console.log(`[sync] ${msg}`),
-  warn: (msg: string) => console.warn(`[sync] ${msg}`),
-  error: (msg: string, err?: unknown) => console.error(`[sync] ${msg}`, err),
-};
+const syncLog = log.child('sync');
 
-await syncModules(data.syncStore, registry, consoleLogger);
+await syncModules(data.syncStore, registry, syncLog);
 
 // ---------------------------------------------------------------------------
 // Step 3: Master cache — loads roles/permissions, auto-refreshes every 5 min
 // ---------------------------------------------------------------------------
 
-const cache = new MasterCache(data.cacheStore, 5 * 60 * 1000, consoleLogger);
+const cache = new MasterCache(data.cacheStore, 5 * 60 * 1000, syncLog);
 await cache.load();
 cache.startAutoRefresh();
 
-console.log(`[boot] Cache loaded: ${cache.getCache()!.roles.length} roles, ${cache.getCache()!.permissions.length} permissions`);
+log.info('Cache loaded', { roles: cache.getCache()!.roles.length, permissions: cache.getCache()!.permissions.length });
 
 // ---------------------------------------------------------------------------
 // Step 4: Dynamic auth middleware — uses cache for permission checks
@@ -175,7 +181,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-csrf-token');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') { res.sendStatus(204); return; }
+  if (req.method === 'OPTIONS') { res.sendStatus(HttpStatus.NO_CONTENT); return; }
   next();
 });
 
@@ -186,7 +192,7 @@ app.post('/auth/login', (req, res) => {
     const { email, password } = req.body as { email?: string; password?: string };
     const user = email !== undefined ? await data.findUserByEmail(email) : undefined;
     if (user === undefined || password === undefined || !verifyPassword(password, user.passwordHash)) {
-      res.status(401).json({ error: 'invalid credentials' });
+      res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid credentials' });
       return;
     }
     const claims: AuthClaims = {
@@ -214,9 +220,9 @@ app.post('/auth/refresh', (req, res) => {
   void (async () => {
     const { refreshToken } = req.body as { refreshToken?: string };
     const rotated = refreshToken !== undefined ? await refreshTokens.rotate(refreshToken) : null;
-    if (rotated === null) { res.status(401).json({ error: 'invalid refresh token' }); return; }
+    if (rotated === null) { res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid refresh token' }); return; }
     const user = await data.findUserById(rotated.userId);
-    if (user === undefined) { res.status(401).json({ error: 'unknown user' }); return; }
+    if (user === undefined) { res.status(HttpStatus.UNAUTHORIZED).json({ error: 'unknown user' }); return; }
     const claims: AuthClaims = {
       tenantId: user.tenantId, userId: user.id, role: user.role,
       audience: user.audience, scopeId: user.scopeId,
@@ -339,10 +345,28 @@ app.get('/modules', (_req, res) => {
   });
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true, mode: USE_PG ? 'postgres' : 'memory' }));
+// --- Health check (composable) ---
+
+const health = createHealthChecker();
+health.register('cache', () => {
+  if (cache.getCache() === null) throw new Error('Cache not loaded');
+});
+if (USE_PG) {
+  const pg = await import('pg');
+  const healthPool = new pg.default.Pool({ connectionString: DATABASE_URL });
+  health.register('postgres', pgCheck(healthPool));
+}
+
+app.get('/health', (_req, res) => {
+  void (async () => {
+    const report = await health.run();
+    const statusCode = report.status === 'healthy' ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
+    res.status(statusCode).json({ ...report, mode: USE_PG ? 'postgres' : 'memory' });
+  })();
+});
 
 app.listen(PORT, () => {
-  console.log(`[sample-server] http://localhost:${PORT} (${USE_PG ? 'Postgres' : 'in-memory'})`);
-  console.log(`[sample-server] Users: superadmin@ / owner@ / manager@ / clerk@demo.test (pw: password123)`);
-  console.log(`[sample-server] Try: GET /modules to see all registered modules + permissions`);
+  log.info(`http://localhost:${PORT} (${USE_PG ? 'Postgres' : 'in-memory'})`);
+  log.info('Users: superadmin@ / owner@ / manager@ / clerk@demo.test (pw: password123)');
+  log.info('Try: GET /modules to see all registered modules + permissions');
 });
