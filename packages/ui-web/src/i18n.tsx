@@ -34,13 +34,11 @@ export function I18nProvider({ defaultLocale = 'en', children }: I18nProviderPro
 
   const t = useCallback(
     (key: string, params?: Readonly<Record<string, string | number>>) => i18n.t(key, params),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [locale],
   );
 
   const tn = useCallback(
     (namespace: string) => i18n.createNamespacedT(namespace),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [locale],
   );
 

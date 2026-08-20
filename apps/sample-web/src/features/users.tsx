@@ -1,30 +1,55 @@
 import { useState, type ReactNode } from 'react';
 import { ApiError } from '@maw/api-client';
-import { Button, Card } from '@maw/ui-web';
-import { palette } from '@maw/theme';
+import { ListPage, DataTable, Avatar, Button, useToast, ErrorState, PageLoader, type ColumnDef } from '@maw/ui-web';
 import { client } from '../api';
-import { cardStyle, preStyle } from '../styles';
 
-export function UsersPanel(): ReactNode {
-  const [data, setData] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+interface User {
+  email: string;
+}
+
+const COLUMNS: ColumnDef<User>[] = [
+  {
+    key: 'avatar',
+    header: '',
+    width: 50,
+    render: (row) => <Avatar name={row.email} size={28} />,
+  },
+  { key: 'email', header: 'Email', sortable: true },
+];
+
+export function UsersView(): ReactNode {
+  const toast = useToast();
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string>();
+
+  const load = () => {
+    setLoading(true);
+    setError(undefined);
+    client
+      .request<{ users: string[] }>('/admin/users')
+      .then((r) => { setUsers(r.users.map((email) => ({ email }))); setLoaded(true); toast.success('Users loaded'); })
+      .catch((e: ApiError) => setError(`${e.status}: ${e.message}`))
+      .finally(() => setLoading(false));
+  };
+
+  if (error) return <ErrorState title="Failed to load users" message={error} retry={load} />;
+  if (loading && !loaded) return <PageLoader message="Loading users..." />;
+
+  if (!loaded) {
+    return (
+      <ListPage title="Users">
+        <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)' }}>
+          <Button onClick={load}>Load Users</Button>
+        </div>
+      </ListPage>
+    );
+  }
 
   return (
-    <Card style={cardStyle}>
-      <h3 style={{ marginTop: 0 }}>Users</h3>
-      <Button
-        onClick={() => {
-          setErr(null);
-          client
-            .request<{ users: string[] }>('/admin/users')
-            .then((r) => setData(JSON.stringify(r, null, 2)))
-            .catch((e: ApiError) => setErr(`${e.status}: ${e.message}`));
-        }}
-      >
-        Load users
-      </Button>
-      {data !== null && <pre style={preStyle}>{data}</pre>}
-      {err !== null && <pre style={{ ...preStyle, color: palette.danger }}>{err}</pre>}
-    </Card>
+    <ListPage title="Users" description={`${users.length} registered users`}>
+      <DataTable columns={COLUMNS} data={users} keyField="email" />
+    </ListPage>
   );
 }

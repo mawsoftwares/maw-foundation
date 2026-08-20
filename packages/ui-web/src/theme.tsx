@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   createTheme,
-  defaultTheme,
   tokensToCssVars,
   type Theme,
   type ThemeOverrides,
@@ -78,13 +77,14 @@ export function ThemeProvider({ overrides, defaultColorMode, children }: ThemePr
 
   const setColorMode = useCallback((mode: ColorMode) => {
     setColorModeState(mode);
+    if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, mode);
   }, []);
 
   const toggleColorMode = useCallback(() => {
     setColorModeState((prev) => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'light';
-      return getSystemPreference() ? 'light' : 'dark';
+      const next = prev === 'light' ? 'dark' : prev === 'dark' ? 'light' : getSystemPreference() ? 'light' : 'dark';
+      if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, next);
+      return next;
     });
   }, []);
 

@@ -1,0 +1,278 @@
+import { useState, type ReactNode } from 'react';
+import {
+  Button,
+  Card,
+  Badge,
+  Divider,
+  Avatar,
+  IconButton,
+  TextArea,
+  Select,
+  Checkbox,
+  Toggle,
+  Modal,
+  Tabs,
+  Tooltip,
+  Spinner,
+  Progress,
+  Stack,
+  DropdownMenu,
+  Skeleton,
+  EmptyState,
+  ErrorState,
+  useToast,
+  useColorMode,
+  useI18n,
+  DataTable,
+  type ColumnDef,
+} from '@maw/ui-web';
+
+const DEMO_TABLE_DATA = [
+  { id: '1', name: 'Alice Johnson', role: 'Admin', status: 'active' },
+  { id: '2', name: 'Bob Smith', role: 'Manager', status: 'active' },
+  { id: '3', name: 'Charlie Brown', role: 'Clerk', status: 'inactive' },
+  { id: '4', name: 'Diana Prince', role: 'Manager', status: 'active' },
+];
+
+const DEMO_COLUMNS: ColumnDef<(typeof DEMO_TABLE_DATA)[0]>[] = [
+  { key: 'id', header: '#', width: 40 },
+  { key: 'name', header: 'Name', sortable: true },
+  { key: 'role', header: 'Role', sortable: true },
+  {
+    key: 'status',
+    header: 'Status',
+    render: (row) => <Badge variant={row.status === 'active' ? 'success' : 'default'}>{row.status}</Badge>,
+  },
+];
+
+export function ShowcaseView(): ReactNode {
+  const toast = useToast();
+  const { isDark, toggleColorMode } = useColorMode();
+  const { locale, setLocale, t } = useI18n();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('buttons');
+  const [checkboxVal, setCheckboxVal] = useState(true);
+  const [toggleVal, setToggleVal] = useState(false);
+  const [textareaVal, setTextareaVal] = useState('');
+  const [selectVal, setSelectVal] = useState('');
+  const [progress, setProgress] = useState(65);
+
+  return (
+    <div>
+      <h1 style={{ color: 'var(--maw-fg)', marginTop: 0, fontSize: 'var(--maw-text-xl)' }}>
+        UI Component Showcase
+      </h1>
+      <p style={{ color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>
+        All @maw/ui-web components using CSS custom properties — responsive to dark mode and tenant branding.
+      </p>
+
+      <Tabs
+        tabs={[
+          { key: 'buttons', label: 'Buttons & Badges' },
+          { key: 'inputs', label: 'Form Inputs' },
+          { key: 'feedback', label: 'Feedback' },
+          { key: 'layout', label: 'Layout & Data' },
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        style={{ marginBottom: 'var(--maw-space-xl)' }}
+      />
+
+      {activeTab === 'buttons' && (
+        <Card>
+          <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Buttons</h3>
+          <Stack direction="row" gap="var(--maw-space-sm)">
+            <Button>Primary</Button>
+            <Button variant="ghost">Ghost</Button>
+            <Button variant="danger">Danger</Button>
+            <Button disabled>Disabled</Button>
+          </Stack>
+
+          <Divider />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>Badges</h3>
+          <Stack direction="row" gap="var(--maw-space-sm)">
+            <Badge>Default</Badge>
+            <Badge variant="success">Success</Badge>
+            <Badge variant="danger">Danger</Badge>
+            <Badge variant="warning">Warning</Badge>
+            <Badge variant="info">Info</Badge>
+          </Stack>
+
+          <Divider />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>Avatars</h3>
+          <Stack direction="row" gap="var(--maw-space-sm)" align="center">
+            <Avatar name="Alice Johnson" size={40} />
+            <Avatar name="Bob Smith" size={32} />
+            <Avatar name="Charlie" size={24} />
+          </Stack>
+
+          <Divider />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>IconButton & Tooltip</h3>
+          <Stack direction="row" gap="var(--maw-space-sm)">
+            <Tooltip content="Edit item">
+              <IconButton label="Edit">✏️</IconButton>
+            </Tooltip>
+            <Tooltip content="Delete item">
+              <IconButton label="Delete">🗑️</IconButton>
+            </Tooltip>
+            <Tooltip content="Settings">
+              <IconButton label="Settings">⚙️</IconButton>
+            </Tooltip>
+          </Stack>
+
+          <Divider />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>DropdownMenu</h3>
+          <DropdownMenu
+            trigger={<Button variant="ghost">Actions ▾</Button>}
+            items={[
+              { key: 'edit', label: 'Edit', onClick: () => toast.info('Edit clicked') },
+              { key: 'duplicate', label: 'Duplicate', onClick: () => toast.info('Duplicate clicked') },
+              { key: 'delete', label: 'Delete', danger: true, onClick: () => toast.warning('Delete clicked') },
+            ]}
+          />
+
+          <Divider />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>Theme Controls</h3>
+          <Stack direction="row" gap="var(--maw-space-md)" align="center">
+            <Button variant="ghost" onClick={toggleColorMode}>
+              {isDark ? '☀️ Light Mode' : '🌙 Dark Mode'}
+            </Button>
+            <Select
+              options={[{ value: 'en', label: 'English' }, { value: 'hi', label: 'Hindi' }, { value: 'mr', label: 'Marathi' }]}
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+              style={{ width: 140 }}
+            />
+          </Stack>
+        </Card>
+      )}
+
+      {activeTab === 'inputs' && (
+        <Card>
+          <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>TextArea</h3>
+          <TextArea
+            label="Description"
+            value={textareaVal}
+            onChange={(e) => setTextareaVal(e.target.value)}
+            placeholder="Type something..."
+          />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>Select</h3>
+          <Select
+            label="Category"
+            placeholder="Choose..."
+            value={selectVal}
+            onChange={(e) => setSelectVal(e.target.value)}
+            options={[
+              { value: 'electronics', label: 'Electronics' },
+              { value: 'clothing', label: 'Clothing' },
+              { value: 'food', label: 'Food & Beverages' },
+            ]}
+          />
+
+          <h3 style={{ color: 'var(--maw-fg)' }}>Checkbox & Toggle</h3>
+          <Stack direction="column" gap="var(--maw-space-md)">
+            <Checkbox label="Enable notifications" checked={checkboxVal} onChange={setCheckboxVal} />
+            <Checkbox label="Disabled option" checked={false} onChange={() => {}} disabled />
+            <Toggle label="Dark mode" checked={toggleVal} onChange={setToggleVal} />
+          </Stack>
+        </Card>
+      )}
+
+      {activeTab === 'feedback' && (
+        <Stack direction="column" gap="var(--maw-space-lg)">
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Toast Notifications</h3>
+            <Stack direction="row" gap="var(--maw-space-sm)">
+              <Button onClick={() => toast.success('Operation successful!')}>Success</Button>
+              <Button variant="danger" onClick={() => toast.error('Something went wrong', 'Check the console for details')}>Error</Button>
+              <Button variant="ghost" onClick={() => toast.warning('Low stock alert')}>Warning</Button>
+              <Button variant="ghost" onClick={() => toast.info('New version available')}>Info</Button>
+            </Stack>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Modal</h3>
+            <Button onClick={() => setModalOpen(true)}>Open Modal</Button>
+            <Modal
+              open={modalOpen}
+              onClose={() => setModalOpen(false)}
+              title="Sample Modal"
+              footer={
+                <>
+                  <Button variant="ghost" onClick={() => setModalOpen(false)}>{t('common.cancel')}</Button>
+                  <Button onClick={() => { setModalOpen(false); toast.success('Confirmed!'); }}>{t('common.save')}</Button>
+                </>
+              }
+            >
+              <p style={{ color: 'var(--maw-fg)' }}>This is a modal dialog with a title, content, and footer actions.</p>
+              <p style={{ color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>Press Escape or click outside to close.</p>
+            </Modal>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Progress & Spinner</h3>
+            <Stack direction="row" gap="var(--maw-space-md)" align="center">
+              <div style={{ flex: 1 }}>
+                <Progress value={progress} />
+                <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-sm)' }}>
+                  <Button variant="ghost" onClick={() => setProgress(Math.max(0, progress - 10))}>-10</Button>
+                  <Button variant="ghost" onClick={() => setProgress(Math.min(100, progress + 10))}>+10</Button>
+                </Stack>
+              </div>
+              <Spinner size={32} />
+            </Stack>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Skeleton Loading</h3>
+            <Stack direction="column" gap="var(--maw-space-sm)">
+              <Skeleton width="60%" height={20} />
+              <Skeleton width="100%" height={14} />
+              <Skeleton width="80%" height={14} />
+              <Skeleton width={120} height={32} borderRadius="var(--maw-radius-md)" />
+            </Stack>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Empty & Error States</h3>
+            <Stack direction="row" gap="var(--maw-space-lg)">
+              <div style={{ flex: 1 }}>
+                <EmptyState icon="📦" title="No orders" message="Create your first order to get started" action={<Button>Create Order</Button>} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <ErrorState title="Connection failed" message="Could not reach the server" retry={() => toast.info('Retrying...')} />
+              </div>
+            </Stack>
+          </Card>
+        </Stack>
+      )}
+
+      {activeTab === 'layout' && (
+        <Stack direction="column" gap="var(--maw-space-lg)">
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>DataTable</h3>
+            <DataTable
+              columns={DEMO_COLUMNS}
+              data={DEMO_TABLE_DATA}
+              keyField="id"
+              selectable
+              selectedKeys={new Set()}
+              onSelectionChange={() => {}}
+              onRowClick={(row) => toast.info(`Clicked: ${row.name}`)}
+              stickyHeader
+              pagination={{ page: 1, pageSize: 10, total: 4 }}
+              onPageChange={() => {}}
+              onPageSizeChange={() => {}}
+            />
+          </Card>
+        </Stack>
+      )}
+    </div>
+  );
+}

@@ -24,7 +24,6 @@ import {
   pgCheck,
   createConfigEngine,
   APP_CONFIG_DEFAULTS,
-  UI_CONFIG_DEFAULTS,
   type ConfigEngine,
 } from '@maw/sdk';
 import {
