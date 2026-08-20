@@ -15,6 +15,7 @@
     "packages/api-client",
     "packages/theme",
     "packages/ui-web",
+    "packages/audit",
     "packages/deployment",
     "apps/sample-server",
     "apps/sample-web"

@@ -24,6 +24,10 @@ export * from './config/constants';
 export * from './config/feature-flags';
 export * from './config/version';
 export * from './config/health';
+export * from './config/config-engine';
+
+// Modules (registry, events, types)
+export * from './modules/index';
 
 // i18n
 export * as i18n from './i18n/index';

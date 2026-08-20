@@ -1,0 +1,18 @@
+{
+  "name": "@maw/audit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable audit trail — types, store contract, in-memory and Postgres implementations, Express middleware.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@maw/sdk": "*"
+  },
+  "peerDependencies": {
+    "pg": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true }
+  }
+}

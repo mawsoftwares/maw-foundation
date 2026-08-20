@@ -22,6 +22,10 @@ import {
   HttpStatus,
   createHealthChecker,
   pgCheck,
+  createConfigEngine,
+  APP_CONFIG_DEFAULTS,
+  UI_CONFIG_DEFAULTS,
+  type ConfigEngine,
 } from '@maw/sdk';
 import {
   MemoryRefreshStore,
@@ -31,7 +35,12 @@ import {
 } from './repo';
 import { registry } from './modules/index';
 import { MemorySyncStore, MemoryCacheStore } from './dynamic-stores';
-import { recordAudit as recordAuditMemory, queryAuditLogs as queryAuditLogsMemory, type AuditEntry } from './audit';
+import {
+  MemoryAuditStore,
+  PgAuditStore,
+  createAuditMiddleware,
+  type IAuditStore,
+} from '@maw/audit';
 
 const log = createLogger('sample-server');
 
@@ -48,10 +57,9 @@ interface DataLayer {
   syncStore: ISyncStore;
   cacheStore: ICacheStore;
   refreshStore: IRefreshTokenStore;
+  auditStore: IAuditStore;
   findUserByEmail: (email: string) => UserRow | undefined | Promise<UserRow | undefined>;
   findUserById: (id: string) => UserRow | undefined | Promise<UserRow | undefined>;
-  recordAudit: (entry: Omit<AuditEntry, 'id' | 'timestamp'>) => void | Promise<void>;
-  queryAuditLogs: (filters?: { tenantId?: string; userId?: string; resource?: string; limit?: number }) => AuditEntry[] | Promise<AuditEntry[]>;
   userRoleMap: Record<string, number>;
   rolePermissionMap: Record<number, string[]>;
 }
@@ -90,21 +98,19 @@ async function buildDataLayer(): Promise<DataLayer> {
   if (USE_PG) {
     const pg = await import('pg');
     const pool = new pg.default.Pool({ connectionString: DATABASE_URL });
-    const { PgSyncStore, PgCacheStore, createPgAuditStore } = await import('./pg-stores');
+    const { PgSyncStore, PgCacheStore } = await import('./pg-stores');
     const { PgRefreshStore, createPgUserRepo } = await import('./repo-pg');
 
     const userRepo = createPgUserRepo(pool);
-    const auditStore = createPgAuditStore(pool);
 
     log.info('Using Postgres data layer');
     return {
       syncStore: new PgSyncStore(pool),
       cacheStore: new PgCacheStore(pool),
       refreshStore: new PgRefreshStore(pool),
+      auditStore: new PgAuditStore(pool),
       findUserByEmail: (email) => userRepo.findByEmail(email),
       findUserById: (id) => userRepo.findById(id),
-      recordAudit: (entry) => { void auditStore.record(entry); },
-      queryAuditLogs: (filters) => auditStore.query(filters),
       userRoleMap: USER_ROLE_MAP,
       rolePermissionMap: ROLE_PERMS,
     };
@@ -115,16 +121,40 @@ async function buildDataLayer(): Promise<DataLayer> {
     syncStore,
     cacheStore: new MemoryCacheStore(syncStore, ROLES, ROLE_PERMS),
     refreshStore: new MemoryRefreshStore(),
+    auditStore: new MemoryAuditStore(),
     findUserByEmail,
     findUserById,
-    recordAudit: (entry) => { recordAuditMemory(entry); },
-    queryAuditLogs: queryAuditLogsMemory,
     userRoleMap: USER_ROLE_MAP,
     rolePermissionMap: ROLE_PERMS,
   };
 }
 
 const data = await buildDataLayer();
+
+// ---------------------------------------------------------------------------
+// Config Engine — multi-level config with precedence
+// ---------------------------------------------------------------------------
+
+const config: ConfigEngine = createConfigEngine();
+
+config.loadLayer('environment', {
+  nodeEnv: getEnv('NODE_ENV', 'development')!,
+  port: PORT,
+  databaseUrl: DATABASE_URL ?? '',
+  jwtSecret: '[redacted]',
+});
+
+config.loadLayer('app', {
+  ...(APP_CONFIG_DEFAULTS as unknown as Record<string, string>),
+  appName: 'MAW Sample Server',
+  appVersion: '0.1.0',
+});
+
+log.info('Config engine ready', {
+  layers: ['environment', 'app'],
+  appName: config.getString('appName'),
+  currency: config.getString('defaultCurrency'),
+});
 
 // ---------------------------------------------------------------------------
 // Step 1: Registry is already populated (see ./modules/index.ts)
@@ -242,24 +272,14 @@ app.post('/auth/logout', (req, res) => {
 
 // --- Audit trail middleware — auto-logs every authenticated action ---
 
-app.use((req, res, next) => {
-  const origEnd = res.end;
-  res.end = function (...args: Parameters<typeof origEnd>) {
+app.use(createAuditMiddleware({
+  store: data.auditStore,
+  extractUser: (req) => {
     const maw = (req as DynamicAuthedRequest).maw;
-    if (maw !== undefined && req.path !== '/health' && !req.path.startsWith('/auth/')) {
-      void data.recordAudit({
-        tenantId: maw.claims.tenantId,
-        userId: maw.claims.userId,
-        action: req.method,
-        resource: req.path,
-        ip: req.ip,
-        details: { statusCode: res.statusCode },
-      });
-    }
-    return origEnd.apply(res, args);
-  } as typeof origEnd;
-  next();
-});
+    return maw ? { tenantId: maw.claims.tenantId, userId: maw.claims.userId } : undefined;
+  },
+  ignorePaths: ['/health', '/auth'],
+}) as express.RequestHandler);
 
 // --- Protected resources (dynamic RBAC) ---
 
@@ -307,7 +327,7 @@ app.get('/audit-logs', auth.requireAuth, auth.audienceGuard('admin'), auth.requi
   void (async () => {
     const { userId, resource, limit } = req.query as { userId?: string; resource?: string; limit?: string };
     const maw = (req as DynamicAuthedRequest).maw!;
-    const logs = await data.queryAuditLogs({
+    const logs = await data.auditStore.query({
       tenantId: maw.claims.tenantId,
       userId,
       resource,
@@ -320,7 +340,7 @@ app.get('/audit-logs', auth.requireAuth, auth.audienceGuard('admin'), auth.requi
 app.get('/audit-logs/export', auth.requireAuth, auth.audienceGuard('admin'), auth.requirePermission('Export_AuditLogs'), (req, res) => {
   void (async () => {
     const maw = (req as DynamicAuthedRequest).maw!;
-    const logs = await data.queryAuditLogs({ tenantId: maw.claims.tenantId });
+    const logs = await data.auditStore.query({ tenantId: maw.claims.tenantId });
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="audit-logs.csv"');
     const header = 'id,timestamp,userId,action,resource,resourceId,statusCode,ip\n';
@@ -338,11 +358,35 @@ app.get('/modules', (_req, res) => {
     modules: registry.getAll().map((m) => ({
       key: m.key,
       name: m.name,
+      level: m.level,
       audience: m.audience ?? 'admin',
+      status: registry.getStatus(m.key),
+      dependencies: registry.getDependencies(m.key),
       permissions: (m.permissions ?? []).map((p) => p.code),
+      menus: m.menus ?? [],
+      events: (m.events ?? []).map((e) => e.name),
       feature: m.featureSync?.code,
     })),
+    initOrder: registry.getInitOrder(),
+    menus: registry.getAllMenus(),
+    events: registry.getAllEvents(),
   });
+});
+
+app.get('/config', (_req, res) => {
+  res.json({
+    resolved: config.resolve(),
+    layers: ['environment', 'app', 'tenant', 'module', 'user'],
+  });
+});
+
+app.get('/config/:path', (req, res) => {
+  const path = req.params.path;
+  if (!config.has(path)) {
+    res.status(HttpStatus.NOT_FOUND).json({ error: `Config key "${path}" not found` });
+    return;
+  }
+  res.json({ path, value: config.get(path) });
 });
 
 // --- Health check (composable) ---

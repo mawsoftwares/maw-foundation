@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@maw/sdk": "*",
+    "@maw/audit": "*",
     "@maw/auth-core": "*",
     "@maw/rbac-core": "*",
     "@maw/server-express": "*",

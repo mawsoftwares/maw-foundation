@@ -3,8 +3,21 @@ import type { ModuleDefinition } from '@maw/rbac-core';
 export const ordersModule: ModuleDefinition = {
   key: 'orders',
   name: 'Orders',
+  description: 'Order lifecycle management',
+  level: 'platform',
   routePrefix: '/api/orders',
   audience: 'shared',
+  dependencies: [
+    { moduleKey: 'billing', optional: true },
+  ],
+  menus: [
+    { label: 'Orders', path: '/orders', icon: 'shopping-cart', group: 'operations', sortOrder: 3 },
+  ],
+  events: [
+    { name: 'order:created', description: 'Fired when a new order is placed' },
+    { name: 'order:updated', description: 'Fired when an order is modified' },
+    { name: 'order:cancelled', description: 'Fired when an order is cancelled' },
+  ],
   permissions: [
     { code: 'Read_Orders', name: 'Read Orders', description: 'View orders' },
     { code: 'Create_Orders', name: 'Create Orders', description: 'Place new orders' },

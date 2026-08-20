@@ -8,7 +8,6 @@ import type {
   ModulePermission,
   FeatureSyncDefinition,
 } from '@maw/rbac-core';
-import type { AuditEntry } from './audit';
 
 /**
  * Postgres ISyncStore — the sync engine writes module permissions and features
@@ -172,58 +171,3 @@ export class PgCacheStore implements ICacheStore {
   }
 }
 
-/**
- * Postgres audit log store.
- */
-export function createPgAuditStore(pool: pg.Pool) {
-  return {
-    async record(entry: Omit<AuditEntry, 'id' | 'timestamp'>): Promise<AuditEntry> {
-      const { rows } = await pool.query<{ id: string; created_at: Date }>(
-        `INSERT INTO audit_logs (tenant_id, user_id, action, resource, resource_id, details, ip)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id::text, created_at`,
-        [entry.tenantId, entry.userId, entry.action, entry.resource,
-         entry.resourceId ?? null, entry.details ? JSON.stringify(entry.details) : null, entry.ip ?? null],
-      );
-      const r = rows[0]!;
-      return { ...entry, id: r.id, timestamp: r.created_at.toISOString() };
-    },
-
-    async query(filters?: {
-      tenantId?: string; userId?: string; resource?: string; limit?: number;
-    }): Promise<AuditEntry[]> {
-      const conditions: string[] = [];
-      const params: unknown[] = [];
-      let idx = 1;
-
-      if (filters?.tenantId) { conditions.push(`tenant_id = $${idx++}`); params.push(filters.tenantId); }
-      if (filters?.userId) { conditions.push(`user_id = $${idx++}`); params.push(filters.userId); }
-      if (filters?.resource) { conditions.push(`resource = $${idx++}`); params.push(filters.resource); }
-
-      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-      const limit = filters?.limit ?? 50;
-
-      const { rows } = await pool.query<{
-        id: string; tenant_id: string; user_id: string; action: string;
-        resource: string; resource_id: string | null; details: Record<string, unknown> | null;
-        ip: string | null; created_at: Date;
-      }>(
-        `SELECT id::text, tenant_id, user_id, action, resource, resource_id, details, ip, created_at
-         FROM audit_logs ${where} ORDER BY created_at DESC LIMIT ${limit}`,
-        params,
-      );
-
-      return rows.map((r) => ({
-        id: r.id,
-        tenantId: r.tenant_id,
-        userId: r.user_id,
-        action: r.action,
-        resource: r.resource,
-        resourceId: r.resource_id ?? undefined,
-        details: r.details ?? undefined,
-        ip: r.ip ?? undefined,
-        timestamp: r.created_at.toISOString(),
-      }));
-    },
-  };
-}

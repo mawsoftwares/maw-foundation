@@ -3,9 +3,12 @@
  * Each feature self-declares its permissions via a ModuleDefinition; the sync engine
  * auto-upserts them to the DB on boot; the master cache serves them at runtime.
  *
- * Framework-agnostic: no Express Router or Hono types here. Route mounting is the
- * server adapter's job (`@maw/server-express`, `@maw/server-hono`).
+ * Extends the base ModuleDefinition from @maw/sdk with RBAC-specific fields
+ * (permissions, featureSync, audience). Framework-agnostic: no Express Router
+ * or Hono types here. Route mounting is the server adapter's job.
  */
+
+import type { BaseModuleDefinition } from '@maw/sdk';
 
 export interface PermissionDefinition {
   code: string;
@@ -26,9 +29,7 @@ export interface FeatureSyncDefinition {
 
 export type ModuleAudience = 'admin' | 'operator' | 'shared';
 
-export interface ModuleDefinition {
-  key: string;
-  name: string;
+export interface ModuleDefinition extends BaseModuleDefinition {
   routePrefix: string;
   audience?: ModuleAudience;
   permissions?: PermissionDefinition[];
