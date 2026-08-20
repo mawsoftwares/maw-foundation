@@ -17,6 +17,7 @@ export * from './contracts/identity';
 export * from './contracts/IHasher';
 export * from './contracts/ISecureStore';
 export * from './contracts/IAccountAuth';
+export * from './contracts/IFileStorage';
 
 // Config
 export * from './config/env';

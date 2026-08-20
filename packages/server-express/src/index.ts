@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import type { IFileStorage, StoredFile, UploadRequest } from '@maw/sdk/contracts/IFileStorage';
+import { sanitizeFilename, getMimeType } from '@maw/sdk/kernel/file';
 import { verifyAccessToken, csrfTokensMatch, UNSAFE_METHODS, type AuthClaims } from '@maw/auth-core';
 import {
   resolveEffectiveAccess,
@@ -151,6 +153,156 @@ export interface DynamicExpressAuth {
   requirePermission: (permission: string) => RequestHandler;
   audienceGuard: (audience: string) => RequestHandler;
   csrfProtection: RequestHandler;
+}
+
+// ---------------------------------------------------------------------------
+// File Upload middleware
+// ---------------------------------------------------------------------------
+
+export interface FileUploadOptions {
+  readonly storage: IFileStorage;
+  readonly maxSize?: number;
+  readonly allowedTypes?: string[];
+  readonly keyPrefix?: string;
+  readonly generateKey?: (file: { originalName: string; mimeType: string }) => string;
+}
+
+export interface MulterLikeFile {
+  fieldname: string;
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
+export interface UploadedRequest extends Request {
+  uploadedFiles?: StoredFile[];
+}
+
+function defaultKeyGenerator(prefix: string, originalName: string): string {
+  const timestamp = Date.now();
+  const rand = Math.random().toString(36).slice(2, 8);
+  const safe = sanitizeFilename(originalName);
+  return prefix ? `${prefix}/${timestamp}-${rand}-${safe}` : `${timestamp}-${rand}-${safe}`;
+}
+
+export function createFileUploadHandler(options: FileUploadOptions): RequestHandler {
+  const maxSize = options.maxSize ?? 10 * 1024 * 1024;
+  const prefix = options.keyPrefix ?? 'uploads';
+
+  return async (req: UploadedRequest, res: Response, next: NextFunction) => {
+    try {
+      const files: MulterLikeFile[] = [];
+
+      const raw = req as unknown as Record<string, unknown>;
+      if (Array.isArray(raw.files)) {
+        files.push(...(raw.files as MulterLikeFile[]));
+      } else if (raw.file) {
+        files.push(raw.file as MulterLikeFile);
+      }
+
+      if (files.length === 0) {
+        const contentType = req.headers['content-type'] ?? '';
+        if (!contentType.includes('multipart/form-data')) {
+          next();
+          return;
+        }
+        res.status(400).json({ error: 'No files provided' });
+        return;
+      }
+
+      const results: StoredFile[] = [];
+
+      for (const file of files) {
+        if (file.size > maxSize) {
+          res.status(413).json({
+            error: `File too large: ${file.originalname} (${file.size} bytes, max ${maxSize})`,
+          });
+          return;
+        }
+
+        const mimeType = file.mimetype || getMimeType(file.originalname);
+
+        if (options.allowedTypes && options.allowedTypes.length > 0) {
+          const allowed = options.allowedTypes.some((t) => {
+            if (t.endsWith('/*')) return mimeType.startsWith(t.slice(0, -1));
+            return mimeType === t;
+          });
+          if (!allowed) {
+            res.status(415).json({ error: `File type not allowed: ${mimeType}` });
+            return;
+          }
+        }
+
+        const key = options.generateKey
+          ? options.generateKey({ originalName: file.originalname, mimeType })
+          : defaultKeyGenerator(prefix, file.originalname);
+
+        const uploadReq: UploadRequest = {
+          key,
+          mimeType,
+          size: file.size,
+          originalName: file.originalname,
+        };
+
+        const stored = await options.storage.put(key, file.buffer, uploadReq);
+        results.push(stored);
+      }
+
+      req.uploadedFiles = results;
+      next();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      res.status(500).json({ error: message });
+    }
+  };
+}
+
+export function createFileRoutes(storage: IFileStorage, opts?: { keyPrefix?: string }): {
+  list: RequestHandler;
+  getUrl: RequestHandler;
+  deleteFile: RequestHandler;
+} {
+  const prefix = opts?.keyPrefix ?? 'uploads';
+
+  const list: RequestHandler = async (_req: Request, res: Response) => {
+    try {
+      const result = await storage.list({ prefix });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : 'List failed' });
+    }
+  };
+
+  const getUrl: RequestHandler = async (req: Request, res: Response) => {
+    const key = req.params.key ?? (req.query.key as string | undefined);
+    if (typeof key !== 'string') {
+      res.status(400).json({ error: 'Missing key parameter' });
+      return;
+    }
+    try {
+      const url = await storage.getUrl(key);
+      res.json({ url });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to get URL' });
+    }
+  };
+
+  const deleteFile: RequestHandler = async (req: Request, res: Response) => {
+    const key = req.params.key ?? (req.query.key as string | undefined);
+    if (typeof key !== 'string') {
+      res.status(400).json({ error: 'Missing key parameter' });
+      return;
+    }
+    try {
+      await storage.delete(key);
+      res.json({ deleted: true, key });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : 'Delete failed' });
+    }
+  };
+
+  return { list, getUrl, deleteFile };
 }
 
 export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): DynamicExpressAuth {

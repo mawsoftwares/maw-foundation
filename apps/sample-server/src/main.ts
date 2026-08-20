@@ -13,7 +13,10 @@ import {
   type ISyncStore,
   type ICacheStore,
 } from '@maw/rbac-core';
-import { createDynamicExpressAuth, type DynamicAuthedRequest } from '@maw/server-express';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
+import { LocalFileStorage } from '@maw/platform';
+import multer from 'multer';
+import * as path from 'node:path';
 import type { Session } from '@maw/sdk/contracts/identity';
 import {
   createLogger,
@@ -349,6 +352,34 @@ app.get('/audit-logs/export', auth.requireAuth, auth.audienceGuard('admin'), aut
     res.send(header + rows);
   })();
 });
+
+// --- File Upload routes ---
+
+const uploadsDir = path.resolve(process.cwd(), 'uploads');
+const fileStorage = new LocalFileStorage({
+  rootDir: uploadsDir,
+  publicUrlPrefix: `http://localhost:${PORT}/files`,
+});
+
+const multerUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const uploadHandler = createFileUploadHandler({
+  storage: fileStorage,
+  maxSize: 10 * 1024 * 1024,
+  allowedTypes: ['image/*', 'application/pdf', 'text/csv'],
+  keyPrefix: 'uploads',
+});
+const fileRoutes = createFileRoutes(fileStorage);
+
+app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), uploadHandler, (req, res) => {
+  const uploaded = (req as UploadedRequest).uploadedFiles ?? [];
+  res.json({ files: uploaded });
+});
+
+app.get('/files', auth.requireAuth, fileRoutes.list);
+app.get('/files/url/:key(*)', auth.requireAuth, fileRoutes.getUrl);
+app.delete('/files/:key(*)', auth.requireAuth, fileRoutes.deleteFile);
+
+app.use('/files', express.static(uploadsDir));
 
 // --- Info routes ---
 

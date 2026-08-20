@@ -122,6 +122,18 @@ export {
   type NavigationConfig,
 } from './navigation';
 
+// File Upload
+export {
+  FileUpload,
+  useFileUpload,
+  type FileEntry,
+  type FileUploadConfig,
+  type FileUploadProps,
+  type UseFileUploadOptions,
+  type UseFileUploadReturn,
+  type UploadStatus,
+} from './file-upload';
+
 // Dashboard
 export {
   KpiCard,
