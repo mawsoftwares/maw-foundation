@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { IconButton, Stack } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -87,7 +88,7 @@ export function useToast(): ToastContextValue {
 }
 
 // ---------------------------------------------------------------------------
-// Renderer
+// Renderer — uses Stack, IconButton from ui-kit
 // ---------------------------------------------------------------------------
 
 const variantColors: Record<ToastVariant, { bg: string; border: string; icon: string }> = {
@@ -100,15 +101,14 @@ const variantColors: Record<ToastVariant, { bg: string; border: string; icon: st
 function ToastContainer({ toasts, onDismiss }: { toasts: readonly Toast[]; onDismiss: (id: string) => void }): ReactNode {
   if (toasts.length === 0) return null;
   return (
-    <div
+    <Stack
+      direction="column"
+      gap="8px"
       style={{
         position: 'fixed',
         top: 16,
         right: 16,
         zIndex: 'var(--maw-z-toast)' as unknown as number,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
         maxWidth: 380,
         width: '100%',
         pointerEvents: 'none',
@@ -117,8 +117,11 @@ function ToastContainer({ toasts, onDismiss }: { toasts: readonly Toast[]; onDis
       {toasts.map((t) => {
         const c = variantColors[t.variant];
         return (
-          <div
+          <Stack
             key={t.id}
+            direction="row"
+            align="flex-start"
+            gap="10px"
             style={{
               fontFamily: 'var(--maw-font-family)',
               background: c.bg,
@@ -126,9 +129,6 @@ function ToastContainer({ toasts, onDismiss }: { toasts: readonly Toast[]; onDis
               borderRadius: 'var(--maw-radius-md)',
               boxShadow: 'var(--maw-shadow-lg)',
               padding: '12px 16px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 10,
               pointerEvents: 'auto',
             }}
           >
@@ -139,23 +139,10 @@ function ToastContainer({ toasts, onDismiss }: { toasts: readonly Toast[]; onDis
                 <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>{t.description}</div>
               )}
             </div>
-            <button
-              onClick={() => onDismiss(t.id)}
-              style={{
-                border: 'none',
-                background: 'none',
-                cursor: 'pointer',
-                color: 'var(--maw-fgMuted)',
-                fontSize: 14,
-                padding: 0,
-                lineHeight: 1,
-              }}
-            >
-              ✕
-            </button>
-          </div>
+            <IconButton label="Dismiss" onClick={() => onDismiss(t.id)} style={{ padding: 0, fontSize: 14 }}>✕</IconButton>
+          </Stack>
         );
       })}
-    </div>
+    </Stack>
   );
 }

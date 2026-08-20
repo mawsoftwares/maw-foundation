@@ -10,6 +10,8 @@ import {
 } from 'react';
 import type { StoredFile } from '@maw/sdk/contracts/IFileStorage';
 import { formatFileSize, getMimeType, isImageFile, sanitizeFilename } from '@maw/sdk/kernel/file';
+import { Button } from './components';
+import { IconButton, Stack, Progress, Spinner } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,7 +127,6 @@ export function useFileUpload(options: UseFileUploadOptions): UseFileUploadRetur
         return [...prev, ...newEntries];
       });
 
-      // Start uploading after state settles
       setTimeout(() => {
         for (const entry of newEntries) {
           void uploadEntry(entry);
@@ -212,13 +213,8 @@ export function useFileUpload(options: UseFileUploadOptions): UseFileUploadRetur
 }
 
 // ---------------------------------------------------------------------------
-// FileUpload component
+// FileUpload component — uses existing UI kit components
 // ---------------------------------------------------------------------------
-
-const base: CSSProperties = {
-  fontFamily: 'var(--maw-fontFamily)',
-  color: 'var(--maw-fg)',
-};
 
 export interface FileUploadProps extends FileUploadConfig {
   upload: (file: File, onProgress: (percent: number) => void) => Promise<StoredFile>;
@@ -286,13 +282,14 @@ export function FileUpload({
   const acceptStr = config.accept?.map((a) => (a.startsWith('.') ? a : `.${a}`)).join(',');
 
   return (
-    <div style={{ ...base, ...style }}>
+    <Stack direction="column" gap="var(--maw-space-md)" style={style}>
       {label && (
-        <div style={{ fontWeight: 600, marginBottom: 'var(--maw-space-xs)', fontSize: 'var(--maw-text-sm)' }}>
+        <div style={{ fontWeight: 600, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fg)' }}>
           {label}
         </div>
       )}
 
+      {/* Drop zone */}
       <div
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
@@ -319,9 +316,9 @@ export function FileUpload({
           style={{ display: 'none' }}
         />
         <div style={{ fontSize: compact ? 20 : 32, marginBottom: 'var(--maw-space-xs)' }}>
-          {isUploading ? '⏳' : '📁'}
+          {isUploading ? <Spinner size={compact ? 20 : 28} /> : '📁'}
         </div>
-        <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500 }}>
+        <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
           {isUploading ? 'Uploading...' : 'Drop files here or click to browse'}
         </div>
         {hint && (
@@ -331,41 +328,35 @@ export function FileUpload({
         )}
       </div>
 
+      {/* File list */}
       {files.length > 0 && (
-        <div style={{ marginTop: 'var(--maw-space-md)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--maw-space-xs)' }}>
+        <Stack direction="column" gap="var(--maw-space-xs)">
+          <Stack direction="row" align="center" style={{ justifyContent: 'space-between' }}>
             <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
               {files.length} file{files.length !== 1 ? 's' : ''}
             </span>
             {files.some((f) => f.status === 'success') && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={clearCompleted}
-                style={{
-                  ...base,
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--maw-brand)',
-                  cursor: 'pointer',
-                  fontSize: 'var(--maw-text-xs)',
-                  padding: 0,
-                }}
+                style={{ fontSize: 'var(--maw-text-xs)', padding: '2px 8px' }}
               >
                 Clear completed
-              </button>
+              </Button>
             )}
-          </div>
+          </Stack>
 
           {files.map((entry) => (
             <FileEntryRow key={entry.id} entry={entry} onRemove={removeFile} onRetry={retryFile} />
           ))}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 }
 
 // ---------------------------------------------------------------------------
-// FileEntryRow
+// FileEntryRow — uses Stack, IconButton, Progress from the UI kit
 // ---------------------------------------------------------------------------
 
 function FileEntryRow({
@@ -377,31 +368,24 @@ function FileEntryRow({
   onRemove: (id: string) => void;
   onRetry: (id: string) => void;
 }): ReactNode {
-  const statusColor: Record<UploadStatus, string> = {
-    idle: 'var(--maw-fgMuted)',
-    uploading: 'var(--maw-brand)',
-    success: 'var(--maw-success)',
-    error: 'var(--maw-danger)',
-  };
-
   return (
-    <div
+    <Stack
+      direction="row"
+      align="center"
+      gap="var(--maw-space-sm)"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--maw-space-sm)',
         padding: 'var(--maw-space-sm)',
         borderRadius: 'var(--maw-radius-md)',
         border: '1px solid var(--maw-border)',
-        marginBottom: 'var(--maw-space-xs)',
         background: 'var(--maw-bg)',
       }}
     >
+      {/* Thumbnail */}
       {entry.preview ? (
         <img
           src={entry.preview}
           alt={entry.file.name}
-          style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 'var(--maw-radius-sm)' }}
+          style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 'var(--maw-radius-sm)', flexShrink: 0 }}
         />
       ) : (
         <div
@@ -414,12 +398,14 @@ function FileEntryRow({
             background: 'var(--maw-bgSubtle)',
             borderRadius: 'var(--maw-radius-sm)',
             fontSize: 18,
+            flexShrink: 0,
           }}
         >
           📄
         </div>
       )}
 
+      {/* File info + progress */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
@@ -439,67 +425,27 @@ function FileEntryRow({
         </div>
 
         {entry.status === 'uploading' && (
-          <div
-            style={{
-              marginTop: 4,
-              height: 3,
-              background: 'var(--maw-border)',
-              borderRadius: 2,
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                height: '100%',
-                width: `${entry.progress}%`,
-                background: 'var(--maw-brand)',
-                transition: 'width 0.2s ease',
-              }}
-            />
+          <div style={{ marginTop: 4 }}>
+            <Progress value={entry.progress} />
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      {/* Status + actions */}
+      <Stack direction="row" gap="4px" align="center" style={{ flexShrink: 0 }}>
         {entry.status === 'uploading' && (
-          <span style={{ fontSize: 'var(--maw-text-xs)', color: statusColor[entry.status] }}>
+          <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-brand)' }}>
             {entry.progress}%
           </span>
         )}
         {entry.status === 'success' && (
-          <span style={{ fontSize: 14, color: statusColor.success }}>✓</span>
+          <span style={{ fontSize: 14, color: 'var(--maw-success)' }}>✓</span>
         )}
         {entry.status === 'error' && (
-          <button
-            onClick={() => onRetry(entry.id)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              color: 'var(--maw-brand)',
-              padding: '2px 4px',
-            }}
-            title="Retry"
-          >
-            ↻
-          </button>
+          <IconButton label="Retry" onClick={() => onRetry(entry.id)}>↻</IconButton>
         )}
-        <button
-          onClick={() => onRemove(entry.id)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 14,
-            color: 'var(--maw-fgMuted)',
-            padding: '2px 4px',
-          }}
-          title="Remove"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
+        <IconButton label="Remove" onClick={() => onRemove(entry.id)}>✕</IconButton>
+      </Stack>
+    </Stack>
   );
 }

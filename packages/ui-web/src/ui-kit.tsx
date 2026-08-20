@@ -4,6 +4,7 @@ import {
   useEffect,
   type ReactNode,
   type CSSProperties,
+  type ButtonHTMLAttributes,
   type HTMLAttributes,
   type TextareaHTMLAttributes,
   type SelectHTMLAttributes,
@@ -71,7 +72,7 @@ export function IconButton({
   label,
   style,
   ...props
-}: HTMLAttributes<HTMLButtonElement> & { label: string }): ReactNode {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }): ReactNode {
   return (
     <button
       {...props}

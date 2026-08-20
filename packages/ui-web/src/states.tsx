@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode, type CSSProperties } from 'react';
-
-const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
+import { Button } from './components';
+import { Spinner } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // ErrorBoundary
@@ -44,7 +44,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 
 // ---------------------------------------------------------------------------
-// ErrorState
+// ErrorState — uses Button from components
 // ---------------------------------------------------------------------------
 
 export function ErrorState({
@@ -59,29 +59,16 @@ export function ErrorState({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, textAlign: 'center', padding: 'var(--maw-space-xxl)', color: 'var(--maw-fgMuted)', ...style }}>
+    <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)', color: 'var(--maw-fgMuted)', ...style }}>
       <div style={{ fontSize: 48, marginBottom: 'var(--maw-space-md)' }}>⚠</div>
       <h3 style={{ margin: 0, fontSize: 'var(--maw-text-lg)', fontWeight: 600, color: 'var(--maw-fg)' }}>{title}</h3>
       {message !== undefined && (
         <p style={{ margin: '8px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{message}</p>
       )}
       {retry !== undefined && (
-        <button
-          onClick={retry}
-          style={{
-            ...base,
-            marginTop: 'var(--maw-space-lg)',
-            padding: 'var(--maw-space-sm) var(--maw-space-xl)',
-            border: '1px solid var(--maw-border)',
-            borderRadius: 'var(--maw-radius-md)',
-            background: 'var(--maw-bg)',
-            color: 'var(--maw-fg)',
-            fontSize: 'var(--maw-text-sm)',
-            cursor: 'pointer',
-          }}
-        >
-          Try again
-        </button>
+        <div style={{ marginTop: 'var(--maw-space-lg)' }}>
+          <Button variant="ghost" onClick={retry}>Try again</Button>
+        </div>
       )}
     </div>
   );
@@ -105,7 +92,7 @@ export function EmptyState({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, textAlign: 'center', padding: 'var(--maw-space-xxl)', color: 'var(--maw-fgMuted)', ...style }}>
+    <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)', color: 'var(--maw-fgMuted)', ...style }}>
       <div style={{ fontSize: 48, marginBottom: 'var(--maw-space-md)' }}>{icon}</div>
       <h3 style={{ margin: 0, fontSize: 'var(--maw-text-lg)', fontWeight: 600, color: 'var(--maw-fg)' }}>{title}</h3>
       {message !== undefined && (
@@ -146,7 +133,7 @@ export function Skeleton({
 }
 
 // ---------------------------------------------------------------------------
-// Loading overlay
+// Loading overlay — uses Spinner from ui-kit
 // ---------------------------------------------------------------------------
 
 export function LoadingOverlay({
@@ -176,17 +163,8 @@ export function LoadingOverlay({
             zIndex: 'var(--maw-z-overlay)' as unknown as number,
           }}
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              border: '3px solid rgba(255,255,255,0.3)',
-              borderTopColor: '#fff',
-              borderRadius: '50%',
-              animation: 'maw-spin 0.6s linear infinite',
-            }}
-          />
-          <span style={{ ...base, fontSize: 'var(--maw-text-sm)', color: '#fff' }}>{label}</span>
+          <Spinner size={32} style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
+          <span style={{ fontSize: 'var(--maw-text-sm)', color: '#fff' }}>{label}</span>
         </div>
       )}
     </div>
@@ -194,14 +172,13 @@ export function LoadingOverlay({
 }
 
 // ---------------------------------------------------------------------------
-// PageLoader (full-page centered spinner)
+// PageLoader — uses Spinner from ui-kit
 // ---------------------------------------------------------------------------
 
 export function PageLoader({ message }: { message?: string }): ReactNode {
   return (
     <div
       style={{
-        ...base,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -211,16 +188,7 @@ export function PageLoader({ message }: { message?: string }): ReactNode {
         color: 'var(--maw-fgMuted)',
       }}
     >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          border: '3px solid var(--maw-border)',
-          borderTopColor: 'var(--maw-brand)',
-          borderRadius: '50%',
-          animation: 'maw-spin 0.6s linear infinite',
-        }}
-      />
+      <Spinner size={40} />
       {message !== undefined && <span style={{ fontSize: 'var(--maw-text-sm)' }}>{message}</span>}
     </div>
   );

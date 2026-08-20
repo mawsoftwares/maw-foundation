@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode, type CSSProperties } from 'react';
 import type { ColumnDef, SortState } from './data-table';
+import { Button, TextField, Card } from './components';
+import { IconButton, Stack } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -151,8 +153,6 @@ export function useCrud<T extends Record<string, unknown>>(config: CrudConfig<T>
 // ListPage — standard list layout with search, table, actions
 // ---------------------------------------------------------------------------
 
-const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
-
 export function ListPage({
   title,
   description,
@@ -177,56 +177,29 @@ export function ListPage({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, ...style }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--maw-space-lg)' }}>
+    <div style={style}>
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-lg)' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h1>
           {description !== undefined && (
             <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{description}</p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 'var(--maw-space-sm)', alignItems: 'center' }}>
+        <Stack direction="row" gap="var(--maw-space-sm)" align="center">
           {toolbar}
           {createLabel !== undefined && onCreate !== undefined && (
-            <button
-              onClick={onCreate}
-              style={{
-                ...base,
-                padding: 'var(--maw-space-sm) var(--maw-space-lg)',
-                borderRadius: 'var(--maw-radius-md)',
-                border: 'none',
-                background: 'var(--maw-brand)',
-                color: 'var(--maw-brandContrast)',
-                fontSize: 'var(--maw-text-sm)',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              + {createLabel}
-            </button>
+            <Button onClick={onCreate}>+ {createLabel}</Button>
           )}
-        </div>
-      </div>
+        </Stack>
+      </Stack>
 
       {onFilterChange !== undefined && (
         <div style={{ marginBottom: 'var(--maw-space-md)' }}>
-          <input
-            type="text"
+          <TextField
             value={filter ?? ''}
             onChange={(e) => onFilterChange(e.target.value)}
             placeholder={searchPlaceholder}
-            style={{
-              ...base,
-              width: '100%',
-              maxWidth: 320,
-              padding: 'var(--maw-space-sm) var(--maw-space-md)',
-              borderRadius: 'var(--maw-radius-md)',
-              border: '1px solid var(--maw-border)',
-              fontSize: 'var(--maw-text-sm)',
-              color: 'var(--maw-fg)',
-              background: 'var(--maw-bg)',
-              outline: 'none',
-            }}
+            style={{ maxWidth: 320 }}
           />
         </div>
       )}
@@ -260,69 +233,35 @@ export function FormPage({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, maxWidth: 640, ...style }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-md)', marginBottom: 'var(--maw-space-xl)' }}>
+    <div style={{ maxWidth: 640, ...style }}>
+      <Stack direction="row" align="center" gap="var(--maw-space-md)" style={{ marginBottom: 'var(--maw-space-xl)' }}>
         {onBack !== undefined && (
-          <button
-            onClick={onBack}
-            style={{ ...base, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-lg)' }}
-          >
-            ←
-          </button>
+          <IconButton label="Go back" onClick={onBack}>←</IconButton>
         )}
         <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h1>
-      </div>
+      </Stack>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
-        style={{
-          background: 'var(--maw-bg)',
-          border: '1px solid var(--maw-border)',
-          borderRadius: 'var(--maw-radius-lg)',
-          padding: 'var(--maw-space-xl)',
-        }}
-      >
-        {children}
+      <Card>
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+          {children}
 
-        <div style={{ display: 'flex', gap: 'var(--maw-space-sm)', justifyContent: 'flex-end', marginTop: 'var(--maw-space-xl)', borderTop: '1px solid var(--maw-border)', paddingTop: 'var(--maw-space-lg)' }}>
-          {onBack !== undefined && (
-            <button
-              type="button"
-              onClick={onBack}
-              style={{
-                ...base,
-                padding: 'var(--maw-space-sm) var(--maw-space-xl)',
-                borderRadius: 'var(--maw-radius-md)',
-                border: '1px solid var(--maw-border)',
-                background: 'var(--maw-bg)',
-                color: 'var(--maw-fg)',
-                fontSize: 'var(--maw-text-sm)',
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={loading || dirty === false}
-            style={{
-              ...base,
-              padding: 'var(--maw-space-sm) var(--maw-space-xl)',
-              borderRadius: 'var(--maw-radius-md)',
-              border: 'none',
-              background: 'var(--maw-brand)',
-              color: 'var(--maw-brandContrast)',
-              fontSize: 'var(--maw-text-sm)',
-              fontWeight: 600,
-              cursor: loading || dirty === false ? 'not-allowed' : 'pointer',
-              opacity: loading || dirty === false ? 0.6 : 1,
-            }}
+          <Stack
+            direction="row"
+            gap="var(--maw-space-sm)"
+            style={{ justifyContent: 'flex-end', marginTop: 'var(--maw-space-xl)', borderTop: '1px solid var(--maw-border)', paddingTop: 'var(--maw-space-lg)' }}
           >
-            {loading ? 'Saving...' : submitLabel}
-          </button>
-        </div>
-      </form>
+            {onBack !== undefined && (
+              <Button variant="ghost" type="button" onClick={onBack}>Cancel</Button>
+            )}
+            <Button
+              type="submit"
+              disabled={loading || dirty === false}
+            >
+              {loading ? 'Saving...' : submitLabel}
+            </Button>
+          </Stack>
+        </form>
+      </Card>
     </div>
   );
 }
@@ -349,50 +288,26 @@ export function DetailPage({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, ...style }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-md)' }}>
+    <div style={style}>
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
+        <Stack direction="row" align="center" gap="var(--maw-space-md)">
           {onBack !== undefined && (
-            <button
-              onClick={onBack}
-              style={{ ...base, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-lg)' }}
-            >
-              ←
-            </button>
+            <IconButton label="Go back" onClick={onBack}>←</IconButton>
           )}
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h1>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--maw-space-sm)' }}>
+        </Stack>
+        <Stack direction="row" gap="var(--maw-space-sm)">
           {actions}
           {onEdit !== undefined && (
-            <button
-              onClick={onEdit}
-              style={{ ...base, padding: 'var(--maw-space-sm) var(--maw-space-lg)', borderRadius: 'var(--maw-radius-md)', border: '1px solid var(--maw-border)', background: 'var(--maw-bg)', color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)', cursor: 'pointer' }}
-            >
-              Edit
-            </button>
+            <Button variant="ghost" onClick={onEdit}>Edit</Button>
           )}
           {onDelete !== undefined && (
-            <button
-              onClick={onDelete}
-              style={{ ...base, padding: 'var(--maw-space-sm) var(--maw-space-lg)', borderRadius: 'var(--maw-radius-md)', border: 'none', background: 'var(--maw-danger)', color: '#fff', fontSize: 'var(--maw-text-sm)', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Delete
-            </button>
+            <Button variant="danger" onClick={onDelete}>Delete</Button>
           )}
-        </div>
-      </div>
+        </Stack>
+      </Stack>
 
-      <div
-        style={{
-          background: 'var(--maw-bg)',
-          border: '1px solid var(--maw-border)',
-          borderRadius: 'var(--maw-radius-lg)',
-          padding: 'var(--maw-space-xl)',
-        }}
-      >
-        {children}
-      </div>
+      <Card>{children}</Card>
     </div>
   );
 }

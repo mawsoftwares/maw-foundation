@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode, type CSSProperties } from 'react';
-
-const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
+import { Card } from './components';
+import { Stack } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,7 +26,7 @@ export interface WidgetConfig {
 }
 
 // ---------------------------------------------------------------------------
-// KpiCard
+// KpiCard — uses Card from components
 // ---------------------------------------------------------------------------
 
 export function KpiCard({
@@ -40,37 +40,29 @@ export function KpiCard({
 }: KpiConfig & { style?: CSSProperties }): ReactNode {
   const isPositive = change !== undefined && change >= 0;
   return (
-    <div
-      style={{
-        ...base,
-        background: 'var(--maw-bg)',
-        border: '1px solid var(--maw-border)',
-        borderRadius: 'var(--maw-radius-lg)',
-        padding: 'var(--maw-space-xl)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-        ...style,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          {label}
-        </span>
-        {icon !== undefined && (
-          <span style={{ fontSize: 20, color: color ?? 'var(--maw-brand)' }}>{icon}</span>
-        )}
-      </div>
-      <div style={{ fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: color ?? 'var(--maw-fg)' }}>
-        {value}
-      </div>
-      {change !== undefined && (
-        <div style={{ fontSize: 'var(--maw-text-xs)', color: isPositive ? 'var(--maw-success)' : 'var(--maw-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span>{isPositive ? '↑' : '↓'} {Math.abs(change)}%</span>
-          {changeLabel !== undefined && <span style={{ color: 'var(--maw-fgMuted)' }}>{changeLabel}</span>}
+    <Card style={{ padding: 'var(--maw-space-xl)', ...style }}>
+      <Stack direction="column" gap="4px">
+        <Stack direction="row" align="center" style={{ justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {label}
+          </span>
+          {icon !== undefined && (
+            <span style={{ fontSize: 20, color: color ?? 'var(--maw-brand)' }}>{icon}</span>
+          )}
+        </Stack>
+        <div style={{ fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: color ?? 'var(--maw-fg)' }}>
+          {value}
         </div>
-      )}
-    </div>
+        {change !== undefined && (
+          <Stack direction="row" align="center" gap="4px">
+            <span style={{ fontSize: 'var(--maw-text-xs)', color: isPositive ? 'var(--maw-success)' : 'var(--maw-danger)' }}>
+              {isPositive ? '↑' : '↓'} {Math.abs(change)}%
+            </span>
+            {changeLabel !== undefined && <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>{changeLabel}</span>}
+          </Stack>
+        )}
+      </Stack>
+    </Card>
   );
 }
 
@@ -105,7 +97,7 @@ export function KpiGrid({
 }
 
 // ---------------------------------------------------------------------------
-// Widget
+// Widget — uses Card from components
 // ---------------------------------------------------------------------------
 
 export function Widget({
@@ -124,28 +116,33 @@ export function Widget({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div
+    <Card
       style={{
-        ...base,
         gridColumn: `span ${span}`,
-        background: 'var(--maw-bg)',
-        border: '1px solid var(--maw-border)',
-        borderRadius: 'var(--maw-radius-lg)',
         display: 'flex',
         flexDirection: 'column',
         height,
         overflow: 'hidden',
+        padding: 0,
         ...style,
       }}
     >
-      <div style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)', borderBottom: '1px solid var(--maw-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Stack
+        direction="row"
+        align="center"
+        style={{
+          justifyContent: 'space-between',
+          padding: 'var(--maw-space-md) var(--maw-space-lg)',
+          borderBottom: '1px solid var(--maw-border)',
+        }}
+      >
         <h3 style={{ margin: 0, fontSize: 'var(--maw-text-sm)', fontWeight: 600, color: 'var(--maw-fg)' }}>{title}</h3>
         {actions}
-      </div>
+      </Stack>
       <div style={{ flex: 1, padding: 'var(--maw-space-lg)', overflowY: 'auto' }}>
         {children}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -194,14 +191,14 @@ export function DashboardPage({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, ...style }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
+    <div style={style}>
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h1>
           {subtitle !== undefined && <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{subtitle}</p>}
         </div>
         {headerActions}
-      </div>
+      </Stack>
       {children}
     </div>
   );
@@ -226,7 +223,7 @@ export function MiniBarChart({
   const max = Math.max(...data, 1);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height, ...style }}>
+    <Stack direction="row" align="flex-end" gap="2px" style={{ height, ...style }}>
       {data.map((v, i) => (
         <div
           key={i}
@@ -241,7 +238,7 @@ export function MiniBarChart({
           title={String(v)}
         />
       ))}
-    </div>
+    </Stack>
   );
 }
 
@@ -319,19 +316,16 @@ export function ActivityFeed({
   style?: CSSProperties;
 }): ReactNode {
   if (items.length === 0) {
-    return <div style={{ ...base, textAlign: 'center', padding: 'var(--maw-space-xl)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>{emptyMessage}</div>;
+    return <div style={{ textAlign: 'center', padding: 'var(--maw-space-xl)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>{emptyMessage}</div>;
   }
   return (
-    <div style={{ ...base, ...style }}>
+    <Stack direction="column" gap="0px" style={style}>
       {items.map((item) => (
-        <div
+        <Stack
           key={item.id}
-          style={{
-            display: 'flex',
-            gap: 'var(--maw-space-md)',
-            padding: 'var(--maw-space-sm) 0',
-            borderBottom: '1px solid var(--maw-border)',
-          }}
+          direction="row"
+          gap="var(--maw-space-md)"
+          style={{ padding: 'var(--maw-space-sm) 0', borderBottom: '1px solid var(--maw-border)' }}
         >
           {item.icon !== undefined && (
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: item.color ?? 'var(--maw-bgMuted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
@@ -347,8 +341,8 @@ export function ActivityFeed({
           <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', whiteSpace: 'nowrap', flexShrink: 0 }}>
             {item.timestamp}
           </div>
-        </div>
+        </Stack>
       ))}
-    </div>
+    </Stack>
   );
 }

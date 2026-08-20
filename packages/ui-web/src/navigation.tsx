@@ -7,6 +7,8 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { Button, Badge } from './components';
+import { IconButton, Stack } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,13 +162,9 @@ export function Sidebar({
       )}
 
       <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
-        <button
-          onClick={toggleSidebar}
-          style={{ ...base, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--maw-fgMuted)', fontSize: 14, padding: 4 }}
-          title={collapsed ? 'Expand' : 'Collapse'}
-        >
+        <IconButton label={collapsed ? 'Expand' : 'Collapse'} onClick={toggleSidebar}>
           {collapsed ? '→' : '←'}
-        </button>
+        </IconButton>
       </div>
 
       <nav style={{ flex: 1, overflowY: 'auto', padding: 'var(--maw-space-xs)' }}>
@@ -242,9 +240,9 @@ function SidebarItem({
           <>
             <span style={{ flex: 1 }}>{item.label}</span>
             {item.badge !== undefined && (
-              <span style={{ fontSize: 'var(--maw-text-xs)', background: active ? 'rgba(255,255,255,0.2)' : 'var(--maw-brand)', color: active ? 'var(--maw-brandContrast)' : 'var(--maw-brandContrast)', padding: '1px 6px', borderRadius: 'var(--maw-radius-pill)', fontWeight: 600 }}>
+              <Badge style={{ background: active ? 'rgba(255,255,255,0.2)' : undefined, color: active ? 'var(--maw-brandContrast)' : undefined }}>
                 {item.badge}
-              </span>
+              </Badge>
             )}
             {hasChildren && <span style={{ fontSize: 10 }}>{expanded ? '▼' : '▶'}</span>}
           </>
@@ -262,7 +260,7 @@ function SidebarItem({
 }
 
 // ---------------------------------------------------------------------------
-// Breadcrumbs
+// Breadcrumbs — uses Button from components
 // ---------------------------------------------------------------------------
 
 export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNode {
@@ -270,7 +268,7 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
   if (breadcrumbs.length === 0) return null;
 
   return (
-    <nav style={{ ...base, display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)', ...style }}>
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)', ...style }}>
       {breadcrumbs.map((crumb, i) => {
         const isLast = i === breadcrumbs.length - 1;
         return (
@@ -279,12 +277,13 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
             {isLast || crumb.path === undefined ? (
               <span style={{ color: isLast ? 'var(--maw-fg)' : undefined, fontWeight: isLast ? 500 : undefined }}>{crumb.label}</span>
             ) : (
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => navigate(crumb.path!)}
-                style={{ ...base, border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: 'var(--maw-brand)', fontSize: 'inherit' }}
+                style={{ border: 'none', padding: 0, fontSize: 'inherit', color: 'var(--maw-brand)' }}
               >
                 {crumb.label}
-              </button>
+              </Button>
             )}
           </span>
         );

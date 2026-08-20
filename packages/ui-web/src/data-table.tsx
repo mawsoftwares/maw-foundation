@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode, type CSSProperties } from 'react';
+import { Checkbox, Select, IconButton, Stack, Spinner } from './ui-kit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,7 +137,7 @@ export function DataTable<T extends object>({
             <tr>
               {selectable && (
                 <th style={{ padding: cellPadding, width: 40, textAlign: 'center', position: stickyHeader ? 'sticky' : undefined, top: stickyHeader ? 0 : undefined, background: 'var(--maw-bgMuted)', borderBottom: '1px solid var(--maw-border)' }}>
-                  <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ accentColor: 'var(--maw-brand)' }} />
+                  <Checkbox label="" checked={allSelected} onChange={toggleAll} />
                 </th>
               )}
               {columns.map((col) => (
@@ -199,12 +200,7 @@ export function DataTable<T extends object>({
                 >
                   {selectable && (
                     <td style={{ padding: cellPadding, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleRow(key)}
-                        style={{ accentColor: 'var(--maw-brand)' }}
-                      />
+                      <Checkbox label="" checked={isSelected} onChange={() => toggleRow(key)} />
                     </td>
                   )}
                   {columns.map((col) => (
@@ -231,10 +227,10 @@ export function DataTable<T extends object>({
       </div>
 
       {pagination !== undefined && totalPages > 0 && (
-        <div
+        <Stack
+          direction="row"
+          align="center"
           style={{
-            display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
             padding: 'var(--maw-space-sm) var(--maw-space-md)',
             fontSize: 'var(--maw-text-xs)',
@@ -242,44 +238,41 @@ export function DataTable<T extends object>({
             borderTop: '1px solid var(--maw-border)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Stack direction="row" align="center" gap="8px">
             <span>Rows per page:</span>
-            <select
-              value={pagination.pageSize}
+            <Select
+              options={pageSizeOptions.map((s) => ({ value: String(s), label: String(s) }))}
+              value={String(pagination.pageSize)}
               onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-              style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-sm)', padding: '2px 4px', fontSize: 'var(--maw-text-xs)', background: 'var(--maw-bg)', color: 'var(--maw-fg)' }}
-            >
-              {pageSizeOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+              style={{ width: 64, fontSize: 'var(--maw-text-xs)', padding: '2px 4px' }}
+            />
+          </Stack>
           <div>
             {((pagination.page - 1) * pagination.pageSize) + 1}–{Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total}
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button
+          <Stack direction="row" gap="4px">
+            <IconButton
+              label="Previous page"
               disabled={pagination.page <= 1}
               onClick={() => onPageChange?.(pagination.page - 1)}
-              style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-sm)', padding: '4px 8px', background: 'var(--maw-bg)', color: 'var(--maw-fg)', cursor: pagination.page <= 1 ? 'not-allowed' : 'pointer', opacity: pagination.page <= 1 ? 0.5 : 1 }}
             >
               ←
-            </button>
-            <button
+            </IconButton>
+            <IconButton
+              label="Next page"
               disabled={pagination.page >= totalPages}
               onClick={() => onPageChange?.(pagination.page + 1)}
-              style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-sm)', padding: '4px 8px', background: 'var(--maw-bg)', color: 'var(--maw-fg)', cursor: pagination.page >= totalPages ? 'not-allowed' : 'pointer', opacity: pagination.page >= totalPages ? 0.5 : 1 }}
             >
               →
-            </button>
-          </div>
-        </div>
+            </IconButton>
+          </Stack>
+        </Stack>
       )}
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: 'var(--maw-space-lg)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>
-          Loading...
-        </div>
+        <Stack direction="column" align="center" style={{ padding: 'var(--maw-space-lg)' }}>
+          <Spinner size={24} />
+        </Stack>
       )}
     </div>
   );
