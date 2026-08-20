@@ -36,6 +36,12 @@ export const ErrorCode = {
   TIMEOUT: 'TIMEOUT',
   NETWORK_ERROR: 'NETWORK_ERROR',
   RATE_LIMITED: 'RATE_LIMITED',
+
+  // Offline
+  OFFLINE_UNAVAILABLE: 'OFFLINE_UNAVAILABLE',
+  SYNC_FAILED: 'SYNC_FAILED',
+  STORAGE_QUOTA_EXCEEDED: 'STORAGE_QUOTA_EXCEEDED',
+  CONFLICT_UNRESOLVED: 'CONFLICT_UNRESOLVED',
 } as const;
 
 export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -114,6 +120,18 @@ export class ConflictError extends AppError {
   }
 }
 
+export class SyncError extends AppError {
+  readonly entityType?: string;
+  readonly entityId?: string;
+
+  constructor(message: string, details?: { entityType?: string; entityId?: string }) {
+    super(ErrorCode.SYNC_FAILED, message, 502, details as Record<string, unknown>);
+    this.name = 'SyncError';
+    this.entityType = details?.entityType;
+    this.entityId = details?.entityId;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Code → HTTP status mapping
 // ---------------------------------------------------------------------------
@@ -139,6 +157,10 @@ const STATUS_MAP: Record<ErrorCodeValue, number> = {
   TIMEOUT: 504,
   NETWORK_ERROR: 502,
   RATE_LIMITED: 429,
+  OFFLINE_UNAVAILABLE: 503,
+  SYNC_FAILED: 502,
+  STORAGE_QUOTA_EXCEEDED: 507,
+  CONFLICT_UNRESOLVED: 409,
 };
 
 export function toHttpStatus(code: ErrorCodeValue): number {

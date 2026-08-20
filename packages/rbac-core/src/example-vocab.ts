@@ -37,7 +37,7 @@ export const EXAMPLE_DEFAULT_ROLE_POLICY: TenantRolePolicy = {
 export const EXAMPLE_RBAC: RbacConfig = {
   capabilities: EXAMPLE_CAPABILITIES,
   capabilityPermissions: EXAMPLE_CAPABILITY_PERMISSIONS,
-  superuserRoles: ['owner'],
+  superuserRoles: ['owner', 'super_admin'],
   defaultRolePolicy: EXAMPLE_DEFAULT_ROLE_POLICY,
   // ABAC demo: a viewer may export a report, but only for their own scope (plant).
   conditionalGrants: {

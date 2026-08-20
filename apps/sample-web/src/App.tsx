@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react';
+import { createConfigEngine } from '@maw/sdk/config/config-engine';
 import { EXAMPLE_RBAC } from '@maw/rbac-core';
 import {
   AuthProvider,
@@ -14,11 +15,16 @@ import {
   Button,
   Badge,
   Avatar,
+  OfflineProvider,
+  NetworkStatusBadge,
+  OfflineBanner,
+  SyncStatusIndicator,
   type NavItem,
   type NavigationConfig,
 } from '@maw/ui-web';
 import { client } from './api';
 import { loadDynamicAccess, restoreSession } from './session';
+import { setupOffline } from './offline-setup';
 import { LoginForm } from './shell/LoginForm';
 import { DashboardView } from './shell/Dashboard';
 import { OrdersView } from './features/orders';
@@ -28,8 +34,16 @@ import { BillingView } from './features/billing';
 import { AuditLogsView } from './features/audit-logs';
 import { UsersView } from './features/users';
 import { ShowcaseView } from './features/showcase';
+import { SettingsView } from './features/settings';
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase';
+// Offline infrastructure — created once; enabled/disabled via Settings toggle
+const config = createConfigEngine();
+config.loadLayer('app', { offline: { enabled: true } });
+const offlineInfra = setupOffline(config, client, 'demo-tenant');
+
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings';
+
+const SUPERADMIN_ROLES = new Set(['owner', 'super_admin']);
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard', group: 'Main', sortOrder: 0 },
@@ -39,10 +53,17 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'billing', label: 'Billing', icon: '💳', path: '/billing', group: 'Finance', sortOrder: 4 },
   { key: 'users', label: 'Users', icon: '👤', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6 },
+  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 7 },
   { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
-function PageContent({ page }: { page: Page }): ReactNode {
+const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase']);
+
+function PageContent({ page, onFeatureChange, featureOverrides }: {
+  page: Page;
+  onFeatureChange?: (key: string, enabled: boolean) => void;
+  featureOverrides?: Record<string, boolean>;
+}): ReactNode {
   switch (page) {
     case 'dashboard': return <DashboardView />;
     case 'orders': return <OrdersView />;
@@ -51,11 +72,15 @@ function PageContent({ page }: { page: Page }): ReactNode {
     case 'billing': return <BillingView />;
     case 'users': return <UsersView />;
     case 'audit-logs': return <AuditLogsView />;
+    case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }
 }
 
-function Shell(): ReactNode {
+function Shell({ offlineEnabled, setOfflineEnabled }: {
+  offlineEnabled: boolean;
+  setOfflineEnabled: (v: boolean) => void;
+}): ReactNode {
   const { session, loading, logout } = useAuth();
   const { t, locale, setLocale, availableLocales } = useI18n();
   const { isDark, toggleColorMode } = useColorMode();
@@ -67,15 +92,28 @@ function Shell(): ReactNode {
     setPage(key);
   }, []);
 
-  const navConfig = useMemo<NavigationConfig>(() => ({
-    items: NAV_ITEMS,
-    activeKey: page,
-    onNavigate: navigate,
-    breadcrumbs: [
-      { label: 'Home', path: '/dashboard' },
-      { label: NAV_ITEMS.find((n) => n.key === page)?.label ?? page },
-    ],
-  }), [page, navigate]);
+  const handleFeatureChange = useCallback((key: string, enabled: boolean) => {
+    if (key === 'offline') setOfflineEnabled(enabled);
+  }, [setOfflineEnabled]);
+
+  const featureOverrides = useMemo(() => ({ offline: offlineEnabled }), [offlineEnabled]);
+
+  const isSuperadmin = session !== null && SUPERADMIN_ROLES.has(session.role);
+
+  const navConfig = useMemo<NavigationConfig>(() => {
+    const items = isSuperadmin
+      ? NAV_ITEMS
+      : NAV_ITEMS.filter((item) => !SUPERADMIN_ONLY_KEYS.has(item.key));
+    return {
+      items,
+      activeKey: page,
+      onNavigate: navigate,
+      breadcrumbs: [
+        { label: 'Home', path: '/dashboard' },
+        { label: NAV_ITEMS.find((n) => n.key === page)?.label ?? page },
+      ],
+    };
+  }, [page, navigate, isSuperadmin]);
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{t('common.loading')}</div>;
   if (session === null) return <LoginForm />;
@@ -131,6 +169,8 @@ function Shell(): ReactNode {
               >
                 {isDark ? '☀️' : '🌙'}
               </Button>
+              <NetworkStatusBadge />
+              <SyncStatusIndicator />
               <Badge variant="info">{session.role}</Badge>
               <Button variant="ghost" onClick={() => void logout()} style={{ fontSize: 'var(--maw-text-sm)' }}>
                 {t('auth.logout')}
@@ -139,7 +179,8 @@ function Shell(): ReactNode {
           </>
         }
       >
-        <PageContent page={page} />
+        <OfflineBanner style={{ marginBottom: 'var(--maw-space-md)' }} />
+        <PageContent page={page} onFeatureChange={handleFeatureChange} featureOverrides={featureOverrides} />
       </AppShell>
     </NavigationProvider>
   );
@@ -147,10 +188,17 @@ function Shell(): ReactNode {
 
 export function App(): ReactNode {
   const rbac = useMemo(() => EXAMPLE_RBAC, []);
+  const [offlineEnabled, setOfflineEnabled] = useState(false);
   return (
     <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
       <DynamicAccessProvider load={loadDynamicAccess}>
-        <Shell />
+        <OfflineProvider
+          networkManager={offlineInfra.networkManager}
+          syncEngine={offlineInfra.syncEngine}
+          enabled={offlineEnabled}
+        >
+          <Shell offlineEnabled={offlineEnabled} setOfflineEnabled={setOfflineEnabled} />
+        </OfflineProvider>
       </DynamicAccessProvider>
     </AuthProvider>
   );

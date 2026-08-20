@@ -18,6 +18,14 @@ export * from './contracts/IHasher';
 export * from './contracts/ISecureStore';
 export * from './contracts/IAccountAuth';
 export * from './contracts/IFileStorage';
+export * from './contracts/IOfflineStorage';
+export * from './contracts/INetworkManager';
+export * from './contracts/ISyncEngine';
+export * from './contracts/IConflictResolver';
+export * from './contracts/IOfflineRepository';
+
+// Offline types
+export * from './offline/types';
 
 // Config
 export * from './config/env';

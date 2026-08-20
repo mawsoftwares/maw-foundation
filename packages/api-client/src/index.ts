@@ -493,6 +493,13 @@ export function webSecureStore(storage: {
   };
 }
 
+// Offline
+export { OnlineOnlyRepository } from './offline/OnlineOnlyRepository';
+export { OfflineRepository, type OfflineRepositoryOptions } from './offline/OfflineRepository';
+export { SyncEngine, type SyncEngineOptions } from './offline/SyncEngine';
+export { createOfflineRepository, type OfflineDependencies } from './offline/createOfflineRepository';
+export { installOfflineInterceptor, type OfflineInterceptorOptions, type OfflineInterceptorHandle } from './offline/installOfflineInterceptor';
+
 /** Create a shared AbortController for a group of requests. */
 export function createRequestGroup(): { signal: AbortSignal; cancelAll(reason?: string): void } {
   const controller = new AbortController();

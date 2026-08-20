@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -69,6 +70,10 @@ export function NavigationProvider({
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [dynamicItems, setDynamicItems] = useState<NavItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>(config.breadcrumbs ?? []);
+
+  useEffect(() => {
+    if (config.breadcrumbs !== undefined) setBreadcrumbs(config.breadcrumbs);
+  }, [config.breadcrumbs]);
 
   const allItems = useMemo(() => {
     const merged = [...config.items, ...dynamicItems];

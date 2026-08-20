@@ -134,6 +134,21 @@ export {
   type UploadStatus,
 } from './file-upload';
 
+// Offline
+export {
+  OfflineProvider,
+  useOffline,
+  useNetworkStatus,
+  useSyncState,
+  useIsOnline,
+  NetworkStatusBadge,
+  SyncStatusIndicator,
+  OfflineBanner,
+  ConflictResolutionDialog,
+  type OfflineProviderProps,
+  type ConflictResolutionDialogProps,
+} from './offline';
+
 // Dashboard
 export {
   KpiCard,
