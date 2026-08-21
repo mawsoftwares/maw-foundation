@@ -28,3 +28,10 @@ export const ScryptHasher: IHasher = {
   hash: hashPassword,
   verify: verifyPassword,
 };
+
+export {
+  validatePassword,
+  type PasswordPolicyConfig,
+  type PasswordValidationError,
+  DEFAULT_PASSWORD_POLICY,
+} from '@maw/sdk/security/PasswordPolicy';

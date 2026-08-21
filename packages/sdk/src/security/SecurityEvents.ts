@@ -1,0 +1,26 @@
+export const SecurityEvent = {
+  AUTH_LOGIN_SUCCESS: 'auth.login.success',
+  AUTH_LOGIN_FAILED: 'auth.login.failed',
+  AUTH_LOGOUT: 'auth.logout',
+  AUTH_TOKEN_REFRESH: 'auth.token.refresh',
+  AUTH_PASSWORD_CHANGED: 'auth.password.changed',
+  AUTH_PASSWORD_RESET: 'auth.password.reset',
+  AUTH_ACCOUNT_LOCKED: 'auth.account.locked',
+  AUTH_ACCOUNT_UNLOCKED: 'auth.account.unlocked',
+  AUTH_PERMISSION_DENIED: 'auth.permission.denied',
+  AUTH_SESSION_REVOKED: 'auth.session.revoked',
+  AUTH_TOKEN_BLACKLISTED: 'auth.token.blacklisted',
+  SECURITY_RATE_LIMITED: 'security.rate_limited',
+  SECURITY_CSRF_REJECTED: 'security.csrf.rejected',
+  SECURITY_VALIDATION_FAILED: 'security.validation.failed',
+  SECURITY_INPUT_SANITIZED: 'security.input.sanitized',
+  SECURITY_SUSPICIOUS_REQUEST: 'security.suspicious_request',
+  SECURITY_CORS_REJECTED: 'security.cors.rejected',
+  USER_CREATED: 'user.created',
+  USER_DEACTIVATED: 'user.deactivated',
+  USER_ROLE_CHANGED: 'user.role.changed',
+  USER_PERMISSION_CHANGED: 'user.permission.changed',
+  TENANT_CONFIG_CHANGED: 'tenant.config.changed',
+} as const;
+
+export type SecurityEventType = (typeof SecurityEvent)[keyof typeof SecurityEvent];

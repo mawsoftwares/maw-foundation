@@ -62,14 +62,14 @@ function bearer(req: Request): string | null {
  * authorization decision runs through the SAME resolver the client uses.
  */
 export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
-  const requireAuth: RequestHandler = (req: AuthedRequest, res: Response, next: NextFunction) => {
+  const requireAuth: RequestHandler = async (req: AuthedRequest, res: Response, next: NextFunction) => {
     const token = bearer(req);
     if (token === null) {
       res.status(HttpStatus.UNAUTHORIZED).json({ error: 'missing bearer token' });
       return;
     }
     try {
-      req.maw = { claims: verifyAccessToken(token, options.jwtSecret) };
+      req.maw = { claims: await verifyAccessToken(token, options.jwtSecret) };
       next();
     } catch {
       res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid or expired token' });
@@ -306,14 +306,14 @@ export function createFileRoutes(storage: IFileStorage, opts?: { keyPrefix?: str
 }
 
 export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): DynamicExpressAuth {
-  const requireAuth: RequestHandler = (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
+  const requireAuth: RequestHandler = async (req: DynamicAuthedRequest, res: Response, next: NextFunction) => {
     const token = bearer(req);
     if (token === null) {
       res.status(HttpStatus.UNAUTHORIZED).json({ error: 'missing bearer token' });
       return;
     }
     try {
-      const claims = verifyAccessToken(token, options.jwtSecret);
+      const claims = await verifyAccessToken(token, options.jwtSecret);
       req.maw = { claims };
       next();
     } catch {
@@ -386,3 +386,19 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
 
   return { requireAuth, requirePermission, audienceGuard, csrfProtection };
 }
+
+// ---------------------------------------------------------------------------
+// Security middleware
+// ---------------------------------------------------------------------------
+
+export { createRateLimitMiddleware, type RateLimitTierMapping, type RateLimitMiddlewareOptions } from './rate-limit';
+export { createSecureHeadersMiddleware } from './secure-headers';
+export { createCorsMiddleware } from './cors';
+export { createGlobalErrorHandler, type GlobalErrorHandlerOptions } from './error-handler';
+export { createSanitizeMiddleware } from './sanitize-input';
+export { validateBody, validateQuery, validateParams, type ValidationSchema } from './request-validation';
+export {
+  createSecurityPipeline,
+  type SecurityPipelineDeps,
+  type SecurityPipelineResult,
+} from './security-pipeline';

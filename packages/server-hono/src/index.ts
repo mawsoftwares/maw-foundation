@@ -40,7 +40,7 @@ export function createHonoAuth(options: HonoAuthOptions): HonoAuth {
     const token = bearer(c);
     if (token === null) return c.json({ error: 'missing bearer token' }, 401);
     try {
-      c.set('mawClaims', verifyAccessToken(token, options.jwtSecret));
+      c.set('mawClaims', await verifyAccessToken(token, options.jwtSecret));
       await next();
       return;
     } catch {
@@ -87,3 +87,20 @@ export function createHonoAuth(options: HonoAuthOptions): HonoAuth {
 
   return { requireAuth, requirePermission, audienceGuard };
 }
+
+// ---------------------------------------------------------------------------
+// Security middleware
+// ---------------------------------------------------------------------------
+
+export { createRateLimitMiddleware, type RateLimitTierMapping, type RateLimitMiddlewareOptions } from './rate-limit';
+export { createSecureHeadersMiddleware } from './secure-headers';
+export { createCorsMiddleware } from './cors';
+export { createGlobalErrorHandler, type GlobalErrorHandlerOptions } from './error-handler';
+export { createSanitizeMiddleware } from './sanitize-input';
+export { createCsrfMiddleware, type CsrfOptions } from './csrf';
+export { validateBody, validateQuery, type ValidationSchema } from './request-validation';
+export {
+  createSecurityPipeline,
+  type SecurityPipelineDeps,
+  type SecurityPipelineResult,
+} from './security-pipeline';

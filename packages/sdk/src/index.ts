@@ -23,6 +23,15 @@ export * from './contracts/INetworkManager';
 export * from './contracts/ISyncEngine';
 export * from './contracts/IConflictResolver';
 export * from './contracts/IOfflineRepository';
+export * from './contracts/IEncryptionService';
+export * from './contracts/IRateLimiter';
+export * from './contracts/ISecretProvider';
+
+// Security
+export * from './security/SecurityConfig';
+export * from './security/SecurityEvents';
+export * from './security/SecurityContext';
+export * from './security/PasswordPolicy';
 
 // Offline types
 export * from './offline/types';

@@ -6,23 +6,23 @@ import { RefreshTokens, hashToken, type IRefreshTokenStore, type RefreshRecord }
 const SECRET = 'test-secret-please-change';
 
 describe('jwt', () => {
-  it('round-trips claims', () => {
+  it('round-trips claims', async () => {
     const token = signAccessToken(
       { tenantId: 't1', userId: 'u1', role: 'manager', audience: 'admin', scopeId: 'p1' },
       SECRET,
     );
-    const claims = verifyAccessToken(token, SECRET);
+    const claims = await verifyAccessToken(token, SECRET);
     expect(claims).toMatchObject({ tenantId: 't1', userId: 'u1', role: 'manager', audience: 'admin', scopeId: 'p1' });
   });
 
-  it('rejects a token signed with a different secret', () => {
+  it('rejects a token signed with a different secret', async () => {
     const token = signAccessToken({ tenantId: 't1', userId: 'u1', role: 'viewer' }, SECRET);
-    expect(() => verifyAccessToken(token, 'wrong-secret')).toThrow();
+    await expect(verifyAccessToken(token, 'wrong-secret')).rejects.toThrow();
   });
 
-  it('rejects an expired token', () => {
+  it('rejects an expired token', async () => {
     const token = signAccessToken({ tenantId: 't1', userId: 'u1', role: 'viewer' }, SECRET, -1);
-    expect(() => verifyAccessToken(token, SECRET)).toThrow();
+    await expect(verifyAccessToken(token, SECRET)).rejects.toThrow();
   });
 });
 

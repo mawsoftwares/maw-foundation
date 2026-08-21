@@ -13,8 +13,12 @@ import {
   type ISyncStore,
   type ICacheStore,
 } from '@maw/rbac-core';
-import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
 import { LocalFileStorage } from '@maw/platform';
+import { MemoryRateLimiter } from '@maw/platform/security/MemoryRateLimiter';
+import { redact } from '@maw/platform/security/LogRedactor';
+import { LoginProtection } from '@maw/auth-core';
+import { DEFAULT_SECURITY_CONFIG } from '@maw/sdk/security/SecurityConfig';
 import multer from 'multer';
 import * as path from 'node:path';
 import type { Session } from '@maw/sdk/contracts/identity';
@@ -205,28 +209,50 @@ const refreshTokens = new RefreshTokens(data.refreshStore, 60 * 60 * 24 * 30);
 // Express app
 // ---------------------------------------------------------------------------
 
+const rateLimiter = new MemoryRateLimiter();
+const loginProtection = new LoginProtection();
+
+const securityConfig = {
+  ...DEFAULT_SECURITY_CONFIG,
+  cors: {
+    ...DEFAULT_SECURITY_CONFIG.cors,
+    allowedOrigins: (getEnv('CORS_ORIGINS') ?? 'http://localhost:5173,http://localhost:3000').split(','),
+  },
+  csrf: { ...DEFAULT_SECURITY_CONFIG.csrf, enabled: false },
+};
+
+const { middleware: securityMiddleware, errorHandler: securityErrorHandler } = createSecurityPipeline(
+  securityConfig,
+  { rateLimiter, redact, logger: log },
+);
+
 const app = express();
 app.use(express.json());
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin ?? '*');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-csrf-token');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') { res.sendStatus(HttpStatus.NO_CONTENT); return; }
-  next();
-});
+for (const mw of securityMiddleware) app.use(mw);
 
 // --- Auth routes ---
 
 app.post('/auth/login', (req, res) => {
   void (async () => {
     const { email, password } = req.body as { email?: string; password?: string };
-    const user = email !== undefined ? await data.findUserByEmail(email) : undefined;
-    if (user === undefined || password === undefined || !verifyPassword(password, user.passwordHash)) {
-      res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid credentials' });
+    const loginKey = email ?? req.ip ?? 'unknown';
+
+    if (loginProtection.isLocked(loginKey)) {
+      res.status(429).json({ error: 'Account temporarily locked. Try again later.' });
       return;
     }
+
+    const user = email !== undefined ? await data.findUserByEmail(email) : undefined;
+    if (user === undefined || password === undefined || !verifyPassword(password, user.passwordHash)) {
+      const result = loginProtection.recordFailure(loginKey);
+      res.status(HttpStatus.UNAUTHORIZED).json({
+        error: 'invalid credentials',
+        ...(result.locked ? { retryAfterMs: result.retryAfterMs } : { attemptsRemaining: result.attemptsRemaining }),
+      });
+      return;
+    }
+
+    loginProtection.recordSuccess(loginKey);
     const claims: AuthClaims = {
       tenantId: user.tenantId, userId: user.id, role: user.role,
       audience: user.audience, scopeId: user.scopeId,
@@ -438,6 +464,8 @@ app.get('/health', (_req, res) => {
     res.status(statusCode).json({ ...report, mode: USE_PG ? 'postgres' : 'memory' });
   })();
 });
+
+app.use(securityErrorHandler);
 
 app.listen(PORT, () => {
   log.info(`http://localhost:${PORT} (${USE_PG ? 'Postgres' : 'in-memory'})`);
