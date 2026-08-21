@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import {
   Button,
   Card,
@@ -31,6 +31,20 @@ import {
   DatePicker,
   DateRangePicker,
   TimePicker,
+  Drawer,
+  Dialog,
+  Popover,
+  Alert,
+  Banner,
+  ConfirmationDialog,
+  Accordion,
+  Panel,
+  Section,
+  Grid,
+  Spacer,
+  Wizard,
+  SettingsLayout,
+  SearchBar,
   type ColumnDef,
   type DateRange,
 } from '@maw/ui-web';
@@ -72,6 +86,15 @@ export function ShowcaseView(): ReactNode {
   const [dateVal, setDateVal] = useState('');
   const [rangeVal, setRangeVal] = useState<DateRange>({ start: '', end: '' });
   const [timeVal, setTimeVal] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [alertDismissed, setAlertDismissed] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const popoverAnchor = useRef<HTMLButtonElement>(null);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <div>
@@ -89,6 +112,7 @@ export function ShowcaseView(): ReactNode {
           { key: 'advanced', label: 'Advanced Inputs' },
           { key: 'feedback', label: 'Feedback' },
           { key: 'layout', label: 'Layout & Data' },
+          { key: 'patterns', label: 'Patterns' },
           { key: 'upload', label: 'File Upload' },
         ]}
         activeTab={activeTab}
@@ -380,6 +404,93 @@ export function ShowcaseView(): ReactNode {
               </div>
             </Stack>
           </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Alert</h3>
+            <Stack direction="column" gap="var(--maw-space-sm)">
+              <Alert variant="info" title="System update">Scheduled maintenance on Sunday 2–4 AM.</Alert>
+              <Alert variant="success" title="Payment received">Invoice #1042 has been paid.</Alert>
+              <Alert variant="warning">Your subscription expires in 3 days.</Alert>
+              <Alert variant="danger" title="Error">Failed to sync 2 records.</Alert>
+              {!alertDismissed && (
+                <Alert variant="info" onDismiss={() => setAlertDismissed(true)}>This alert is dismissible — click ✕ to remove.</Alert>
+              )}
+            </Stack>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Banner</h3>
+            <Stack direction="column" gap="var(--maw-space-sm)">
+              <Banner variant="info">New version 2.1 available.</Banner>
+              <Banner variant="warning" action={<Button variant="ghost" onClick={() => toast.info('Upgrading...')}>Upgrade</Button>}>Your plan is expiring soon.</Banner>
+              {!bannerDismissed && (
+                <Banner variant="success" onDismiss={() => setBannerDismissed(true)}>All systems operational. Click ✕ to dismiss.</Banner>
+              )}
+            </Stack>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Drawer</h3>
+            <Button onClick={() => setDrawerOpen(true)}>Open Drawer</Button>
+            <Drawer
+              open={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              title="Order Details"
+              footer={
+                <>
+                  <Button variant="ghost" onClick={() => setDrawerOpen(false)}>Close</Button>
+                  <Button onClick={() => { setDrawerOpen(false); toast.success('Saved!'); }}>Save</Button>
+                </>
+              }
+            >
+              <p style={{ color: 'var(--maw-fg)' }}>This is a slide-in drawer panel from the right side.</p>
+              <p style={{ color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>Press Escape or click the overlay to close.</p>
+            </Drawer>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Dialog</h3>
+            <Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
+            <Dialog
+              open={dialogOpen}
+              onClose={() => setDialogOpen(false)}
+              title="Edit Profile"
+              footer={
+                <>
+                  <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={() => { setDialogOpen(false); toast.success('Profile updated!'); }}>Save Changes</Button>
+                </>
+              }
+            >
+              <p style={{ color: 'var(--maw-fg)' }}>Dialog with role=&quot;dialog&quot;, aria-modal, close button, and overlay click-to-close.</p>
+            </Dialog>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Popover</h3>
+            <button ref={popoverAnchor} onClick={() => setPopoverOpen(!popoverOpen)} style={{ padding: '8px 16px', borderRadius: 'var(--maw-radius-md)', border: '1px solid var(--maw-border)', background: 'var(--maw-bg)', color: 'var(--maw-fg)', cursor: 'pointer' }}>
+              Toggle Popover
+            </button>
+            <Popover open={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={popoverAnchor}>
+              <p style={{ margin: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Popover content anchored to the button.</p>
+              <p style={{ margin: '4px 0 0', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-xs)' }}>Click outside or press Escape to close.</p>
+            </Popover>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>ConfirmationDialog</h3>
+            <Button variant="danger" onClick={() => setConfirmOpen(true)}>Delete Item</Button>
+            <ConfirmationDialog
+              open={confirmOpen}
+              onConfirm={() => { setConfirmOpen(false); toast.success('Item deleted'); }}
+              onCancel={() => setConfirmOpen(false)}
+              title="Delete item?"
+              message="This action cannot be undone. The item and all associated data will be permanently removed."
+              confirmLabel="Delete"
+              cancelLabel="Keep it"
+              variant="danger"
+            />
+          </Card>
         </Stack>
       )}
 
@@ -399,6 +510,112 @@ export function ShowcaseView(): ReactNode {
               pagination={{ page: 1, pageSize: 10, total: 4 }}
               onPageChange={() => {}}
               onPageSizeChange={() => {}}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Accordion</h3>
+            <Accordion
+              items={[
+                { key: 'billing', title: 'Billing Information', content: <p style={{ margin: 0 }}>Manage your billing details and payment methods.</p> },
+                { key: 'shipping', title: 'Shipping Address', content: <p style={{ margin: 0 }}>Update your default shipping address.</p> },
+                { key: 'notifications', title: 'Notification Preferences', content: <p style={{ margin: 0 }}>Choose which notifications you want to receive.</p> },
+                { key: 'disabled', title: 'Locked Section', content: <p style={{ margin: 0 }}>This section is disabled.</p>, disabled: true },
+              ]}
+              multiple
+              defaultExpanded={['billing']}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Panel</h3>
+            <Stack direction="column" gap="var(--maw-space-md)">
+              <Panel title="Default Panel" actions={<Button variant="ghost">Edit</Button>}>
+                <p style={{ margin: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>A bordered panel with header actions.</p>
+              </Panel>
+              <Panel title="Collapsible Panel" collapsible>
+                <p style={{ margin: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Click the arrow to collapse this panel.</p>
+              </Panel>
+              <Panel title="Elevated Panel" variant="elevated">
+                <p style={{ margin: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Elevated variant with shadow, no border.</p>
+              </Panel>
+            </Stack>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Section</h3>
+            <Section title="Team Members" description="Manage who has access to this workspace." actions={<Button>Invite</Button>}>
+              <p style={{ margin: 0, color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>Section content goes here — tables, forms, or any child elements.</p>
+            </Section>
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Grid</h3>
+            <Grid columns={3} gap="var(--maw-space-sm)">
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <div key={n} style={{ padding: 'var(--maw-space-md)', background: 'var(--maw-bgSubtle)', borderRadius: 'var(--maw-radius-sm)', textAlign: 'center', color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>
+                  Cell {n}
+                </div>
+              ))}
+            </Grid>
+            <Spacer size="var(--maw-space-sm)" />
+            <p style={{ margin: 0, color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-xs)' }}>3-column grid with Spacer between sections</p>
+          </Card>
+        </Stack>
+      )}
+
+      {activeTab === 'patterns' && (
+        <Stack direction="column" gap="var(--maw-space-lg)">
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>Wizard</h3>
+            <Wizard
+              steps={[
+                { key: 'info', title: 'Basic Info', content: <p style={{ color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Enter your name and email address.</p> },
+                { key: 'plan', title: 'Choose Plan', content: <p style={{ color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Select a subscription plan that fits your needs.</p> },
+                { key: 'payment', title: 'Payment', content: <p style={{ color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Add your payment method to continue.</p> },
+                { key: 'review', title: 'Review', content: <p style={{ color: 'var(--maw-fg)', fontSize: 'var(--maw-text-sm)' }}>Review your selections and confirm.</p> },
+              ]}
+              activeStep={wizardStep}
+              onStepChange={setWizardStep}
+              onComplete={() => { setWizardStep(0); toast.success('Wizard completed!'); }}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>SearchBar</h3>
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search orders, items, users…"
+              onSearch={(q) => toast.info(`Searching: "${q}"`)}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>SettingsLayout</h3>
+            <SettingsLayout
+              groups={[
+                {
+                  key: 'notifications',
+                  title: 'Email notifications',
+                  description: 'Choose which emails you want to receive.',
+                  children: <Toggle checked={toggleVal} onChange={setToggleVal} label="Marketing emails" />,
+                },
+                {
+                  key: 'language',
+                  title: 'Language',
+                  description: 'Select your preferred language for the interface.',
+                  children: (
+                    <Select value={selectVal || 'en'} onChange={(v) => toast.info(`Language: ${v}`)} options={[{ value: 'en', label: 'English' }, { value: 'hi', label: 'Hindi' }, { value: 'mr', label: 'Marathi' }]} />
+                  ),
+                },
+                {
+                  key: 'theme',
+                  title: 'Appearance',
+                  description: 'Toggle between light and dark mode.',
+                  children: <Toggle checked={isDark} onChange={toggleColorMode} label={isDark ? 'Dark mode' : 'Light mode'} />,
+                },
+              ]}
             />
           </Card>
         </Stack>

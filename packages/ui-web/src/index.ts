@@ -184,3 +184,48 @@ export {
   type DateRangePickerProps,
   type TimePickerProps,
 } from './input-components';
+
+// Overlay & Feedback Components (Phase 2)
+export {
+  Drawer,
+  Dialog,
+  Popover,
+  Alert,
+  Banner,
+  ConfirmationDialog,
+  type DrawerProps,
+  type DialogProps,
+  type PopoverProps,
+  type AlertVariant,
+  type AlertProps,
+  type BannerVariant,
+  type BannerProps,
+  type ConfirmationDialogProps,
+} from './overlay-components';
+
+// Layout Components (Phase 3)
+export {
+  Accordion,
+  Panel,
+  Section,
+  Grid,
+  Spacer,
+  type AccordionItem,
+  type AccordionProps,
+  type PanelProps,
+  type SectionProps,
+  type GridProps,
+  type SpacerProps,
+} from './layout-components';
+
+// Pattern Components (Phase 4)
+export {
+  Wizard,
+  SettingsLayout,
+  SearchBar,
+  type WizardStep,
+  type WizardProps,
+  type SettingsGroup,
+  type SettingsLayoutProps,
+  type SearchBarProps,
+} from './pattern-components';
