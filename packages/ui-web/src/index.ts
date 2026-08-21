@@ -164,3 +164,23 @@ export {
   type WidgetConfig,
   type ActivityItem,
 } from './dashboard';
+
+// Input Components (Phase 1)
+export {
+  RadioGroup,
+  MultiSelect,
+  SearchableSelect,
+  DatePicker,
+  DateRangePicker,
+  TimePicker,
+  type RadioOption,
+  type RadioGroupProps,
+  type MultiSelectOption,
+  type MultiSelectProps,
+  type SearchableSelectOption,
+  type SearchableSelectProps,
+  type DatePickerProps,
+  type DateRange,
+  type DateRangePickerProps,
+  type TimePickerProps,
+} from './input-components';

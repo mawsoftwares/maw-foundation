@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import type { ITokenBlacklist } from './token-blacklist';
 
@@ -40,7 +39,7 @@ export function signAccessToken(
   const payload: Record<string, unknown> = { ...claims };
 
   if (opts.issueJti) {
-    payload['jti'] = randomUUID();
+    payload['jti'] = globalThis.crypto.randomUUID();
   }
 
   return jwt.sign(payload, secret, { algorithm: 'HS256', expiresIn: ttl });

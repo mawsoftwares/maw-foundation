@@ -25,7 +25,14 @@ import {
   useI18n,
   DataTable,
   FileUpload,
+  RadioGroup,
+  MultiSelect,
+  SearchableSelect,
+  DatePicker,
+  DateRangePicker,
+  TimePicker,
   type ColumnDef,
+  type DateRange,
 } from '@maw/ui-web';
 import type { StoredFile } from '@maw/sdk/contracts/IFileStorage';
 import { client } from '../api';
@@ -59,6 +66,12 @@ export function ShowcaseView(): ReactNode {
   const [textareaVal, setTextareaVal] = useState('');
   const [selectVal, setSelectVal] = useState('');
   const [progress, setProgress] = useState(65);
+  const [radioVal, setRadioVal] = useState('email');
+  const [multiVal, setMultiVal] = useState<readonly string[]>([]);
+  const [searchVal, setSearchVal] = useState('');
+  const [dateVal, setDateVal] = useState('');
+  const [rangeVal, setRangeVal] = useState<DateRange>({ start: '', end: '' });
+  const [timeVal, setTimeVal] = useState('');
 
   return (
     <div>
@@ -73,6 +86,7 @@ export function ShowcaseView(): ReactNode {
         tabs={[
           { key: 'buttons', label: 'Buttons & Badges' },
           { key: 'inputs', label: 'Form Inputs' },
+          { key: 'advanced', label: 'Advanced Inputs' },
           { key: 'feedback', label: 'Feedback' },
           { key: 'layout', label: 'Layout & Data' },
           { key: 'upload', label: 'File Upload' },
@@ -186,6 +200,118 @@ export function ShowcaseView(): ReactNode {
             <Toggle label="Dark mode" checked={toggleVal} onChange={setToggleVal} />
           </Stack>
         </Card>
+      )}
+
+      {activeTab === 'advanced' && (
+        <Stack direction="column" gap="var(--maw-space-lg)">
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>RadioGroup</h3>
+            <RadioGroup
+              label="Notification method"
+              name="notify"
+              value={radioVal}
+              onChange={setRadioVal}
+              options={[
+                { value: 'email', label: 'Email' },
+                { value: 'sms', label: 'SMS' },
+                { value: 'push', label: 'Push notification' },
+                { value: 'none', label: 'None', disabled: true },
+              ]}
+            />
+            <RadioGroup
+              label="Layout direction"
+              name="direction"
+              value={radioVal}
+              onChange={setRadioVal}
+              direction="row"
+              options={[
+                { value: 'email', label: 'Email' },
+                { value: 'sms', label: 'SMS' },
+                { value: 'push', label: 'Push' },
+              ]}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>MultiSelect</h3>
+            <MultiSelect
+              label="Assign tags"
+              value={multiVal}
+              onChange={setMultiVal}
+              options={[
+                { value: 'urgent', label: 'Urgent' },
+                { value: 'bug', label: 'Bug' },
+                { value: 'feature', label: 'Feature' },
+                { value: 'docs', label: 'Documentation' },
+                { value: 'perf', label: 'Performance' },
+                { value: 'security', label: 'Security' },
+              ]}
+              placeholder="Search tags..."
+              maxSelections={4}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>SearchableSelect</h3>
+            <SearchableSelect
+              label="Country"
+              value={searchVal}
+              onChange={setSearchVal}
+              options={[
+                { value: 'us', label: 'United States' },
+                { value: 'uk', label: 'United Kingdom' },
+                { value: 'in', label: 'India' },
+                { value: 'de', label: 'Germany' },
+                { value: 'fr', label: 'France' },
+                { value: 'jp', label: 'Japan' },
+                { value: 'au', label: 'Australia' },
+                { value: 'ca', label: 'Canada' },
+              ]}
+              placeholder="Search countries..."
+              clearable
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>DatePicker</h3>
+            <DatePicker
+              label="Start date"
+              value={dateVal}
+              onChange={setDateVal}
+              required
+            />
+
+            <h3 style={{ color: 'var(--maw-fg)' }}>DateRangePicker</h3>
+            <DateRangePicker
+              label="Report period"
+              value={rangeVal}
+              onChange={setRangeVal}
+            />
+          </Card>
+
+          <Card>
+            <h3 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>TimePicker</h3>
+            <Stack direction="row" gap="var(--maw-space-lg)">
+              <div style={{ flex: 1 }}>
+                <TimePicker
+                  label="Meeting time (12h)"
+                  value={timeVal}
+                  onChange={setTimeVal}
+                  step={30}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <TimePicker
+                  label="Meeting time (24h)"
+                  value={timeVal}
+                  onChange={setTimeVal}
+                  step={15}
+                  use24Hour
+                />
+              </div>
+            </Stack>
+          </Card>
+        </Stack>
       )}
 
       {activeTab === 'feedback' && (
