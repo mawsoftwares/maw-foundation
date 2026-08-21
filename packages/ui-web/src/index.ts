@@ -229,3 +229,52 @@ export {
   type SettingsLayoutProps,
   type SearchBarProps,
 } from './pattern-components';
+
+// Dynamic Form Engine
+export {
+  useDynamicForm,
+  evaluateCondition,
+  type UseDynamicFormOptions,
+  type UseDynamicFormReturn,
+  type DynamicFieldState,
+} from './dynamic-form-engine';
+
+// Dynamic Form Component
+export {
+  DynamicForm,
+  FieldRegistryProvider,
+  useFieldRegistry,
+  useDynamicFormContext,
+  createFieldRegistry,
+  mergeRegistry,
+  type DynamicFormProps,
+} from './dynamic-form';
+
+// DataGrid Engine
+export {
+  useDataGrid,
+  createClientDataSource,
+  createServerDataSource,
+  type UseDataGridOptions,
+  type UseDataGridReturn,
+} from './data-grid-engine';
+
+// DataGrid Component
+export {
+  DataGrid,
+  type DataGridProps,
+} from './data-grid';
+
+// Responsive Utilities (Phase 5)
+export {
+  BREAKPOINTS,
+  useMediaQuery,
+  useBreakpoint,
+  useIsMobile,
+  Responsive,
+  VisuallyHidden,
+  useContainerWidth,
+  type Breakpoint,
+  type ResponsiveProps,
+  type VisuallyHiddenProps,
+} from './responsive';

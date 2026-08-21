@@ -45,9 +45,12 @@ import {
   Wizard,
   SettingsLayout,
   SearchBar,
+  DataGrid,
+  DynamicForm,
   type ColumnDef,
   type DateRange,
 } from '@maw/ui-web';
+import type { DataGridSchema, FormSchema } from '@maw/sdk';
 import type { StoredFile } from '@maw/sdk/contracts/IFileStorage';
 import { client } from '../api';
 
@@ -68,6 +71,150 @@ const DEMO_COLUMNS: ColumnDef<(typeof DEMO_TABLE_DATA)[0]>[] = [
     render: (row) => <Badge variant={row.status === 'active' ? 'success' : 'default'}>{row.status}</Badge>,
   },
 ];
+
+type Product = { id: string; name: string; category: string; price: number; stock: number; status: string };
+
+const DEMO_PRODUCTS: Product[] = [
+  { id: '1', name: 'Espresso', category: 'Beverages', price: 350, stock: 100, status: 'active' },
+  { id: '2', name: 'Cappuccino', category: 'Beverages', price: 450, stock: 80, status: 'active' },
+  { id: '3', name: 'Caesar Salad', category: 'Food', price: 850, stock: 25, status: 'active' },
+  { id: '4', name: 'Cheesecake', category: 'Desserts', price: 650, stock: 15, status: 'active' },
+  { id: '5', name: 'Latte', category: 'Beverages', price: 400, stock: 60, status: 'active' },
+  { id: '6', name: 'Grilled Chicken', category: 'Food', price: 1200, stock: 30, status: 'active' },
+  { id: '7', name: 'Tiramisu', category: 'Desserts', price: 700, stock: 0, status: 'inactive' },
+  { id: '8', name: 'Americano', category: 'Beverages', price: 300, stock: 90, status: 'active' },
+  { id: '9', name: 'Pasta Carbonara', category: 'Food', price: 1100, stock: 20, status: 'active' },
+  { id: '10', name: 'Brownie', category: 'Desserts', price: 550, stock: 40, status: 'active' },
+  { id: '11', name: 'Green Tea', category: 'Beverages', price: 250, stock: 70, status: 'active' },
+  { id: '12', name: 'Fish & Chips', category: 'Food', price: 1350, stock: 10, status: 'inactive' },
+];
+
+const PRODUCT_GRID_SCHEMA: DataGridSchema<Product> = {
+  keyField: 'id',
+  columns: [
+    { id: 'id', field: 'id', header: '#', width: 50, sortable: true },
+    { id: 'name', field: 'name', header: 'Product Name', sortable: true },
+    { id: 'category', field: 'category', header: 'Category', sortable: true },
+    {
+      id: 'price', field: 'price', header: 'Price', sortable: true, align: 'right',
+      formatter: (v: unknown) => `$${(Number(v) / 100).toFixed(2)}`,
+    },
+    {
+      id: 'stock', field: 'stock', header: 'Stock', sortable: true, align: 'right',
+      formatter: (v: unknown) => String(v),
+    },
+    {
+      id: 'status', field: 'status', header: 'Status',
+      render: (row: Product) => <Badge variant={row.status === 'active' ? 'success' : 'default'}>{row.status}</Badge>,
+    },
+  ],
+  search: { enabled: true, placeholder: 'Search products…', debounceMs: 200 },
+  sort: { defaultSort: { field: 'name', direction: 'asc' } },
+  pagination: { defaultPageSize: 5, pageSizeOptions: [5, 10, 25] },
+  selection: { enabled: true, mode: 'multi' },
+  export: { enabled: true, formats: ['csv'], filename: 'products' },
+  bulkActions: [
+    {
+      id: 'delete',
+      label: 'Delete',
+      variant: 'danger',
+      confirm: { title: 'Delete products?', message: 'This cannot be undone.', variant: 'danger', confirmLabel: 'Delete' },
+      handler: () => { /* demo */ },
+    },
+  ],
+  rowActions: [
+    { id: 'edit', label: 'Edit', handler: () => { /* demo */ } },
+    {
+      id: 'delete', label: 'Delete', variant: 'danger',
+      confirm: { title: 'Delete product?', message: 'This product will be permanently removed.', variant: 'danger' },
+      handler: () => { /* demo */ },
+    },
+  ],
+  expansion: {
+    enabled: true,
+    render: (row: Product) => (
+      <div style={{ padding: 'var(--maw-space-sm)', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
+        <strong>{row.name}</strong> — {row.category} — Stock: {row.stock} units — Price: ${(row.price / 100).toFixed(2)}
+      </div>
+    ),
+  },
+  empty: { title: 'No products', message: 'No products match your search criteria.' },
+  striped: true,
+  hoverable: true,
+  stickyHeader: true,
+};
+
+// ---------------------------------------------------------------------------
+// Dynamic Form Schemas
+// ---------------------------------------------------------------------------
+
+const CUSTOMER_FORM_SCHEMA: FormSchema = {
+  id: 'customer.create',
+  version: 1,
+  title: 'Create Customer',
+  description: 'Schema-driven form — no manual JSX needed.',
+  fields: [
+    { name: 'name', type: 'text', label: 'Full Name', required: true, placeholder: 'John Doe', validation: [{ type: 'minLength', value: 2 }] },
+    { name: 'email', type: 'email', label: 'Email', required: true, placeholder: 'john@example.com' },
+    { name: 'phone', type: 'phone', label: 'Phone', placeholder: '+1234567890' },
+    { name: 'age', type: 'number', label: 'Age', min: 18, max: 120, validation: [{ type: 'min', value: 18, message: 'Must be 18 or older' }] },
+    { name: 'gender', type: 'select', label: 'Gender', options: [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }] },
+    { name: 'dob', type: 'date', label: 'Date of Birth' },
+    { name: 'notes', type: 'textarea', label: 'Notes', placeholder: 'Additional information…', rows: 3 },
+    { name: 'newsletter', type: 'switch', label: 'Subscribe to newsletter', defaultValue: true },
+  ],
+  layout: { type: 'two-column' },
+  focusFirstError: true,
+};
+
+const CONDITIONAL_FORM_SCHEMA: FormSchema = {
+  id: 'customer.conditional',
+  version: 1,
+  title: 'Customer Type Form',
+  description: 'Conditional fields — business fields appear only when type is "business".',
+  fields: [
+    { name: 'name', type: 'text', label: 'Name', required: true },
+    {
+      name: 'customerType', type: 'select', label: 'Customer Type', required: true,
+      options: [{ value: 'individual', label: 'Individual' }, { value: 'business', label: 'Business' }],
+    },
+    {
+      name: 'companyName', type: 'text', label: 'Company Name',
+      visibleWhen: { field: 'customerType', operator: 'eq', value: 'business' },
+      requiredWhen: { field: 'customerType', operator: 'eq', value: 'business' },
+    },
+    {
+      name: 'gstNumber', type: 'text', label: 'GST Number', placeholder: 'e.g. 22AAAAA0000A1Z5',
+      visibleWhen: { field: 'customerType', operator: 'eq', value: 'business' },
+      requiredWhen: { field: 'customerType', operator: 'eq', value: 'business' },
+    },
+    { name: 'email', type: 'email', label: 'Email', required: true },
+  ],
+  layout: { type: 'single' },
+};
+
+const SECTIONED_FORM_SCHEMA: FormSchema = {
+  id: 'employee.create',
+  version: 1,
+  title: 'New Employee',
+  description: 'Sectioned layout with grouped fields.',
+  fields: [
+    { name: 'firstName', type: 'text', label: 'First Name', required: true },
+    { name: 'lastName', type: 'text', label: 'Last Name', required: true },
+    { name: 'email', type: 'email', label: 'Email', required: true },
+    { name: 'phone', type: 'phone', label: 'Phone' },
+    { name: 'department', type: 'select', label: 'Department', options: [{ value: 'engineering', label: 'Engineering' }, { value: 'sales', label: 'Sales' }, { value: 'hr', label: 'HR' }, { value: 'finance', label: 'Finance' }] },
+    { name: 'designation', type: 'text', label: 'Designation' },
+    { name: 'joiningDate', type: 'date', label: 'Joining Date', required: true },
+    { name: 'active', type: 'switch', label: 'Active', defaultValue: true },
+  ],
+  sections: [
+    { id: 'personal', title: 'Personal Information', fields: ['firstName', 'lastName'], columns: 2 },
+    { id: 'contact', title: 'Contact Information', fields: ['email', 'phone'], columns: 2 },
+    { id: 'work', title: 'Work Details', fields: ['department', 'designation', 'joiningDate', 'active'], columns: 2 },
+  ],
+  layout: { type: 'sections' },
+};
 
 export function ShowcaseView(): ReactNode {
   const toast = useToast();
@@ -113,6 +260,8 @@ export function ShowcaseView(): ReactNode {
           { key: 'feedback', label: 'Feedback' },
           { key: 'layout', label: 'Layout & Data' },
           { key: 'patterns', label: 'Patterns' },
+          { key: 'datagrid', label: 'DataGrid' },
+          { key: 'forms', label: 'Dynamic Forms' },
           { key: 'upload', label: 'File Upload' },
         ]}
         activeTab={activeTab}
@@ -616,6 +765,48 @@ export function ShowcaseView(): ReactNode {
                   children: <Toggle checked={isDark} onChange={toggleColorMode} label={isDark ? 'Dark mode' : 'Light mode'} />,
                 },
               ]}
+            />
+          </Card>
+        </Stack>
+      )}
+
+      {activeTab === 'datagrid' && (
+        <Stack direction="column" gap="var(--maw-space-lg)">
+          <Card>
+            <DataGrid
+              schema={PRODUCT_GRID_SCHEMA}
+              dataSource={{ data: DEMO_PRODUCTS }}
+              title="Products"
+              description="Schema-driven DataGrid with search, sort, pagination, selection, row expansion, bulk actions, and export."
+              headerActions={<Button onClick={() => toast.info('Add product')}>+ Add Product</Button>}
+            />
+          </Card>
+        </Stack>
+      )}
+
+      {activeTab === 'forms' && (
+        <Stack direction="column" gap="var(--maw-space-lg)">
+          <Card>
+            <DynamicForm
+              schema={CUSTOMER_FORM_SCHEMA}
+              onSubmit={(values) => { toast.success(`Customer: ${JSON.stringify(values).slice(0, 80)}…`); }}
+              onCancel={() => toast.info('Cancelled')}
+              submitLabel="Create Customer"
+            />
+          </Card>
+          <Card>
+            <DynamicForm
+              schema={CONDITIONAL_FORM_SCHEMA}
+              onSubmit={(values) => { toast.success(`Conditional: ${JSON.stringify(values).slice(0, 80)}…`); }}
+              submitLabel="Save"
+            />
+          </Card>
+          <Card>
+            <DynamicForm
+              schema={SECTIONED_FORM_SCHEMA}
+              onSubmit={(values) => { toast.success(`Employee: ${JSON.stringify(values).slice(0, 80)}…`); }}
+              onCancel={() => toast.info('Cancelled')}
+              submitLabel="Create Employee"
             />
           </Card>
         </Stack>

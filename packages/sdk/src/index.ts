@@ -47,5 +47,11 @@ export * from './config/config-engine';
 // Modules (registry, events, types)
 export * from './modules/index';
 
+// Data Grid
+export * from './data-grid/index';
+
+// Dynamic Form
+export * from './dynamic-form/index';
+
 // i18n
 export * as i18n from './i18n/index';
