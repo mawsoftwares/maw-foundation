@@ -1,3 +1,14 @@
+// Branding
+export {
+  BrandProvider,
+  useBrand,
+  useBrandColors,
+  useBrandLogo,
+  type BrandProviderProps,
+  type BrandContextValue,
+  type BrandColorMode,
+} from './brand';
+
 // Auth + RBAC
 export { AuthProvider, useAuth, useCan, Can, type AuthProviderProps } from './access';
 export {

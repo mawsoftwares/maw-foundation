@@ -5,12 +5,12 @@ import {
   AuthProvider,
   DynamicAccessProvider,
   useAuth,
+  useBrand,
   NavigationProvider,
   AppShell,
   Sidebar,
   Breadcrumbs,
   useI18n,
-  useColorMode,
   useToast,
   Button,
   Badge,
@@ -25,6 +25,7 @@ import {
 import { client } from './api';
 import { loadDynamicAccess, restoreSession } from './session';
 import { setupOffline } from './offline-setup';
+import { AVAILABLE_TENANTS } from './brand-setup';
 import { LoginForm } from './shell/LoginForm';
 import { DashboardView } from './shell/Dashboard';
 import { OrdersView } from './features/orders';
@@ -83,7 +84,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading, logout } = useAuth();
   const { t, locale, setLocale, availableLocales } = useI18n();
-  const { isDark, toggleColorMode } = useColorMode();
+  const { isDark, toggleColorMode, brand, switchTenant } = useBrand();
   const toast = useToast();
   const [page, setPage] = useState<Page>('dashboard');
 
@@ -126,7 +127,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
             header={
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 20 }}>⚡</span>
-                <span style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)' }}>MAW Foundation</span>
+                <span style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)' }}>{brand.name}</span>
               </div>
             }
             footer={
@@ -143,6 +144,26 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
           <>
             <Breadcrumbs />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <select
+                value={brand.tenantId}
+                onChange={(e) => {
+                  void switchTenant(e.target.value);
+                  toast.success(`Brand: ${e.target.value}`);
+                }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 'var(--maw-radius-sm)',
+                  border: '2px solid var(--maw-brand)',
+                  fontSize: 'var(--maw-text-xs)',
+                  background: 'var(--maw-bg)',
+                  color: 'var(--maw-fg)',
+                  fontWeight: 600,
+                }}
+              >
+                {AVAILABLE_TENANTS.map((tid) => (
+                  <option key={tid} value={tid}>{tid}</option>
+                ))}
+              </select>
               <select
                 value={locale}
                 onChange={(e) => {

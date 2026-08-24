@@ -56,5 +56,8 @@ export * from './dynamic-form/index';
 // Domains (shared entity types)
 export * from './domains/index';
 
+// Branding (tenant brand configuration engine)
+export * from './branding/index';
+
 // i18n
 export * as i18n from './i18n/index';

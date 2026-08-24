@@ -9,6 +9,17 @@ export {
 } from './theme';
 export type { Theme, ThemeOverrides, TenantBranding, RNStyles } from './theme';
 
+// Branding
+export {
+  NativeBrandProvider,
+  useNativeBrand,
+  useNativeBrandColors,
+  useNativeBrandLogo,
+  type NativeBrandProviderProps,
+  type BrandContextValue,
+  type BrandColorMode,
+} from './brand';
+
 // Core Components
 export {
   Button,

@@ -323,6 +323,66 @@ export function tokensToRNStyles(dark = false, theme?: Theme): RNStyles {
 // CSS custom properties generation
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// BrandConfig → ThemeOverrides bridge
+// ---------------------------------------------------------------------------
+
+export interface BrandColorConfig {
+  readonly primary: string;
+  readonly secondary?: string;
+  readonly accent?: string;
+  readonly success?: string;
+  readonly warning?: string;
+  readonly error?: string;
+  readonly background?: string;
+  readonly surface?: string;
+  readonly text?: string;
+  readonly textMuted?: string;
+  readonly border?: string;
+}
+
+export interface BrandConfigLike {
+  readonly colors: BrandColorConfig;
+  readonly typography?: { readonly fontFamily?: string; readonly headingFontFamily?: string };
+  readonly theme?: { readonly radius?: number };
+  readonly customTokens?: Readonly<Record<string, string>>;
+}
+
+export function brandConfigToThemeOverrides(brand: BrandConfigLike): ThemeOverrides {
+  const c = brand.colors;
+
+  const paletteOverrides: Partial<Palette> = {};
+  if (c.primary) paletteOverrides.brand = c.primary;
+  if (c.secondary) paletteOverrides.brandLight = c.secondary;
+  if (c.accent) paletteOverrides.brandDark = c.accent;
+  if (c.success) paletteOverrides.success = c.success;
+  if (c.warning) paletteOverrides.warning = c.warning;
+  if (c.error) paletteOverrides.danger = c.error;
+  if (c.background) paletteOverrides.bg = c.background;
+  if (c.surface) paletteOverrides.bgMuted = c.surface;
+  if (c.text) paletteOverrides.fg = c.text;
+  if (c.textMuted) paletteOverrides.fgMuted = c.textMuted;
+  if (c.border) paletteOverrides.border = c.border;
+  if (c.primary) paletteOverrides.borderFocus = c.primary;
+
+  const branding: TenantBranding = {
+    primaryColor: c.primary,
+    secondaryColor: c.secondary,
+    accentColor: c.accent,
+    fontFamily: brand.typography?.fontFamily,
+    borderRadius: brand.theme?.radius,
+  };
+
+  return {
+    branding,
+    palette: paletteOverrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CSS custom properties generation
+// ---------------------------------------------------------------------------
+
 export function tokensToCssVars(dark = false, theme?: Theme): Record<string, string> {
   const t = theme ?? defaultTheme;
   const p = dark ? t.dark : t.light;

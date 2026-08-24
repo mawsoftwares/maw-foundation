@@ -1,8 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ThemeProvider, I18nProvider, ToastProvider } from '@maw/ui-web';
+import { BrandProvider, I18nProvider, ToastProvider } from '@maw/ui-web';
 import * as i18n from '@maw/sdk/i18n/index';
 import { App } from './App';
+import { staticBrandProvider, DEFAULT_TENANT } from './brand-setup';
 
 i18n.registerLocale('en', {
   'common.save': 'Save',
@@ -67,12 +68,16 @@ i18n.registerLocale('mr', {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
+    <BrandProvider
+      tenantId={DEFAULT_TENANT}
+      provider={staticBrandProvider}
+      loadingFallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#666' }}>Loading brand...</div>}
+    >
       <I18nProvider defaultLocale="en">
         <ToastProvider>
           <App />
         </ToastProvider>
       </I18nProvider>
-    </ThemeProvider>
+    </BrandProvider>
   </StrictMode>,
 );
