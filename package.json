@@ -17,6 +17,7 @@
     "packages/ui-web",
     "packages/communication",
     "packages/queue",
+    "packages/import-export",
     "packages/audit",
     "packages/deployment",
     "apps/sample-server",

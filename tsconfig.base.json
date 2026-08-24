@@ -41,7 +41,9 @@
       "@maw/communication": ["packages/communication/src/index.ts"],
       "@maw/communication/*": ["packages/communication/src/*"],
       "@maw/queue": ["packages/queue/src/index.ts"],
-      "@maw/queue/*": ["packages/queue/src/*"]
+      "@maw/queue/*": ["packages/queue/src/*"],
+      "@maw/import-export": ["packages/import-export/src/index.ts"],
+      "@maw/import-export/*": ["packages/import-export/src/*"]
     }
   }
 }
