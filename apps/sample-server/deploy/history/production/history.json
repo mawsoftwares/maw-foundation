@@ -1,0 +1,48 @@
+[
+  {
+    "id": "deploy-1787568932580",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": true,
+    "timestamp": "2026-08-24T10:55:32.575Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/prod/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.maw-foundation.apps.mawsoftwares.in.conf"
+    },
+    "completedAt": "2026-08-24T10:55:32.583Z"
+  },
+  {
+    "id": "deploy-1787573556598",
+    "type": "deployment",
+    "environment": "production",
+    "dryRun": true,
+    "timestamp": "2026-08-24T12:12:36.594Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/prod/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/ecosystem.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/production/Dockerfile"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/api.maw-foundation.apps.mawsoftwares.in.conf"
+    },
+    "completedAt": "2026-08-24T12:12:36.600Z"
+  }
+]

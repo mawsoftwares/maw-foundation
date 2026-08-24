@@ -1,0 +1,4 @@
+generated/
+logs/
+environments/**/.env
+!environments/**/.env.example

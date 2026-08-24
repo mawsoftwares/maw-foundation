@@ -22,9 +22,10 @@
   },
   "scripts": {
     "dev": "node --env-file=.env --import=tsx src/main.ts",
-    "start": "node --env-file=.env --import=tsx src/main.ts",
-    "db:migrate": "node --env-file=.env --import=tsx src/db/migrate.ts",
-    "db:seed": "node --env-file=.env --import=tsx src/db/seed.ts",
+    "start": "node --import=tsx src/main.ts",
+    "db:migrate": "node --import=tsx src/db/migrate.ts",
+    "db:seed": "node --import=tsx src/db/seed.ts",
+    "db:test": "node --import=tsx src/db/test-connection.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }

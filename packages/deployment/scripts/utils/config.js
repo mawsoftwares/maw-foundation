@@ -24,6 +24,7 @@ function loadEnvironmentConfig(environment) {
   const envDir = getEnvironmentDir(environment)
   const manifestPath = path.join(envDir, 'app.config.json')
   const envFilePath = path.join(envDir, '.env')
+  const envExamplePath = path.join(envDir, '.env.example')
 
   if (!fs.existsSync(envDir)) {
     throw new DeploymentError(`Unknown environment "${environment}"`, {
@@ -37,7 +38,13 @@ function loadEnvironmentConfig(environment) {
     })
   }
 
-  if (!fs.existsSync(envFilePath)) {
+  const resolvedEnvPath = fs.existsSync(envFilePath)
+    ? envFilePath
+    : fs.existsSync(envExamplePath)
+      ? envExamplePath
+      : null
+
+  if (!resolvedEnvPath) {
     throw new DeploymentError(`Missing .env file for "${environment}"`, {
       expectedPath: envFilePath,
     })
@@ -47,7 +54,8 @@ function loadEnvironmentConfig(environment) {
   return {
     environment,
     envDir,
-    envFilePath,
+    envFilePath: resolvedEnvPath,
+    usingExampleEnv: resolvedEnvPath === envExamplePath,
     manifest,
     manifestPath,
   }

@@ -70,3 +70,32 @@ describe('isPlaceholder', () => {
     assert.equal(isPlaceholder('103.211.202.236'), false)
   })
 })
+
+describe('validateDeployEnv frontend', () => {
+  it('requires VITE_API_BASE_URL for frontend kind', () => {
+    assert.throws(
+      () =>
+        validateDeployEnv({ name: 'staging', kind: 'frontend' }, { VITE_BASE_PATH: '/' }),
+      (error) =>
+        error.details?.errors?.some((message) => message.includes('VITE_API_BASE_URL')) === true
+    )
+  })
+
+  it('accepts custom requiredEnv and skips legacy DB checks', () => {
+    const result = validateDeployEnv(
+      { name: 'staging', deployment: { requiredEnv: ['JWT_SECRET'] } },
+      { JWT_SECRET: 'a-real-secret-value' }
+    )
+    assert.equal(result.ok, true)
+  })
+
+  it('treats placeholders as warnings when allowPlaceholders is set', () => {
+    const result = validateDeployEnv(
+      { name: 'staging', kind: 'frontend' },
+      {},
+      { allowPlaceholders: true }
+    )
+    assert.equal(result.ok, false)
+    assert.ok(result.warnings.some((message) => message.includes('VITE_API_BASE_URL')))
+  })
+})

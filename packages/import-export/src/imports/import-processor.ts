@@ -6,8 +6,6 @@ import type {
   OperationContext,
   ImportProgress,
   RowError,
-  ImportExportRecord,
-  DuplicateStrategyValue,
 } from '../types';
 import { ImportStatus, DuplicateStrategy, ErrorSeverity } from '../types';
 import { ImportExportEvent } from '../events';
@@ -67,7 +65,7 @@ export class ImportProcessor {
 
     const mappedRows = parsedRows.map((row) => this.mapper.applyMapping(row, mapping, definition));
 
-    let duplicateSet = new Set<number>();
+    const duplicateSet = new Set<number>();
     if (definition.duplicateKeys && definition.duplicateKeys.length > 0) {
       const inFileResult = await this.inFileChecker.check(mappedRows, definition.duplicateKeys);
       for (const d of inFileResult.duplicates) {

@@ -1,0 +1,96 @@
+[
+  {
+    "id": "deploy-1787568724520",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-08-24T10:52:04.517Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/runtime.config.js"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/maw-foundation.apps.mawsoftwares.in.conf"
+    },
+    "completedAt": "2026-08-24T10:52:04.522Z"
+  },
+  {
+    "id": "deploy-1787568932537",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-08-24T10:55:32.529Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/runtime.config.js"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "snippetPath": "/home/deploy/nginx/snippets/apps.mawsoftwares.in/maw-foundation.conf"
+    },
+    "completedAt": "2026-08-24T10:55:32.539Z"
+  },
+  {
+    "id": "deploy-1787569552512",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-08-24T11:05:52.506Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/runtime.config.js"
+    ],
+    "success": false,
+    "completedAt": "2026-08-24T11:05:57.680Z",
+    "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && git clone --branch \"main\" \"git@github.com:YOUR_ORG/maw-foundation.git\" \"/home/deploy/staging/maw-foundation\""
+  },
+  {
+    "id": "deploy-1787571391887",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-08-24T11:36:31.883Z",
+    "deployPath": "/home/deploy/staging/maw-foundation/web",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/runtime.config.js"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "snippetPath": "/home/deploy/nginx/snippets/apps.mawsoftwares.in/maw-foundation.conf"
+    },
+    "completedAt": "2026-08-24T11:36:31.888Z"
+  },
+  {
+    "id": "deploy-1787573542462",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-08-24T12:12:22.456Z",
+    "deployPath": "/home/deploy/staging/maw-foundation/web",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/runtime.config.js"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "snippetPath": "/home/deploy/nginx/snippets/apps.mawsoftwares.in/maw-foundation.conf"
+    },
+    "completedAt": "2026-08-24T12:12:22.463Z"
+  }
+]

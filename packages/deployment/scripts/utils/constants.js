@@ -65,13 +65,7 @@ const GENERATED_DIR = path.join(DEPLOY_DIR, 'generated')
 const LOGS_DIR = path.join(DEPLOY_DIR, 'logs')
 const HISTORY_DIR = path.join(DEPLOY_DIR, 'history')
 
-// Legacy support: if project has no deploy/ folder but has the old
-// deployment/environments/ layout (engine itself), fall back to engine root.
-// This keeps existing Sushmapet-style repos working until they migrate.
-const LEGACY_ENVIRONMENTS_DIR = path.join(ENGINE_ROOT, 'environments')
 function getEnvironmentsDir() {
-  if (fs.existsSync(ENVIRONMENTS_DIR)) return ENVIRONMENTS_DIR
-  if (fs.existsSync(LEGACY_ENVIRONMENTS_DIR)) return LEGACY_ENVIRONMENTS_DIR
   return ENVIRONMENTS_DIR
 }
 

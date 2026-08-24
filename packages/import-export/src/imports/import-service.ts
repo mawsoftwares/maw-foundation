@@ -1,6 +1,5 @@
-import type { Logger, IFileStorage, StoredFile, EventBus } from '@maw/sdk';
+import type { Logger, EventBus } from '@maw/sdk';
 import { createLogger, sanitizeFilename } from '@maw/sdk';
-import type { IQueueService } from '@maw/sdk';
 import type {
   ImportDefinition,
   OperationContext,
@@ -9,10 +8,10 @@ import type {
   ImportProgress,
   RowError,
 } from '../types';
-import { ImportStatus, ImportFormat, ErrorSeverity } from '../types';
+import { ImportStatus, type ImportFormatValue, type ImportStatusValue } from '../types';
 import { ImportError, ProcessingError } from '../errors';
 import { ImportExportEvent } from '../events';
-import type { IParser, ParsedRow, ParseResult } from '../parsers/types';
+import type { ParseResult } from '../parsers/types';
 import { ParserRegistry, createDefaultParsers } from '../parsers/registry';
 import { FileValidator } from '../validation/file-validator';
 import { ColumnMapper } from '../mapping/mapper';
@@ -24,13 +23,9 @@ import type { IImportExportHistory } from '../history/types';
 import { validateTransition } from './state-machine';
 import { ImportProcessor } from './import-processor';
 import type { IImportRowProcessor } from './types';
-import { CSVFormatter } from '../formatters/csv-formatter';
-import { sanitizeRowValue } from '../security';
 
 export interface ImportServiceOptions {
   readonly history: IImportExportHistory;
-  readonly storage?: IFileStorage;
-  readonly queueService?: IQueueService;
   readonly parserRegistry?: ParserRegistry;
   readonly eventBus?: EventBus;
   readonly logger?: Logger;
@@ -44,8 +39,6 @@ interface ParsedImportData {
 
 export class ImportService {
   private readonly history: IImportExportHistory;
-  private readonly storage: IFileStorage | null;
-  private readonly queueService: IQueueService | null;
   private readonly parsers: ParserRegistry;
   private readonly fileValidator = new FileValidator();
   private readonly mapper = new ColumnMapper();
@@ -57,8 +50,6 @@ export class ImportService {
 
   constructor(options: ImportServiceOptions) {
     this.history = options.history;
-    this.storage = options.storage ?? null;
-    this.queueService = options.queueService ?? null;
     this.parsers = options.parserRegistry ?? createDefaultParsers();
     this.eventBus = options.eventBus ?? null;
     this.logger = options.logger ?? createLogger('import-service');
@@ -100,7 +91,7 @@ export class ImportService {
       });
     }
 
-    const parseResult = await this.parseFile(importId, fileData, format, definition);
+    const parseResult = await this.parseFile(importId, fileData, format);
 
     this.parsedCache.set(importId, { parseResult, mapping: new Map(), definition });
 
@@ -114,7 +105,7 @@ export class ImportService {
     fileData?: string | Buffer,
   ): Promise<ImportPreview> {
     const record = await this.getRecord(importId);
-    validateTransition(record.status as any, ImportStatus.PARSING);
+    validateTransition(record.status as ImportStatusValue, ImportStatus.PARSING);
     await this.history.update(importId, { status: ImportStatus.PARSING });
 
     let parseResult: ParseResult;
@@ -122,7 +113,7 @@ export class ImportService {
     if (cached) {
       parseResult = cached.parseResult;
     } else if (fileData) {
-      const parser = this.parsers.resolve(record.format as any);
+      const parser = this.parsers.resolve(record.format as ImportFormatValue);
       parseResult = await parser.parse(fileData);
     } else {
       throw new ImportError('No parsed data available. Provide fileData or create a new import.');
@@ -141,13 +132,10 @@ export class ImportService {
     );
 
     const errors: RowError[] = [];
-    let validRows = 0;
     let invalidRows = 0;
     for (let i = 0; i < mappedPreview.length; i++) {
       const result = this.rowValidator.validate(mappedPreview[i]!, i + 1, definition);
-      if (result.valid) {
-        validRows++;
-      } else {
+      if (!result.valid) {
         invalidRows++;
         errors.push(...result.errors);
       }
@@ -206,7 +194,7 @@ export class ImportService {
     externalDuplicateChecker?: IDuplicateChecker,
   ): Promise<ImportProgress> {
     const record = await this.getRecord(importId);
-    validateTransition(record.status as any, ImportStatus.PROCESSING);
+    validateTransition(record.status as ImportStatusValue, ImportStatus.PROCESSING);
 
     const cached = this.parsedCache.get(importId);
     if (!cached) {
@@ -283,7 +271,7 @@ export class ImportService {
 
   async cancel(importId: string): Promise<void> {
     const record = await this.getRecord(importId);
-    validateTransition(record.status as any, ImportStatus.CANCELLED);
+    validateTransition(record.status as ImportStatusValue, ImportStatus.CANCELLED);
     await this.history.update(importId, {
       status: ImportStatus.CANCELLED,
       completedAt: new Date().toISOString(),
@@ -302,12 +290,11 @@ export class ImportService {
   }
 
   private async parseFile(
-    importId: string,
+    _importId: string,
     data: string | Buffer,
-    format: string,
-    definition: ImportDefinition,
+    format: ImportFormatValue,
   ): Promise<ParseResult> {
-    const parser = this.parsers.resolve(format as any);
+    const parser = this.parsers.resolve(format);
     return parser.parse(data);
   }
 

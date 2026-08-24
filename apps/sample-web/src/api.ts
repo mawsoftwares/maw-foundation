@@ -1,7 +1,9 @@
 import { ApiClient, webSecureStore } from '@maw/api-client';
 
+import { API_BASE_URL } from './config';
+
 export const client = new ApiClient({
-  baseUrl: 'http://localhost:4000',
+  baseUrl: API_BASE_URL,
   store: webSecureStore(window.localStorage),
   mode: 'token',
 });

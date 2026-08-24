@@ -1,52 +1,62 @@
 const path = require('path')
 const { confirmPrompt } = require('./confirm')
 const { GENERATED_FILE_MAP } = require('./constants')
-const { isDedicatedDomainTopology, resolveNginxTemplateName } = require('./topology')
+const {
+  isDedicatedDomainTopology,
+  isFrontendSharedSubpath,
+  isPublicVhostTopology,
+  resolveConfigOutputRoot,
+  resolveNginxSettings,
+  resolveNginxTemplateName,
+} = require('./topology')
 const { sshExec, sshExecSoft, sshMkdir, remotePathExists, shellQuote } = require('./ssh')
 
 function resolveVhostRemotePath(manifest) {
-  const nginx = manifest.nginx || {}
-  const vhostDir = nginx.vhostDir || '/home/deploy/nginx/vhosts-enabled'
-  return path.posix.join(vhostDir, `${manifest.domain}.conf`)
+  const nginx = resolveNginxSettings(manifest)
+  return path.posix.join(nginx.vhostDir, `${manifest.domain}.conf`)
 }
 
 function resolveRemoteNginxSourcePath(manifest) {
-  return path.posix.join(
-    manifest.deployPath,
-    manifest.generatedSubPath,
-    GENERATED_FILE_MAP.nginx
-  )
+  return path.posix.join(resolveConfigOutputRoot(manifest), GENERATED_FILE_MAP.nginx)
 }
 
 function resolveCertbotEmail(manifest) {
   if (process.env.CERTBOT_EMAIL && process.env.CERTBOT_EMAIL.trim()) {
     return process.env.CERTBOT_EMAIL.trim()
   }
-  const email = manifest.nginx?.certbot?.email
+  const email = resolveNginxSettings(manifest).certbot?.email
   return typeof email === 'string' && email.trim() ? email.trim() : null
 }
 
 function shouldAutoInstallNginx(manifest) {
-  if (!isDedicatedDomainTopology(manifest)) {
-    return false
-  }
-  const nginx = manifest.nginx || {}
+  const nginx = resolveNginxSettings(manifest)
   if (nginx.enabled === false) {
     return false
   }
+  if (isFrontendSharedSubpath(manifest)) {
+    return nginx.autoInstall !== false && Boolean(nginx.snippetDir)
+  }
+  if (!isPublicVhostTopology(manifest)) {
+    return false
+  }
   return nginx.autoInstall === true
+}
+
+function resolveSnippetRemotePath(manifest) {
+  const nginx = resolveNginxSettings(manifest)
+  return path.posix.join(nginx.snippetDir, `${nginx.snippetName}.conf`)
 }
 
 /**
  * Install generated nginx.conf into the deploy-owned vhost dir, enable the site, reload.
  */
 function installNginxVhost(manifest, { logger, dryRun = false } = {}) {
+  const nginx = resolveNginxSettings(manifest)
   const vhostPath = resolveVhostRemotePath(manifest)
   const sourcePath = resolveRemoteNginxSourcePath(manifest)
-  const sitesEnabled = manifest.nginx?.sitesEnabled || '/etc/nginx/sites-enabled'
+  const sitesEnabled = nginx.sitesEnabled
   const enabledLink = path.posix.join(sitesEnabled, `${manifest.domain}.conf`)
-  const acmeRoot =
-    manifest.nginx?.ssl?.acmeChallengeRoot || `/home/deploy/${manifest.name}/acme-challenge`
+  const acmeRoot = nginx.ssl?.acmeChallengeRoot || `/home/deploy/${manifest.name}/acme-challenge`
 
   if (dryRun) {
     logger.info('DRY RUN: would install nginx vhost', { sourcePath, vhostPath, enabledLink })
@@ -101,13 +111,44 @@ function installNginxVhost(manifest, { logger, dryRun = false } = {}) {
   }
 }
 
+function installNginxSnippet(manifest, { logger, dryRun = false } = {}) {
+  const snippetPath = resolveSnippetRemotePath(manifest)
+  const sourcePath = resolveRemoteNginxSourcePath(manifest)
+
+  if (dryRun) {
+    logger.info('DRY RUN: would install nginx snippet', { sourcePath, snippetPath })
+    return { dryRun: true, snippetPath, reloadOk: false }
+  }
+
+  sshMkdir(manifest, path.posix.dirname(snippetPath), { logger })
+  sshExec(
+    manifest,
+    `cp ${shellQuote(sourcePath)} ${shellQuote(snippetPath)} && chmod 644 ${shellQuote(snippetPath)}`,
+    { logger }
+  )
+
+  const reloadResult = sshExecSoft(manifest, 'sudo nginx -t && sudo systemctl reload nginx', {
+    logger,
+  })
+  if (reloadResult.status !== 0) {
+    logger.warn(
+      'Nginx reload failed after snippet install — run: sudo nginx -t && sudo systemctl reload nginx',
+      { snippetPath }
+    )
+    return { snippetPath, writeOk: true, reloadOk: false }
+  }
+
+  logger.info('Nginx snippet installed and reloaded', { snippetPath })
+  return { snippetPath, writeOk: true, reloadOk: true }
+}
+
 /**
  * Issue (or renew) a Let's Encrypt cert via webroot.
  */
 function issueCertificate(manifest, { logger, dryRun = false } = {}) {
   const domain = manifest.domain
-  const acmeRoot =
-    manifest.nginx?.ssl?.acmeChallengeRoot || `/home/deploy/${manifest.name}/acme-challenge`
+  const nginx = resolveNginxSettings(manifest)
+  const acmeRoot = nginx.ssl?.acmeChallengeRoot || `/home/deploy/${manifest.name}/acme-challenge`
   const email = resolveCertbotEmail(manifest)
 
   if (!email) {
@@ -140,7 +181,7 @@ function issueCertificate(manifest, { logger, dryRun = false } = {}) {
   }
 
   const certPath =
-    manifest.nginx?.ssl?.certificate || `/etc/letsencrypt/live/${domain}/fullchain.pem`
+    nginx.ssl?.certificate || `/etc/letsencrypt/live/${domain}/fullchain.pem`
   const present = remotePathExists(manifest, certPath, { logger })
   if (!present) {
     throw new Error(`Certbot finished but certificate not found at ${certPath}`)
@@ -175,13 +216,37 @@ async function setupNginxIfNeeded(manifest, options = {}) {
     return { skipped: true, reason: skipNginx ? 'skipped by flag' : 'nginx.autoInstall not enabled' }
   }
 
-  if (!isDedicatedDomainTopology(manifest)) {
-    return { skipped: true, reason: 'not dedicated-domain topology' }
+  const nginx = resolveNginxSettings(manifest)
+
+  if (isFrontendSharedSubpath(manifest)) {
+    const snippetPath = resolveSnippetRemotePath(manifest)
+    const requiresConfirmation = nginx.confirmBeforeInstall !== false
+    let approved = yesNginx
+    if (!approved && requiresConfirmation) {
+      approved = await confirmPrompt(
+        `Install nginx snippet for ${manifest.static?.basePath || manifest.name} at ${snippetPath} on ${manifest.server}?`
+      )
+    }
+    if (!approved) {
+      logger.warn('Nginx snippet install skipped — operator did not confirm', { snippetPath })
+      return { skipped: true, reason: 'not confirmed', snippetPath }
+    }
+    const snippetInstall = installNginxSnippet(manifest, { logger, dryRun })
+    return {
+      skipped: false,
+      kind: 'snippet',
+      ...snippetInstall,
+      template: resolveNginxTemplateName(manifest, options),
+    }
+  }
+
+  if (!isPublicVhostTopology(manifest)) {
+    return { skipped: true, reason: 'not a public vhost topology' }
   }
 
   const vhostPath = resolveVhostRemotePath(manifest)
-  const requiresConfirmation = manifest.nginx?.confirmBeforeInstall !== false
-  const failOnError = manifest.nginx?.failOnError === true
+  const requiresConfirmation = nginx.confirmBeforeInstall !== false
+  const failOnError = nginx.failOnError === true
   let approved = yesNginx || setupHttps
 
   if (!approved && requiresConfirmation) {
@@ -216,9 +281,9 @@ async function setupNginxIfNeeded(manifest, options = {}) {
   // Phase 1: ensure bootstrap is live when issuing certs or when certs are not ready yet
   let certsReady = Boolean(sslCertsReady)
 
-  if (!certsReady && !setupHttps && manifest.nginx?.ssl?.enabled) {
+  if (!certsReady && !setupHttps && nginx.ssl?.enabled) {
     const certPath =
-      manifest.nginx.ssl.certificate ||
+      nginx.ssl.certificate ||
       `/etc/letsencrypt/live/${manifest.domain}/fullchain.pem`
     certsReady = remotePathExists(manifest, certPath, { logger })
     if (certsReady) {
@@ -329,9 +394,11 @@ async function setupNginxIfNeeded(manifest, options = {}) {
 }
 
 module.exports = {
+  installNginxSnippet,
   installNginxVhost,
   issueCertificate,
   resolveCertbotEmail,
+  resolveSnippetRemotePath,
   resolveVhostRemotePath,
   setupNginxIfNeeded,
   shouldAutoInstallNginx,

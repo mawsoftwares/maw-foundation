@@ -14,28 +14,38 @@ const { ensureDirSync, writeFileSync } = require('./utils/fileSystem')
 const { renderTemplate } = require('./utils/templateEngine')
 const {
   buildNginxTemplateData,
+  isFrontend,
+  resolveConfigOutputRoot,
   resolveNginxTemplateName,
   resolveBackendTopology,
+  resolveFrontendTopology,
 } = require('./utils/topology')
 
+const FRONTEND_SKIP_TYPES = new Set(['ecosystem', 'dockerCompose', 'dockerfile'])
+
 function buildTemplateData(manifest) {
+  const processManager = manifest.processManager || {}
+  const runtime = manifest.runtime || {}
+  const ports = manifest.ports || {}
   return {
     ...manifest,
-    appName: manifest.processManager.name,
+    appName: processManager.name || `${manifest.name}-app`,
     branch: manifest.branch,
-    backendPort: manifest.ports.backend,
-    frontendPort: manifest.ports.frontend,
+    backendPort: ports.backend || '',
+    frontendPort: ports.frontend || '',
     deployPath: manifest.deployPath,
     domain: manifest.domain,
     envName: manifest.name,
-    execMode: manifest.runtime.execMode,
-    featuresJson: JSON.stringify(manifest.features, null, 2),
-    maxMemoryRestart: manifest.runtime.maxMemoryRestart,
-    runtimeInstances: manifest.runtime.instances,
-    startScript: manifest.runtime.startScript,
+    execMode: runtime.execMode || 'fork',
+    featuresJson: JSON.stringify(manifest.features || {}, null, 2),
+    maxMemoryRestart: runtime.maxMemoryRestart || '256M',
+    runtimeInstances: runtime.instances || 1,
+    startScript: runtime.startScript || '',
+    interpreter: runtime.interpreter || '',
+    interpreterArgs: runtime.interpreterArgs || '',
     server: manifest.server,
     generatedSubPath: manifest.generatedSubPath,
-    deploymentEnvFile: `${manifest.deployPath}/${manifest.generatedSubPath}/.env`,
+    deploymentEnvFile: `${resolveConfigOutputRoot(manifest)}/.env`,
   }
 }
 
@@ -54,7 +64,12 @@ function generateRuntimeFiles(environment, options = {}) {
   })
   const generatedFiles = []
 
+  const frontend = isFrontend(manifest)
+
   for (const [type, templateName] of Object.entries(TEMPLATE_FILE_MAP)) {
+    if (frontend && FRONTEND_SKIP_TYPES.has(type)) {
+      continue
+    }
     const resolvedTemplateName =
       type === 'nginx' ? resolveNginxTemplateName(manifest, options) : templateName
     const templatePath = path.join(TEMPLATES_DIR, resolvedTemplateName)
@@ -66,7 +81,7 @@ function generateRuntimeFiles(environment, options = {}) {
     generatedFiles.push(outputPath)
     logger.info(`Generated ${type} config`, {
       outputPath,
-      topology: resolveBackendTopology(manifest),
+      topology: frontend ? resolveFrontendTopology(manifest) : resolveBackendTopology(manifest),
       template: resolvedTemplateName,
     })
   }

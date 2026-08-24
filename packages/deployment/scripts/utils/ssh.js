@@ -39,6 +39,7 @@ function sshExec(manifest, command, { logger } = {}) {
   if (logger) logger.info(`SSH remote: ${remoteCommand}`)
   execFileSync('ssh', ['-i', key, ...SSH_BASE_ARGS, `${user}@${host}`, remoteCommand], {
     stdio: 'inherit',
+    timeout: 300_000,
   })
 }
 
@@ -51,6 +52,7 @@ function sshExecSoft(manifest, command, { logger } = {}) {
   if (logger) logger.info(`SSH remote: ${remoteCommand}`)
   return spawnSync('ssh', ['-i', key, ...SSH_BASE_ARGS, `${user}@${host}`, remoteCommand], {
     stdio: 'inherit',
+    timeout: 300_000,
   })
 }
 
@@ -70,7 +72,7 @@ function scpUpload(manifest, localPath, remotePath, { logger } = {}) {
   execFileSync(
     'scp',
     ['-i', key, ...SSH_BASE_ARGS, localPath, `${user}@${host}:${remotePath}`],
-    { stdio: 'inherit' }
+    { stdio: 'inherit', timeout: 300_000 }
   )
 }
 
@@ -138,12 +140,64 @@ function scpUploadWithSudoFallback(
   }
 }
 
+/**
+ * Upload a local directory to a remote path (rsync --delete, tar+ssh fallback).
+ * Used to publish a frontend `dist/` folder without cloning the repo on the server.
+ */
+function uploadDirectory(manifest, localDir, remoteDir, { logger } = {}) {
+  if (remoteDir.split('/').filter(Boolean).length < 3) {
+    throw new Error(`Refusing rsync --delete to shallow path: ${remoteDir}`)
+  }
+  const { user, host, key } = buildSshArgs(manifest)
+  sshMkdir(manifest, remoteDir, { logger })
+
+  const sshRemote = `${user}@${host}`
+  const sshCmd = `ssh -i ${shellQuote(key)} ${SSH_BASE_ARGS.join(' ')}`
+  if (logger) {
+    logger.info(`Upload directory: ${localDir} → ${sshRemote}:${remoteDir}`)
+  }
+
+  const rsync = spawnSync(
+    'rsync',
+    [
+      '-az',
+      '--delete',
+      '-e',
+      sshCmd,
+      `${localDir.replace(/\/?$/, '/')}`,
+      `${sshRemote}:${remoteDir.replace(/\/?$/, '/')}`,
+    ],
+    { stdio: 'inherit' }
+  )
+  if (!rsync.error && rsync.status === 0) {
+    return
+  }
+
+  if (logger) {
+    logger.warn('rsync unavailable or failed; falling back to tar-over-ssh', {
+      status: rsync.status,
+      error: rsync.error ? rsync.error.message : undefined,
+    })
+  }
+
+  const remoteExtract = `mkdir -p ${shellQuote(remoteDir)} && tar -C ${shellQuote(remoteDir)} -xzf -`
+  execFileSync(
+    'sh',
+    [
+      '-c',
+      `tar -C ${shellQuote(localDir)} -czf - . | ${sshCmd} ${shellQuote(sshRemote)} ${shellQuote(remoteExtract)}`,
+    ],
+    { stdio: 'inherit' }
+  )
+}
+
 module.exports = {
   sshExec,
   sshExecSoft,
   sshMkdir,
   scpUpload,
   scpUploadWithSudoFallback,
+  uploadDirectory,
   canUseNonInteractiveSudo,
   remotePathExists,
   shellQuote,

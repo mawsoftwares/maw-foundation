@@ -4,6 +4,8 @@ module.exports = {
       name: '{{appName}}',
       script: '{{deployPath}}/{{startScript}}',
       cwd: '{{deployPath}}',
+      interpreter: '{{interpreter}}',
+      interpreter_args: '{{interpreterArgs}}',
       instances: {{runtimeInstances}},
       exec_mode: '{{execMode}}',
       autorestart: true,

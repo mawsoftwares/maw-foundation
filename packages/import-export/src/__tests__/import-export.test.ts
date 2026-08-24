@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { CSVParser } from '../parsers/csv-parser';
 import { JSONParser } from '../parsers/json-parser';
 import { CSVFormatter } from '../formatters/csv-formatter';
@@ -9,8 +9,8 @@ import { FileValidator } from '../validation/file-validator';
 import { InFileDuplicateChecker } from '../duplicates/in-file-checker';
 import { validateTransition, canTransition } from '../imports/state-machine';
 import { sanitizeCellValue, sanitizeFilePath, sanitizeRowValue } from '../security';
-import { ImportStatus, FieldType, ExportFormat } from '../types';
-import type { ImportDefinition, ExportFieldDefinition, FieldDefinition } from '../types';
+import { ImportStatus, FieldType } from '../types';
+import type { ImportDefinition, ExportFieldDefinition } from '../types';
 import { InvalidStateTransitionError } from '../errors';
 
 // ──── Parsers ────
@@ -138,8 +138,8 @@ describe('CSVFormatter', () => {
   it('sanitizes formula injection', () => {
     const rows = [{ name: '=CMD()', email: 'a@b.com' }];
     const csv = formatter.formatRows(rows, fields);
-    expect(csv).not.toContain('=CMD()');
     expect(csv).toContain('\t=CMD()');
+    expect(csv).not.toMatch(/(?<!\t)=CMD\(\)/);
   });
 
   it('handles null/undefined values', () => {

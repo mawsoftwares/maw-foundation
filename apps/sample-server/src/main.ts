@@ -384,7 +384,7 @@ app.get('/audit-logs/export', auth.requireAuth, auth.audienceGuard('admin'), aut
 const uploadsDir = path.resolve(process.cwd(), 'uploads');
 const fileStorage = new LocalFileStorage({
   rootDir: uploadsDir,
-  publicUrlPrefix: `http://localhost:${PORT}/files`,
+  publicUrlPrefix: `${getEnv('PUBLIC_URL', `http://localhost:${PORT}`)}/files`,
 });
 
 const multerUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });

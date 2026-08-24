@@ -45,8 +45,9 @@ Example: `https://apps.mawsoftwares.in/classroom-prod/`
 | `static.basePath` | `"/classroom-prod"` |
 | `static.apiProxy.enabled` | `true` |
 | `static.apiProxy.backendPort` | backend port, e.g. `8200` |
+| `static.localDist` | local folder to upload, usually `"dist"` |
+| `deployPath` | remote folder nginx serves (contents of `dist/`, not a git checkout) |
 | `static.nginx.snippetDir` | snippet folder for that shared domain |
-| `static.assets.verifyAfterBuild` | `true` |
 
 ### 2. Frontend `.env`
 
@@ -75,7 +76,7 @@ Example: `https://apps.mawsoftwares.in/classroom-prod/`
 ### Deploy
 
 ```bash
-# Frontend — rebuild required (VITE_* baked in)
+# Frontend — builds locally, then uploads dist/ (VITE_* baked in)
 npm run deploy -- <env>
 
 # Backend

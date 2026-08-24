@@ -15,7 +15,7 @@ const path = require('path')
 const KNEX_MIGRATE = 'tsx node_modules/knex/bin/cli.js migrate:latest'
 const KNEX_SEED = 'tsx node_modules/knex/bin/cli.js seed:run'
 const KNEX_CLI = 'node_modules/knex/bin/cli.js'
-const NPM_RUN_RE = /\bnpm\s+run(?:\s+-s)?\s+([A-Za-z0-9:_-]+)/g
+const NPM_RUN_RE = /\bnpm\s+run(?:\s+-\w+\s+\S+)*\s+([A-Za-z0-9:_-]+)/g
 
 const DEFAULT_SCRIPTS = {
   migrate: KNEX_MIGRATE,

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "deploy": "node bin/maw-deploy.js",
-    "test": "node scripts/utils/deployEnv.test.mjs"
+    "test": "node scripts/utils/deployEnv.test.mjs && node scripts/utils/topology.test.mjs"
   },
   "keywords": ["deployment", "devops", "pm2", "nginx"]
 }

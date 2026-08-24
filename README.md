@@ -48,6 +48,10 @@ npm install
 npm run verify        # typecheck + dependency-law lint + tests
 npm run sample:server # run the Express proof backend
 npm run sample:web    # run the web proof app
+
+# Deploy (fill deploy/environments/<env>/.env first; --dry-run is safe)
+npm run deploy:server -- staging --dry-run
+npm run deploy:web -- staging --dry-run
 ```
 
 Postman: import [`apps/sample-server/postman/MAW-Foundation.postman_collection.json`](apps/sample-server/postman/MAW-Foundation.postman_collection.json) and the local environment, start the server, then run a **Login as …** request. The collection covers `/auth/*`, `/me`, `/modules`, `/reports`, `/orders`, `/inventory`, `/billing`, `/audit-logs`, `/audit-logs/export`, and `/admin/users` (dynamic `Action_Module` permissions). Tokens are stored as collection variables so protected folders send `Authorization: Bearer …` automatically.

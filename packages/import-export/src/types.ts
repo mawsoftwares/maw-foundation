@@ -96,7 +96,7 @@ export interface FieldDefinition {
   readonly pattern?: RegExp;
 }
 
-export interface ImportDefinition<T = Record<string, unknown>> {
+export interface ImportDefinition {
   readonly name: string;
   readonly fields: readonly FieldDefinition[];
   readonly duplicateKeys?: readonly string[];
@@ -115,7 +115,7 @@ export interface ExportFieldDefinition {
   readonly format?: string;
 }
 
-export interface ExportDefinition<T = Record<string, unknown>> {
+export interface ExportDefinition {
   readonly name: string;
   readonly fields: readonly ExportFieldDefinition[];
   readonly format: ExportFormatValue;

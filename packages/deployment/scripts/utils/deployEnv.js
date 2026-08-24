@@ -68,55 +68,80 @@ function prepareDeployEnv(manifest, envVars) {
     prepared.DB_PORT = String(db.port)
   }
 
-  if (db.name && isPlaceholder(prepared.DB_USER)) {
-    prepared.DB_USER = db.name.trim()
+  if (db.user && isPlaceholder(prepared.DB_USER)) {
+    prepared.DB_USER = db.user.trim()
   }
 
   return prepared
 }
 
-function validateDeployEnv(manifest, envVars) {
+function resolveRequiredEnvKeys(manifest) {
+  const configured = manifest.deployment?.requiredEnv
+  if (Array.isArray(configured) && configured.length > 0) {
+    return configured
+  }
+  if (manifest.kind === 'frontend' || manifest.kind === 'web') {
+    return ['VITE_API_BASE_URL']
+  }
+  return null
+}
+
+function validateDeployEnv(manifest, envVars, options = {}) {
   const errors = []
   const warnings = []
   const db = manifest.database || {}
+  const requiredKeys = resolveRequiredEnvKeys(manifest)
 
-  if (isPlaceholder(envVars.DB_HOST)) {
-    errors.push(
-      `DB_HOST is missing or still a placeholder. Set it in deployment/environments/${manifest.name}/.env ` +
-        `(expected host from app.config.json: "${db.host}")`
-    )
-  }
+  if (requiredKeys) {
+    requiredKeys.forEach((key) => {
+      if (isPlaceholder(envVars[key])) {
+        errors.push(
+          `${key} is missing or still a placeholder. Set it in deploy/environments/${manifest.name}/.env`
+        )
+      }
+    })
+  } else {
+    if (isPlaceholder(envVars.DB_HOST)) {
+      errors.push(
+        `DB_HOST is missing or still a placeholder. Set it in deployment/environments/${manifest.name}/.env ` +
+          `(expected host from app.config.json: "${db.host}")`
+      )
+    }
 
-  if (isPlaceholder(envVars.DB_PASSWORD)) {
-    errors.push(
-      `DB_PASSWORD is missing or still a placeholder. Set the real database password in deployment/environments/${manifest.name}/.env`
-    )
-  }
+    if (isPlaceholder(envVars.DB_PASSWORD)) {
+      errors.push(
+        `DB_PASSWORD is missing or still a placeholder. Set the real database password in deployment/environments/${manifest.name}/.env`
+      )
+    }
 
-  if (isPlaceholder(envVars.SESSION_SECRET)) {
-    errors.push(
-      `SESSION_SECRET is missing or still a placeholder. The app will crash on boot without it. Set it in deployment/environments/${manifest.name}/.env`
-    )
-  }
+    if (isPlaceholder(envVars.SESSION_SECRET)) {
+      errors.push(
+        `SESSION_SECRET is missing or still a placeholder. The app will crash on boot without it. Set it in deployment/environments/${manifest.name}/.env`
+      )
+    }
 
-  if (isPlaceholder(envVars.DB_NAME)) {
-    errors.push(`DB_NAME is missing or still a placeholder in deployment/environments/${manifest.name}/.env`)
-  }
+    if (isPlaceholder(envVars.DB_NAME)) {
+      errors.push(`DB_NAME is missing or still a placeholder in deployment/environments/${manifest.name}/.env`)
+    }
 
-  if (
-    db.host &&
-    envVars.DB_HOST &&
-    !isPlaceholder(envVars.DB_HOST) &&
-    envVars.DB_HOST.trim() !== db.host.trim()
-  ) {
-    errors.push(
-      `DB_HOST "${envVars.DB_HOST}" does not match app.config.json database.host "${db.host}". ` +
-        'Update deployment/environments/' +
-        `${manifest.name}/.env or change database.host in the manifest so they agree.`
-    )
+    if (
+      db.host &&
+      envVars.DB_HOST &&
+      !isPlaceholder(envVars.DB_HOST) &&
+      envVars.DB_HOST.trim() !== db.host.trim()
+    ) {
+      errors.push(
+        `DB_HOST "${envVars.DB_HOST}" does not match app.config.json database.host "${db.host}". ` +
+          'Update deployment/environments/' +
+          `${manifest.name}/.env or change database.host in the manifest so they agree.`
+      )
+    }
   }
 
   if (errors.length > 0) {
+    if (options.allowPlaceholders) {
+      return { ok: false, warnings: warnings.concat(errors) }
+    }
     throw new DeploymentError('Deployment environment validation failed', { errors, warnings })
   }
 

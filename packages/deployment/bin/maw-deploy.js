@@ -42,7 +42,8 @@ if (command === 'info') {
 }
 
 // Forward to the main deploy script for all other commands
-require('../scripts/deploy')
+const { runCli } = require('../scripts/deploy')
+runCli()
 
 // ---------------------------------------------------------------------------
 // init — scaffold a deploy/ folder in the current project

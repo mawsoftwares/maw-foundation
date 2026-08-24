@@ -1,0 +1,74 @@
+{
+  "name": "production",
+  "type": "production",
+  "kind": "backend",
+  "hosting": {
+    "topology": "dedicated-domain"
+  },
+  "branch": "main",
+  "server": "66.116.243.198",
+  "deployPath": "/home/deploy/prod/maw-foundation",
+  "generatedSubPath": "deployment-config",
+  "processManager": {
+    "name": "maw-sample-server-production"
+  },
+  "ports": {
+    "backend": 4103
+  },
+  "domain": "api.maw-foundation.apps.mawsoftwares.in",
+  "nginx": {
+    "enabled": true,
+    "autoInstall": true,
+    "confirmBeforeInstall": true,
+    "failOnError": false,
+    "vhostDir": "/home/deploy/nginx/vhosts-enabled",
+    "sitesEnabled": "/etc/nginx/sites-enabled",
+    "certbot": {
+      "email": "ops@mawsoftwares.in"
+    },
+    "ssl": {
+      "enabled": true,
+      "listenPort": 443,
+      "certificate": "/etc/letsencrypt/live/api.maw-foundation.apps.mawsoftwares.in/fullchain.pem",
+      "certificateKey": "/etc/letsencrypt/live/api.maw-foundation.apps.mawsoftwares.in/privkey.pem",
+      "redirectHttp": true,
+      "acmeChallengeRoot": "/home/deploy/prod/maw-foundation/acme-challenge"
+    }
+  },
+  "database": {
+    "name": "mawfoundation_prod_db",
+    "user": "mawfoundation_prod_user",
+    "host": "103.211.202.236",
+    "port": 5432
+  },
+  "features": {},
+  "runtime": {
+    "startScript": "apps/sample-server/src/main.ts",
+    "interpreter": "node",
+    "interpreterArgs": "--import=tsx",
+    "instances": 1,
+    "execMode": "fork",
+    "maxMemoryRestart": "500M"
+  },
+  "ssh": {
+    "user": "deploy",
+    "keyPath": "~/.ssh/mac_to_doserver",
+    "shellInit": "source ~/.nvm/nvm.sh"
+  },
+  "deployment": {
+    "projectRoot": "/home/deploy/prod/maw-foundation",
+    "repoUrl": "git@github.com:YOUR_ORG/maw-foundation.git",
+    "pm2Command": "pm2 startOrReload {{ecosystemPath}}",
+    "requiredEnv": ["JWT_SECRET"],
+    "commands": {
+      "pull": "git fetch origin && git checkout -B main origin/main",
+      "install": "npm install",
+      "build": "npm run -w @maw/sample-server typecheck",
+      "migrate": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run -w @maw/sample-server db:migrate"
+    }
+  },
+  "health": {
+    "protocol": "http",
+    "endpoint": "/health"
+  }
+}

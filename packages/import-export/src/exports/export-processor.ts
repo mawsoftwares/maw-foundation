@@ -50,20 +50,15 @@ export class ExportProcessor {
       progress: { totalRows, processedRows: 0, percentage: 0 },
     });
 
-    const parts: string[] = [];
-
-    if (formatter.formatHeader) {
-      parts.push(formatter.formatHeader(definition.fields));
-    }
-
+    const allRows: Record<string, unknown>[] = [];
     let processedRows = 0;
 
     for (let offset = 0; offset < totalRows; offset += chunkSize) {
       const rows = await provider.fetch(filters, offset, chunkSize, context);
 
-      const transformedRows = rows.map((row) => this.applyTransforms(row, definition.fields));
-      const formatted = formatter.formatRows(transformedRows, definition.fields);
-      parts.push(formatted);
+      for (const row of rows) {
+        allRows.push(this.applyTransforms(row, definition.fields));
+      }
 
       processedRows += rows.length;
       const percentage = totalRows > 0 ? Math.round((processedRows / totalRows) * 100) : 100;
@@ -84,7 +79,7 @@ export class ExportProcessor {
       }
     }
 
-    const content = parts.join('');
+    const content = formatter.formatRows(allRows, definition.fields, { includeHeaders: true });
     const finalProgress: ExportProgress = {
       totalRows,
       processedRows: totalRows,

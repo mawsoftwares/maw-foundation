@@ -1,0 +1,43 @@
+{
+  "name": "production",
+  "type": "production",
+  "kind": "frontend",
+  "hosting": {
+    "topology": "dedicated-root"
+  },
+  "server": "YOUR_SERVER_IP",
+  "deployPath": "/home/deploy/prod/your-app/web",
+  "generatedSubPath": "deployment-config-web",
+  "domain": "app.your-domain.com",
+  "static": {
+    "localDist": "dist",
+    "nginx": {
+      "enabled": true,
+      "autoInstall": true,
+      "confirmBeforeInstall": true,
+      "vhostDir": "/home/deploy/nginx/vhosts-enabled",
+      "sitesEnabled": "/etc/nginx/sites-enabled",
+      "certbot": {
+        "email": "ops@your-domain.com"
+      },
+      "ssl": {
+        "enabled": true,
+        "listenPort": 443,
+        "certificate": "/etc/letsencrypt/live/app.your-domain.com/fullchain.pem",
+        "certificateKey": "/etc/letsencrypt/live/app.your-domain.com/privkey.pem",
+        "redirectHttp": true,
+        "acmeChallengeRoot": "/home/deploy/prod/your-app/acme-challenge"
+      }
+    }
+  },
+  "ssh": {
+    "user": "deploy",
+    "keyPath": "~/.ssh/id_rsa"
+  },
+  "deployment": {
+    "requiredEnv": ["VITE_API_BASE_URL", "VITE_BASE_PATH"],
+    "commands": {
+      "build": "npm run build"
+    }
+  }
+}

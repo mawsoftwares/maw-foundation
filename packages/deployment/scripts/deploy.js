@@ -2,6 +2,7 @@
 const path = require('path')
 const fs = require('fs')
 const os = require('os')
+const { spawnSync } = require('child_process')
 const { listEnvironments, loadEnvironmentConfig } = require('./utils/config')
 const { createDeploymentLogger } = require('./utils/logger')
 const { validateManifest } = require('./utils/validation')
@@ -11,11 +12,13 @@ const {
   sshMkdir,
   scpUploadWithSudoFallback,
   canUseNonInteractiveSudo,
+  uploadDirectory,
+  shellQuote,
 } = require('./utils/ssh')
 const { generateRuntimeFiles } = require('./generate-runtime-files')
 const { runHealthCheck } = require('./health-check')
 const { appendHistory } = require('./rollback')
-const { HISTORY_DIR, GENERATED_FILE_MAP } = require('./utils/constants')
+const { HISTORY_DIR, GENERATED_FILE_MAP, PROJECT_ROOT } = require('./utils/constants')
 const {
   formatEnvFile,
   parseEnvFile,
@@ -23,12 +26,20 @@ const {
   validateDeployEnv,
 } = require('./utils/deployEnv')
 const { setupNginxIfNeeded } = require('./utils/nginxInstall')
-const { collectNpmRunNames, ensurePackageScripts } = require('./ensure-package-scripts')
+const { collectNpmRunNames } = require('./ensure-package-scripts')
+const {
+  isFrontend,
+  resolveConfigOutputRoot,
+  resolveLocalDist,
+  resolveStaticRoot,
+} = require('./utils/topology')
 
 function printHelp() {
   console.log('Usage:')
+  console.log(
+    '  npx @maw/deploy <environment> [--dry-run] [--skip-nginx] [--skip-build] [--yes-nginx] [--ssl-ready] [--setup-https] [--project-root <path>]'
+  )
   console.log('  npx @maw/deploy list')
-  console.log('  npx @maw/deploy <environment> [--dry-run] [--skip-nginx] [--yes-nginx] [--ssl-ready] [--setup-https]')
   console.log('  npx @maw/deploy init                     Scaffold a deploy/ folder in the current project')
   console.log('  npx @maw/deploy info                     Show resolved paths and available environments')
   console.log('')
@@ -38,6 +49,7 @@ function printHelp() {
   console.log('  --yes-nginx     Install/reload nginx vhost without prompting')
   console.log('  --ssl-ready     Use HTTPS nginx template (certs already issued)')
   console.log('  --skip-nginx    Skip nginx install (app deploy only)')
+  console.log('  --skip-build    Skip frontend local build (upload existing dist) or backend remote build')
   console.log('  --project-root  Override project root path (default: auto-detected)')
 }
 
@@ -52,11 +64,28 @@ function executeStep({ dryRun, logger, title, command, manifest }) {
 }
 
 function parseArguments(argv) {
-  const [command, ...flags] = argv.slice(2)
+  const args = argv.slice(2)
+  let command
+  const flags = []
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]
+    if (arg === '--project-root') {
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--')) {
+      flags.push(arg)
+      continue
+    }
+    if (!command) {
+      command = arg
+    }
+  }
   return {
     command,
     dryRun: flags.includes('--dry-run'),
     skipNginx: flags.includes('--skip-nginx'),
+    skipBuild: flags.includes('--skip-build'),
     yesNginx: flags.includes('--yes-nginx') || flags.includes('--setup-https'),
     sslCertsReady: flags.includes('--ssl-ready'),
     setupHttps: flags.includes('--setup-https'),
@@ -147,24 +176,69 @@ function ensureRemoteGitRepo(manifest, { logger, dryRun }) {
   initGitInExistingDirectory(manifest, remoteDir, repoUrl, branch, { logger })
 }
 
+function runLocalFrontendBuild(manifest, envVars, { logger, dryRun, skipBuild }) {
+  const localDist = resolveLocalDist(manifest, PROJECT_ROOT)
+  const command = manifest.deployment?.commands?.build || 'npm run build'
+
+  if (skipBuild) {
+    logger.info('Skipping local frontend build (--skip-build)', { localDist })
+  } else {
+    logger.info('STEP: Build frontend locally', {
+      command,
+      cwd: PROJECT_ROOT,
+      output: localDist,
+    })
+    if (dryRun) {
+      logger.info('DRY RUN: skipped local frontend build')
+    } else {
+      const result = spawnSync(command, {
+        shell: true,
+        cwd: PROJECT_ROOT,
+        stdio: 'inherit',
+        env: { ...process.env, ...envVars },
+      })
+      if (result.status !== 0) {
+        throw new Error(`Local frontend build failed (exit ${result.status ?? 'null'})`)
+      }
+    }
+  }
+
+  if (!dryRun) {
+    const indexHtml = path.join(localDist, 'index.html')
+    if (!fs.existsSync(indexHtml)) {
+      throw new Error(`Frontend dist is missing index.html at ${indexHtml}`)
+    }
+  }
+
+  return localDist
+}
+
 async function deploy(environment, options = {}) {
   const dryRun = Boolean(options.dryRun)
   const skipNginx = Boolean(options.skipNginx)
+  const skipBuild = Boolean(options.skipBuild)
   const yesNginx = Boolean(options.yesNginx)
   const sslCertsReady = Boolean(options.sslCertsReady)
   const setupHttps = Boolean(options.setupHttps)
   const logger = createDeploymentLogger(environment)
   const startedAt = new Date().toISOString()
   const availableEnvironments = listEnvironments()
-  const { manifest, envFilePath } = loadEnvironmentConfig(environment)
+  const { manifest, envFilePath, usingExampleEnv } = loadEnvironmentConfig(environment)
   validateManifest(manifest, availableEnvironments)
+
+  const frontend = isFrontend(manifest)
+  if (usingExampleEnv) {
+    logger.warn('Using .env.example because .env is missing. Copy it to .env before a real deploy.')
+  }
 
   const rawEnvVars = parseEnvFile(envFilePath)
   const preparedEnvVars = prepareDeployEnv(manifest, rawEnvVars)
-  const envValidation = validateDeployEnv(manifest, preparedEnvVars)
+  const envValidation = validateDeployEnv(manifest, preparedEnvVars, {
+    allowPlaceholders: dryRun,
+  })
   envValidation.warnings.forEach((warning) => logger.warn(warning))
 
-  const preparedEnvPath = path.join(os.tmpdir(), `backend-deploy-${environment}-${Date.now()}.env`)
+  const preparedEnvPath = path.join(os.tmpdir(), `deploy-env-${environment}-${Date.now()}.env`)
   fs.writeFileSync(preparedEnvPath, formatEnvFile(preparedEnvVars), 'utf8')
 
   logger.info('Prepared deployment environment', {
@@ -180,8 +254,8 @@ async function deploy(environment, options = {}) {
     sslCertsReady,
   })
   const deployRoot = manifest.deployPath
-  const configOutputRoot = path.join(deployRoot, manifest.generatedSubPath)
-  const ecosystemPath = path.join(configOutputRoot, 'ecosystem.config.js')
+  const configOutputRoot = resolveConfigOutputRoot(manifest)
+  const ecosystemPath = path.posix.join(configOutputRoot, 'ecosystem.config.js')
   let sudoAvailable = false
   const deploymentRecord = {
     id: `deploy-${Date.now()}`,
@@ -199,161 +273,216 @@ async function deploy(environment, options = {}) {
     scpUploadWithSudoFallback(
       manifest,
       localNginxPath,
-      path.join(configOutputRoot, GENERATED_FILE_MAP.nginx),
+      path.posix.join(configOutputRoot, GENERATED_FILE_MAP.nginx),
       { logger, canUseSudoFallback: sudoAvailable }
     )
   }
 
   try {
-    const plannedSteps = [
-      'load manifest',
-      'validate config',
-      'generate runtime files',
-      'ensure git repository',
-      'upload env/config',
-      'pull configured branch',
-      'install dependencies',
-      'build project',
-      'ensure package.json migrate/seed scripts',
-      'test database connectivity',
-      'run migrations',
-      'restart PM2',
-      'run health check',
-      'optional nginx / HTTPS setup',
-    ]
-    logger.info('Deployment plan', { steps: plannedSteps, dryRun, setupHttps, sslCertsReady })
+    const plannedSteps = frontend
+      ? [
+          'load manifest',
+          'validate config',
+          'generate nginx config',
+          skipBuild ? 'skip local build' : 'build locally',
+          'upload dist/',
+          'upload nginx config',
+          'optional nginx / HTTPS setup',
+        ]
+      : [
+          'load manifest',
+          'validate config',
+          'generate runtime files',
+          'ensure git repository',
+          'upload env/config',
+          'pull configured branch',
+          'install dependencies',
+          skipBuild ? 'skip build' : 'build project',
+          'ensure package.json migrate/seed scripts',
+          'test database connectivity',
+          'run migrations',
+          'restart PM2',
+          'run health check',
+          'optional nginx / HTTPS setup',
+        ]
+    logger.info('Deployment plan', {
+      kind: frontend ? 'frontend' : 'backend',
+      steps: plannedSteps,
+      dryRun,
+      setupHttps,
+      sslCertsReady,
+    })
 
-    ensureRemoteGitRepo(manifest, { logger, dryRun })
+    if (frontend) {
+      const localDist = runLocalFrontendBuild(manifest, preparedEnvVars, {
+        logger,
+        dryRun,
+        skipBuild,
+      })
+      const staticRoot = resolveStaticRoot(manifest)
 
-    if (!dryRun) {
-      sudoAvailable = canUseNonInteractiveSudo(manifest, { logger })
-      if (sudoAvailable) {
-        logger.info('Preflight: non-interactive sudo is available for upload fallback')
+      if (dryRun) {
+        logger.info('DRY RUN: skipped upload dist/ and nginx config', {
+          localDist,
+          staticRoot,
+          configOutputRoot,
+          generatedPreview: generated.generatedFiles,
+        })
       } else {
-        logger.warn(
-          'Preflight: non-interactive sudo is not available; uploads require direct write access; nginx enable/reload/certbot need passwordless sudo'
-        )
+        sudoAvailable = canUseNonInteractiveSudo(manifest, { logger })
+        if (sudoAvailable) {
+          logger.info('Preflight: non-interactive sudo is available for upload fallback')
+        } else {
+          logger.warn(
+            'Preflight: non-interactive sudo is not available; uploads require direct write access; nginx enable/reload/certbot need passwordless sudo'
+          )
+        }
+
+        logger.info('Creating remote config directory', { path: configOutputRoot })
+        sshMkdir(manifest, configOutputRoot, { logger })
+        generated.generatedFiles.forEach((filePath) => {
+          scpUploadWithSudoFallback(
+            manifest,
+            filePath,
+            path.posix.join(configOutputRoot, path.basename(filePath)),
+            { logger, canUseSudoFallback: sudoAvailable }
+          )
+        })
+        scpUploadWithSudoFallback(manifest, preparedEnvPath, path.posix.join(configOutputRoot, '.env'), {
+          logger,
+          canUseSudoFallback: sudoAvailable,
+        })
+
+        logger.info('Uploading local dist/ to server', { localDist, staticRoot })
+        uploadDirectory(manifest, localDist, staticRoot, { logger })
+        sshExec(manifest, `test -f ${shellQuote(`${staticRoot}/index.html`)}`, { logger })
+        logger.info('Published frontend dist', { staticRoot })
+      }
+    } else {
+      ensureRemoteGitRepo(manifest, { logger, dryRun })
+
+      if (!dryRun) {
+        sudoAvailable = canUseNonInteractiveSudo(manifest, { logger })
+        if (sudoAvailable) {
+          logger.info('Preflight: non-interactive sudo is available for upload fallback')
+        } else {
+          logger.warn(
+            'Preflight: non-interactive sudo is not available; uploads require direct write access; nginx enable/reload/certbot need passwordless sudo'
+          )
+        }
+
+        logger.info('Creating remote deployment-config directory', { path: configOutputRoot })
+        sshMkdir(manifest, configOutputRoot, { logger })
+        generated.generatedFiles.forEach((filePath) => {
+          scpUploadWithSudoFallback(
+            manifest,
+            filePath,
+            path.posix.join(configOutputRoot, path.basename(filePath)),
+            { logger, canUseSudoFallback: sudoAvailable }
+          )
+        })
+        scpUploadWithSudoFallback(manifest, preparedEnvPath, path.posix.join(configOutputRoot, '.env'), {
+          logger,
+          canUseSudoFallback: sudoAvailable,
+        })
+        logger.info('Uploaded environment and generated config files', { target: configOutputRoot })
+      } else {
+        logger.info('DRY RUN: skipped upload env/config step', {
+          target: configOutputRoot,
+          generatedPreview: generated.generatedFiles,
+          preparedDbHost: preparedEnvVars.DB_HOST,
+        })
       }
 
-      logger.info('Creating remote deployment-config directory', { path: configOutputRoot })
-      sshMkdir(manifest, configOutputRoot, { logger })
-      generated.generatedFiles.forEach((filePath) => {
-        scpUploadWithSudoFallback(
-          manifest,
-          filePath,
-          path.join(configOutputRoot, path.basename(filePath)),
-          { logger, canUseSudoFallback: sudoAvailable }
-        )
-      })
-      scpUploadWithSudoFallback(manifest, preparedEnvPath, path.join(configOutputRoot, '.env'), {
-        logger,
-        canUseSudoFallback: sudoAvailable,
-      })
-      logger.info('Uploaded environment and generated config files', { target: configOutputRoot })
-    } else {
-      logger.info('DRY RUN: skipped upload env/config step', {
-        target: configOutputRoot,
-        generatedPreview: generated.generatedFiles,
-        preparedDbHost: preparedEnvVars.DB_HOST,
-      })
-    }
-
-    executeStep({
-      dryRun,
-      logger,
-      manifest,
-      title: `Pull branch ${manifest.branch}`,
-      command: manifest.deployment.commands.pull,
-    })
-    executeStep({
-      dryRun,
-      logger,
-      manifest,
-      title: 'Install dependencies',
-      command: manifest.deployment.commands.install,
-    })
-    executeStep({
-      dryRun,
-      logger,
-      manifest,
-      title: 'Build project',
-      command: manifest.deployment.commands.build,
-    })
-
-    const extraScriptNames = [
-      ...collectNpmRunNames(manifest.deployment.commands),
-      'db:test',
-    ]
-    const localScriptSync = ensurePackageScripts(path.resolve(__dirname, '..', '..'), {
-      extraScriptNames,
-    })
-    if (localScriptSync.added.length > 0) {
-      logger.info('Added missing npm scripts to local package.json', {
-        added: localScriptSync.added,
-      })
-    }
-
-    const ensureScriptPath = path.join(__dirname, 'ensure-package-scripts.js')
-    logger.info('STEP: Ensure remote package.json has migrate/seed scripts', {
-      dryRun,
-      extraScriptNames,
-    })
-    if (dryRun) {
-      logger.info('DRY RUN: skipped remote package.json script ensure step')
-    } else {
-      const remoteEnsurePath = `/tmp/ensure-package-scripts-${Date.now()}.js`
-      scpUploadWithSudoFallback(manifest, ensureScriptPath, remoteEnsurePath, {
-        logger,
-        canUseSudoFallback: sudoAvailable,
-      })
-      const extraArg = extraScriptNames.filter(Boolean).join(',')
-      sshExec(
-        manifest,
-        `node ${remoteEnsurePath} --root ${manifest.deployment.projectRoot}${extraArg ? ` --scripts ${extraArg}` : ''} && rm -f ${remoteEnsurePath}`,
-        { logger }
-      )
-    }
-
-    executeStep({
-      dryRun,
-      logger,
-      manifest,
-      title: 'Test database connectivity',
-      command: `node deployment/scripts/run-with-deploy-env.js ${manifest.generatedSubPath}/.env npm run db:test`,
-    })
-    executeStep({
-      dryRun,
-      logger,
-      manifest,
-      title: 'Run database migrations',
-      command: manifest.deployment.commands.migrate,
-    })
-    if (
-      typeof manifest.deployment.commands.seed === 'string' &&
-      manifest.deployment.commands.seed.trim()
-    ) {
       executeStep({
         dryRun,
         logger,
         manifest,
-        title: 'Run database seeds',
-        command: manifest.deployment.commands.seed,
+        title: `Pull branch ${manifest.branch}`,
+        command: manifest.deployment.commands.pull,
       })
-    }
-    executeStep({
-      dryRun,
-      logger,
-      manifest,
-      title: 'Restart PM2 process',
-      command: manifest.deployment.pm2Command.replace('{{ecosystemPath}}', ecosystemPath),
-    })
+      executeStep({
+        dryRun,
+        logger,
+        manifest,
+        title: 'Install dependencies',
+        command: manifest.deployment.commands.install,
+      })
+      if (skipBuild) {
+        logger.info('Skipping build step (--skip-build)')
+      } else {
+        executeStep({
+          dryRun,
+          logger,
+          manifest,
+          title: 'Build project',
+          command: manifest.deployment.commands.build,
+        })
+      }
 
-    if (dryRun) {
-      logger.info('DRY RUN: skipped health check')
-    } else {
-      const health = await runHealthCheck(manifest, { logger })
-      logger.info('Health check passed', health)
-      deploymentRecord.healthCheck = health
+      const extraScriptNames = [...collectNpmRunNames(manifest.deployment.commands), 'db:test']
+      const ensureScriptPath = path.join(__dirname, 'ensure-package-scripts.js')
+      logger.info('STEP: Ensure remote package.json has migrate/seed scripts', {
+        dryRun,
+        extraScriptNames,
+      })
+      if (dryRun) {
+        logger.info('DRY RUN: skipped remote package.json script ensure step')
+      } else {
+        const remoteEnsurePath = `/tmp/ensure-package-scripts-${Date.now()}.js`
+        scpUploadWithSudoFallback(manifest, ensureScriptPath, remoteEnsurePath, {
+          logger,
+          canUseSudoFallback: sudoAvailable,
+        })
+        const extraArg = extraScriptNames.filter(Boolean).join(',')
+        sshExec(
+          manifest,
+          `node ${remoteEnsurePath} --root ${manifest.deployment.projectRoot}${extraArg ? ` --scripts ${extraArg}` : ''} && rm -f ${remoteEnsurePath}`,
+          { logger }
+        )
+      }
+
+      executeStep({
+        dryRun,
+        logger,
+        manifest,
+        title: 'Test database connectivity',
+        command: `node packages/deployment/scripts/run-with-deploy-env.js ${manifest.generatedSubPath}/.env npm run db:test`,
+      })
+      executeStep({
+        dryRun,
+        logger,
+        manifest,
+        title: 'Run database migrations',
+        command: manifest.deployment.commands.migrate,
+      })
+      if (
+        typeof manifest.deployment.commands.seed === 'string' &&
+        manifest.deployment.commands.seed.trim()
+      ) {
+        executeStep({
+          dryRun,
+          logger,
+          manifest,
+          title: 'Run database seeds',
+          command: manifest.deployment.commands.seed,
+        })
+      }
+      executeStep({
+        dryRun,
+        logger,
+        manifest,
+        title: 'Restart PM2 process',
+        command: manifest.deployment.pm2Command.replace('{{ecosystemPath}}', ecosystemPath),
+      })
+
+      if (dryRun) {
+        logger.info('DRY RUN: skipped health check')
+      } else {
+        const health = await runHealthCheck(manifest, { logger })
+        logger.info('Health check passed', health)
+        deploymentRecord.healthCheck = health
+      }
     }
 
     const nginxResult = await setupNginxIfNeeded(manifest, {
@@ -394,9 +523,8 @@ async function deploy(environment, options = {}) {
 }
 
 async function runCli() {
-  const { command, dryRun, skipNginx, yesNginx, sslCertsReady, setupHttps } = parseArguments(
-    process.argv
-  )
+  const { command, dryRun, skipNginx, skipBuild, yesNginx, sslCertsReady, setupHttps } =
+    parseArguments(process.argv)
 
   if (!command) {
     printHelp()
@@ -416,7 +544,7 @@ async function runCli() {
   }
 
   try {
-    await deploy(command, { dryRun, skipNginx, yesNginx, sslCertsReady, setupHttps })
+    await deploy(command, { dryRun, skipNginx, skipBuild, yesNginx, sslCertsReady, setupHttps })
     console.log(`Deployment command completed for "${command}"${dryRun ? ' (dry run)' : ''}.`)
   } catch (error) {
     console.error(error.message)
@@ -430,4 +558,5 @@ if (require.main === module) {
 
 module.exports = {
   deploy,
+  runCli,
 }

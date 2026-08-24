@@ -9,7 +9,6 @@ import type {
 import { ExportStatus } from '../types';
 import { ExportError, ProcessingError } from '../errors';
 import { ImportExportEvent } from '../events';
-import type { IFormatter } from '../formatters/types';
 import { FormatterRegistry, createDefaultFormatters } from '../formatters/registry';
 import type { IImportExportHistory } from '../history/types';
 import type { IExportDataProvider } from './types';

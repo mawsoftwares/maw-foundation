@@ -3,7 +3,7 @@ import { ImportService } from '../imports/import-service';
 import { ExportService } from '../exports/export-service';
 import { InMemoryHistoryStore } from '../history/in-memory-store';
 import { ImportStatus, ExportStatus, FieldType, ExportFormat } from '../types';
-import type { ImportDefinition, ExportDefinition, OperationContext, RowError } from '../types';
+import type { ImportDefinition, ExportDefinition, OperationContext } from '../types';
 import type { IImportRowProcessor } from '../imports/types';
 import type { IExportDataProvider } from '../exports/types';
 
@@ -135,7 +135,7 @@ describe('Import — end-to-end lifecycle', () => {
     };
 
     const history = new InMemoryHistoryStore();
-    const service = new ImportService({ history, eventBus: eventBus as any });
+    const service = new ImportService({ history, eventBus: eventBus as unknown as import('@maw/sdk').EventBus });
     const processor = createProcessor();
 
     const csv = 'First Name,Last Name,Email\nAlice,A,a@test.com';
@@ -253,7 +253,7 @@ describe('Export — end-to-end lifecycle', () => {
     };
 
     const history = new InMemoryHistoryStore();
-    const service = new ExportService({ history, eventBus: eventBus as any });
+    const service = new ExportService({ history, eventBus: eventBus as unknown as import('@maw/sdk').EventBus });
     const provider = createProvider(sampleData);
 
     const record = await service.createExport(exportDef, context);

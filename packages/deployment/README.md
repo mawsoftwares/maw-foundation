@@ -57,6 +57,7 @@ npx @maw/deploy <environment> --setup-https    # First-time HTTPS setup
 npx @maw/deploy <environment> --ssl-ready      # Use HTTPS template (certs exist)
 npx @maw/deploy <environment> --skip-nginx     # App deploy only, skip nginx
 npx @maw/deploy <environment> --yes-nginx      # Auto-confirm nginx install
+npx @maw/deploy <environment> --skip-build     # Skip frontend local build or backend remote build
 ```
 
 ## Environment contract
@@ -66,12 +67,39 @@ Each environment folder must have:
 - **`app.config.json`** — the deployment manifest
 - **`.env`** — environment variables (secrets)
 
-Required manifest fields: `name`, `type`, `branch`, `server`, `deployPath`,
-`generatedSubPath`, `domain`, `processManager.name`, `ports.backend`,
-`database.name`, `database.host`, `database.port`, `features`, `runtime.*`,
-`deployment.projectRoot`, `deployment.pm2Command`, `deployment.commands.*`
+Required manifest fields: `name`, `type`, `server`, `deployPath`,
+`generatedSubPath`, `domain`. Backend also needs `branch`, `processManager.name`,
+`ports.backend`, `database.*`, `features`, `runtime.*`, and
+`deployment.pm2Command` plus `commands.migrate`. Frontend (`kind: "frontend"`)
+builds locally and uploads `dist/` only — no git clone, npm install, or Node
+runtime on the server. It needs `deployment.commands.build` (optional, defaults
+to `npm run build`) plus static/nginx fields for its topology.
 
-See `topology/` for sample configs (subpath vs dedicated domain).
+See `topology/` for sample configs (subpath vs dedicated domain), including
+frontend samples under `topology/samples/frontend/`.
+
+## Sample apps in this repo
+
+`apps/sample-server` and `apps/sample-web` each have a `deploy/` folder.
+
+```bash
+# Preview (no SSH)
+npm run deploy:server -- staging --dry-run
+npm run deploy:web -- staging --dry-run
+
+# After filling deploy/environments/<env>/.env and SSH/server fields:
+npm run deploy:server -- staging
+npm run deploy:web -- staging --setup-https
+```
+
+| Env | Topology | Web | API |
+| --- | --- | --- | --- |
+| **staging** | shared subpath | `https://apps.mawsoftwares.in/maw-foundation/` | `https://apps.mawsoftwares.in/maw-foundation/api` |
+| **production** | dedicated domains | `https://maw-foundation.apps.mawsoftwares.in` | `https://api.maw-foundation.apps.mawsoftwares.in` |
+
+Server: `66.116.243.198`. Backend needs a real `deployment.repoUrl`. Frontend
+does not — copy `.env.example` → `.env` (`VITE_*` for web, `JWT_SECRET` /
+`DATABASE_URL` for API) and run the deploy command.
 
 ## Design principles
 

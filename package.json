@@ -29,7 +29,9 @@
     "test": "vitest run",
     "verify": "npm run typecheck && npm run lint && npm run test",
     "sample:server": "npm run -w @maw/sample-server dev",
-    "sample:web": "npm run -w @maw/sample-web dev"
+    "sample:web": "npm run -w @maw/sample-web dev",
+    "deploy:server": "node packages/deployment/bin/maw-deploy.js --project-root apps/sample-server",
+    "deploy:web": "node packages/deployment/bin/maw-deploy.js --project-root apps/sample-web"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

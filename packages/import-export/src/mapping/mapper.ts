@@ -1,4 +1,4 @@
-import type { ImportDefinition, FieldDefinition, FieldTypeValue } from '../types';
+import type { ImportDefinition, FieldTypeValue } from '../types';
 import { FieldType } from '../types';
 import type { ParsedRow } from '../parsers/types';
 import type { MappingConfig, MappingResult } from './types';
