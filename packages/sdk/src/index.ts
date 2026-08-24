@@ -59,5 +59,11 @@ export * from './domains/index';
 // Branding (tenant brand configuration engine)
 export * from './branding/index';
 
+// Communication (notification channels, providers, templates)
+export * from './communication/index';
+
+// Queue (background jobs, workers, retry policies)
+export * from './queue/index';
+
 // i18n
 export * as i18n from './i18n/index';

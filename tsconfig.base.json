@@ -37,7 +37,11 @@
       "@maw/ui-web": ["packages/ui-web/src/index.ts"],
       "@maw/ui-web/*": ["packages/ui-web/src/*"],
       "@maw/ui-native": ["packages/ui-native/src/index.ts"],
-      "@maw/ui-native/*": ["packages/ui-native/src/*"]
+      "@maw/ui-native/*": ["packages/ui-native/src/*"],
+      "@maw/communication": ["packages/communication/src/index.ts"],
+      "@maw/communication/*": ["packages/communication/src/*"],
+      "@maw/queue": ["packages/queue/src/index.ts"],
+      "@maw/queue/*": ["packages/queue/src/*"]
     }
   }
 }

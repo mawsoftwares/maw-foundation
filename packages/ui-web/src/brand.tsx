@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { BrandConfig, IBrandConfigProvider } from '@maw/sdk';
 import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@maw/sdk';
 import { brandConfigToThemeOverrides, createTheme, tokensToCssVars, type Theme } from '@maw/theme';
+import { ThemeProvider } from './theme';
 
 export type BrandColorMode = 'light' | 'dark' | 'system';
 
@@ -148,11 +149,19 @@ export function BrandProvider({
     [brand, theme, colorMode, isDark, loading, error, setColorMode, toggleColorMode, switchTenant],
   );
 
+  const themeOverrides = useMemo(() => brandConfigToThemeOverrides(brand), [brand]);
+
   if (loading && loadingFallback) {
     return <>{loadingFallback}</>;
   }
 
-  return <BrandContext.Provider value={value}>{children}</BrandContext.Provider>;
+  return (
+    <BrandContext.Provider value={value}>
+      <ThemeProvider overrides={themeOverrides} defaultColorMode={colorMode}>
+        {children}
+      </ThemeProvider>
+    </BrandContext.Provider>
+  );
 }
 
 export function useBrand(): BrandContextValue {
