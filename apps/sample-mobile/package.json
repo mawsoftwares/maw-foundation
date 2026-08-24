@@ -1,0 +1,33 @@
+{
+  "name": "@maw/sample-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo start --ios",
+    "android": "expo start --android",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@maw/sdk": "*",
+    "@maw/theme": "*",
+    "@maw/platform": "*",
+    "@maw/api-client": "*",
+    "@maw/rbac-core": "*",
+    "@maw/ui-native": "*",
+    "expo": "~52.0.0",
+    "expo-router": "~4.0.0",
+    "expo-secure-store": "~14.0.0",
+    "expo-status-bar": "~2.0.0",
+    "@react-native-community/netinfo": "~11.4.0",
+    "react": "18.3.1",
+    "react-native": "0.76.9",
+    "react-native-safe-area-context": "~5.0.0",
+    "react-native-screens": "~4.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.0",
+    "typescript": "~5.7.0"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@maw/ui-native",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-native": "*",
+    "expo-secure-store": "*",
+    "@react-native-community/netinfo": "*"
+  },
+  "dependencies": {
+    "@maw/sdk": "*",
+    "@maw/theme": "*",
+    "@maw/api-client": "*",
+    "@maw/rbac-core": "*",
+    "@maw/platform": "*"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

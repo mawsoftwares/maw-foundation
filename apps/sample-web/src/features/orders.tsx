@@ -1,5 +1,6 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import { ApiError } from '@maw/api-client';
+import type { Order } from '@maw/sdk';
 import {
   ListPage,
   DataTable,
@@ -16,13 +17,6 @@ import {
   type SortState,
 } from '@maw/ui-web';
 import { client } from '../api';
-
-interface Order {
-  id: string;
-  item: string;
-  qty: number;
-  status?: string;
-}
 
 const COLUMNS: ColumnDef<Order>[] = [
   { key: 'id', header: 'Order ID', sortable: true, width: 100 },

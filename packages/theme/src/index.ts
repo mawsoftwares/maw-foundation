@@ -223,6 +223,106 @@ export const defaultTheme: Theme = createTheme();
 // CSS custom properties generation
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// React Native style generation
+// ---------------------------------------------------------------------------
+
+export interface RNShadow {
+  readonly shadowColor: string;
+  readonly shadowOffset: { readonly width: number; readonly height: number };
+  readonly shadowOpacity: number;
+  readonly shadowRadius: number;
+  readonly elevation: number;
+}
+
+export interface RNStyles {
+  readonly colors: Palette;
+  readonly spacing: { readonly [K in keyof typeof spacing]: number };
+  readonly radius: { readonly [K in keyof typeof radius]: number };
+  readonly shadows: { readonly [K in keyof typeof shadows]: RNShadow };
+  readonly typography: {
+    readonly fontFamily: string;
+    readonly monoFamily: string;
+    readonly size: { readonly [K in keyof typeof typography.size]: number };
+    readonly weight: { readonly [K in keyof typeof typography.weight]: string };
+    readonly lineHeight: { readonly [K in keyof typeof typography.lineHeight]: number };
+  };
+}
+
+const SHADOW_NONE: RNShadow = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 0 },
+  shadowOpacity: 0,
+  shadowRadius: 0,
+  elevation: 0,
+};
+
+export function parseCSSShadow(shadow: string): RNShadow {
+  if (shadow === 'none') return SHADOW_NONE;
+
+  const isInset = shadow.startsWith('inset');
+  const parts = shadow.replace(/^inset\s*/, '');
+
+  const colorMatch = parts.match(/rgba?\([^)]+\)/);
+  const shadowColor = colorMatch?.[0] ?? '#000';
+
+  const nums = parts.replace(/rgba?\([^)]+\)/, '').trim().split(/\s+/).map(parseFloat).filter((n) => !isNaN(n));
+  const offsetX = nums[0] ?? 0;
+  const offsetY = nums[1] ?? 0;
+  const blur = nums[2] ?? 0;
+
+  let opacity = 0.1;
+  const opacityMatch = shadowColor.match(/,\s*([\d.]+)\s*\)/);
+  if (opacityMatch) opacity = parseFloat(opacityMatch[1] ?? '0.1');
+
+  return {
+    shadowColor: shadowColor.replace(/,\s*[\d.]+\s*\)/, ', 1)'),
+    shadowOffset: { width: isInset ? 0 : offsetX, height: isInset ? 0 : offsetY },
+    shadowOpacity: isInset ? 0 : opacity,
+    shadowRadius: blur / 2,
+    elevation: isInset ? 0 : Math.max(1, Math.round(blur / 2)),
+  };
+}
+
+function stripFontFallbacks(family: string): string {
+  const first = family.split(',')[0]?.trim() ?? 'System';
+  return first.replace(/^['"]|['"]$/g, '');
+}
+
+export function tokensToRNStyles(dark = false, theme?: Theme): RNStyles {
+  const t = theme ?? defaultTheme;
+  const p = dark ? t.dark : t.light;
+
+  const rnShadows = {} as Record<string, RNShadow>;
+  for (const [k, v] of Object.entries(t.shadows)) {
+    const first = v.split(/,(?![^(]*\))/).map((s) => s.trim())[0] ?? v;
+    rnShadows[k] = parseCSSShadow(first);
+  }
+
+  return {
+    colors: p,
+    spacing: t.spacing,
+    radius: t.radius,
+    shadows: rnShadows as RNStyles['shadows'],
+    typography: {
+      fontFamily: stripFontFallbacks(t.typography.fontFamily),
+      monoFamily: stripFontFallbacks(t.typography.monoFamily),
+      size: t.typography.size,
+      weight: {
+        regular: '400',
+        medium: '500',
+        semibold: '600',
+        bold: '700',
+      },
+      lineHeight: t.typography.lineHeight,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CSS custom properties generation
+// ---------------------------------------------------------------------------
+
 export function tokensToCssVars(dark = false, theme?: Theme): Record<string, string> {
   const t = theme ?? defaultTheme;
   const p = dark ? t.dark : t.light;

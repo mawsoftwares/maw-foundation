@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "MAW Sample",
+    "slug": "maw-sample",
+    "version": "1.0.0",
+    "scheme": "maw-sample",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.maw.sample"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4f46e5"
+      },
+      "package": "com.maw.sample"
+    },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}

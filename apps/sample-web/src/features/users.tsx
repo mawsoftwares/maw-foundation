@@ -1,11 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { ApiError } from '@maw/api-client';
+import type { User } from '@maw/sdk';
 import { ListPage, DataTable, Avatar, Button, useToast, ErrorState, PageLoader, type ColumnDef } from '@maw/ui-web';
 import { client } from '../api';
-
-interface User {
-  email: string;
-}
 
 const COLUMNS: ColumnDef<User>[] = [
   {

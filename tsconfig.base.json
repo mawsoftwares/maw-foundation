@@ -21,6 +21,7 @@
       "@maw/sdk/*": ["packages/sdk/src/*"],
       "@maw/platform": ["packages/platform/src/index.ts"],
       "@maw/platform/*": ["packages/platform/src/*"],
+      "@maw/platform/native": ["packages/platform/src/native/index.ts"],
       "@maw/rbac-core": ["packages/rbac-core/src/index.ts"],
       "@maw/rbac-core/*": ["packages/rbac-core/src/*"],
       "@maw/auth-core": ["packages/auth-core/src/index.ts"],

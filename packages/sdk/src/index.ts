@@ -53,5 +53,8 @@ export * from './data-grid/index';
 // Dynamic Form
 export * from './dynamic-form/index';
 
+// Domains (shared entity types)
+export * from './domains/index';
+
 // i18n
 export * as i18n from './i18n/index';
