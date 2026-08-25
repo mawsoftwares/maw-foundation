@@ -15,4 +15,10 @@ export interface User {
   readonly name?: string;
   readonly tenantId?: string;
   readonly createdAt?: string;
+  readonly accountStatus?: import('../security/AccountStatus').AccountStatusValue;
+  readonly emailVerified?: boolean;
+  readonly mfaEnabled?: boolean;
+  readonly lastLoginAt?: string;
+  readonly phone?: string;
+  readonly phoneVerified?: boolean;
 }

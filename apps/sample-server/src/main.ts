@@ -6,6 +6,18 @@ import {
   DEFAULT_ACCESS_TTL_SECONDS,
   type AuthClaims,
   type IRefreshTokenStore,
+  ScryptHasher,
+  MemorySessionStore,
+  SessionService,
+  EmailVerification,
+  MemoryEmailVerificationStore,
+  RegistrationService,
+  PasswordResetService,
+  MemoryPasswordResetStore,
+  PasswordChangeService,
+  OtpService,
+  MfaService,
+  MemoryOtpSecretStore,
 } from '@maw/auth-core';
 import {
   MasterCache,
@@ -13,7 +25,7 @@ import {
   type ISyncStore,
   type ICacheStore,
 } from '@maw/rbac-core';
-import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
 import { LocalFileStorage } from '@maw/platform';
 import { MemoryRateLimiter } from '@maw/platform/security/MemoryRateLimiter';
 import { redact } from '@maw/platform/security/LogRedactor';
@@ -35,8 +47,10 @@ import {
 } from '@maw/sdk';
 import {
   MemoryRefreshStore,
+  MemoryUserRepository,
   findUserByEmail,
   findUserById,
+  USERS,
   type UserRow,
 } from './repo';
 import { registry } from './modules/index';
@@ -206,6 +220,51 @@ const auth = createDynamicExpressAuth({
 const refreshTokens = new RefreshTokens(data.refreshStore, 60 * 60 * 24 * 30);
 
 // ---------------------------------------------------------------------------
+// New auth services (registration, password reset/change, sessions, MFA)
+// ---------------------------------------------------------------------------
+
+const hasher = ScryptHasher;
+const userRepository = new MemoryUserRepository(USERS);
+const sessionStore = new MemorySessionStore();
+const sessionService = new SessionService({
+  store: sessionStore,
+  config: DEFAULT_SECURITY_CONFIG.session,
+});
+
+const emailVerificationStore = new MemoryEmailVerificationStore();
+const emailVerification = new EmailVerification({
+  store: emailVerificationStore,
+  ttlSeconds: DEFAULT_SECURITY_CONFIG.registration.emailVerificationTtlSeconds,
+});
+
+const registrationService = new RegistrationService({
+  userRepository,
+  hasher,
+  passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
+  registrationConfig: DEFAULT_SECURITY_CONFIG.registration,
+  emailVerification,
+});
+
+const passwordResetStore = new MemoryPasswordResetStore();
+const passwordResetService = new PasswordResetService({
+  userRepository,
+  hasher,
+  passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
+  resetConfig: DEFAULT_SECURITY_CONFIG.passwordReset,
+  store: passwordResetStore,
+  sessionService,
+});
+
+const passwordChangeService = new PasswordChangeService({
+  userRepository,
+  hasher,
+  passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
+});
+
+const otpService = new OtpService(DEFAULT_SECURITY_CONFIG.otp);
+const otpSecretStore = new MemoryOtpSecretStore();
+
+// ---------------------------------------------------------------------------
 // Express app
 // ---------------------------------------------------------------------------
 
@@ -297,6 +356,16 @@ app.post('/auth/logout', (req, res) => {
     res.json({ ok: true });
   })();
 });
+
+// --- New auth routes (registration, password, sessions, MFA) ---
+
+app.use('/auth', createAuthRoutes({
+  requireAuth: auth.requireAuth,
+  registrationService,
+  passwordResetService,
+  passwordChangeService,
+  sessionService,
+}));
 
 // --- Audit trail middleware — auto-logs every authenticated action ---
 

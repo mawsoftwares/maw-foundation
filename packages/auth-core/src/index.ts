@@ -28,3 +28,76 @@ export {
   type LoginProtectionConfig,
   type FailureResult,
 } from './login-protection';
+export {
+  AccountEvent,
+  type AccountEventValue,
+  transitionAccount,
+  canApplyEvent,
+} from './account-status';
+export {
+  AuthError,
+  InvalidCredentialsError,
+  AccountLockedError,
+  AccountDisabledError,
+  AccountPendingVerificationError,
+  TokenExpiredError,
+  TokenAlreadyUsedError,
+  PasswordPolicyError,
+  DuplicateEmailError,
+  MfaRequiredError,
+  InvalidOtpError,
+} from './auth-errors';
+export {
+  type ServerSession,
+  type ISessionStore,
+  MemorySessionStore,
+  SessionService,
+  type SessionServiceOptions,
+} from './session-store';
+export {
+  type VerificationRecord,
+  type IEmailVerificationStore,
+  MemoryEmailVerificationStore,
+  EmailVerification,
+  type EmailVerificationOptions,
+} from './email-verification';
+export {
+  type RegistrationInput,
+  type SendVerificationEmail,
+  type RegistrationServiceOptions,
+  RegistrationService,
+} from './registration';
+export {
+  type ResetRecord,
+  type IPasswordResetStore,
+  MemoryPasswordResetStore,
+  type SendResetEmail,
+  type PasswordResetServiceOptions,
+  PasswordResetService,
+} from './password-reset';
+export {
+  type PasswordChangeServiceOptions,
+  PasswordChangeService,
+} from './password-change';
+export {
+  OtpService,
+  type IOtpSecretStore,
+  MemoryOtpSecretStore,
+  MfaService,
+  type MfaServiceOptions,
+} from './otp';
+export {
+  type LoginAttemptRecord,
+  type ILoginAttemptStore,
+  MemoryLoginAttemptStore,
+} from './login-attempt-store';
+export {
+  type SocialAuthProfile,
+  type ISocialAuthProvider,
+  type SocialAccountLink,
+  type ISocialAccountStore,
+  MemorySocialAccountStore,
+  type SocialAuthResult,
+  type SocialAuthServiceOptions,
+  SocialAuthService,
+} from './social-auth';

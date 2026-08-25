@@ -21,6 +21,15 @@ export const SecurityEvent = {
   USER_ROLE_CHANGED: 'user.role.changed',
   USER_PERMISSION_CHANGED: 'user.permission.changed',
   TENANT_CONFIG_CHANGED: 'tenant.config.changed',
+
+  AUTH_REGISTRATION: 'auth.registration',
+  AUTH_EMAIL_VERIFIED: 'auth.email.verified',
+  AUTH_PASSWORD_RESET_REQUESTED: 'auth.password.reset_requested',
+  AUTH_SESSION_CREATED: 'auth.session.created',
+  AUTH_ALL_SESSIONS_REVOKED: 'auth.sessions.revoked_all',
+  AUTH_MFA_ENROLLED: 'auth.mfa.enrolled',
+  AUTH_MFA_VERIFIED: 'auth.mfa.verified',
+  AUTH_SOCIAL_LOGIN: 'auth.social.login',
 } as const;
 
 export type SecurityEventType = (typeof SecurityEvent)[keyof typeof SecurityEvent];

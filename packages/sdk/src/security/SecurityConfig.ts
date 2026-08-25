@@ -54,10 +54,38 @@ export interface LoginProtectionConfig {
   readonly progressiveDelay: boolean;
 }
 
+export interface SessionConfig {
+  readonly maxConcurrentSessions: number;
+  readonly sessionTtlSeconds: number;
+  readonly rememberMeTtlSeconds: number;
+}
+
+export interface OtpConfig {
+  readonly issuer: string;
+  readonly digits: number;
+  readonly stepSeconds: number;
+  readonly window: number;
+}
+
+export interface RegistrationConfig {
+  readonly requireEmailVerification: boolean;
+  readonly emailVerificationTtlSeconds: number;
+  readonly defaultRole: string;
+}
+
+export interface PasswordResetConfig {
+  readonly ttlSeconds: number;
+  readonly maxAttempts: number;
+}
+
 export interface SecurityConfig {
   readonly auth: AuthSecurityConfig;
   readonly passwordPolicy: PasswordPolicyConfig;
   readonly loginProtection: LoginProtectionConfig;
+  readonly session: SessionConfig;
+  readonly otp: OtpConfig;
+  readonly registration: RegistrationConfig;
+  readonly passwordReset: PasswordResetConfig;
   readonly rateLimit: {
     readonly login: RateLimitTier;
     readonly api: RateLimitTier;
@@ -81,6 +109,26 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     maxAttempts: 5,
     lockoutDurationMs: 15 * 60 * 1000, // 15 minutes
     progressiveDelay: true,
+  },
+  session: {
+    maxConcurrentSessions: 5,
+    sessionTtlSeconds: 24 * 60 * 60, // 1 day
+    rememberMeTtlSeconds: 30 * 24 * 60 * 60, // 30 days
+  },
+  otp: {
+    issuer: 'MAW',
+    digits: 6,
+    stepSeconds: 30,
+    window: 1,
+  },
+  registration: {
+    requireEmailVerification: true,
+    emailVerificationTtlSeconds: 24 * 60 * 60, // 24 hours
+    defaultRole: 'viewer',
+  },
+  passwordReset: {
+    ttlSeconds: 60 * 60, // 1 hour
+    maxAttempts: 3,
   },
   rateLimit: {
     login: { windowMs: 60_000, maxRequests: 5 },

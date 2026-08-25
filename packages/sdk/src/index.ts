@@ -26,12 +26,14 @@ export * from './contracts/IOfflineRepository';
 export * from './contracts/IEncryptionService';
 export * from './contracts/IRateLimiter';
 export * from './contracts/ISecretProvider';
+export * from './contracts/IUserRepository';
 
 // Security
 export * from './security/SecurityConfig';
 export * from './security/SecurityEvents';
 export * from './security/SecurityContext';
 export * from './security/PasswordPolicy';
+export * from './security/AccountStatus';
 
 // Offline types
 export * from './offline/types';

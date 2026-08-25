@@ -11,10 +11,19 @@ export type Role = string;
 /** A product/tenant audience — e.g. Sushmapet's 'admin' vs 'operator' apps. */
 export type Audience = string;
 
+export interface DeviceInfo {
+  readonly deviceId: string;
+  readonly deviceName?: string;
+  readonly deviceType?: 'mobile' | 'tablet' | 'desktop' | 'unknown';
+  readonly os?: string;
+  readonly browser?: string;
+}
+
 export interface Session {
   readonly userId: string;
   readonly tenantId: string;
   readonly role: Role;
+  readonly accountStatus?: import('../security/AccountStatus').AccountStatusValue;
   /** Which app/audience this session was issued for (dual-audience gating). */
   readonly audience?: Audience;
   /** Licensed/enabled module keys for the tenant. */

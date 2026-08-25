@@ -1,6 +1,8 @@
 import { hashPassword } from '@maw/auth-core';
 import type { IRefreshTokenStore, RefreshRecord } from '@maw/auth-core';
 import type { TenantRolePolicy } from '@maw/rbac-core';
+import type { IUserRepository, UserRecord, CreateUserInput } from '@maw/sdk/contracts/IUserRepository';
+import { randomUUID } from 'node:crypto';
 
 /**
  * In-memory data layer for the proof server — so it runs with ZERO external deps (no
@@ -50,6 +52,86 @@ export function findUserByEmail(email: string): UserRow | undefined {
 
 export function findUserById(id: string): UserRow | undefined {
   return USERS.find((u) => u.id === id);
+}
+
+/** In-memory user repository implementing the SDK port. */
+export class MemoryUserRepository implements IUserRepository {
+  private readonly users = new Map<string, UserRecord>();
+
+  constructor(seedUsers?: readonly UserRow[]) {
+    if (seedUsers) {
+      const now = new Date().toISOString();
+      for (const u of seedUsers) {
+        this.users.set(u.id, {
+          id: u.id,
+          tenantId: u.tenantId,
+          email: u.email,
+          passwordHash: u.passwordHash,
+          role: u.role,
+          accountStatus: 'ACTIVE',
+          emailVerified: true,
+          mfaEnabled: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+  }
+
+  async findById(id: string): Promise<UserRecord | null> {
+    return this.users.get(id) ?? null;
+  }
+
+  async findByEmail(tenantId: string, email: string): Promise<UserRecord | null> {
+    for (const u of this.users.values()) {
+      if (u.tenantId === tenantId && u.email.toLowerCase() === email.toLowerCase()) return u;
+    }
+    return null;
+  }
+
+  async create(input: CreateUserInput): Promise<UserRecord> {
+    const now = new Date().toISOString();
+    const record: UserRecord = {
+      id: randomUUID(),
+      tenantId: input.tenantId,
+      email: input.email,
+      passwordHash: input.passwordHash,
+      role: input.role,
+      name: input.name,
+      accountStatus: input.accountStatus,
+      emailVerified: false,
+      mfaEnabled: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.users.set(record.id, record);
+    return record;
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    const u = this.users.get(userId);
+    if (u) this.users.set(userId, { ...u, passwordHash, updatedAt: new Date().toISOString() });
+  }
+
+  async updateStatus(userId: string, status: UserRecord['accountStatus']): Promise<void> {
+    const u = this.users.get(userId);
+    if (u) this.users.set(userId, { ...u, accountStatus: status, updatedAt: new Date().toISOString() });
+  }
+
+  async updateEmailVerified(userId: string, verified: boolean): Promise<void> {
+    const u = this.users.get(userId);
+    if (u) this.users.set(userId, { ...u, emailVerified: verified, updatedAt: new Date().toISOString() });
+  }
+
+  async updateLastLogin(userId: string, timestamp: string): Promise<void> {
+    const u = this.users.get(userId);
+    if (u) this.users.set(userId, { ...u, lastLoginAt: timestamp, updatedAt: new Date().toISOString() });
+  }
+
+  async updateMfaEnabled(userId: string, enabled: boolean): Promise<void> {
+    const u = this.users.get(userId);
+    if (u) this.users.set(userId, { ...u, mfaEnabled: enabled, updatedAt: new Date().toISOString() });
+  }
 }
 
 /** In-memory refresh-token store implementing the auth-core port. */

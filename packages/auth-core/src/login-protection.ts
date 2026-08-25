@@ -1,3 +1,5 @@
+import type { ILoginAttemptStore } from './login-attempt-store';
+
 export interface LoginProtectionConfig {
   readonly maxAttempts: number;
   readonly lockoutDurationMs: number;
@@ -25,12 +27,14 @@ export interface FailureResult {
 export class LoginProtection {
   private readonly config: LoginProtectionConfig;
   private readonly store = new Map<string, AttemptRecord>();
+  private readonly persistentStore?: ILoginAttemptStore;
 
-  constructor(config: Partial<LoginProtectionConfig> = {}) {
+  constructor(config: Partial<LoginProtectionConfig> = {}, persistentStore?: ILoginAttemptStore) {
     this.config = { ...DEFAULT_LOGIN_PROTECTION, ...config };
+    this.persistentStore = persistentStore;
   }
 
-  recordFailure(key: string): FailureResult {
+  recordFailure(key: string, meta?: { ipAddress?: string; userAgent?: string; failureReason?: string }): FailureResult {
     const now = Date.now();
     let record = this.store.get(key);
 
@@ -55,6 +59,15 @@ export class LoginProtection {
 
     record.count++;
 
+    if (this.persistentStore) {
+      void this.persistentStore.record({
+        key,
+        timestamp: new Date(now).toISOString(),
+        success: false,
+        ...meta,
+      });
+    }
+
     if (record.count >= this.config.maxAttempts) {
       record.lockedUntil = now + this.config.lockoutDurationMs;
       return {
@@ -74,6 +87,9 @@ export class LoginProtection {
 
   recordSuccess(key: string): void {
     this.store.delete(key);
+    if (this.persistentStore) {
+      void this.persistentStore.clear(key);
+    }
   }
 
   isLocked(key: string): boolean {

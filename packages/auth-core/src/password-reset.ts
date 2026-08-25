@@ -1,0 +1,119 @@
+import { randomBytes } from 'node:crypto';
+import { type PasswordPolicyConfig, validatePassword, type PasswordResetConfig } from '@maw/sdk';
+import type { IUserRepository } from '@maw/sdk/contracts/IUserRepository';
+import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import { hashToken } from './refresh';
+import { TokenExpiredError, TokenAlreadyUsedError, PasswordPolicyError } from './auth-errors';
+import type { SessionService } from './session-store';
+
+export interface ResetRecord {
+  readonly userId: string;
+  readonly email: string;
+  readonly tokenHash: string;
+  readonly expiresAt: string;
+  readonly usedAt: string | null;
+}
+
+export interface IPasswordResetStore {
+  save(record: ResetRecord): Promise<void>;
+  findByTokenHash(hash: string): Promise<ResetRecord | null>;
+  deleteForUser(userId: string): Promise<void>;
+}
+
+export class MemoryPasswordResetStore implements IPasswordResetStore {
+  private readonly records = new Map<string, ResetRecord>();
+
+  async save(record: ResetRecord): Promise<void> {
+    this.records.set(record.tokenHash, record);
+  }
+
+  async findByTokenHash(hash: string): Promise<ResetRecord | null> {
+    return this.records.get(hash) ?? null;
+  }
+
+  async deleteForUser(userId: string): Promise<void> {
+    for (const [hash, r] of this.records) {
+      if (r.userId === userId) this.records.delete(hash);
+    }
+  }
+}
+
+export type SendResetEmail = (email: string, token: string) => Promise<void>;
+
+export interface PasswordResetServiceOptions {
+  readonly userRepository: IUserRepository;
+  readonly hasher: IHasher;
+  readonly passwordPolicy: PasswordPolicyConfig;
+  readonly resetConfig: PasswordResetConfig;
+  readonly store: IPasswordResetStore;
+  readonly sendResetEmail?: SendResetEmail;
+  readonly sessionService?: SessionService;
+}
+
+export class PasswordResetService {
+  private readonly userRepository: IUserRepository;
+  private readonly hasher: IHasher;
+  private readonly passwordPolicy: PasswordPolicyConfig;
+  private readonly resetConfig: PasswordResetConfig;
+  private readonly store: IPasswordResetStore;
+  private readonly sendResetEmail?: SendResetEmail;
+  private readonly sessionService?: SessionService;
+
+  constructor(options: PasswordResetServiceOptions) {
+    this.userRepository = options.userRepository;
+    this.hasher = options.hasher;
+    this.passwordPolicy = options.passwordPolicy;
+    this.resetConfig = options.resetConfig;
+    this.store = options.store;
+    this.sendResetEmail = options.sendResetEmail;
+    this.sessionService = options.sessionService;
+  }
+
+  async requestReset(tenantId: string, email: string): Promise<void> {
+    const user = await this.userRepository.findByEmail(tenantId, email);
+    if (!user) return;
+
+    await this.store.deleteForUser(user.id);
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + this.resetConfig.ttlSeconds * 1000).toISOString();
+
+    await this.store.save({
+      userId: user.id,
+      email: user.email,
+      tokenHash: hashToken(token),
+      expiresAt,
+      usedAt: null,
+    });
+
+    if (this.sendResetEmail) {
+      await this.sendResetEmail(user.email, token);
+    }
+  }
+
+  async executeReset(token: string, newPassword: string): Promise<void> {
+    const record = await this.store.findByTokenHash(hashToken(token));
+    if (!record) {
+      throw new TokenExpiredError('Invalid or expired reset token');
+    }
+    if (record.usedAt !== null) {
+      throw new TokenAlreadyUsedError();
+    }
+    if (new Date(record.expiresAt).getTime() < Date.now()) {
+      throw new TokenExpiredError('Reset token has expired');
+    }
+
+    const policyErrors = validatePassword(newPassword, this.passwordPolicy);
+    if (policyErrors.length > 0) {
+      throw new PasswordPolicyError(policyErrors.map((e) => e.message));
+    }
+
+    const passwordHash = await this.hasher.hash(newPassword);
+    await this.userRepository.updatePassword(record.userId, passwordHash);
+    await this.store.save({ ...record, usedAt: new Date().toISOString() });
+
+    const user = await this.userRepository.findById(record.userId);
+    if (user && this.sessionService) {
+      await this.sessionService.revokeAll(user.tenantId, user.id);
+    }
+  }
+}

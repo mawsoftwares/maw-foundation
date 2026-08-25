@@ -402,3 +402,4 @@ export {
   type SecurityPipelineDeps,
   type SecurityPipelineResult,
 } from './security-pipeline';
+export { createAuthRoutes, type AuthRouteDeps } from './auth-routes';
