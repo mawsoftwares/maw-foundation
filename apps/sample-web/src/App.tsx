@@ -27,6 +27,9 @@ import { loadDynamicAccess, restoreSession } from './session';
 import { setupOffline } from './offline-setup';
 import { AVAILABLE_TENANTS } from './brand-setup';
 import { LoginForm } from './shell/LoginForm';
+import { RegisterForm } from './shell/RegisterForm';
+import { ForgotPasswordForm } from './shell/ForgotPasswordForm';
+import { ResetPasswordForm } from './shell/ResetPasswordForm';
 import { DashboardView } from './shell/Dashboard';
 import { OrdersView } from './features/orders';
 import { ReportsView } from './features/reports';
@@ -36,13 +39,16 @@ import { AuditLogsView } from './features/audit-logs';
 import { UsersView } from './features/users';
 import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
+import { AccountView } from './features/account';
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
 const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account';
+
+type AuthPage = 'login' | 'register' | 'forgot' | 'reset';
 
 const SUPERADMIN_ROLES = new Set(['owner', 'super_admin']);
 
@@ -54,7 +60,8 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'billing', label: 'Billing', icon: '💳', path: '/billing', group: 'Finance', sortOrder: 4 },
   { key: 'users', label: 'Users', icon: '👤', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6 },
-  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 7 },
+  { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
+  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 8 },
   { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
@@ -73,6 +80,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'billing': return <BillingView />;
     case 'users': return <UsersView />;
     case 'audit-logs': return <AuditLogsView />;
+    case 'account': return <AccountView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }
@@ -87,6 +95,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const { isDark, toggleColorMode, brand, switchTenant } = useBrand();
   const toast = useToast();
   const [page, setPage] = useState<Page>('dashboard');
+  const [authPage, setAuthPage] = useState<AuthPage>('login');
 
   const navigate = useCallback((path: string) => {
     const key = path.replace('/', '') as Page;
@@ -117,7 +126,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   }, [page, navigate, isSuperadmin]);
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{t('common.loading')}</div>;
-  if (session === null) return <LoginForm />;
+  if (session === null) {
+    switch (authPage) {
+      case 'register': return <RegisterForm onSwitchToLogin={() => setAuthPage('login')} />;
+      case 'forgot': return <ForgotPasswordForm onSwitchToLogin={() => setAuthPage('login')} onResetReady={() => setAuthPage('reset')} />;
+      case 'reset': return <ResetPasswordForm onSwitchToLogin={() => setAuthPage('login')} />;
+      default: return <LoginForm onSwitchToRegister={() => setAuthPage('register')} onSwitchToForgot={() => setAuthPage('forgot')} />;
+    }
+  }
 
   return (
     <NavigationProvider config={navConfig}>

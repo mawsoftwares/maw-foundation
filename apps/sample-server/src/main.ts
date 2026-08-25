@@ -55,6 +55,8 @@ import {
 } from './repo';
 import { registry } from './modules/index';
 import { MemorySyncStore, MemoryCacheStore } from './dynamic-stores';
+import { createReportingService } from './reporting-setup';
+import { createReportingRoutes } from './reporting-routes';
 import {
   MemoryAuditStore,
   PgAuditStore,
@@ -366,6 +368,11 @@ app.use('/auth', createAuthRoutes({
   passwordChangeService,
   sessionService,
 }));
+
+// --- Reporting routes ---
+
+const reportService = createReportingService();
+app.use('/reporting', createReportingRoutes(reportService, auth.requireAuth));
 
 // --- Audit trail middleware — auto-logs every authenticated action ---
 

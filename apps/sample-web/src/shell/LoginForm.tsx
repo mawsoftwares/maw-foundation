@@ -1,7 +1,12 @@
 import { type ReactNode } from 'react';
 import { Button, Card, TextField, useAuth, useForm, FormField, useI18n, useToast } from '@maw/ui-web';
 
-export function LoginForm(): ReactNode {
+interface LoginFormProps {
+  readonly onSwitchToRegister?: () => void;
+  readonly onSwitchToForgot?: () => void;
+}
+
+export function LoginForm({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps = {}): ReactNode {
   const { login } = useAuth();
   const { t } = useI18n();
   const toast = useToast();
@@ -55,6 +60,19 @@ export function LoginForm(): ReactNode {
             {form.submitting ? t('common.loading') : t('auth.login')}
           </Button>
         </form>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--maw-space-md)' }}>
+          {onSwitchToRegister && (
+            <Button variant="ghost" onClick={onSwitchToRegister} style={{ fontSize: 'var(--maw-text-xs)' }}>
+              Create account
+            </Button>
+          )}
+          {onSwitchToForgot && (
+            <Button variant="ghost" onClick={onSwitchToForgot} style={{ fontSize: 'var(--maw-text-xs)' }}>
+              Forgot password?
+            </Button>
+          )}
+        </div>
 
         <div style={{ marginTop: 'var(--maw-space-lg)', padding: 'var(--maw-space-md)', background: 'var(--maw-bgMuted)', borderRadius: 'var(--maw-radius-md)', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
           <strong>Test accounts:</strong><br />
