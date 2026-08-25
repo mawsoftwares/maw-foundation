@@ -1,58 +1,12 @@
 import type pg from 'pg';
 import type { IRefreshTokenStore, RefreshRecord } from '@maw/auth-core';
 import type { TenantRolePolicy } from '@maw/rbac-core';
-import type { UserRow } from './repo';
 
 /**
  * Postgres-backed data layer — same interface shapes as the in-memory repo, but reads/
- * writes go to real tables (created by `migrations/001_auth_rbac.sql`).
+ * writes go to real tables (created by `migrations/001_auth_rbac.sql`). The user store
+ * itself lives in `auth-stores-pg.ts` alongside the other auth ports.
  */
-
-export function createPgUserRepo(pool: pg.Pool) {
-  return {
-    async findByEmail(email: string): Promise<UserRow | undefined> {
-      const { rows } = await pool.query<{
-        id: string; tenant_id: string; email: string; role: string;
-        audience: string; password_hash: string; scope_id: string | null;
-      }>(
-        'SELECT id, tenant_id, email, role, audience, password_hash, scope_id FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1',
-        [email],
-      );
-      const r = rows[0];
-      if (r === undefined) return undefined;
-      return {
-        id: r.id,
-        tenantId: r.tenant_id,
-        email: r.email,
-        role: r.role,
-        audience: r.audience,
-        passwordHash: r.password_hash,
-        scopeId: r.scope_id,
-      };
-    },
-
-    async findById(id: string): Promise<UserRow | undefined> {
-      const { rows } = await pool.query<{
-        id: string; tenant_id: string; email: string; role: string;
-        audience: string; password_hash: string; scope_id: string | null;
-      }>(
-        'SELECT id, tenant_id, email, role, audience, password_hash, scope_id FROM users WHERE id = $1 LIMIT 1',
-        [id],
-      );
-      const r = rows[0];
-      if (r === undefined) return undefined;
-      return {
-        id: r.id,
-        tenantId: r.tenant_id,
-        email: r.email,
-        role: r.role,
-        audience: r.audience,
-        passwordHash: r.password_hash,
-        scopeId: r.scope_id,
-      };
-    },
-  };
-}
 
 export async function loadTenantRolePolicy(pool: pg.Pool, tenantId: string): Promise<TenantRolePolicy> {
   const { rows } = await pool.query<{ role: string; permission: string }>(

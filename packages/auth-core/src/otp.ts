@@ -73,17 +73,24 @@ export class OtpService {
     return { secret, otpauthUri };
   }
 
+  /** The code an authenticator app shows for this secret right now. */
+  generate(secret: string, atMs: number = Date.now()): string {
+    return generateTotp(base32Decode(secret), this.counterAt(atMs), this.config.digits);
+  }
+
   verify(secret: string, token: string): boolean {
     const key = base32Decode(secret);
-    const now = BigInt(Math.floor(Date.now() / 1000));
-    const step = BigInt(this.config.stepSeconds);
-    const counter = now / step;
+    const counter = this.counterAt(Date.now());
 
     for (let i = -this.config.window; i <= this.config.window; i++) {
       const candidate = generateTotp(key, counter + BigInt(i), this.config.digits);
       if (timingSafeEqual(candidate, token)) return true;
     }
     return false;
+  }
+
+  private counterAt(atMs: number): bigint {
+    return BigInt(Math.floor(atMs / 1000)) / BigInt(this.config.stepSeconds);
   }
 
   generateBackupCodes(count = 10): string[] {
@@ -200,8 +207,14 @@ export class MfaService {
 
     if (this.otpService.verify(secret, token)) return true;
 
-    const tokenHash = await this.hasher.hash(token);
-    return this.store.useBackupCode(userId, tokenHash);
+    // Backup codes are salted hashes, so they must be matched by verify, not by
+    // re-hashing the candidate — a fresh hash would never equal the stored one.
+    for (const storedHash of await this.store.getBackupCodes(userId)) {
+      if (await this.hasher.verify(token, storedHash)) {
+        return this.store.useBackupCode(userId, storedHash);
+      }
+    }
+    return false;
   }
 
   async disable(userId: string, token: string): Promise<void> {

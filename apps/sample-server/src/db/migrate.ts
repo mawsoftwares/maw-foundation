@@ -12,6 +12,7 @@ const migrations = [
   '001_auth_rbac.sql',
   '002_dynamic_rbac.sql',
   '003_audit_logs.sql',
+  '004_auth_foundation.sql',
 ];
 
 const client = new pg.Client({ connectionString: DATABASE_URL });

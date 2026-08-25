@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from 'express';
+import { AppError } from '@maw/sdk';
+import { AccountLockedError, PasswordPolicyError } from '@maw/auth-core';
 import type { AuthedRequest } from './index';
 import type { RegistrationService } from '@maw/auth-core';
 import type { PasswordResetService } from '@maw/auth-core';
@@ -214,10 +216,16 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
   return router;
 }
 
-function handleAuthError(res: Response, err: unknown): void {
-  if (err && typeof err === 'object' && 'status' in err && typeof err.status === 'number') {
-    const appErr = err as { status: number; message: string; code?: string };
-    res.status(appErr.status).json({ error: appErr.message, code: appErr.code });
+export function handleAuthError(res: Response, err: unknown): void {
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+      ...(err instanceof PasswordPolicyError ? { violations: err.violations } : {}),
+      ...(err instanceof AccountLockedError && err.retryAfterMs !== undefined
+        ? { retryAfterMs: err.retryAfterMs }
+        : {}),
+    });
     return;
   }
   res.status(500).json({ error: 'Internal server error' });

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-4789-abcd-maw-foundation-01",
     "name": "MAW Foundation — Sample Server",
-    "description": "Dynamic RBAC sample-server (`createDynamicExpressAuth` + module registry).\n\n**Setup**\n1. `npm run sample:server`\n2. Import this collection + `local.postman_environment.json`\n3. Select **MAW Foundation — Local**\n4. Run **Login as Owner** (or Manager / Clerk) — tests persist `accessToken` / `refreshToken` on the **collection**\n\nProtected routes send `Authorization: Bearer {{accessToken}}`.\n\nPermission codes are `Action_Module` (e.g. `Read_Reports`). Owner is a superuser and bypasses checks. Manager/clerk use the seeded role map.\n\n**Seeded users** (password `password123`)\n| Email | Role | Audience | `/reports` | `/orders` | `/inventory` | `GET /billing` | `POST /billing` | `GET /audit-logs` | `GET /audit-logs/export` | `/admin/users` |\n|---|---|---|---|---|---|---|---|---|---|---|\n| owner@demo.test | owner | admin | 200 | 200 | 200 | 200 | 200 | 200 | 200 | 200 |\n| manager@demo.test | manager | admin | 200 | 200 | 200 | 403 (no `Read_Billing`) | 200 | 200 | 403 (no `Export_AuditLogs`) | 403 (no `Read_Users`) |\n| clerk@demo.test | clerk | operator | 403 | 200 | 403 | 403 (no `Read_Billing`) | 200 | 403 (wrong audience) | 403 (wrong audience) | 403 (wrong audience) |",
+    "description": "Dynamic RBAC sample-server (`createDynamicExpressAuth` + module registry) plus the auth foundation from `@maw/auth-core`.\n\n**Setup**\n1. `npm run sample:server`\n2. Import this collection + `local.postman_environment.json`\n3. Select **MAW Foundation — Local**\n4. Run **Login as Owner** (or Manager / Clerk) — tests persist `accessToken` / `refreshToken` / `sessionId` on the **collection**\n\nProtected routes send `Authorization: Bearer {{accessToken}}`.\n\nPermission codes are `Action_Module` (e.g. `Read_Reports`). Owner is a superuser and bypasses checks. Manager/clerk use the seeded role map.\n\n**Folder order matters.** Folders 1–4 are written to run top-to-bottom in the Collection Runner: authentication seeds the tokens, the account lifecycle folder registers a throwaway user and carries its tokens forward, and the MFA folder enrolls and then disables MFA so the run is repeatable.\n\n**Login rate limit.** `/auth/login` allows 5 requests per minute per IP (`DEFAULT_SECURITY_CONFIG.rateLimit.login`), and the collection logs in about a dozen times, so a back-to-back full pass will hit `429`. Every login tolerates that and reports a skip instead of a failure, and anything that would act on the wrong account is skipped with it. Run one folder at a time, or space the requests out:\n\n```\nnewman run MAW-Foundation.postman_collection.json --env-var baseUrl=http://localhost:4000 --delay-request 13000\n```\n\n**One-time tokens.** The sample has no mail provider, so email-verification and password-reset tokens are written to the **server log** rather than returned by the API. Copy the token from the console into `verificationToken` / `resetToken` before running those requests.\n\n**Seeded users** (password `password123`)\n| Email | Role | Audience | `/reports` | `/orders` | `/inventory` | `GET /billing` | `POST /billing` | `GET /audit-logs` | `GET /audit-logs/export` | `/admin/users` |\n|---|---|---|---|---|---|---|---|---|---|---|\n| owner@demo.test | owner | admin | 200 | 200 | 200 | 200 | 200 | 200 | 200 | 200 |\n| manager@demo.test | manager | admin | 200 | 200 | 200 | 403 (no `Read_Billing`) | 200 | 200 | 403 (no `Export_AuditLogs`) | 403 (no `Read_Users`) |\n| clerk@demo.test | clerk | operator | 403 | 200 | 403 | 403 (no `Read_Billing`) | 200 | 403 (wrong audience) | 403 (wrong audience) | 403 (wrong audience) |",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,7 +10,22 @@
     { "key": "accessToken", "value": "" },
     { "key": "refreshToken", "value": "" },
     { "key": "sessionRole", "value": "" },
-    { "key": "userId", "value": "" }
+    { "key": "userId", "value": "" },
+    { "key": "sessionId", "value": "" },
+    { "key": "tenantId", "value": "demo-tenant" },
+    { "key": "newUserEmail", "value": "" },
+    { "key": "newUserPassword", "value": "Str0ng!Pass" },
+    { "key": "newUserAuthed", "value": "" },
+    { "key": "rotatedPassword", "value": "Rot4ted!Pass" },
+    { "key": "verificationToken", "value": "" },
+    { "key": "resetToken", "value": "" },
+    { "key": "mfaEmail", "value": "clerk@demo.test" },
+    { "key": "mfaAuthed", "value": "" },
+    { "key": "mfaPassword", "value": "password123" },
+    { "key": "mfaSecret", "value": "" },
+    { "key": "mfaCode", "value": "" },
+    { "key": "mfaBackupCode", "value": "" },
+    { "key": "mfaChallengeToken", "value": "" }
   ],
   "auth": {
     "type": "bearer",
@@ -24,6 +39,40 @@
         "exec": [
           "if (!pm.collectionVariables.get('baseUrl')) {",
           "  pm.collectionVariables.set('baseUrl', 'http://localhost:4000');",
+          "}",
+          "",
+          "// Keep {{mfaCode}} in sync with the enrolled TOTP secret so the MFA requests",
+          "// can be sent as-is. No-op until 'Enroll MFA' stores a secret.",
+          "const mfaSecret = pm.collectionVariables.get('mfaSecret');",
+          "if (mfaSecret) {",
+          "  pm.collectionVariables.set('mfaCode', totp(mfaSecret));",
+          "}",
+          "",
+          "function base32ToHex(base32) {",
+          "  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';",
+          "  let bits = '';",
+          "  for (const char of base32.replace(/=+$/, '').toUpperCase()) {",
+          "    const index = alphabet.indexOf(char);",
+          "    if (index === -1) continue;",
+          "    bits += index.toString(2).padStart(5, '0');",
+          "  }",
+          "  let hex = '';",
+          "  for (let i = 0; i + 8 <= bits.length; i += 8) {",
+          "    hex += parseInt(bits.substr(i, 8), 2).toString(16).padStart(2, '0');",
+          "  }",
+          "  return hex;",
+          "}",
+          "",
+          "// RFC 6238 TOTP — must match OtpService defaults (SHA-1, 6 digits, 30s step).",
+          "function totp(secret, digits = 6, stepSeconds = 30) {",
+          "  const CryptoJS = require('crypto-js');",
+          "  const counter = Math.floor(Date.now() / 1000 / stepSeconds);",
+          "  const key = CryptoJS.enc.Hex.parse(base32ToHex(secret));",
+          "  const message = CryptoJS.enc.Hex.parse(counter.toString(16).padStart(16, '0'));",
+          "  const digest = CryptoJS.HmacSHA1(message, key).toString(CryptoJS.enc.Hex);",
+          "  const offset = parseInt(digest.slice(-1), 16) * 2;",
+          "  const binary = parseInt(digest.substr(offset, 8), 16) & 0x7fffffff;",
+          "  return (binary % Math.pow(10, digits)).toString().padStart(digits, '0');",
           "}"
         ]
       }
@@ -43,8 +92,11 @@
                 "exec": [
                   "pm.test('server is up', function () {",
                   "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json().ok).to.eql(true);",
-                  "});"
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('healthy');",
+                  "  pm.expect(body.checks).to.be.an('array').and.not.empty;",
+                  "});",
+                  "console.log('Data layer:', pm.response.json().mode);"
                 ]
               }
             }
@@ -58,7 +110,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["health"]
             },
-            "description": "Liveness check. No auth."
+            "description": "Composable health check. Each registered probe reports separately in `checks`, and `mode` tells you whether the server is running on `postgres` or `memory`. Returns `503` when any probe fails."
           }
         },
         {
@@ -116,15 +168,20 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('login succeeded', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('login succeeded', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "}",
                   "if (pm.response.code === 200) {",
                   "  const body = pm.response.json();",
                   "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
                   "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
                   "  pm.collectionVariables.set('sessionRole', body.session.role);",
                   "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
                   "  pm.test('session + token pair + catalog', function () {",
                   "    pm.expect(body.session.role).to.eql('owner');",
                   "    pm.expect(body.session.audience).to.eql('admin');",
@@ -172,15 +229,20 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('login succeeded', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('login succeeded', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "}",
                   "if (pm.response.code === 200) {",
                   "  const body = pm.response.json();",
                   "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
                   "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
                   "  pm.collectionVariables.set('sessionRole', body.session.role);",
                   "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
                   "  pm.test('manager grants', function () {",
                   "    pm.expect(body.session.role).to.eql('manager');",
                   "    pm.expect(body.session.audience).to.eql('admin');",
@@ -218,15 +280,20 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('login succeeded', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('login succeeded', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "}",
                   "if (pm.response.code === 200) {",
                   "  const body = pm.response.json();",
                   "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
                   "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
                   "  pm.collectionVariables.set('sessionRole', body.session.role);",
                   "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
                   "  pm.test('clerk grants', function () {",
                   "    pm.expect(body.session.role).to.eql('clerk');",
                   "    pm.expect(body.session.audience).to.eql('operator');",
@@ -262,10 +329,17 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('rejects bad password', function () {",
-                  "  pm.response.to.have.status(401);",
-                  "  pm.expect(pm.response.json().error).to.eql('invalid credentials');",
-                  "});"
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('rejects bad password', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    pm.expect(pm.response.json().code).to.eql('INVALID_CREDENTIALS');",
+                  "  });",
+                  "  pm.test('does not reveal whether the email exists', function () {",
+                  "    pm.expect(pm.response.json().error).to.eql('Invalid credentials');",
+                  "  });",
+                  "}"
                 ]
               }
             }
@@ -282,7 +356,8 @@
               "raw": "{{baseUrl}}/auth/login",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login"]
-            }
+            },
+            "description": "`AuthenticationService` returns the same `Invalid credentials` body for a wrong password and for an unknown email, and spends the same time on both (it verifies against a decoy hash when no user matches), so neither the response nor the latency reveals which emails are registered.\n\nAfter 5 consecutive failures the key is locked out and even the correct password returns `423 ACCOUNT_LOCKED`."
           }
         },
         {
@@ -355,23 +430,38 @@
               "path": ["auth", "refresh"]
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "2. Account lifecycle",
+      "description": "Registration → email verification → password change → forgot/reset, served by `RegistrationService`, `EmailVerification`, `PasswordChangeService` and `PasswordResetService`.\n\n**Run this folder in order.** `POST Register` mints a unique throwaway email into `{{newUserEmail}}` and the later requests reuse it, so the folder is repeatable without cleaning the database.\n\n**Manual step.** Verification and reset tokens are logged by the server, not returned by the API (no mail provider is configured in the sample). Copy the `token: '…'` value from the server console into the `verificationToken` / `resetToken` collection variables before running those two requests.",
+      "item": [
         {
-          "name": "POST Logout",
+          "name": "POST Register",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Unique address per run so re-running the folder never hits DUPLICATE_EMAIL.",
+                  "pm.collectionVariables.set('newUserEmail', `postman+${Date.now()}@demo.test`);"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('logout acknowledged', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  pm.expect(pm.response.json().ok).to.eql(true);",
+                  "pm.test('user created, pending verification', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.userId).to.be.a('string').and.not.empty;",
+                  "  pm.expect(body.emailVerificationRequired).to.eql(true);",
                   "});",
-                  "pm.collectionVariables.set('accessToken', '');",
-                  "pm.collectionVariables.set('refreshToken', '');",
-                  "pm.collectionVariables.set('sessionRole', '');",
-                  "pm.collectionVariables.set('userId', '');"
+                  "console.log('Registered', pm.collectionVariables.get('newUserEmail'), '— copy the verification token from the server log into {{verificationToken}}');"
                 ]
               }
             }
@@ -382,20 +472,949 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\",\n  \"tenantId\": \"{{tenantId}}\",\n  \"name\": \"Postman User\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/auth/logout",
+              "raw": "{{baseUrl}}/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "path": ["auth", "register"]
             },
-            "description": "Revokes the refresh token. The access JWT stays valid until expiry — this script clears local collection tokens."
+            "description": "Creates the user with `accountStatus: PENDING_VERIFICATION` (`registration.requireEmailVerification` is on) and issues a verification token. The response deliberately omits the token — it goes to the configured mail transport, which in this sample is the server log."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"userId\": \"cdb09ac1-3874-4539-b349-edf2d89e3115\",\n  \"emailVerificationRequired\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST Register (weak password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('password policy is enforced', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.code).to.eql('PASSWORD_POLICY_VIOLATION');",
+                  "  pm.expect(body.violations).to.be.an('array').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"weak+{{$timestamp}}@demo.test\",\n  \"password\": \"abc\",\n  \"tenantId\": \"{{tenantId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "`validatePassword` runs before the user is created, so nothing is persisted. `violations` lists every rule that failed rather than only the first."
+          },
+          "response": [
+            {
+              "name": "400 Policy violation",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"Password does not meet policy requirements\",\n  \"code\": \"PASSWORD_POLICY_VIOLATION\",\n  \"violations\": [\n    \"Password must be at least 8 characters\",\n    \"Password must contain an uppercase letter\",\n    \"Password must contain a number\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST Register (duplicate email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects an address already in the tenant', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().code).to.eql('DUPLICATE_EMAIL');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\",\n  \"tenantId\": \"{{tenantId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Re-sends the address from **POST Register**. Uniqueness is scoped per tenant, so the same email can exist under a different `tenantId`."
+          }
+        },
+        {
+          "name": "POST Login (before verifying)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('unverified account cannot sign in', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().code).to.eql('ACCOUNT_PENDING_VERIFICATION');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "The password is correct, but `AuthenticationService` gates on `accountStatus` after verifying credentials — only `ACTIVE` may sign in. Note the distinct code: a caller can prompt \"check your inbox\" instead of \"wrong password\"."
+          }
+        },
+        {
+          "name": "POST Verify Email",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get('verificationToken')) {",
+                  "  console.log('Skipped — copy the token from the server log line \"Email verification token issued\" into {{verificationToken}}, then re-run this request.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('email verified', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().verified).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            },
+            "description": "**Set `{{verificationToken}}` first** from the server log line `Email verification token issued`.\n\nFlips the account to `ACTIVE` and marks `emailVerified`. Tokens are stored as SHA-256 hashes and are single-use — replaying one returns `400 TOKEN_ALREADY_USED`, and an expired one returns `400 TOKEN_EXPIRED`."
+          }
+        },
+        {
+          "name": "POST Login (after verifying)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Marks the token as belonging to the throwaway user. The password",
+                  "// requests below refuse to run without it, so a half-finished folder",
+                  "// can never rotate a seeded account's password.",
+                  "pm.collectionVariables.set('newUserAuthed', '');",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else if (pm.response.code === 403) {",
+                  "  pm.test.skip('account still unverified — run POST Verify Email first');",
+                  "} else {",
+                  "  pm.test('verified account signs in', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
+                  "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.collectionVariables.set('sessionRole', body.session.role);",
+                  "  pm.collectionVariables.set('newUserAuthed', 'true');",
+                  "  pm.test('account is now active', function () {",
+                  "    pm.expect(body.session.accountStatus).to.eql('ACTIVE');",
+                  "    pm.expect(body.sessionId).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-device-id", "value": "postman-device-1" },
+              { "key": "x-device-name", "value": "Postman" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\",\n  \"rememberMe\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Switches the collection's tokens to the newly registered user, so the password-change request below acts on it rather than on a seeded account.\n\n`x-device-id` / `x-device-name` are recorded on the session and show up in `GET /auth/sessions`. Send `rememberMe: true` to get the 30-day TTL instead of 1 day."
+          }
+        },
+        {
+          "name": "POST Change Password",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// The bearer token decides whose password changes, so refuse to run",
+                  "// unless it is the throwaway user from this folder.",
+                  "if (pm.collectionVariables.get('newUserAuthed') !== 'true') {",
+                  "  console.log('Skipped — run POST Login (after verifying) first so this acts on the registered test user, not a seeded account.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('password changed', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().changed).to.eql(true);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  // Later requests must use the new password.",
+                  "  pm.collectionVariables.set('newUserPassword', pm.collectionVariables.get('rotatedPassword'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{newUserPassword}}\",\n  \"newPassword\": \"{{rotatedPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Authenticated (`requireAuth`) and takes the user from the token, not the body, so one user can never change another's password. The current password must still verify; a wrong one returns `401 INVALID_CREDENTIALS` and the new password is checked against the same policy as registration."
+          }
+        },
+        {
+          "name": "POST Forgot Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('always answers the same way', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().message).to.include('If an account exists');",
+                  "});",
+                  "console.log('Copy the password reset token from the server log into {{resetToken}}');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"tenantId\": \"{{tenantId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            },
+            "description": "Deliberately returns the same 200 message whether or not the address exists, so the endpoint cannot be used to enumerate accounts. Change the email to a random address and compare — the response is identical."
+          }
+        },
+        {
+          "name": "POST Reset Password",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get('resetToken')) {",
+                  "  console.log('Skipped — copy the token from the server log line \"Password reset token issued\" into {{resetToken}}, then re-run this request.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('password reset', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().reset).to.eql(true);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('newUserPassword', 'Res3t!Pass');",
+                  "  // Reset revokes every session for the user, so the local tokens are dead.",
+                  "  pm.collectionVariables.set('accessToken', '');",
+                  "  pm.collectionVariables.set('sessionId', '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"Res3t!Pass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            },
+            "description": "**Set `{{resetToken}}` first** from the server log line `Password reset token issued`.\n\nOn success every server-side session for that user is revoked (`PasswordResetService` calls `sessionService.revokeAll`), which is what logs a thief out of stolen devices. Single-use and expiring, like the verification token."
           }
         }
       ]
     },
     {
-      "name": "2. User",
+      "name": "3. Sessions & devices",
+      "description": "Server-side sessions from `SessionService`. Every login writes one row carrying device, IP and user agent, which is what powers a \"where you're signed in\" screen and remote sign-out.\n\nSelf-contained: the first request signs in so the folder can be run on its own, and the rest act on the `{{sessionId}}` it captures.",
+      "item": [
+        {
+          "name": "POST Login (sessions test user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('signed in', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
+                  "  pm.collectionVariables.set('sessionRole', body.session.role);",
+                  "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-device-id", "value": "postman-device-1" },
+              { "key": "x-device-name", "value": "Postman" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager@demo.test\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Creates the session the rest of this folder inspects and revokes. The device headers are what appear as `deviceInfo` in the listing — change them and log in again to see a second device."
+          }
+        },
+        {
+          "name": "GET Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('lists the active sessions', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const sessions = pm.response.json().sessions;",
+                  "  pm.expect(sessions).to.be.an('array').and.not.empty;",
+                  "  pm.expect(sessions[0]).to.have.property('lastActiveAt');",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const current = pm.collectionVariables.get('sessionId');",
+                  "  pm.test('includes the session this token came from', function () {",
+                  "    pm.expect(pm.response.json().sessions.map((s) => s.id)).to.include(current);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "sessions"]
+            },
+            "description": "Only live sessions are returned — revoked and expired rows are filtered out. Log in from another client (or change `x-device-id`) to watch the list grow.\n\nThe seeded config allows 5 concurrent sessions; a sixth login silently revokes the oldest."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"sessions\": [\n    {\n      \"id\": \"cd1e11a4-e5fb-41f7-a871-a9293f22d8f3\",\n      \"deviceInfo\": { \"deviceId\": \"postman-device-1\", \"deviceName\": \"Postman\" },\n      \"createdAt\": \"2026-08-25T06:19:46.286Z\",\n      \"lastActiveAt\": \"2026-08-25T06:19:46.286Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE Session (current)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('session revoked', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().revoked).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "sessions", "{{sessionId}}"]
+            },
+            "description": "Revokes one session by id — the \"sign this device out\" action. Re-run **GET Sessions** and it is gone.\n\nThe matching access JWT keeps working until it expires, because it is stateless; the session row governs refresh and the device list."
+          }
+        },
+        {
+          "name": "DELETE All Other Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('other sessions revoked', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().revokedAll).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/sessions?except={{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "sessions"],
+              "query": [
+                {
+                  "key": "except",
+                  "value": "{{sessionId}}",
+                  "description": "Session to keep alive — normally the caller's own, so \"sign out everywhere else\" does not sign you out here. Drop it to revoke every session."
+                }
+              ]
+            },
+            "description": "\"Sign out everywhere else\". The same call `PasswordResetService` makes after a reset, except that one keeps nothing."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. MFA",
+      "description": "TOTP second factor via `MfaService` — enroll, activate, then a two-leg login.\n\n`{{mfaCode}}` is computed for you: the collection pre-request script derives a live RFC 6238 code from `{{mfaSecret}}` before every request, so these can be sent without an authenticator app.\n\n**Run in order.** The folder is self-contained: it signs in as `{{mfaEmail}}` (the seeded `clerk@demo.test`), enrolls, exercises both the TOTP and backup-code paths, then disables MFA again — so it leaves the account exactly as it found it and can be re-run.",
+      "item": [
+        {
+          "name": "POST Login (MFA test user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Enrollment follows the bearer token, so the rest of the folder only",
+                  "// runs once we know the token belongs to the intended MFA subject.",
+                  "pm.collectionVariables.set('mfaAuthed', '');",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('signed in as the MFA test user', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "  });",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
+                  "  pm.collectionVariables.set('sessionRole', body.session.role);",
+                  "  pm.collectionVariables.set('userId', body.session.userId);",
+                  "  pm.collectionVariables.set('mfaAuthed', 'true');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{mfaEmail}}\",\n  \"password\": \"{{mfaPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Enrollment acts on whoever the bearer token belongs to, so the folder starts by signing in as its own subject. Point `{{mfaEmail}}` at a different account to enroll that one instead."
+          }
+        },
+        {
+          "name": "POST Enroll MFA",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('mfaAuthed') !== 'true') {",
+                  "  console.log('Skipped — run POST Login (MFA test user) first so this enrolls the intended account.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('enrollment issued', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.secret).to.be.a('string').and.not.empty;",
+                  "  pm.expect(body.otpauthUri).to.include('otpauth://totp/');",
+                  "  pm.expect(body.backupCodes).to.be.an('array').with.lengthOf(10);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('mfaSecret', body.secret);",
+                  "  pm.collectionVariables.set('mfaBackupCode', body.backupCodes[0]);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountName\": \"{{mfaEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/enroll",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "mfa", "enroll"]
+            },
+            "description": "Generates the TOTP secret plus 10 backup codes. This is the only time either is returned in the clear: the secret is stored encrypted (`MFA_ENCRYPTION_KEY`) and the backup codes are stored as salted hashes.\n\nEnrolling does **not** turn MFA on — **POST Activate MFA** does, after proving the authenticator works. `otpauthUri` is what you render as a QR code."
+          }
+        },
+        {
+          "name": "POST Activate MFA",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('mfaSecret')) {",
+                  "  console.log('Skipped — run POST Enroll MFA first.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('MFA activated', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().activated).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{mfaCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "mfa", "verify"]
+            },
+            "description": "Confirms the enrolled secret by checking one live code, then sets `mfaEnabled` on the user. From here every login for this account needs a second factor."
+          }
+        },
+        {
+          "name": "POST Login (MFA challenge)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Clear first so the requests below skip rather than replay a dead",
+                  "// challenge if this login did not produce one.",
+                  "pm.collectionVariables.set('mfaChallengeToken', '');",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test.skip('login rate-limited (5/min) — wait a minute and re-run');",
+                  "} else {",
+                  "  pm.test('password alone does not issue tokens', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.mfaRequired).to.eql(true);",
+                  "    pm.expect(body.challengeToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.tokens).to.be.undefined;",
+                  "  });",
+                  "}",
+                  "if (pm.response.code === 200 && pm.response.json().challengeToken) {",
+                  "  pm.collectionVariables.set('mfaChallengeToken', pm.response.json().challengeToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{mfaEmail}}\",\n  \"password\": \"{{mfaPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "First leg. Credentials are correct, so instead of tokens you get a short-lived (5 min) challenge token and no session is created yet.\n\nThe challenge is stored as a hash and carries the `rememberMe` flag forward, so the password never has to be re-sent for the second leg."
+          },
+          "response": [
+            {
+              "name": "200 MFA required",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"mfaRequired\": true,\n  \"challengeToken\": \"<hex>\",\n  \"expiresAt\": \"2026-08-25T06:28:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST MFA Challenge (wrong code)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('mfaChallengeToken')) {",
+                  "  console.log('Skipped — no challenge available. Run POST Login (MFA challenge) first.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejects an invalid code', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json().code).to.eql('INVALID_OTP');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"code\": \"000000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/challenge",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "mfa", "challenge"]
+            },
+            "description": "A failed second factor counts toward the same lockout counter as a failed password, so brute-forcing the 6-digit code is bounded. The challenge itself survives, so the user can retry."
+          }
+        },
+        {
+          "name": "POST MFA Challenge (TOTP)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('mfaChallengeToken')) {",
+                  "  console.log('Skipped — no challenge available. Run POST Login (MFA challenge) first.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second factor completes the login', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.tokens.accessToken).to.be.a('string').and.not.empty;",
+                  "  pm.expect(body.sessionId).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.tokens.refreshToken);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"code\": \"{{mfaCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/challenge",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "mfa", "challenge"]
+            },
+            "description": "Second leg. Returns exactly the same payload a single-factor login would — session, tokens, permissions, modules — so clients need only one success path.\n\nThe challenge is consumed here; replaying it returns `400 TOKEN_EXPIRED`."
+          }
+        },
+        {
+          "name": "POST MFA Challenge (backup code)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Needs its own challenge — the previous request consumed the last one.",
+                  "// pm.variables.get resolves through the environment, so an overridden",
+                  "// baseUrl (e.g. newman --env-var) is honoured here too.",
+                  "pm.sendRequest({",
+                  "  url: `${pm.variables.get('baseUrl')}/auth/login`,",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({",
+                  "      email: pm.variables.get('mfaEmail'),",
+                  "      password: pm.variables.get('mfaPassword'),",
+                  "    }),",
+                  "  },",
+                  "}, function (err, res) {",
+                  "  if (!err && res.code === 200 && res.json().challengeToken) {",
+                  "    pm.collectionVariables.set('mfaChallengeToken', res.json().challengeToken);",
+                  "  } else {",
+                  "    console.log('Skipped — could not obtain a challenge (login rate-limited, or MFA is not enrolled).');",
+                  "    pm.execution.skipRequest();",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('a backup code also completes the login', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().tokens.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.tokens.accessToken);",
+                  "  pm.collectionVariables.set('sessionId', body.sessionId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"code\": \"{{mfaBackupCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/challenge",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "mfa", "challenge"]
+            },
+            "description": "The recovery path for a lost authenticator. Backup codes are single-use — send this twice and the second attempt returns `401 INVALID_OTP`.\n\nThe pre-request script fetches a fresh challenge, since the previous request burned the last one."
+          }
+        },
+        {
+          "name": "POST Disable MFA",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('mfaSecret')) {",
+                  "  console.log('Skipped — nothing enrolled by this run.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('MFA disabled', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().disabled).to.eql(true);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('mfaSecret', '');",
+                  "  pm.collectionVariables.set('mfaCode', '');",
+                  "  pm.collectionVariables.set('mfaBackupCode', '');",
+                  "  pm.collectionVariables.set('mfaChallengeToken', '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{mfaCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/disable",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "mfa", "disable"]
+            },
+            "description": "Turning MFA off requires a valid code, so a hijacked session cannot quietly remove the second factor. Deletes the secret and all remaining backup codes, restoring the account for the next run."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. User",
       "description": "`GET /me` returns the current user plus their `permissions` list (UI permission payload). `GET /admin/users` is the admin user list, gated by `Read_Users` + admin audience.",
       "item": [
         {
@@ -515,7 +1534,7 @@
       ]
     },
     {
-      "name": "3. RBAC / modules",
+      "name": "6. RBAC / modules",
       "description": "Each route is gated with `requirePermission('Action_Module')` from the module registry. Run a login first, then hit these with that role.",
       "item": [
         {
@@ -911,6 +1930,49 @@
               "path": ["admin", "users"]
             },
             "description": "Same route as User → GET Admin Users. Included here so a Collection Runner can cover all module gates in one folder."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Teardown",
+      "description": "Runs last so the folders above still have a token. Logging out mid-collection would strand every request after it.",
+      "item": [
+        {
+          "name": "POST Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logout acknowledged', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().ok).to.eql(true);",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', '');",
+                  "pm.collectionVariables.set('refreshToken', '');",
+                  "pm.collectionVariables.set('sessionRole', '');",
+                  "pm.collectionVariables.set('userId', '');",
+                  "pm.collectionVariables.set('sessionId', '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Revokes the refresh token, and the server-side session too when `sessionId` is supplied — that is what drops the device out of `GET /auth/sessions`. The access JWT stays valid until it expires, since it is stateless; this script clears the local collection tokens."
           }
         }
       ]

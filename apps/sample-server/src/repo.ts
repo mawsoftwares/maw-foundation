@@ -1,5 +1,6 @@
 import { hashPassword } from '@maw/auth-core';
 import type { IRefreshTokenStore, RefreshRecord } from '@maw/auth-core';
+import { AccountStatus } from '@maw/sdk';
 import type { TenantRolePolicy } from '@maw/rbac-core';
 import type { IUserRepository, UserRecord, CreateUserInput } from '@maw/sdk/contracts/IUserRepository';
 import { randomUUID } from 'node:crypto';
@@ -22,7 +23,10 @@ export interface UserRow {
   readonly scopeId: string | null;
 }
 
-const TENANT = 'demo-tenant';
+/** The single tenant the sample seeds; real products resolve this per request. */
+export const DEMO_TENANT = 'demo-tenant';
+
+const TENANT = DEMO_TENANT;
 
 /** Tenant config: which modules are enabled (license ∪ feature flags). */
 export const ENABLED_MODULES = ['admin', 'reports', 'orders', 'inventory', 'billing'];
@@ -46,14 +50,6 @@ export const USERS: readonly UserRow[] = [
   { id: 'u-clerk', tenantId: TENANT, email: 'clerk@demo.test', role: 'clerk', audience: 'operator', passwordHash: hashPassword('password123'), scopeId: 'plant-1' },
 ];
 
-export function findUserByEmail(email: string): UserRow | undefined {
-  return USERS.find((u) => u.email === email.toLowerCase());
-}
-
-export function findUserById(id: string): UserRow | undefined {
-  return USERS.find((u) => u.id === id);
-}
-
 /** In-memory user repository implementing the SDK port. */
 export class MemoryUserRepository implements IUserRepository {
   private readonly users = new Map<string, UserRecord>();
@@ -68,7 +64,9 @@ export class MemoryUserRepository implements IUserRepository {
           email: u.email,
           passwordHash: u.passwordHash,
           role: u.role,
-          accountStatus: 'ACTIVE',
+          audience: u.audience,
+          scopeId: u.scopeId,
+          accountStatus: AccountStatus.ACTIVE,
           emailVerified: true,
           mfaEnabled: false,
           createdAt: now,
@@ -98,6 +96,8 @@ export class MemoryUserRepository implements IUserRepository {
       passwordHash: input.passwordHash,
       role: input.role,
       name: input.name,
+      audience: input.audience ?? 'admin',
+      scopeId: input.scopeId ?? null,
       accountStatus: input.accountStatus,
       emailVerified: false,
       mfaEnabled: false,

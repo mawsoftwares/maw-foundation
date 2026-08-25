@@ -275,7 +275,7 @@ export function createFileRoutes(storage: IFileStorage, opts?: { keyPrefix?: str
   };
 
   const getUrl: RequestHandler = async (req: Request, res: Response) => {
-    const key = req.params.key ?? (req.query.key as string | undefined);
+    const key = readKeyParam(req);
     if (typeof key !== 'string') {
       res.status(400).json({ error: 'Missing key parameter' });
       return;
@@ -289,7 +289,7 @@ export function createFileRoutes(storage: IFileStorage, opts?: { keyPrefix?: str
   };
 
   const deleteFile: RequestHandler = async (req: Request, res: Response) => {
-    const key = req.params.key ?? (req.query.key as string | undefined);
+    const key = readKeyParam(req);
     if (typeof key !== 'string') {
       res.status(400).json({ error: 'Missing key parameter' });
       return;
@@ -303,6 +303,16 @@ export function createFileRoutes(storage: IFileStorage, opts?: { keyPrefix?: str
   };
 
   return { list, getUrl, deleteFile };
+}
+
+/**
+ * Storage keys contain slashes, so they arrive through an Express 5 wildcard
+ * (`/files/:key*`), which hands back one array element per path segment.
+ */
+function readKeyParam(req: Request): string | undefined {
+  const param = req.params.key;
+  if (Array.isArray(param)) return param.join('/');
+  return param ?? (req.query.key as string | undefined);
 }
 
 export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): DynamicExpressAuth {
@@ -402,4 +412,4 @@ export {
   type SecurityPipelineDeps,
   type SecurityPipelineResult,
 } from './security-pipeline';
-export { createAuthRoutes, type AuthRouteDeps } from './auth-routes';
+export { createAuthRoutes, handleAuthError, type AuthRouteDeps } from './auth-routes';

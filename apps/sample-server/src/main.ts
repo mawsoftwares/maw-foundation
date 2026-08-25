@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   signAccessToken,
-  verifyPassword,
+  hashToken,
   RefreshTokens,
   DEFAULT_ACCESS_TTL_SECONDS,
   type AuthClaims,
@@ -18,6 +18,17 @@ import {
   OtpService,
   MfaService,
   MemoryOtpSecretStore,
+  MemoryLoginAttemptStore,
+  MemoryMfaChallengeStore,
+  AuthenticationService,
+  type AuthenticateContext,
+  type ServerSession,
+  type ISessionStore,
+  type IEmailVerificationStore,
+  type IPasswordResetStore,
+  type IOtpSecretStore,
+  type ILoginAttemptStore,
+  type IMfaChallengeStore,
 } from '@maw/auth-core';
 import {
   MasterCache,
@@ -25,8 +36,9 @@ import {
   type ISyncStore,
   type ICacheStore,
 } from '@maw/rbac-core';
-import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
 import { LocalFileStorage } from '@maw/platform';
+import { AesEncryptionService } from '@maw/platform/security/AesEncryptionService';
 import { MemoryRateLimiter } from '@maw/platform/security/MemoryRateLimiter';
 import { redact } from '@maw/platform/security/LogRedactor';
 import { LoginProtection } from '@maw/auth-core';
@@ -34,6 +46,7 @@ import { DEFAULT_SECURITY_CONFIG } from '@maw/sdk/security/SecurityConfig';
 import multer from 'multer';
 import * as path from 'node:path';
 import type { Session } from '@maw/sdk/contracts/identity';
+import type { IUserRepository, UserRecord } from '@maw/sdk/contracts/IUserRepository';
 import {
   createLogger,
   getEnv,
@@ -48,10 +61,8 @@ import {
 import {
   MemoryRefreshStore,
   MemoryUserRepository,
-  findUserByEmail,
-  findUserById,
+  DEMO_TENANT,
   USERS,
-  type UserRow,
 } from './repo';
 import { registry } from './modules/index';
 import { MemorySyncStore, MemoryCacheStore } from './dynamic-stores';
@@ -80,8 +91,14 @@ interface DataLayer {
   cacheStore: ICacheStore;
   refreshStore: IRefreshTokenStore;
   auditStore: IAuditStore;
-  findUserByEmail: (email: string) => UserRow | undefined | Promise<UserRow | undefined>;
-  findUserById: (id: string) => UserRow | undefined | Promise<UserRow | undefined>;
+  /** The one user store. Login and every auth service read through this port. */
+  userRepository: IUserRepository;
+  sessionStore: ISessionStore;
+  emailVerificationStore: IEmailVerificationStore;
+  passwordResetStore: IPasswordResetStore;
+  otpSecretStore: IOtpSecretStore;
+  loginAttemptStore: ILoginAttemptStore;
+  mfaChallengeStore: IMfaChallengeStore;
   userRoleMap: Record<string, number>;
   rolePermissionMap: Record<number, string[]>;
 }
@@ -121,9 +138,11 @@ async function buildDataLayer(): Promise<DataLayer> {
     const pg = await import('pg');
     const pool = new pg.default.Pool({ connectionString: DATABASE_URL });
     const { PgSyncStore, PgCacheStore } = await import('./pg-stores');
-    const { PgRefreshStore, createPgUserRepo } = await import('./repo-pg');
-
-    const userRepo = createPgUserRepo(pool);
+    const { PgRefreshStore } = await import('./repo-pg');
+    const {
+      PgUserRepository, PgSessionStore, PgEmailVerificationStore,
+      PgPasswordResetStore, PgOtpSecretStore, PgLoginAttemptStore, PgMfaChallengeStore,
+    } = await import('./auth-stores-pg');
 
     log.info('Using Postgres data layer');
     return {
@@ -131,8 +150,13 @@ async function buildDataLayer(): Promise<DataLayer> {
       cacheStore: new PgCacheStore(pool),
       refreshStore: new PgRefreshStore(pool),
       auditStore: new PgAuditStore(pool),
-      findUserByEmail: (email) => userRepo.findByEmail(email),
-      findUserById: (id) => userRepo.findById(id),
+      userRepository: new PgUserRepository(pool),
+      sessionStore: new PgSessionStore(pool),
+      emailVerificationStore: new PgEmailVerificationStore(pool),
+      passwordResetStore: new PgPasswordResetStore(pool),
+      otpSecretStore: new PgOtpSecretStore(pool),
+      loginAttemptStore: new PgLoginAttemptStore(pool),
+      mfaChallengeStore: new PgMfaChallengeStore(pool),
       userRoleMap: USER_ROLE_MAP,
       rolePermissionMap: ROLE_PERMS,
     };
@@ -144,8 +168,13 @@ async function buildDataLayer(): Promise<DataLayer> {
     cacheStore: new MemoryCacheStore(syncStore, ROLES, ROLE_PERMS),
     refreshStore: new MemoryRefreshStore(),
     auditStore: new MemoryAuditStore(),
-    findUserByEmail,
-    findUserById,
+    userRepository: new MemoryUserRepository(USERS),
+    sessionStore: new MemorySessionStore(),
+    emailVerificationStore: new MemoryEmailVerificationStore(),
+    passwordResetStore: new MemoryPasswordResetStore(),
+    otpSecretStore: new MemoryOtpSecretStore(),
+    loginAttemptStore: new MemoryLoginAttemptStore(),
+    mfaChallengeStore: new MemoryMfaChallengeStore(),
     userRoleMap: USER_ROLE_MAP,
     rolePermissionMap: ROLE_PERMS,
   };
@@ -226,18 +255,25 @@ const refreshTokens = new RefreshTokens(data.refreshStore, 60 * 60 * 24 * 30);
 // ---------------------------------------------------------------------------
 
 const hasher = ScryptHasher;
-const userRepository = new MemoryUserRepository(USERS);
-const sessionStore = new MemorySessionStore();
+const userRepository = data.userRepository;
 const sessionService = new SessionService({
-  store: sessionStore,
+  store: data.sessionStore,
   config: DEFAULT_SECURITY_CONFIG.session,
 });
 
-const emailVerificationStore = new MemoryEmailVerificationStore();
 const emailVerification = new EmailVerification({
-  store: emailVerificationStore,
+  store: data.emailVerificationStore,
   ttlSeconds: DEFAULT_SECURITY_CONFIG.registration.emailVerificationTtlSeconds,
 });
+
+/**
+ * The sample has no mail provider, so one-time tokens go to the log. Swap this for a
+ * real @maw/communication channel in a product — the services only need the callback.
+ */
+const authLog = log.child('auth');
+const deliverToken = (kind: string) => async (email: string, token: string): Promise<void> => {
+  authLog.info(`${kind} token issued (no mail provider configured)`, { email, token });
+};
 
 const registrationService = new RegistrationService({
   userRepository,
@@ -245,15 +281,16 @@ const registrationService = new RegistrationService({
   passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
   registrationConfig: DEFAULT_SECURITY_CONFIG.registration,
   emailVerification,
+  sendVerificationEmail: deliverToken('Email verification'),
 });
 
-const passwordResetStore = new MemoryPasswordResetStore();
 const passwordResetService = new PasswordResetService({
   userRepository,
   hasher,
   passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
   resetConfig: DEFAULT_SECURITY_CONFIG.passwordReset,
-  store: passwordResetStore,
+  store: data.passwordResetStore,
+  sendResetEmail: deliverToken('Password reset'),
   sessionService,
 });
 
@@ -263,15 +300,37 @@ const passwordChangeService = new PasswordChangeService({
   passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
 });
 
+// TOTP secrets are stored encrypted at rest, so MFA needs a real key in production.
+const MFA_ENCRYPTION_KEY = getEnv('MFA_ENCRYPTION_KEY', '0'.repeat(64))!;
 const otpService = new OtpService(DEFAULT_SECURITY_CONFIG.otp);
-const otpSecretStore = new MemoryOtpSecretStore();
+const mfaService = new MfaService({
+  otpService,
+  store: data.otpSecretStore,
+  encryptionService: new AesEncryptionService(MFA_ENCRYPTION_KEY),
+  userRepository,
+  hasher: {
+    hash: async (value) => hasher.hash(value),
+    verify: async (value, hash) => hasher.verify(value, hash),
+  },
+});
+
+const loginProtection = new LoginProtection(DEFAULT_SECURITY_CONFIG.loginProtection);
+
+const authService = new AuthenticationService({
+  userRepository,
+  hasher,
+  sessionService,
+  loginProtection,
+  loginAttemptStore: data.loginAttemptStore,
+  mfaService,
+  mfaChallengeStore: data.mfaChallengeStore,
+});
 
 // ---------------------------------------------------------------------------
 // Express app
 // ---------------------------------------------------------------------------
 
 const rateLimiter = new MemoryRateLimiter();
-const loginProtection = new LoginProtection();
 
 const securityConfig = {
   ...DEFAULT_SECURITY_CONFIG,
@@ -293,45 +352,96 @@ for (const mw of securityMiddleware) app.use(mw);
 
 // --- Auth routes ---
 
+/**
+ * Turns an authenticated user + server session into the payload this product's clients
+ * expect. `AuthenticationService` deliberately stops at the session, because claims,
+ * entitlements and the permission matrix are product decisions, not foundation ones.
+ */
+async function buildLoginResponse(user: UserRecord, session: ServerSession) {
+  const claims: AuthClaims = {
+    tenantId: user.tenantId, userId: user.id, role: user.role,
+    audience: user.audience, scopeId: user.scopeId,
+  };
+  const accessToken = signAccessToken(claims, JWT_SECRET, DEFAULT_ACCESS_TTL_SECONDS);
+  const refreshToken = await refreshTokens.issue(user.tenantId, user.id);
+  await sessionService.updateRefreshTokenHash(session.id, hashToken(refreshToken));
+
+  const roleId = data.userRoleMap[user.id];
+  const permissions = roleId !== undefined ? (data.rolePermissionMap[roleId] ?? []) : [];
+
+  return {
+    session: {
+      userId: user.id, tenantId: user.tenantId, role: user.role,
+      accountStatus: user.accountStatus,
+      audience: user.audience, entitlements: registry.getAll().map((m) => m.key),
+      capabilities: [], rolePermissions: {},
+      scopeId: user.scopeId,
+    } satisfies Session,
+    sessionId: session.id,
+    tokens: { accessToken, refreshToken },
+    permissions,
+    modules: registry.getAll().map((m) => ({ key: m.key, name: m.name, audience: m.audience ?? 'admin' })),
+  };
+}
+
+function requestContext(req: express.Request): AuthenticateContext {
+  const deviceId = req.get('x-device-id');
+  return {
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+    deviceInfo: deviceId !== undefined ? { deviceId, deviceName: req.get('x-device-name') } : undefined,
+  };
+}
+
 app.post('/auth/login', (req, res) => {
   void (async () => {
-    const { email, password } = req.body as { email?: string; password?: string };
-    const loginKey = email ?? req.ip ?? 'unknown';
+    try {
+      const { email, password, tenantId, rememberMe } = req.body as {
+        email?: string; password?: string; tenantId?: string; rememberMe?: boolean;
+      };
+      if (email === undefined || password === undefined) {
+        res.status(HttpStatus.BAD_REQUEST).json({ error: 'email and password are required' });
+        return;
+      }
 
-    if (loginProtection.isLocked(loginKey)) {
-      res.status(429).json({ error: 'Account temporarily locked. Try again later.' });
-      return;
-    }
-
-    const user = email !== undefined ? await data.findUserByEmail(email) : undefined;
-    if (user === undefined || password === undefined || !verifyPassword(password, user.passwordHash)) {
-      const result = loginProtection.recordFailure(loginKey);
-      res.status(HttpStatus.UNAUTHORIZED).json({
-        error: 'invalid credentials',
-        ...(result.locked ? { retryAfterMs: result.retryAfterMs } : { attemptsRemaining: result.attemptsRemaining }),
+      const result = await authService.authenticate({
+        tenantId: tenantId ?? DEMO_TENANT,
+        email,
+        password,
+        rememberMe,
+        ...requestContext(req),
       });
-      return;
-    }
 
-    loginProtection.recordSuccess(loginKey);
-    const claims: AuthClaims = {
-      tenantId: user.tenantId, userId: user.id, role: user.role,
-      audience: user.audience, scopeId: user.scopeId,
-    };
-    const accessToken = signAccessToken(claims, JWT_SECRET, DEFAULT_ACCESS_TTL_SECONDS);
-    const refreshToken = await refreshTokens.issue(user.tenantId, user.id);
-    const roleId = data.userRoleMap[user.id];
-    const permissions = roleId !== undefined ? (data.rolePermissionMap[roleId] ?? []) : [];
-    res.json({
-      session: {
-        userId: user.id, tenantId: user.tenantId, role: user.role,
-        audience: user.audience, entitlements: registry.getAll().map((m) => m.key),
-        capabilities: [], rolePermissions: {},
-      } satisfies Session,
-      tokens: { accessToken, refreshToken },
-      permissions,
-      modules: registry.getAll().map((m) => ({ key: m.key, name: m.name, audience: m.audience ?? 'admin' })),
-    });
+      if (result.outcome === 'mfa_required') {
+        res.status(HttpStatus.OK).json({
+          mfaRequired: true,
+          challengeToken: result.challengeToken,
+          expiresAt: result.expiresAt,
+        });
+        return;
+      }
+
+      res.json(await buildLoginResponse(result.user, result.session));
+    } catch (err) {
+      handleAuthError(res, err);
+    }
+  })();
+});
+
+/** Second leg of an MFA login: exchange the challenge token for real tokens. */
+app.post('/auth/mfa/challenge', (req, res) => {
+  void (async () => {
+    try {
+      const { challengeToken, code } = req.body as { challengeToken?: string; code?: string };
+      if (challengeToken === undefined || code === undefined) {
+        res.status(HttpStatus.BAD_REQUEST).json({ error: 'challengeToken and code are required' });
+        return;
+      }
+      const result = await authService.completeMfaChallenge(challengeToken, code, requestContext(req));
+      res.json(await buildLoginResponse(result.user, result.session));
+    } catch (err) {
+      handleAuthError(res, err);
+    }
   })();
 });
 
@@ -340,8 +450,8 @@ app.post('/auth/refresh', (req, res) => {
     const { refreshToken } = req.body as { refreshToken?: string };
     const rotated = refreshToken !== undefined ? await refreshTokens.rotate(refreshToken) : null;
     if (rotated === null) { res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid refresh token' }); return; }
-    const user = await data.findUserById(rotated.userId);
-    if (user === undefined) { res.status(HttpStatus.UNAUTHORIZED).json({ error: 'unknown user' }); return; }
+    const user = await userRepository.findById(rotated.userId);
+    if (user === null) { res.status(HttpStatus.UNAUTHORIZED).json({ error: 'unknown user' }); return; }
     const claims: AuthClaims = {
       tenantId: user.tenantId, userId: user.id, role: user.role,
       audience: user.audience, scopeId: user.scopeId,
@@ -353,8 +463,9 @@ app.post('/auth/refresh', (req, res) => {
 
 app.post('/auth/logout', (req, res) => {
   void (async () => {
-    const { refreshToken } = req.body as { refreshToken?: string };
+    const { refreshToken, sessionId } = req.body as { refreshToken?: string; sessionId?: string };
     if (refreshToken !== undefined) await refreshTokens.revoke(refreshToken);
+    if (sessionId !== undefined) await sessionService.revoke(sessionId);
     res.json({ ok: true });
   })();
 });
@@ -367,6 +478,7 @@ app.use('/auth', createAuthRoutes({
   passwordResetService,
   passwordChangeService,
   sessionService,
+  mfaService,
 }));
 
 // --- Reporting routes ---
@@ -478,8 +590,8 @@ app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), upl
 });
 
 app.get('/files', auth.requireAuth, fileRoutes.list);
-app.get('/files/url/:key(*)', auth.requireAuth, fileRoutes.getUrl);
-app.delete('/files/:key(*)', auth.requireAuth, fileRoutes.deleteFile);
+app.get('/files/url/*key', auth.requireAuth, fileRoutes.getUrl);
+app.delete('/files/*key', auth.requireAuth, fileRoutes.deleteFile);
 
 app.use('/files', express.static(uploadsDir));
 

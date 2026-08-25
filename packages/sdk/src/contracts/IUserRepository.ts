@@ -7,6 +7,10 @@ export interface UserRecord {
   readonly passwordHash: string;
   readonly role: string;
   readonly name?: string;
+  /** Which app/audience this user signs into (dual-audience gating). */
+  readonly audience?: string;
+  /** ABAC scoping axis carried into token claims (e.g. plant id; null = all). */
+  readonly scopeId?: string | null;
   readonly accountStatus: AccountStatusValue;
   readonly emailVerified: boolean;
   readonly mfaEnabled: boolean;
@@ -23,6 +27,8 @@ export interface CreateUserInput {
   readonly passwordHash: string;
   readonly role: string;
   readonly name?: string;
+  readonly audience?: string;
+  readonly scopeId?: string | null;
   readonly accountStatus: AccountStatusValue;
 }
 

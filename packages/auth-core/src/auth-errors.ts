@@ -20,8 +20,8 @@ export class AccountLockedError extends AuthError {
 }
 
 export class AccountDisabledError extends AuthError {
-  constructor() {
-    super(ErrorCode.ACCOUNT_DISABLED, 'Account is disabled', 403);
+  constructor(message = 'Account is disabled') {
+    super(ErrorCode.ACCOUNT_DISABLED, message, 403);
   }
 }
 

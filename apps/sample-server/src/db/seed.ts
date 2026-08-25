@@ -47,11 +47,13 @@ try {
   // --- Users (001 tables) ---
   for (const u of users) {
     await client.query(
-      `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id, account_status, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', TRUE)
        ON CONFLICT (tenant_id, email) DO UPDATE SET
          role = EXCLUDED.role, audience = EXCLUDED.audience,
-         password_hash = EXCLUDED.password_hash, scope_id = EXCLUDED.scope_id`,
+         password_hash = EXCLUDED.password_hash, scope_id = EXCLUDED.scope_id,
+         account_status = EXCLUDED.account_status, email_verified = EXCLUDED.email_verified,
+         updated_at = NOW()`,
       [u.id, TENANT, u.email, u.role, u.audience, hashPassword('password123'), u.scopeId],
     );
   }

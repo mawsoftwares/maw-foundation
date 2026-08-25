@@ -92,6 +92,18 @@ export {
   MemoryLoginAttemptStore,
 } from './login-attempt-store';
 export {
+  AuthenticationService,
+  type AuthenticationServiceOptions,
+  type AuthenticateContext,
+  type AuthenticateInput,
+  type AuthenticateResult,
+  type AuthenticationSuccess,
+  type MfaChallengeIssued,
+  type MfaChallengeRecord,
+  type IMfaChallengeStore,
+  MemoryMfaChallengeStore,
+} from './authentication';
+export {
   type SocialAuthProfile,
   type ISocialAuthProvider,
   type SocialAccountLink,
