@@ -20,6 +20,7 @@
     "packages/import-export",
     "packages/audit",
     "packages/deployment",
+    "packages/reporting",
     "apps/sample-server",
     "apps/sample-web"
   ],
