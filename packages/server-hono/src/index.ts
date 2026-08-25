@@ -104,3 +104,12 @@ export {
   type SecurityPipelineDeps,
   type SecurityPipelineResult,
 } from './security-pipeline';
+export {
+  populateRequestContext,
+  executeController,
+  createApiRouter,
+  type ApiRouteOptions,
+  type ApiRouterOptions,
+} from './api-adapter';
+export { createRequestLogger, type RequestLoggerOptions } from './request-logger';
+export { correlationIdMiddleware } from './correlation-id';

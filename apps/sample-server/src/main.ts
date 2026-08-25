@@ -36,7 +36,7 @@ import {
   type ISyncStore,
   type ICacheStore,
 } from '@maw/rbac-core';
-import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, correlationIdMiddleware, createRequestLogger, populateRequestContext, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
 import { LocalFileStorage } from '@maw/platform';
 import { AesEncryptionService } from '@maw/platform/security/AesEncryptionService';
 import { MemoryRateLimiter } from '@maw/platform/security/MemoryRateLimiter';
@@ -349,6 +349,9 @@ const { middleware: securityMiddleware, errorHandler: securityErrorHandler } = c
 const app = express();
 app.use(express.json());
 for (const mw of securityMiddleware) app.use(mw);
+app.use(correlationIdMiddleware());
+app.use(createRequestLogger({ logger: log, ignorePaths: ['/health'] }));
+app.use(populateRequestContext());
 
 // --- Auth routes ---
 
@@ -632,6 +635,14 @@ app.get('/config/:path', (req, res) => {
   }
   res.json({ path, value: config.get(path) });
 });
+
+// --- API v1 (standard envelope) ---
+
+import { createOrdersRouter } from './modules/orders/routes';
+app.use('/api/v1/orders', createOrdersRouter({
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+}));
 
 // --- Health check (composable) ---
 

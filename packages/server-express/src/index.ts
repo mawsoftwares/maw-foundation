@@ -413,3 +413,12 @@ export {
   type SecurityPipelineResult,
 } from './security-pipeline';
 export { createAuthRoutes, handleAuthError, type AuthRouteDeps } from './auth-routes';
+export {
+  populateRequestContext,
+  executeController,
+  createApiRouter,
+  type ApiRouteOptions,
+  type ApiRouterOptions,
+} from './api-adapter';
+export { createRequestLogger, type RequestLoggerOptions } from './request-logger';
+export { correlationIdMiddleware } from './correlation-id';

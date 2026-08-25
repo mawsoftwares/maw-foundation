@@ -45,7 +45,9 @@
       "@maw/import-export": ["packages/import-export/src/index.ts"],
       "@maw/import-export/*": ["packages/import-export/src/*"],
       "@maw/reporting": ["packages/reporting/src/index.ts"],
-      "@maw/reporting/*": ["packages/reporting/src/*"]
+      "@maw/reporting/*": ["packages/reporting/src/*"],
+      "@maw/api": ["packages/api/src/index.ts"],
+      "@maw/api/*": ["packages/api/src/*"]
     }
   }
 }

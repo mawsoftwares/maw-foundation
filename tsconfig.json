@@ -11,6 +11,7 @@
     "packages/auth-core/src",
     "packages/server-express/src",
     "packages/server-hono/src",
+    "packages/api/src",
     "packages/api-client/src",
     "packages/theme/src",
     "packages/ui-web/src",

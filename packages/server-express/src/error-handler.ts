@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
 import { HttpStatus } from '@maw/sdk/config/constants';
+import { ApiResponse } from '@maw/api';
 
 export interface GlobalErrorHandlerOptions {
   readonly redact?: <T>(obj: T) => T;
@@ -14,12 +15,13 @@ export function createGlobalErrorHandler(
   const { redact } = options;
 
   return (err: unknown, req: Request, res: Response, _next: NextFunction) => {
+    const requestId = req.headers['x-request-id'] as string | undefined;
+
     if (err instanceof AppError) {
-      const body = {
-        error: err.message,
-        code: err.code,
-        ...(err.details !== undefined ? { details: redact ? redact(err.details) : err.details } : {}),
-      };
+      const details = err.details !== undefined
+        ? (redact ? redact(err.details) : err.details) as Record<string, unknown>
+        : undefined;
+      const body = ApiResponse.error(err.code, err.message, details, requestId);
       res.status(err.statusCode).json(body);
       return;
     }
@@ -28,9 +30,8 @@ export function createGlobalErrorHandler(
     const logPayload = { message, path: req.path, method: req.method };
     logger.error('Unhandled error', redact ? redact(logPayload) : logPayload);
 
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-      error: 'Internal server error',
-      code: ErrorCode.INTERNAL,
-    });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error(ErrorCode.INTERNAL, 'Internal server error', undefined, requestId),
+    );
   };
 }

@@ -1,5 +1,6 @@
 import type { ErrorHandler } from 'hono';
 import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
+import { ApiResponse } from '@maw/api';
 
 export interface GlobalErrorHandlerOptions {
   readonly redact?: <T>(obj: T) => T;
@@ -12,12 +13,13 @@ export function createGlobalErrorHandler(
   const { redact, logger = console } = options;
 
   return (err, c) => {
+    const requestId = c.req.header('x-request-id');
+
     if (err instanceof AppError) {
-      const body = {
-        error: err.message,
-        code: err.code,
-        ...(err.details !== undefined ? { details: redact ? redact(err.details) : err.details } : {}),
-      };
+      const details = err.details !== undefined
+        ? (redact ? redact(err.details) : err.details) as Record<string, unknown>
+        : undefined;
+      const body = ApiResponse.error(err.code, err.message, details, requestId);
       return c.json(body, err.statusCode as 400);
     }
 
@@ -25,6 +27,9 @@ export function createGlobalErrorHandler(
     const logPayload = { message, path: c.req.path, method: c.req.method };
     logger.error('Unhandled error', redact ? redact(logPayload) : logPayload);
 
-    return c.json({ error: 'Internal server error', code: ErrorCode.INTERNAL }, 500);
+    return c.json(
+      ApiResponse.error(ErrorCode.INTERNAL, 'Internal server error', undefined, requestId),
+      500,
+    );
   };
 }

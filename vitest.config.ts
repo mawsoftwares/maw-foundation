@@ -7,6 +7,7 @@ const pkgs = [
   'platform',
   'rbac-core',
   'auth-core',
+  'api',
   'server-express',
   'server-hono',
   'api-client',
