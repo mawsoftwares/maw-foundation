@@ -11,3 +11,19 @@ coverage/
 .expo/
 web-build/
 *.tsbuildinfo
+
+# pnpm
+.pnpm-debug.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Secrets — never commit
+*.pem
+*.key

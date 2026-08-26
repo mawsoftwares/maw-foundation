@@ -5,18 +5,31 @@ import {
   Button,
   Stack,
   Divider,
+  DataTable,
+  TextField,
   useToast,
   useOffline,
   useBrand,
   useBrandColors,
+  type ColumnDef,
 } from '@maw/ui-web';
+
+interface StorageEntry {
+  readonly key: string;
+  readonly value: string;
+}
+
+const STORAGE_COLUMNS: ColumnDef<StorageEntry>[] = [
+  { key: 'key', header: 'Key', render: (r: StorageEntry) => <code style={{ fontSize: 'var(--maw-text-xs)' }}>{r.key}</code> },
+  { key: 'value', header: 'Value' },
+];
 
 export function PlatformView(): ReactNode {
   const toast = useToast();
   const offline = useOffline();
   const { brand, switchTenant } = useBrand();
   const colors = useBrandColors();
-  const [storageEntries, setStorageEntries] = useState<Array<{ key: string; value: string }>>([]);
+  const [storageEntries, setStorageEntries] = useState<StorageEntry[]>([]);
   const [storeKey, setStoreKey] = useState('test-key');
   const [storeValue, setStoreValue] = useState('hello world');
 
@@ -39,7 +52,7 @@ export function PlatformView(): ReactNode {
   };
 
   const handleStorageRead = () => {
-    const entries: Array<{ key: string; value: string }> = [];
+    const entries: StorageEntry[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (k?.startsWith('maw:offline:')) {
@@ -66,7 +79,7 @@ export function PlatformView(): ReactNode {
 
   return (
     <div>
-      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)', flexWrap: 'wrap', gap: 'var(--maw-space-sm)' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>Platform</h1>
           <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
@@ -105,7 +118,7 @@ export function PlatformView(): ReactNode {
           </div>
         </Stack>
         <Divider style={{ margin: 'var(--maw-space-md) 0' }} />
-        <Stack direction="row" gap="var(--maw-space-sm)">
+        <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
           <Button onClick={handleSyncTrigger} variant="ghost">
             Trigger Sync
           </Button>
@@ -127,64 +140,26 @@ export function PlatformView(): ReactNode {
       {/* Offline Storage */}
       <h2 style={sectionTitle}>Offline Storage</h2>
       <Card style={{ padding: 'var(--maw-space-lg)', marginBottom: 'var(--maw-space-xl)' }}>
-        <Stack direction="row" gap="var(--maw-space-sm)" align="end" style={{ marginBottom: 'var(--maw-space-md)' }}>
-          <div style={{ flex: 1 }}>
-            <div style={label}>Key</div>
-            <input
-              value={storeKey}
-              onChange={(e) => setStoreKey(e.target.value)}
-              style={{
-                width: '100%', padding: '6px 10px', borderRadius: 'var(--maw-radius-sm)',
-                border: '1px solid var(--maw-border)', background: 'var(--maw-bg)', color: 'var(--maw-fg)',
-                fontSize: 'var(--maw-text-sm)',
-              }}
-            />
+        <Stack direction="row" gap="var(--maw-space-sm)" align="end" style={{ marginBottom: 'var(--maw-space-md)', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 120 }}>
+            <TextField label="Key" value={storeKey} onChange={(e) => setStoreKey(e.target.value)} />
           </div>
-          <div style={{ flex: 2 }}>
-            <div style={label}>Value</div>
-            <input
-              value={storeValue}
-              onChange={(e) => setStoreValue(e.target.value)}
-              style={{
-                width: '100%', padding: '6px 10px', borderRadius: 'var(--maw-radius-sm)',
-                border: '1px solid var(--maw-border)', background: 'var(--maw-bg)', color: 'var(--maw-fg)',
-                fontSize: 'var(--maw-text-sm)',
-              }}
-            />
+          <div style={{ flex: 2, minWidth: 180 }}>
+            <TextField label="Value" value={storeValue} onChange={(e) => setStoreValue(e.target.value)} />
           </div>
-          <Button onClick={handleStorageWrite}>Write</Button>
-          <Button variant="ghost" onClick={handleStorageRead}>Read All</Button>
-          <Button variant="ghost" onClick={handleStorageClear}>Clear</Button>
+          <Stack direction="row" gap="var(--maw-space-xs)">
+            <Button onClick={handleStorageWrite}>Write</Button>
+            <Button variant="ghost" onClick={handleStorageRead}>Read All</Button>
+            <Button variant="ghost" onClick={handleStorageClear}>Clear</Button>
+          </Stack>
         </Stack>
 
-        {storageEntries.length > 0 && (
-          <div style={{
-            border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-sm)',
-            overflow: 'hidden',
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--maw-text-sm)' }}>
-              <thead>
-                <tr style={{ background: 'var(--maw-surface)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--maw-fg)' }}>Key</th>
-                  <th style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--maw-fg)' }}>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storageEntries.map((e) => (
-                  <tr key={e.key} style={{ borderTop: '1px solid var(--maw-border)' }}>
-                    <td style={{ padding: '8px 12px', color: 'var(--maw-fg)', fontFamily: 'monospace' }}>{e.key}</td>
-                    <td style={{ padding: '8px 12px', color: 'var(--maw-fgMuted)' }}>{e.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {storageEntries.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 'var(--maw-space-md)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>
-            No offline storage entries. Click "Read All" to scan or "Write" to add one.
-          </div>
-        )}
+        <DataTable<StorageEntry>
+          data={storageEntries}
+          columns={STORAGE_COLUMNS}
+          keyField="key"
+          emptyMessage='No offline storage entries. Click "Read All" to scan or "Write" to add one.'
+        />
       </Card>
 
       {/* Brand Config */}
@@ -248,7 +223,7 @@ export function PlatformView(): ReactNode {
 
         <Divider style={{ margin: 'var(--maw-space-md) 0' }} />
 
-        <Stack direction="row" gap="var(--maw-space-sm)">
+        <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
           <Button variant="ghost" onClick={() => { void switchTenant('client-a'); toast.success('Switched to Blue Corp'); }}>
             Blue Corp
           </Button>

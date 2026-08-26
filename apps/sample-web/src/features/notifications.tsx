@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import { ApiError } from '@maw/api-client';
+import type { ApiSuccessResponse } from '@maw/api/response/types';
 import {
   Card,
   Badge,
@@ -42,7 +43,7 @@ export function NotificationsView(): ReactNode {
   const loadChannels = useCallback(() => {
     setLoading(true);
     client
-      .request<{ data: NotificationChannel[] }>('/api/v1/notifications/channels')
+      .request<ApiSuccessResponse<NotificationChannel[]>>('/api/v1/notifications/channels')
       .then((r) => setChannels(r.data))
       .catch((e: ApiError) => toast.error(`Load failed: ${e.message}`))
       .finally(() => setLoading(false));
@@ -54,7 +55,7 @@ export function NotificationsView(): ReactNode {
   const handleSend = () => {
     setSending(true);
     client
-      .request<{ data: { sent: boolean; channel: string; to: string } }>('/api/v1/notifications/send', {
+      .request<ApiSuccessResponse<{ sent: boolean; channel: string; to: string }>>('/api/v1/notifications/send', {
         method: 'POST',
         body: JSON.stringify({ channel: 'EMAIL', email: toEmail, subject, body }),
       })
@@ -83,7 +84,7 @@ export function NotificationsView(): ReactNode {
 
   return (
     <div>
-      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)', flexWrap: 'wrap', gap: 'var(--maw-space-sm)' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>Notifications</h1>
           <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
@@ -99,12 +100,12 @@ export function NotificationsView(): ReactNode {
           <div key={ch.id}>
             <Stack
               direction="row" align="center" gap="var(--maw-space-lg)"
-              style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}
+              style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)', flexWrap: 'wrap' }}
             >
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--maw-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--maw-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                 {ch.id === 'EMAIL' ? '✉' : ch.id === 'SMS' ? '📱' : ch.id === 'PUSH' ? '🔔' : '📥'}
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
                   {ch.name}
                 </div>
@@ -132,7 +133,7 @@ export function NotificationsView(): ReactNode {
           <TextField label="To" value={toEmail} onChange={(e) => setToEmail(e.target.value)} />
           <TextField label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           <TextField label="Body" value={body} onChange={(e) => setBody(e.target.value)} />
-          <Stack direction="row" gap="var(--maw-space-sm)" style={{ justifyContent: 'flex-end' }}>
+          <Stack direction="row" gap="var(--maw-space-sm)" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Button onClick={handleSend} disabled={sending || !toEmail || !subject}>
               {sending ? 'Sending...' : 'Send Notification'}
             </Button>
@@ -155,9 +156,9 @@ export function NotificationsView(): ReactNode {
               <div key={pref.key}>
                 <Stack
                   direction="row" align="center" gap="var(--maw-space-lg)"
-                  style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}
+                  style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)', flexWrap: 'wrap' }}
                 >
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 150 }}>
                     <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
                       {pref.label}
                     </div>
@@ -181,7 +182,7 @@ export function NotificationsView(): ReactNode {
         </div>
       ))}
 
-      <Stack direction="row" gap="var(--maw-space-sm)" style={{ justifyContent: 'flex-end', marginTop: 'var(--maw-space-md)' }}>
+      <Stack direction="row" gap="var(--maw-space-sm)" style={{ justifyContent: 'flex-end', marginTop: 'var(--maw-space-md)', flexWrap: 'wrap' }}>
         <Button variant="ghost" onClick={() => toast.info('Preferences reset')}>Reset</Button>
         <Button onClick={() => toast.success('Preferences saved')}>Save Preferences</Button>
       </Stack>

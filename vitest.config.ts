@@ -3,19 +3,43 @@ import { defineConfig } from 'vitest/config';
 
 /** Resolve @maw/<pkg> and @maw/<pkg>/<subpath> to package source — no build step. */
 const pkgs = [
+  // Core
   'sdk',
+  'core',
+  'config',
   'platform',
   'rbac-core',
   'auth-core',
+  'users',
+  'tenancy',
+  'modules',
+  'feature-flags',
+  // Infrastructure
   'api',
   'database',
   'masters',
+  // Adapters (in packages/)
   'server-express',
   'server-hono',
+  // Client
   'api-client',
+  // UI
   'theme',
   'ui-web',
   'ui-native',
+  // Placeholder packages
+  'notifications',
+  'audit',
+  'files',
+  'validation',
+  'i18n',
+  'workflow',
+  'billing',
+  'queue',
+  'offline',
+  'communication',
+  'import-export',
+  'reporting',
 ];
 
 const alias = pkgs.flatMap((p) => [
@@ -29,11 +53,35 @@ const alias = pkgs.flatMap((p) => [
   },
 ]);
 
+// Add adapter aliases
+const adapterPkgs = [
+  { name: 'express', dir: 'adapters/express' },
+  { name: 'hono', dir: 'adapters/hono' },
+  { name: 'postgres', dir: 'adapters/postgres' },
+];
+
+for (const a of adapterPkgs) {
+  alias.push(
+    {
+      find: new RegExp(`^@maw/${a.name}$`),
+      replacement: fileURLToPath(new URL(`./${a.dir}/src/index.ts`, import.meta.url)),
+    },
+    {
+      find: new RegExp(`^@maw/${a.name}/(.*)$`),
+      replacement: fileURLToPath(new URL(`./${a.dir}/src/$1`, import.meta.url)),
+    },
+  );
+}
+
 export default defineConfig({
   resolve: { alias },
   test: {
     globals: true,
     environment: 'node',
-    include: ['packages/**/*.test.{ts,tsx}', 'apps/**/*.test.{ts,tsx}'],
+    include: [
+      'packages/**/*.test.{ts,tsx}',
+      'adapters/**/*.test.{ts,tsx}',
+      'apps/**/*.test.{ts,tsx}',
+    ],
   },
 });

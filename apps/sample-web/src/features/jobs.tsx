@@ -1,5 +1,6 @@
 import { useState, useCallback, type ReactNode, type ChangeEvent } from 'react';
 import { ApiError } from '@maw/api-client';
+import type { ApiSuccessResponse } from '@maw/api/response/types';
 import {
   Card,
   Badge,
@@ -7,9 +8,10 @@ import {
   Stack,
   Divider,
   DataTable,
+  ListPage,
   useToast,
-  PageLoader,
   ErrorState,
+  PageLoader,
   Modal,
   TextField,
   Select,
@@ -83,7 +85,7 @@ export function JobsView(): ReactNode {
     const params = new URLSearchParams({ type: filterType });
     if (filterStatus) params.set('status', filterStatus);
     client
-      .request<{ data: JobRecord[] }>(`/api/v1/jobs?${params}`)
+      .request<ApiSuccessResponse<JobRecord[]>>(`/api/v1/jobs?${params}`)
       .then((r) => { setJobs(r.data); setLoaded(true); })
       .catch((e: ApiError) => setError(`${e.status}: ${e.message}`))
       .finally(() => setLoading(false));
@@ -91,7 +93,7 @@ export function JobsView(): ReactNode {
 
   const handleEnqueue = useCallback((type: string, data: Record<string, unknown>) => {
     client
-      .request<{ data: { jobId: string; status: string } }>('/api/v1/jobs', {
+      .request<ApiSuccessResponse<{ jobId: string; status: string }>>('/api/v1/jobs', {
         method: 'POST',
         body: JSON.stringify({ type, data }),
       })
@@ -105,39 +107,25 @@ export function JobsView(): ReactNode {
 
   const label: React.CSSProperties = { fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', fontWeight: 500 };
 
-  return (
-    <div>
-      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>Jobs</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-            Queue monitoring — view, filter, and enqueue background jobs
-          </p>
-        </div>
-        <Stack direction="row" gap="var(--maw-space-sm)">
-          <Button variant="ghost" onClick={loadJobs}>Refresh</Button>
-          <Button onClick={() => setShowEnqueue(true)}>Enqueue Job</Button>
-        </Stack>
-      </Stack>
-
-      {/* Filters */}
-      <Card style={{ padding: 'var(--maw-space-md)', marginBottom: 'var(--maw-space-lg)' }}>
-        <Stack direction="row" gap="var(--maw-space-md)" align="end">
-          <div>
-            <div style={label}>Job Type</div>
+  if (!loaded && !loading && !error) {
+    return (
+      <ListPage
+        title="Jobs"
+        description="Queue monitoring — view, filter, and enqueue background jobs"
+        createLabel="Enqueue Job"
+        onCreate={() => setShowEnqueue(true)}
+        toolbar={
+          <Stack direction="row" gap="var(--maw-space-sm)" align="center" style={{ flexWrap: 'wrap' }}>
             <Select
               value={filterType}
               onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterType(e.target.value)}
               options={JOB_TYPES.map((t) => ({ label: t, value: t }))}
             />
-          </div>
-          <div>
-            <div style={label}>Status</div>
             <Select
               value={filterStatus}
               onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
               options={[
-                { label: 'All', value: '' },
+                { label: 'All Statuses', value: '' },
                 { label: 'QUEUED', value: 'QUEUED' },
                 { label: 'PROCESSING', value: 'PROCESSING' },
                 { label: 'COMPLETED', value: 'COMPLETED' },
@@ -146,38 +134,66 @@ export function JobsView(): ReactNode {
                 { label: 'CANCELLED', value: 'CANCELLED' },
               ]}
             />
-          </div>
-          <Button onClick={loadJobs}>Load</Button>
-        </Stack>
-      </Card>
-
-      {/* Job list */}
-      {loading && <PageLoader />}
-      {error && <ErrorState message={error} retry={loadJobs} />}
-      {loaded && !loading && !error && (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <DataTable<JobRecord>
-            data={jobs}
-            columns={COLUMNS}
-            keyField="id"
-            onRowClick={(row) => setSelectedJob(row)}
-            emptyMessage="No jobs found. Try changing filters or enqueue a new job."
-          />
-        </Card>
-      )}
-      {!loaded && !loading && !error && (
+          </Stack>
+        }
+      >
         <Card style={{ padding: 'var(--maw-space-xl)', textAlign: 'center' }}>
           <p style={{ color: 'var(--maw-fgMuted)', marginBottom: 'var(--maw-space-md)' }}>
             Select a job type and click Load to view queue status
           </p>
           <Button onClick={loadJobs}>Load Jobs</Button>
         </Card>
-      )}
+        <EnqueueModal open={showEnqueue} onClose={() => setShowEnqueue(false)} onSubmit={handleEnqueue} />
+      </ListPage>
+    );
+  }
 
-      {/* Enqueue modal */}
+  if (error) return <ErrorState title="Failed to load jobs" message={error} retry={loadJobs} />;
+  if (loading && !loaded) return <PageLoader message="Loading jobs..." />;
+
+  return (
+    <>
+      <ListPage
+        title="Jobs"
+        description={`${jobs.length} jobs loaded`}
+        createLabel="Enqueue Job"
+        onCreate={() => setShowEnqueue(true)}
+        toolbar={
+          <Stack direction="row" gap="var(--maw-space-sm)" align="center" style={{ flexWrap: 'wrap' }}>
+            <Select
+              value={filterType}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterType(e.target.value)}
+              options={JOB_TYPES.map((t) => ({ label: t, value: t }))}
+            />
+            <Select
+              value={filterStatus}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
+              options={[
+                { label: 'All Statuses', value: '' },
+                { label: 'QUEUED', value: 'QUEUED' },
+                { label: 'PROCESSING', value: 'PROCESSING' },
+                { label: 'COMPLETED', value: 'COMPLETED' },
+                { label: 'FAILED', value: 'FAILED' },
+                { label: 'RETRYING', value: 'RETRYING' },
+                { label: 'CANCELLED', value: 'CANCELLED' },
+              ]}
+            />
+            <Button variant="ghost" onClick={loadJobs}>Refresh</Button>
+          </Stack>
+        }
+      >
+        <DataTable<JobRecord>
+          data={jobs}
+          columns={COLUMNS}
+          keyField="id"
+          onRowClick={(row) => setSelectedJob(row)}
+          loading={loading}
+          emptyMessage="No jobs found. Try changing filters or enqueue a new job."
+        />
+      </ListPage>
+
       <EnqueueModal open={showEnqueue} onClose={() => setShowEnqueue(false)} onSubmit={handleEnqueue} />
 
-      {/* Job detail modal */}
       {selectedJob && (
         <Modal open onClose={() => setSelectedJob(null)} title={`Job ${selectedJob.id.slice(0, 8)}...`}>
           <div style={{ padding: 'var(--maw-space-lg)' }}>
@@ -211,7 +227,7 @@ export function JobsView(): ReactNode {
           </div>
         </Modal>
       )}
-    </div>
+    </>
   );
 }
 

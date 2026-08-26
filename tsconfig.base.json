@@ -19,6 +19,8 @@
     "paths": {
       "@maw/sdk": ["packages/sdk/src/index.ts"],
       "@maw/sdk/*": ["packages/sdk/src/*"],
+      "@maw/core": ["packages/core/src/index.ts"],
+      "@maw/config": ["packages/config/src/index.ts"],
       "@maw/platform": ["packages/platform/src/index.ts"],
       "@maw/platform/*": ["packages/platform/src/*"],
       "@maw/platform/native": ["packages/platform/src/native/index.ts"],
@@ -26,6 +28,11 @@
       "@maw/rbac-core/*": ["packages/rbac-core/src/*"],
       "@maw/auth-core": ["packages/auth-core/src/index.ts"],
       "@maw/auth-core/*": ["packages/auth-core/src/*"],
+      "@maw/users": ["packages/users/src/index.ts"],
+      "@maw/users/*": ["packages/users/src/*"],
+      "@maw/tenancy": ["packages/tenancy/src/index.ts"],
+      "@maw/modules": ["packages/modules/src/index.ts"],
+      "@maw/feature-flags": ["packages/feature-flags/src/index.ts"],
       "@maw/server-express": ["packages/server-express/src/index.ts"],
       "@maw/server-express/*": ["packages/server-express/src/*"],
       "@maw/server-hono": ["packages/server-hono/src/index.ts"],
@@ -51,7 +58,18 @@
       "@maw/database": ["packages/database/src/index.ts"],
       "@maw/database/*": ["packages/database/src/*"],
       "@maw/masters": ["packages/masters/src/index.ts"],
-      "@maw/masters/*": ["packages/masters/src/*"]
+      "@maw/masters/*": ["packages/masters/src/*"],
+      "@maw/notifications": ["packages/notifications/src/index.ts"],
+      "@maw/audit": ["packages/audit/src/index.ts"],
+      "@maw/files": ["packages/files/src/index.ts"],
+      "@maw/validation": ["packages/validation/src/index.ts"],
+      "@maw/i18n": ["packages/i18n/src/index.ts"],
+      "@maw/workflow": ["packages/workflow/src/index.ts"],
+      "@maw/billing": ["packages/billing/src/index.ts"],
+      "@maw/offline": ["packages/offline/src/index.ts"],
+      "@maw/express": ["adapters/express/src/index.ts"],
+      "@maw/hono": ["adapters/hono/src/index.ts"],
+      "@maw/postgres": ["adapters/postgres/src/index.ts"]
     }
   }
 }

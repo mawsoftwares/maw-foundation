@@ -5,11 +5,11 @@ import tseslint from 'typescript-eslint';
 /**
  * The dependency law — enforced, not merely documented.
  *
- *   apps → ui-* + api-client + server-adapters → auth-core + rbac-core → platform → sdk
+ *   apps → adapters + ui-* + api-client → auth-core + rbac-core → platform → sdk/core
  *
- * `sdk` imports nothing of ours; each tier may only import the tiers below it.
+ * `sdk`/`core` imports nothing of ours; each tier may only import the tiers below it.
  * A `ui-web` that imports `server-express`, or an `sdk` that imports `platform`,
- * fails `npm run lint` — that is what keeps the base reusable instead of rotting.
+ * fails `pnpm lint` — that is what keeps the base reusable instead of rotting.
  *
  * Encoded with `no-restricted-imports` patterns per package glob (matches the
  * Restaurant OS eslint.config.js approach that seeded this repo).
@@ -31,18 +31,23 @@ function forbid(scopes, why) {
 }
 
 const ABOVE = {
-  sdk: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native'],
-  platform: ['rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
-  database: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
-  masters: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
-  'rbac-core': ['auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'platform'],
-  'auth-core': ['server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
-  'server-express': ['server-hono', 'ui-web', 'ui-native'],
-  'server-hono': ['server-express', 'ui-web', 'ui-native'],
-  'api-client': ['server-express', 'server-hono', 'ui-web', 'ui-native'],
-  theme: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
-  'ui-web': ['server-express', 'server-hono', 'ui-native'],
-  'ui-native': ['server-express', 'server-hono', 'ui-web'],
+  sdk: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native', 'core', 'config', 'tenancy', 'modules', 'feature-flags', 'express', 'hono', 'postgres'],
+  core: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native', 'config', 'tenancy', 'modules', 'feature-flags', 'express', 'hono', 'postgres'],
+  config: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native', 'tenancy', 'modules', 'feature-flags', 'express', 'hono', 'postgres'],
+  platform: ['rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'express', 'hono', 'postgres'],
+  database: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'express', 'hono'],
+  masters: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'express', 'hono'],
+  tenancy: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native', 'modules', 'feature-flags', 'express', 'hono', 'postgres'],
+  modules: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native', 'tenancy', 'feature-flags', 'express', 'hono', 'postgres'],
+  'feature-flags': ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native', 'tenancy', 'modules', 'express', 'hono', 'postgres'],
+  'rbac-core': ['auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'platform', 'express', 'hono', 'postgres'],
+  'auth-core': ['server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'express', 'hono', 'postgres'],
+  'server-express': ['server-hono', 'ui-web', 'ui-native', 'hono'],
+  'server-hono': ['server-express', 'ui-web', 'ui-native', 'express'],
+  'api-client': ['server-express', 'server-hono', 'ui-web', 'ui-native', 'express', 'hono', 'postgres'],
+  theme: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'express', 'hono', 'postgres'],
+  'ui-web': ['server-express', 'server-hono', 'ui-native', 'express', 'hono', 'postgres'],
+  'ui-native': ['server-express', 'server-hono', 'ui-web', 'express', 'hono', 'postgres'],
 };
 
 const layerConfigs = Object.entries(ABOVE).map(([pkg, forbidden]) => ({
@@ -75,9 +80,9 @@ export default tseslint.config(
   },
   ...layerConfigs,
   {
-    // Apps and tests are exempt from the layering rule — apps compose everything;
-    // tests may import across tiers to exercise them.
-    files: ['apps/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    // Apps, tests, and adapters are exempt from the layering rule — apps compose everything;
+    // tests may import across tiers to exercise them; adapters wrap packages.
+    files: ['apps/**/*.{ts,tsx}', 'adapters/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
     rules: { 'no-restricted-imports': 'off' },
   },
 );
