@@ -771,6 +771,12 @@ app.use('/api/v1/orders', createOrdersRouter({
   requirePermission: (perm) => auth.requirePermission(perm),
 }));
 
+// --- Users routes (User module) ---
+import { createUsersRouter } from './users-routes';
+if (data.pool) {
+  app.use('/api/v1/users', createUsersRouter(data.pool, auth.requireAuth));
+}
+
 // --- Masters routes (dynamic master data) ---
 import { createMastersRouter } from './modules/masters/routes';
 import {

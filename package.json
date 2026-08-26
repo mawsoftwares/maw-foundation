@@ -23,6 +23,7 @@
     "packages/audit",
     "packages/deployment",
     "packages/reporting",
+    "packages/users",
     "apps/sample-server",
     "apps/sample-web"
   ],
