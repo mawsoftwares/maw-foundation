@@ -5,15 +5,25 @@ apps
   → ui-web | ui-native | api-client | server-express | server-hono
       → auth-core | rbac-core
           → platform
-              → sdk        (imports nothing of ours)
+              → config | tenancy | modules | feature-flags
+                  → core
+                      → sdk        (imports nothing of ours)
 ```
 
-Each tier may import only tiers **below** it. Violations fail `npm run lint` via
+Each tier may import only tiers **below** it. Violations fail `pnpm lint` via
 `no-restricted-imports` patterns (see `eslint.config.js`).
+
+Adapters (`adapters/express`, `adapters/hono`, `adapters/postgres`) wrap their
+corresponding `packages/` implementations and are exempt from layering.
 
 | Package | May import | Must NOT import |
 |---|---|---|
 | `@maw/sdk` | (nothing of ours) | everything above |
+| `@maw/core` | `sdk` | everything above |
+| `@maw/config` | `sdk`, `core` | everything above |
+| `@maw/tenancy` | `sdk`, `core` | everything above |
+| `@maw/modules` | `sdk`, `core` | everything above |
+| `@maw/feature-flags` | `sdk`, `core` | everything above |
 | `@maw/database` | `sdk` | platform/rbac/auth/adapters/api/ui |
 | `@maw/platform` | `sdk` | rbac/auth/adapters/api/ui |
 | `@maw/rbac-core` | `sdk` | auth/adapters/api/ui/platform |
