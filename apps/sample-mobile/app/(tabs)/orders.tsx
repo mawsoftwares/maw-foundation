@@ -2,6 +2,7 @@ import { useState, useCallback, type ReactNode } from 'react';
 import { Text, View, type TextStyle } from 'react-native';
 import { ApiError } from '@maw/api-client';
 import type { Order } from '@maw/sdk';
+import type { ApiSuccessResponse } from '@maw/api/response/types';
 import {
   useNativeTheme,
   useToast,
@@ -31,9 +32,9 @@ export default function OrdersScreen(): ReactNode {
     setLoading(true);
     setError(undefined);
     client
-      .request<{ orders: Order[] }>('/orders')
+      .request<ApiSuccessResponse<Order[]>>('/api/v1/orders')
       .then((r) => {
-        setOrders(r.orders);
+        setOrders(r.data);
         setLoaded(true);
       })
       .catch((e: ApiError) => setError(`${e.status}: ${e.message}`))
@@ -48,7 +49,7 @@ export default function OrdersScreen(): ReactNode {
     },
     onSubmit: async (values) => {
       try {
-        await client.request('/orders', {
+        await client.request('/api/v1/orders', {
           method: 'POST',
           body: JSON.stringify({ item: values.item, qty: Number(values.qty) }),
         });

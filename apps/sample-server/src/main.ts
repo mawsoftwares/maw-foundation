@@ -73,6 +73,21 @@ import {
   createAuditMiddleware,
   type IAuditStore,
 } from '@maw/audit';
+import { createCommunication } from '@maw/communication';
+import { NotificationChannel, type NotificationChannelValue } from '@maw/sdk/communication/types';
+import {
+  QueueService,
+  JobRunner,
+  WorkerRegistry,
+  InMemoryQueueProvider,
+} from '@maw/queue';
+import {
+  ExportService,
+  InMemoryHistoryStore,
+  ExportFormat,
+  type ExportDefinition,
+  type IExportDataProvider,
+} from '@maw/import-export';
 
 const log = createLogger('sample-server');
 
@@ -86,6 +101,7 @@ const USE_PG = DATABASE_URL !== undefined && DATABASE_URL !== '';
 // ---------------------------------------------------------------------------
 
 interface DataLayer {
+  pool?: import('@maw/database').PgTransactionPool;
   syncStore: ISyncStore;
   cacheStore: ICacheStore;
   refreshStore: IRefreshTokenStore;
@@ -145,6 +161,7 @@ async function buildDataLayer(): Promise<DataLayer> {
 
     log.info('Using Postgres data layer');
     return {
+      pool,
       syncStore: new PgSyncStore(pool),
       cacheStore: new PgCacheStore(pool),
       refreshStore: new PgRefreshStore(pool),
@@ -265,13 +282,18 @@ const emailVerification = new EmailVerification({
   ttlSeconds: DEFAULT_SECURITY_CONFIG.registration.emailVerificationTtlSeconds,
 });
 
-/**
- * The sample has no mail provider, so one-time tokens go to the log. Swap this for a
- * real @maw/communication channel in a product — the services only need the callback.
- */
-const authLog = log.child('auth');
+// ---------------------------------------------------------------------------
+// Communication — uses ConsoleNotificationProvider (logs to stdout in dev)
+// ---------------------------------------------------------------------------
+
+const communication = createCommunication({ logger: log.child('communication') });
+
 const deliverToken = (kind: string) => async (email: string, token: string): Promise<void> => {
-  authLog.info(`${kind} token issued (no mail provider configured)`, { email, token });
+  await communication.service.send({
+    channel: NotificationChannel.EMAIL,
+    metadata: { tenantId: DEMO_TENANT, source: 'auth' },
+    email: { to: email, subject: `${kind} token`, body: `Your ${kind.toLowerCase()} token: ${token}` },
+  });
 };
 
 const registrationService = new RegistrationService({
@@ -324,6 +346,68 @@ const authService = new AuthenticationService({
   mfaService,
   mfaChallengeStore: data.mfaChallengeStore,
 });
+
+// ---------------------------------------------------------------------------
+// Queue — background job processing (in-memory for the sample)
+// ---------------------------------------------------------------------------
+
+const queueProvider = new InMemoryQueueProvider();
+const queueService = new QueueService({ provider: queueProvider, logger: log.child('queue') });
+const workerRegistry = new WorkerRegistry();
+
+workerRegistry.register('audit.cleanup', async (job) => {
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  log.info('Running audit cleanup', { cutoff, tenantId: job.context.tenantId });
+  return { success: true, result: { cutoff } };
+});
+
+workerRegistry.register('notification.send', async (job) => {
+  const { channel, email: emailAddr, subject, body } = job.data as {
+    channel: string; email: string; subject: string; body: string;
+  };
+  await communication.service.send({
+    channel: channel as NotificationChannelValue,
+    metadata: { tenantId: job.context.tenantId, source: 'queue' },
+    email: { to: emailAddr, subject, body },
+  });
+  return { success: true };
+});
+
+const jobRunner = new JobRunner({
+  provider: queueProvider,
+  registry: workerRegistry,
+  options: { pollIntervalMs: 5000 },
+  logger: log.child('job-runner'),
+});
+jobRunner.start();
+
+// ---------------------------------------------------------------------------
+// Import/Export — CSV order exports
+// ---------------------------------------------------------------------------
+
+const exportHistory = new InMemoryHistoryStore();
+const exportService = new ExportService({ history: exportHistory, logger: log.child('export') });
+
+const ordersExportDefinition: ExportDefinition = {
+  name: 'orders',
+  format: ExportFormat.CSV,
+  fields: [
+    { name: 'id', label: 'Order ID' },
+    { name: 'item', label: 'Item' },
+    { name: 'qty', label: 'Quantity' },
+    { name: 'status', label: 'Status' },
+  ],
+};
+
+const ordersExportProvider: IExportDataProvider = {
+  async count() { return 2; },
+  async fetch() {
+    return [
+      { id: 'o1', item: 'Widget A', qty: 5, status: 'pending' },
+      { id: 'o2', item: 'Widget B', qty: 3, status: 'delivered' },
+    ];
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -643,6 +727,72 @@ app.use('/api/v1/orders', createOrdersRouter({
   requirePermission: (perm) => auth.requirePermission(perm),
 }));
 
+// --- Masters routes (dynamic master data) ---
+import { createMastersRouter } from './modules/masters/routes';
+import {
+  MasterService,
+  PgMasterRepository,
+  PgMasterFieldRepository,
+  PgMasterValueRepository,
+} from '@maw/masters';
+
+const masterRepo = new PgMasterRepository(data.pool!);
+const masterFieldRepo = new PgMasterFieldRepository(data.pool!);
+const masterValueRepo = new PgMasterValueRepository(data.pool!);
+const masterService = new MasterService({ pool: data.pool!, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
+
+app.use('/api/v1/masters', createMastersRouter({
+  service: masterService,
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+}));
+
+// --- Export routes (import-export package) ---
+
+app.get('/api/v1/orders/export', auth.requireAuth, auth.requirePermission('Read_Orders'), (req, res) => {
+  void (async () => {
+    const maw = (req as DynamicAuthedRequest).maw!;
+    const record = await exportService.createExport(ordersExportDefinition, {
+      tenantId: maw.claims.tenantId,
+      userId: maw.claims.userId,
+    });
+    const result = await exportService.processExport(record.id, ordersExportDefinition, ordersExportProvider);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="orders-export.csv"');
+    res.send(result.content);
+  })();
+});
+
+app.get('/api/v1/exports/:id/status', auth.requireAuth, (req, res) => {
+  void (async () => {
+    const record = await exportService.getStatus(req.params.id as string);
+    res.json({ data: record });
+  })();
+});
+
+// --- Queue routes (background jobs) ---
+
+app.post('/api/v1/jobs', auth.requireAuth, (req, res) => {
+  void (async () => {
+    const maw = (req as DynamicAuthedRequest).maw!;
+    const { type, data: jobData } = req.body as { type: string; data?: unknown };
+    const job = await queueService.enqueue({
+      type,
+      data: jobData ?? {},
+      context: { tenantId: maw.claims.tenantId, userId: maw.claims.userId },
+    });
+    res.status(HttpStatus.CREATED).json({ data: { jobId: job.id, type: job.type, status: job.status } });
+  })();
+});
+
+app.get('/api/v1/jobs/:id', auth.requireAuth, (req, res) => {
+  void (async () => {
+    const job = await queueService.getJob(req.params.id as string);
+    if (!job) { res.status(HttpStatus.NOT_FOUND).json({ error: 'Job not found' }); return; }
+    res.json({ data: job });
+  })();
+});
+
 // --- Health check (composable) ---
 
 const health = createHealthChecker();
@@ -668,8 +818,13 @@ app.get('/health', (_req, res) => {
 
 app.use(securityErrorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   log.info(`http://localhost:${PORT} (${USE_PG ? 'Postgres' : 'in-memory'})`);
   log.info('Users: superadmin@ / owner@ / manager@ / clerk@demo.test (pw: password123)');
   log.info('Try: GET /modules to see all registered modules + permissions');
+});
+
+process.on('SIGTERM', () => {
+  void jobRunner.stop();
+  server.close();
 });

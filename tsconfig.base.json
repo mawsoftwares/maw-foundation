@@ -49,7 +49,9 @@
       "@maw/api": ["packages/api/src/index.ts"],
       "@maw/api/*": ["packages/api/src/*"],
       "@maw/database": ["packages/database/src/index.ts"],
-      "@maw/database/*": ["packages/database/src/*"]
+      "@maw/database/*": ["packages/database/src/*"],
+      "@maw/masters": ["packages/masters/src/index.ts"],
+      "@maw/masters/*": ["packages/masters/src/*"]
     }
   }
 }

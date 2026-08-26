@@ -6,6 +6,7 @@
   "dependencies": {
     "@maw/api": "*",
     "@maw/api-client": "*",
+    "@maw/import-export": "*",
     "@maw/rbac-core": "*",
     "@maw/sdk": "*",
     "@maw/theme": "*",

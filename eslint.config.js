@@ -34,6 +34,7 @@ const ABOVE = {
   sdk: ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-native'],
   platform: ['rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
   database: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
+  masters: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
   'rbac-core': ['auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'platform'],
   'auth-core': ['server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native'],
   'server-express': ['server-hono', 'ui-web', 'ui-native'],

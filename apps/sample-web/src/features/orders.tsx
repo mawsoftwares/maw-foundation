@@ -54,6 +54,22 @@ export function OrdersView(): ReactNode {
       .finally(() => setLoading(false));
   }, []);
 
+  const exportCsv = useCallback(() => {
+    client
+      .request<string>('/api/v1/orders/export', { headers: { Accept: 'text/csv' } })
+      .then((csv) => {
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'orders-export.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Export downloaded');
+      })
+      .catch((e: ApiError) => toast.error(`Export failed: ${e.message}`));
+  }, [toast]);
+
   const createForm = useForm({
     initialValues: { item: '', qty: '1' },
     fields: {
@@ -111,6 +127,7 @@ export function OrdersView(): ReactNode {
         onCreate={() => setShowCreate(true)}
         filter={filter}
         onFilterChange={setFilter}
+        toolbar={<Button variant="ghost" onClick={exportCsv}>Export CSV</Button>}
       >
         <DataTable
           columns={COLUMNS}

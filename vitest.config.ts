@@ -9,6 +9,7 @@ const pkgs = [
   'auth-core',
   'api',
   'database',
+  'masters',
   'server-express',
   'server-hono',
   'api-client',

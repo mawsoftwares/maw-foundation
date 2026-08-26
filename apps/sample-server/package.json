@@ -6,8 +6,12 @@
   "dependencies": {
     "@maw/api": "*",
     "@maw/audit": "*",
+    "@maw/communication": "*",
     "@maw/database": "*",
     "@maw/auth-core": "*",
+    "@maw/import-export": "*",
+    "@maw/masters": "*",
+    "@maw/queue": "*",
     "@maw/rbac-core": "*",
     "@maw/sdk": "*",
     "@maw/server-express": "*",

@@ -6,6 +6,7 @@ import { ordersModule } from './orders';
 import { inventoryModule } from './inventory';
 import { billingModule } from './billing';
 import { auditLogsModule } from './audit-logs';
+import { mastersModule } from './masters';
 
 const log = createLogger('registry');
 
@@ -38,4 +39,5 @@ registry.register(
   inventoryModule,
   billingModule,
   auditLogsModule,
+  mastersModule,
 );

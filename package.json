@@ -19,6 +19,7 @@
     "packages/queue",
     "packages/import-export",
     "packages/database",
+    "packages/masters",
     "packages/audit",
     "packages/deployment",
     "packages/reporting",
