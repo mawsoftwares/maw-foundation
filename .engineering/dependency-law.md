@@ -14,6 +14,7 @@ Each tier may import only tiers **below** it. Violations fail `npm run lint` via
 | Package | May import | Must NOT import |
 |---|---|---|
 | `@maw/sdk` | (nothing of ours) | everything above |
+| `@maw/database` | `sdk` | platform/rbac/auth/adapters/api/ui |
 | `@maw/platform` | `sdk` | rbac/auth/adapters/api/ui |
 | `@maw/rbac-core` | `sdk` | auth/adapters/api/ui/platform |
 | `@maw/auth-core` | `sdk`, `platform` | adapters/api/ui |

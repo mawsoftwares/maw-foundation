@@ -18,6 +18,7 @@
     "packages/communication",
     "packages/queue",
     "packages/import-export",
+    "packages/database",
     "packages/audit",
     "packages/deployment",
     "packages/reporting",

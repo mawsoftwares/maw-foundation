@@ -47,7 +47,9 @@
       "@maw/reporting": ["packages/reporting/src/index.ts"],
       "@maw/reporting/*": ["packages/reporting/src/*"],
       "@maw/api": ["packages/api/src/index.ts"],
-      "@maw/api/*": ["packages/api/src/*"]
+      "@maw/api/*": ["packages/api/src/*"],
+      "@maw/database": ["packages/database/src/index.ts"],
+      "@maw/database/*": ["packages/database/src/*"]
     }
   }
 }
