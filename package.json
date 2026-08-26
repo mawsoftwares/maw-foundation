@@ -14,6 +14,7 @@
     "packages/server-hono",
     "packages/api-client",
     "packages/theme",
+    "packages/ui-users",
     "packages/ui-web",
     "packages/communication",
     "packages/queue",
@@ -24,6 +25,7 @@
     "packages/deployment",
     "packages/reporting",
     "packages/users",
+    "packages/api",
     "apps/sample-server",
     "apps/sample-web"
   ],

@@ -7,7 +7,7 @@ import { AccountStatus } from '@maw/sdk/security/AccountStatus';
 
 // Basic mapping function
 export function toUserResponseDto(user: unknown): UserResponseDto {
-  const u = user as unknown;
+  const u = user as any;
   return {
     id: u.id,
     tenantId: u.tenantId,
@@ -29,13 +29,13 @@ export function toUserResponseDto(user: unknown): UserResponseDto {
 export class CreateUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly rbacService?: unknown, // optional RBAC integration
-    private readonly auditService?: unknown, // optional Audit integration
-    private readonly eventBus?: unknown, // optional Event bus
+    private readonly rbacService?: any, // optional RBAC integration
+    private readonly auditService?: any, // optional Audit integration
+    private readonly eventBus?: any, // optional Event bus
   ) {}
 
   async execute(input: CreateUserDto, actorId?: string): Promise<UserResponseDto> {
-    const errors = validateFields(input as unknown as Record<string, unknown>, CreateUserSchema as unknown);
+    const errors = validateFields(input as unknown as Record<string, unknown>, CreateUserSchema as any);
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${JSON.stringify(errors)}`);
     }
@@ -76,14 +76,14 @@ export class CreateUserUseCase {
     });
 
     if (input.roleId && this.rbacService) {
-      await (this.rbacService as unknown).assignRole(user.id, input.roleId, input.tenantId);
+      await (this.rbacService as any).assignRole(user.id, input.roleId, input.tenantId);
       if (this.auditService) {
-         (this.auditService as unknown).log('ROLE_ASSIGNED', { actor: actorId, target: user.id, metadata: { roleId: input.roleId } });
+         (this.auditService as any).log('ROLE_ASSIGNED', { actor: actorId, target: user.id, metadata: { roleId: input.roleId } });
       }
     }
 
     if (this.eventBus) {
-      (this.eventBus as unknown).emit('UserCreated', {
+      (this.eventBus as any).emit('UserCreated', {
         type: 'USER_CREATED',
         userId: user.id,
         tenantId: user.tenantId,
@@ -93,7 +93,7 @@ export class CreateUserUseCase {
     }
 
     if (this.auditService) {
-      (this.auditService as unknown).log('USER_CREATED', { actor: actorId, target: user.id, metadata: { email: user.email } });
+      (this.auditService as any).log('USER_CREATED', { actor: actorId, target: user.id, metadata: { email: user.email } });
     }
 
     return toUserResponseDto(user);

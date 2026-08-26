@@ -6,12 +6,12 @@ import { validateFields } from '@maw/sdk/kernel/validate';
 export class UpdateUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly auditService?: unknown,
-    private readonly eventBus?: unknown,
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
   async execute(id: string, tenantId: string, input: UpdateUserDto, actorId?: string): Promise<UserResponseDto> {
-    const errors = validateFields(input as unknown as Record<string, unknown>, UpdateUserSchema as unknown);
+    const errors = validateFields(input as unknown as Record<string, unknown>, UpdateUserSchema as any);
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${JSON.stringify(errors)}`);
     }

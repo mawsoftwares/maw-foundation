@@ -27,8 +27,8 @@ export function Avatar({
   size?: number;
   style?: CSSProperties;
 }): ReactNode {
-  const initials = name
-    ? name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+  const initials = typeof name === 'string' && name.trim().length > 0
+    ? name.trim().split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
     : '?';
   return src ? (
     <img

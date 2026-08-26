@@ -36,7 +36,7 @@ import { ReportsView } from './features/reports';
 import { InventoryView } from './features/inventory';
 import { BillingView } from './features/billing';
 import { AuditLogsView } from './features/audit-logs';
-import { UsersView } from './features/users';
+import { UsersView } from './features/users/index';
 import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';

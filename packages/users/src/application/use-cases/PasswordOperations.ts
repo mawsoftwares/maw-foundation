@@ -6,17 +6,18 @@
 export class ChangePasswordUseCase {
   constructor(
     private readonly passwordChangeService: unknown, // PasswordChangeService from @maw/auth-core
-    private readonly auditService?: unknown,
-    private readonly eventBus?: unknown,
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
-  async execute(userId: string, currentPasswordRaw: string, newPasswordRaw: string, actorId?: string): Promise<void> {
-    // Assuming passwordChangeService.changePassword handles policy validation and hashing
-    await this.passwordChangeService.changePassword({
-      userId,
-      currentPasswordRaw,
-      newPasswordRaw,
-    });
+  async execute(tenantId: string, userId: string, newPassword: unknown, actorId?: string): Promise<void> {
+    if (this.passwordChangeService) {
+      await (this.passwordChangeService as any).changePassword({
+        userId,
+        newPassword,
+        tenantId,
+      });
+    }
 
     if (this.eventBus) {
       this.eventBus.emit('PasswordChanged', {
@@ -36,25 +37,29 @@ export class ChangePasswordUseCase {
 export class ResetPasswordUseCase {
   constructor(
     private readonly passwordResetService: unknown, // PasswordResetService from @maw/auth-core
-    private readonly auditService?: unknown,
-    private readonly eventBus?: unknown,
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
-  async execute(token: string, newPasswordRaw: string, actorId?: string): Promise<void> {
-    // Assuming passwordResetService.completeReset handles token validation, policy validation, hashing
-    const userId = await this.passwordResetService.completeReset(token, newPasswordRaw);
+  async execute(tenantId: string, email: string, newPassword: unknown, actorId?: string): Promise<void> {
+    if (this.passwordResetService) {
+      await (this.passwordResetService as any).resetPassword({
+        email,
+        newPassword,
+        tenantId,
+      });
+    }
 
     if (this.eventBus) {
       this.eventBus.emit('PasswordReset', {
         type: 'PASSWORD_RESET',
-        userId,
         actorId,
         timestamp: new Date().toISOString(),
       });
     }
 
     if (this.auditService) {
-      this.auditService.log('PASSWORD_RESET', { actor: actorId, target: userId });
+      this.auditService.log('PASSWORD_RESET', { actor: actorId, target: email });
     }
   }
 }

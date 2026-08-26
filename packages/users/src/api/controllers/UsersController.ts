@@ -64,10 +64,10 @@ export class UsersController {
     };
   }
 
-  private error(err: unknown): HttpResponse {
-    // Basic error mapping. In a real app this uses a centralized error handler.
-    const message = err.message || 'Internal Server Error';
-    let status = 500;
+  private error(err: unknown, defaultStatus = 500): HttpResponse {
+    const e = err as any;
+    const message = e.message || 'Internal Server Error';
+    let status = defaultStatus;
     
     if (message.includes('Validation') || message.includes('ALREADY_EXISTS')) status = 400;
     if (message.includes('NOT_FOUND')) status = 404;
@@ -86,7 +86,7 @@ export class UsersController {
   async createUser(req: HttpRequest): Promise<HttpResponse> {
     try {
       const input: CreateUserDto = {
-        ...req.body,
+        ...(req.body as any),
         tenantId: req.context.tenantId,
       };
       const result = await this.createUserUseCase.execute(input, req.context.actorId);
@@ -98,7 +98,8 @@ export class UsersController {
 
   async getUser(req: HttpRequest): Promise<HttpResponse> {
     try {
-      const result = await this.getUserUseCase.execute(req.params.id, req.context.tenantId);
+      const p = req.params as any;
+      const result = await this.getUserUseCase.execute(p.id, req.context.tenantId);
       return this.success(result);
     } catch (e) {
       return this.error(e);
@@ -107,14 +108,15 @@ export class UsersController {
 
   async listUsers(req: HttpRequest): Promise<HttpResponse> {
     try {
+      const q = req.query as any;
       const query: ListUsersQueryDto = {
-        page: req.query.page ? parseInt(req.query.page, 10) : undefined,
-        limit: req.query.limit ? parseInt(req.query.limit, 10) : undefined,
-        search: req.query.search,
-        status: req.query.status,
-        role: req.query.role,
-        createdFrom: req.query.createdFrom,
-        createdTo: req.query.createdTo,
+        page: q.page ? parseInt(q.page, 10) : undefined,
+        limit: q.limit ? parseInt(q.limit, 10) : undefined,
+        search: q.search,
+        status: q.status,
+        role: q.role,
+        createdFrom: q.createdFrom,
+        createdTo: q.createdTo,
       };
       const result = await this.listUsersUseCase.execute(req.context.tenantId, query);
       return this.success(result);
@@ -125,8 +127,13 @@ export class UsersController {
 
   async updateUser(req: HttpRequest): Promise<HttpResponse> {
     try {
-      const input: UpdateUserDto = req.body;
-      const result = await this.updateUserUseCase.execute(req.params.id, req.context.tenantId, input, req.context.actorId);
+      const p = req.params as any;
+      const result = await this.updateUserUseCase.execute(
+        p.id,
+        req.context.tenantId,
+        req.body as UpdateUserDto,
+        req.context.actorId
+      );
       return this.success(result);
     } catch (e) {
       return this.error(e);
@@ -135,7 +142,8 @@ export class UsersController {
 
   async deleteUser(req: HttpRequest): Promise<HttpResponse> {
     try {
-      await this.deleteUserUseCase.execute(req.params.id, req.context.tenantId, req.context.actorId);
+      const p = req.params as any;
+      await this.deleteUserUseCase.execute(p.id, req.context.tenantId, req.context.actorId);
       return this.success({ success: true });
     } catch (e) {
       return this.error(e);
@@ -144,7 +152,8 @@ export class UsersController {
 
   async activateUser(req: HttpRequest): Promise<HttpResponse> {
     try {
-      await this.activateUserUseCase.execute(req.params.id, req.context.tenantId, req.context.actorId);
+      const p = req.params as any;
+      await this.activateUserUseCase.execute(p.id, req.context.tenantId, req.context.actorId);
       return this.success({ success: true });
     } catch (e) {
       return this.error(e);
@@ -153,7 +162,8 @@ export class UsersController {
 
   async deactivateUser(req: HttpRequest): Promise<HttpResponse> {
     try {
-      await this.deactivateUserUseCase.execute(req.params.id, req.context.tenantId, req.context.actorId);
+      const p = req.params as any;
+      await this.deactivateUserUseCase.execute(p.id, req.context.tenantId, req.context.actorId);
       return this.success({ success: true });
     } catch (e) {
       return this.error(e);
@@ -162,10 +172,12 @@ export class UsersController {
 
   async changePassword(req: HttpRequest): Promise<HttpResponse> {
     try {
+      const p = req.params as any;
+      const b = req.body as any;
       await this.changePasswordUseCase.execute(
-        req.params.id,
-        req.body.currentPassword,
-        req.body.newPassword,
+        p.id,
+        b.currentPassword,
+        b.newPassword,
         req.context.actorId
       );
       return this.success({ success: true });
@@ -176,9 +188,11 @@ export class UsersController {
 
   async resetPassword(req: HttpRequest): Promise<HttpResponse> {
     try {
+      const b = req.body as any;
       await this.resetPasswordUseCase.execute(
-        req.body.token,
-        req.body.newPassword,
+        req.context.tenantId,
+        b.email,
+        b.newPassword,
         req.context.actorId
       );
       return this.success({ success: true });

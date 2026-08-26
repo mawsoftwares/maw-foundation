@@ -3,8 +3,8 @@ import type { IUsersRepository } from '../../infrastructure/repositories/UserRep
 export class DeleteUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly auditService?: unknown,
-    private readonly eventBus?: unknown,
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
   async execute(id: string, tenantId: string, actorId?: string): Promise<void> {

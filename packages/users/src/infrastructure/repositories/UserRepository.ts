@@ -20,7 +20,7 @@ export class PgUserRepository extends TenantScopedRepository<Record<string, unkn
     super({
       pool,
       table: 'users',
-      mapper: (row: unknown): User => ({
+      mapper: (row: any): User => ({
         id: row.id,
         tenantId: row.tenant_id,
         firstName: row.first_name,
@@ -92,7 +92,7 @@ export class PgUserRepository extends TenantScopedRepository<Record<string, unkn
   async searchUsers(tenantId: string, query?: unknown, options?: unknown): Promise<User[]> {
     // simplified for now, will implement full filtering in list use-case
     const qb = new QueryBuilder().whereNull('deleted_at');
-    return this.findManyInTenant(tenantId, qb, options);
+    return this.findManyInTenant(tenantId, qb, options as any);
   }
 
   async updateUser(id: string, tenantId: string, updates: Partial<User>, client?: PgClient): Promise<User | null> {

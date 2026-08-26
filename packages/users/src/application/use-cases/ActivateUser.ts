@@ -4,8 +4,8 @@ import { AccountStatus } from '@maw/sdk/security/AccountStatus';
 export class ActivateUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly auditService?: unknown,
-    private readonly eventBus?: unknown,
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
   async execute(id: string, tenantId: string, actorId?: string): Promise<void> {
@@ -42,8 +42,8 @@ export class ActivateUserUseCase {
 export class DeactivateUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly auditService?: unknown,
-    private readonly eventBus?: unknown,
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
   async execute(id: string, tenantId: string, actorId?: string): Promise<void> {

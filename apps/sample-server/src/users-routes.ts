@@ -11,13 +11,13 @@ import {
   ChangePasswordUseCase,
   ResetPasswordUseCase,
 } from '@maw/users';
-import { PgUserRepository } from '@maw/users';
-import type { PgPool } from '@maw/database';
-import { DynamicAuthedRequest } from '@maw/server-express';
+import type { IUsersRepository } from '@maw/users';
 
-export function createUsersRouter(pool: PgPool, requireAuth: any) {
+export function createUsersRouter(repo: IUsersRepository, requireAuth: any) {
   const router = Router();
-  const repo = new PgUserRepository(pool);
+  router.get('/test', (req, res) => {
+    res.json({ message: 'users router is mounted!' });
+  });
 
   // Use Cases
   const createUc = new CreateUserUseCase(repo);

@@ -773,9 +773,11 @@ app.use('/api/v1/orders', createOrdersRouter({
 
 // --- Users routes (User module) ---
 import { createUsersRouter } from './users-routes';
-if (data.pool) {
-  app.use('/api/v1/users', createUsersRouter(data.pool, auth.requireAuth));
-}
+import { MemoryUsersRepository } from './memory-users-repo';
+import { PgUserRepository } from '@maw/users';
+
+const usersRepo = data.pool ? new PgUserRepository(data.pool) : new MemoryUsersRepository();
+app.use('/api/v1/users', createUsersRouter(usersRepo, auth.requireAuth));
 
 // --- Masters routes (dynamic master data) ---
 import { createMastersRouter } from './modules/masters/routes';
