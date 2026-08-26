@@ -1,4 +1,4 @@
-import type pg from 'pg';
+import type { PgPool } from '@maw/database';
 import type { IRefreshTokenStore, RefreshRecord } from '@maw/auth-core';
 import type { TenantRolePolicy } from '@maw/rbac-core';
 
@@ -8,7 +8,7 @@ import type { TenantRolePolicy } from '@maw/rbac-core';
  * itself lives in `auth-stores-pg.ts` alongside the other auth ports.
  */
 
-export async function loadTenantRolePolicy(pool: pg.Pool, tenantId: string): Promise<TenantRolePolicy> {
+export async function loadTenantRolePolicy(pool: PgPool, tenantId: string): Promise<TenantRolePolicy> {
   const { rows } = await pool.query<{ role: string; permission: string }>(
     'SELECT role, permission FROM tenant_role_permissions WHERE tenant_id = $1',
     [tenantId],
@@ -21,7 +21,7 @@ export async function loadTenantRolePolicy(pool: pg.Pool, tenantId: string): Pro
 }
 
 export class PgRefreshStore implements IRefreshTokenStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async save(record: RefreshRecord): Promise<void> {
     await this.pool.query(

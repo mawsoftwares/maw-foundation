@@ -1,39 +1,32 @@
-import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import pg from 'pg';
-import { getRequiredEnv, createLogger } from '@maw/sdk';
+import { MigrationRunner, createDatabasePool, closeDatabasePool } from '@maw/database';
+import { createLogger } from '@maw/sdk';
 
 const log = createLogger('migrate');
-const DATABASE_URL = getRequiredEnv('DATABASE_URL');
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrations = [
-  '001_auth_rbac.sql',
-  '002_dynamic_rbac.sql',
-  '003_audit_logs.sql',
-  '004_auth_foundation.sql',
-];
 
-const client = new pg.Client({ connectionString: DATABASE_URL });
-await client.connect();
+const pool = await createDatabasePool();
+const runner = new MigrationRunner({
+  pool,
+  migrationsDir: resolve(__dirname, '../../migrations'),
+  logger: log,
+});
 
 try {
-  for (const file of migrations) {
-    const sql = readFileSync(resolve(__dirname, '../../migrations', file), 'utf-8');
-    try {
-      await client.query(sql);
-      log.info(`${file} — applied.`);
-    } catch (err: unknown) {
-      const pgErr = err as { code?: string };
-      if (pgErr.code === '42P07') {
-        log.info(`${file} — tables already exist, skipping.`);
-      } else {
-        throw err;
-      }
-    }
+  const applied = await runner.up();
+  if (applied.length === 0) {
+    log.info('No pending migrations.');
+  } else {
+    log.info(`Applied ${applied.length} migration(s).`, {
+      versions: applied.map((m) => `${m.version}_${m.name}`),
+    });
   }
-  log.info('All migrations complete.');
+
+  const { valid, drifted } = await runner.verify();
+  if (!valid) {
+    log.warn('Checksum drift detected', { drifted });
+  }
 } finally {
-  await client.end();
+  await closeDatabasePool(pool);
 }

@@ -1,10 +1,11 @@
-import pg from 'pg';
-import { getRequiredEnv, createLogger } from '@maw/sdk';
+import { createDatabasePool, closeDatabasePool, pgCheck } from '@maw/database';
+import { createLogger } from '@maw/sdk';
 
 const log = createLogger('db:test');
-const client = new pg.Client({ connectionString: getRequiredEnv('DATABASE_URL') });
+const pool = await createDatabasePool();
 
-await client.connect();
-await client.query('select 1 as ok');
-await client.end();
+const check = pgCheck(pool);
+await check();
 log.info('database reachable');
+
+await closeDatabasePool(pool);

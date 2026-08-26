@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@maw/api": "*",
     "@maw/api-client": "*",
     "@maw/rbac-core": "*",
     "@maw/sdk": "*",

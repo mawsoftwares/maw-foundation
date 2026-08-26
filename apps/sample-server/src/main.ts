@@ -53,7 +53,6 @@ import {
   getEnvInt,
   HttpStatus,
   createHealthChecker,
-  pgCheck,
   createConfigEngine,
   APP_CONFIG_DEFAULTS,
   type ConfigEngine,
@@ -135,8 +134,8 @@ const USER_ROLE_MAP: Record<string, number> = {
 
 async function buildDataLayer(): Promise<DataLayer> {
   if (USE_PG) {
-    const pg = await import('pg');
-    const pool = new pg.default.Pool({ connectionString: DATABASE_URL });
+    const { createDatabasePool } = await import('@maw/database');
+    const pool = await createDatabasePool({ connectionString: DATABASE_URL! });
     const { PgSyncStore, PgCacheStore } = await import('./pg-stores');
     const { PgRefreshStore } = await import('./repo-pg');
     const {
@@ -651,9 +650,12 @@ health.register('cache', () => {
   if (cache.getCache() === null) throw new Error('Cache not loaded');
 });
 if (USE_PG) {
-  const pg = await import('pg');
-  const healthPool = new pg.default.Pool({ connectionString: DATABASE_URL });
-  health.register('postgres', pgCheck(healthPool));
+  const { createDatabasePool, poolHealthCheck } = await import('@maw/database');
+  const healthPool = await createDatabasePool({ connectionString: DATABASE_URL! });
+  health.register('postgres', async () => {
+    const result = await poolHealthCheck(healthPool);
+    if (!result.healthy) throw new Error(result.message);
+  });
 }
 
 app.get('/health', (_req, res) => {

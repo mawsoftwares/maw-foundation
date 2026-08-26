@@ -6,6 +6,7 @@
   "dependencies": {
     "@maw/api": "*",
     "@maw/audit": "*",
+    "@maw/database": "*",
     "@maw/auth-core": "*",
     "@maw/rbac-core": "*",
     "@maw/sdk": "*",

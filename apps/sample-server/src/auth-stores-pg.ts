@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type pg from 'pg';
+import type { PgPool } from '@maw/database';
 import type {
   IEmailVerificationStore,
   ILoginAttemptStore,
@@ -68,7 +68,7 @@ function toUserRecord(row: UserDbRow): UserRecord {
 }
 
 export class PgUserRepository implements IUserRepository {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async findById(id: string): Promise<UserRecord | null> {
     const { rows } = await this.pool.query<UserDbRow>(
@@ -178,7 +178,7 @@ const SESSION_COLUMNS = `id, tenant_id, user_id, device_id, device_info, refresh
   ip_address, user_agent, created_at, last_active_at, expires_at, revoked_at`;
 
 export class PgSessionStore implements ISessionStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async create(session: ServerSession): Promise<void> {
     await this.pool.query(
@@ -261,7 +261,7 @@ interface OneTimeTokenDbRow {
  */
 class PgOneTimeTokenStore {
   constructor(
-    private readonly pool: pg.Pool,
+    private readonly pool: PgPool,
     private readonly table: 'email_verification_tokens' | 'password_reset_tokens',
   ) {}
 
@@ -296,19 +296,19 @@ class PgOneTimeTokenStore {
 }
 
 export class PgEmailVerificationStore extends PgOneTimeTokenStore implements IEmailVerificationStore {
-  constructor(pool: pg.Pool) {
+  constructor(pool: PgPool) {
     super(pool, 'email_verification_tokens');
   }
 }
 
 export class PgPasswordResetStore extends PgOneTimeTokenStore implements IPasswordResetStore {
-  constructor(pool: pg.Pool) {
+  constructor(pool: PgPool) {
     super(pool, 'password_reset_tokens');
   }
 }
 
 export class PgMfaChallengeStore implements IMfaChallengeStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async save(record: MfaChallengeRecord): Promise<void> {
     await this.pool.query(
@@ -342,7 +342,7 @@ export class PgMfaChallengeStore implements IMfaChallengeStore {
 }
 
 export class PgOtpSecretStore implements IOtpSecretStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async saveSecret(userId: string, encryptedSecret: string): Promise<void> {
     await this.pool.query(
@@ -393,7 +393,7 @@ export class PgOtpSecretStore implements IOtpSecretStore {
 }
 
 export class PgLoginAttemptStore implements ILoginAttemptStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async record(attempt: LoginAttemptRecord): Promise<void> {
     await this.pool.query(

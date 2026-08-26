@@ -1,4 +1,4 @@
-import type pg from 'pg';
+import type { PgPool } from '@maw/database';
 import type {
   ISyncStore,
   ICacheStore,
@@ -14,7 +14,7 @@ import type {
  * to real DB tables (created by migrations/002_dynamic_rbac.sql).
  */
 export class PgSyncStore implements ISyncStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async findPermissionByCode(code: string) {
     const { rows } = await this.pool.query<{ id: number; description: string | null }>(
@@ -106,7 +106,7 @@ export class PgSyncStore implements ISyncStore {
  * Postgres ICacheStore — loads master RBAC data from the DB tables.
  */
 export class PgCacheStore implements ICacheStore {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: PgPool) {}
 
   async loadRoles(): Promise<RbacRole[]> {
     const { rows } = await this.pool.query<{
