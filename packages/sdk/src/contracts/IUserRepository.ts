@@ -35,6 +35,7 @@ export interface CreateUserInput {
 export interface IUserRepository {
   findById(id: string): Promise<UserRecord | null>;
   findByEmail(tenantId: string, email: string): Promise<UserRecord | null>;
+  listByTenant(tenantId: string): Promise<UserRecord[]>;
   create(input: CreateUserInput): Promise<UserRecord>;
   updatePassword(userId: string, passwordHash: string): Promise<void>;
   updateStatus(userId: string, status: AccountStatusValue): Promise<void>;

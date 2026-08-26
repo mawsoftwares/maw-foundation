@@ -40,13 +40,14 @@ import { UsersView } from './features/users';
 import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';
+import { MastersView } from './features/masters';
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
 const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset';
 
@@ -61,7 +62,8 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'users', label: 'Users', icon: '👤', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6 },
   { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
-  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 8 },
+  { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
+  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 9 },
   { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
@@ -81,6 +83,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'users': return <UsersView />;
     case 'audit-logs': return <AuditLogsView />;
     case 'account': return <AccountView />;
+    case 'masters': return <MastersView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }

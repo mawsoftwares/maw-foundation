@@ -80,6 +80,14 @@ export class MemoryUserRepository implements IUserRepository {
     return this.users.get(id) ?? null;
   }
 
+  async listByTenant(tenantId: string): Promise<UserRecord[]> {
+    const result: UserRecord[] = [];
+    for (const u of this.users.values()) {
+      if (u.tenantId === tenantId) result.push(u);
+    }
+    return result;
+  }
+
   async findByEmail(tenantId: string, email: string): Promise<UserRecord | null> {
     for (const u of this.users.values()) {
       if (u.tenantId === tenantId && u.email.toLowerCase() === email.toLowerCase()) return u;

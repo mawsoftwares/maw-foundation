@@ -53,9 +53,13 @@ export function executeController<
   const safe = withErrorTranslation(controller);
 
   return (req: Request, res: Response, _next: NextFunction) => {
-    const context = req.requestContext ?? createRequestContext({
+    const base = req.requestContext ?? createRequestContext({
       requestId: req.headers['x-request-id'] as string | undefined,
     });
+    const maw = (req as DynamicAuthedRequest).maw;
+    const context = maw
+      ? createRequestContext({ ...base, userId: maw.claims.userId, tenantId: maw.claims.tenantId })
+      : base;
 
     const promise = safe({
       body: req.body as TBody,
@@ -77,6 +81,10 @@ export function executeController<
       }
 
       res.status(result.statusCode).json(result.body);
+    }).catch((err: unknown) => {
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Internal server error' });
+      }
     });
   };
 }

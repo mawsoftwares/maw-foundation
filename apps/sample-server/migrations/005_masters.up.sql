@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS masters (
 );
 
 CREATE UNIQUE INDEX masters_tenant_code_unique ON masters (tenant_id, code) WHERE (deleted_at IS NULL);
-
 CREATE INDEX idx_masters_tenant_id ON masters (tenant_id);
 CREATE INDEX idx_masters_code ON masters (tenant_id, code) WHERE deleted_at IS NULL;
 CREATE INDEX idx_masters_status ON masters (tenant_id, status) WHERE deleted_at IS NULL;
@@ -46,7 +45,6 @@ CREATE TABLE IF NOT EXISTS master_fields (
 );
 
 CREATE UNIQUE INDEX master_fields_master_code_unique ON master_fields (master_id, code) WHERE (deleted_at IS NULL);
-
 CREATE INDEX idx_master_fields_master_id ON master_fields (master_id) WHERE deleted_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS master_values (
@@ -67,7 +65,6 @@ CREATE TABLE IF NOT EXISTS master_values (
 );
 
 CREATE UNIQUE INDEX master_values_master_code_unique ON master_values (master_id, code) WHERE (deleted_at IS NULL);
-
 CREATE INDEX idx_master_values_master_id ON master_values (master_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_master_values_active ON master_values (master_id, is_active, sort_order) WHERE deleted_at IS NULL;
 CREATE INDEX idx_master_values_code ON master_values (master_id, code) WHERE deleted_at IS NULL;

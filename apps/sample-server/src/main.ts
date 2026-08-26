@@ -114,8 +114,6 @@ interface DataLayer {
   otpSecretStore: IOtpSecretStore;
   loginAttemptStore: ILoginAttemptStore;
   mfaChallengeStore: IMfaChallengeStore;
-  userRoleMap: Record<string, number>;
-  rolePermissionMap: Record<number, string[]>;
 }
 
 const ROLES = [
@@ -124,29 +122,6 @@ const ROLES = [
   { id: 2, code: 'manager', name: 'Manager', isActive: true as const, sortOrder: 1 },
   { id: 3, code: 'clerk', name: 'Clerk', isActive: true as const, sortOrder: 2 },
 ];
-
-const ROLE_PERMS: Record<number, string[]> = {
-  0: [],
-  1: [],
-  2: [
-    'Read_Reports', 'Create_Reports',
-    'Read_Orders', 'Create_Orders', 'Update_Orders',
-    'Read_Inventory',
-    'Create_Billing',
-    'Read_AuditLogs',
-  ],
-  3: [
-    'Read_Orders', 'Create_Orders',
-    'Create_Billing',
-  ],
-};
-
-const USER_ROLE_MAP: Record<string, number> = {
-  'u-superadmin': 0,
-  'u-owner': 1,
-  'u-manager': 2,
-  'u-clerk': 3,
-};
 
 async function buildDataLayer(): Promise<DataLayer> {
   if (USE_PG) {
@@ -173,15 +148,19 @@ async function buildDataLayer(): Promise<DataLayer> {
       otpSecretStore: new PgOtpSecretStore(pool),
       loginAttemptStore: new PgLoginAttemptStore(pool),
       mfaChallengeStore: new PgMfaChallengeStore(pool),
-      userRoleMap: USER_ROLE_MAP,
-      rolePermissionMap: ROLE_PERMS,
     };
   }
 
   const syncStore = new MemorySyncStore();
+  const memoryRolePerms: Record<number, string[]> = {
+    0: [],
+    1: [],
+    2: ['Read_Reports', 'Create_Reports', 'Read_Orders', 'Create_Orders', 'Update_Orders', 'Read_Inventory', 'Create_Billing', 'Read_AuditLogs'],
+    3: ['Read_Orders', 'Create_Orders', 'Create_Billing'],
+  };
   return {
     syncStore,
-    cacheStore: new MemoryCacheStore(syncStore, ROLES, ROLE_PERMS),
+    cacheStore: new MemoryCacheStore(syncStore, ROLES, memoryRolePerms),
     refreshStore: new MemoryRefreshStore(),
     auditStore: new MemoryAuditStore(),
     userRepository: new MemoryUserRepository(USERS),
@@ -191,8 +170,6 @@ async function buildDataLayer(): Promise<DataLayer> {
     otpSecretStore: new MemoryOtpSecretStore(),
     loginAttemptStore: new MemoryLoginAttemptStore(),
     mfaChallengeStore: new MemoryMfaChallengeStore(),
-    userRoleMap: USER_ROLE_MAP,
-    rolePermissionMap: ROLE_PERMS,
   };
 }
 
@@ -255,9 +232,10 @@ const auth = createDynamicExpressAuth({
   jwtSecret: JWT_SECRET,
   cache,
   superuserRoles: ['super_admin', 'owner'],
-  loadUserContext: async (claims) => ({
-    roleId: data.userRoleMap[claims.userId],
-  }),
+  loadUserContext: async (claims) => {
+    const role = cache.getRoleByCode(claims.role);
+    return { roleId: role?.id };
+  },
 });
 
 // ---------------------------------------------------------------------------
@@ -348,10 +326,16 @@ const authService = new AuthenticationService({
 });
 
 // ---------------------------------------------------------------------------
-// Queue — background job processing (in-memory for the sample)
+// Queue — background job processing (Postgres when USE_PG, else in-memory)
 // ---------------------------------------------------------------------------
 
-const queueProvider = new InMemoryQueueProvider();
+const queueProvider = await (async () => {
+  if (USE_PG) {
+    const { PgQueueProvider } = await import('./queue-pg');
+    return new PgQueueProvider(data.pool!);
+  }
+  return new InMemoryQueueProvider();
+})();
 const queueService = new QueueService({ provider: queueProvider, logger: log.child('queue') });
 const workerRegistry = new WorkerRegistry();
 
@@ -465,8 +449,8 @@ async function buildLoginResponse(user: UserRecord, session: ServerSession) {
   const refreshToken = await refreshTokens.issue(user.tenantId, user.id);
   await sessionService.updateRefreshTokenHash(session.id, hashToken(refreshToken));
 
-  const roleId = data.userRoleMap[user.id];
-  const permissions = roleId !== undefined ? (data.rolePermissionMap[roleId] ?? []) : [];
+  const role = cache.getRoleByCode(user.role);
+  const permissions = role ? await cache.getUserPermissions(role.id) : [];
 
   return {
     session: {
@@ -599,13 +583,15 @@ app.use(createAuditMiddleware({
 // --- Protected resources (dynamic RBAC) ---
 
 app.get('/me', auth.requireAuth, (req, res) => {
-  const { claims } = (req as DynamicAuthedRequest).maw!;
-  const roleId = data.userRoleMap[claims.userId];
-  const permissions = roleId !== undefined ? (data.rolePermissionMap[roleId] ?? []) : [];
-  res.json({
-    userId: claims.userId, tenantId: claims.tenantId, role: claims.role,
-    audience: claims.audience, permissions,
-  });
+  void (async () => {
+    const { claims } = (req as DynamicAuthedRequest).maw!;
+    const role = cache.getRoleByCode(claims.role);
+    const permissions = role ? await cache.getUserPermissions(role.id) : [];
+    res.json({
+      userId: claims.userId, tenantId: claims.tenantId, role: claims.role,
+      audience: claims.audience, permissions,
+    });
+  })();
 });
 
 app.get('/reports', auth.requireAuth, auth.requirePermission('Read_Reports'), (_req, res) => {
@@ -624,8 +610,25 @@ app.get('/inventory', auth.requireAuth, auth.requirePermission('Read_Inventory')
   res.json({ items: [{ sku: 'W-001', name: 'Widget A', stock: 150 }] });
 });
 
-app.get('/admin/users', auth.requireAuth, auth.audienceGuard('admin'), auth.requirePermission('Read_Users'), (_req, res) => {
-  res.json({ users: ['superadmin@demo.test', 'owner@demo.test', 'manager@demo.test', 'clerk@demo.test'] });
+app.get('/admin/users', auth.requireAuth, auth.audienceGuard('admin'), auth.requirePermission('Read_Users'), (req, res) => {
+  void (async () => {
+    const maw = (req as DynamicAuthedRequest).maw!;
+    const users = await userRepository.listByTenant(maw.claims.tenantId);
+    res.json({
+      users: users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        role: u.role,
+        name: u.name,
+        audience: u.audience,
+        accountStatus: u.accountStatus,
+        emailVerified: u.emailVerified,
+        mfaEnabled: u.mfaEnabled,
+        lastLoginAt: u.lastLoginAt,
+        createdAt: u.createdAt,
+      })),
+    });
+  })();
 });
 
 app.get('/billing', auth.requireAuth, auth.requirePermission('Read_Billing'), (_req, res) => {
@@ -683,14 +686,42 @@ const uploadHandler = createFileUploadHandler({
 });
 const fileRoutes = createFileRoutes(fileStorage);
 
-app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), uploadHandler, (req, res) => {
+const fileMetadataStore = await (async () => {
+  if (USE_PG) {
+    const { PgFileMetadataStore } = await import('./file-metadata-pg');
+    return new PgFileMetadataStore(data.pool!);
+  }
+  return null;
+})();
+
+app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), uploadHandler, async (req, res) => {
   const uploaded = (req as UploadedRequest).uploadedFiles ?? [];
+  if (fileMetadataStore) {
+    const maw = (req as DynamicAuthedRequest).maw;
+    for (const f of uploaded) {
+      await fileMetadataStore.record({
+        tenantId: maw?.claims.tenantId ?? 'unknown',
+        storageKey: f.key,
+        originalName: f.originalName,
+        mimeType: f.mimeType,
+        sizeBytes: f.size,
+        uploadedBy: maw?.claims.userId,
+        url: f.url,
+      });
+    }
+  }
   res.json({ files: uploaded });
 });
 
 app.get('/files', auth.requireAuth, fileRoutes.list);
 app.get('/files/url/*key', auth.requireAuth, fileRoutes.getUrl);
-app.delete('/files/*key', auth.requireAuth, fileRoutes.deleteFile);
+app.delete('/files/*key', auth.requireAuth, async (req, res, next) => {
+  if (fileMetadataStore) {
+    const key = Array.isArray(req.params.key) ? req.params.key.join('/') : req.params.key;
+    if (key) await fileMetadataStore.softDelete(key);
+  }
+  fileRoutes.deleteFile(req, res, next);
+});
 
 app.use('/files', express.static(uploadsDir));
 

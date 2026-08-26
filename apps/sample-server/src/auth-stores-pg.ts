@@ -78,6 +78,14 @@ export class PgUserRepository implements IUserRepository {
     return rows[0] !== undefined ? toUserRecord(rows[0]) : null;
   }
 
+  async listByTenant(tenantId: string): Promise<UserRecord[]> {
+    const { rows } = await this.pool.query<UserDbRow>(
+      `SELECT ${USER_COLUMNS} FROM users WHERE tenant_id = $1 ORDER BY created_at`,
+      [tenantId],
+    );
+    return rows.map(toUserRecord);
+  }
+
   async findByEmail(tenantId: string, email: string): Promise<UserRecord | null> {
     const { rows } = await this.pool.query<UserDbRow>(
       `SELECT ${USER_COLUMNS} FROM users WHERE tenant_id = $1 AND LOWER(email) = LOWER($2) LIMIT 1`,
