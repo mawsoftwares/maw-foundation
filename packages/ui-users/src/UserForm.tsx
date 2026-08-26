@@ -67,27 +67,25 @@ export function UserForm({ initialData, onSave, onCancel }: UserFormProps) {
       email: values.email,
       phone: values.phone || undefined,
     };
-    
+
     if (!isEditing && values.password) {
       data.password = values.password;
     }
-    
+
     if (!isEditing) {
-      data.tenantId = 'tenant-1'; 
+      data.tenantId = 'tenant-1';
     }
-    
+
     await onSave(data);
   };
 
   return (
-    <div style={{ padding: 'var(--maw-space-xl)' }}>
-      <DynamicForm
-        schema={schema}
-        defaultValues={initialData ?? {}}
-        onSubmit={handleSubmit}
-        onCancel={onCancel}
-        submitLabel={isEditing ? 'Save Changes' : 'Create'}
-      />
-    </div>
+    <DynamicForm
+      schema={schema}
+      initialValues={initialData ?? {}}
+      onSubmit={handleSubmit}
+      onCancel={onCancel}
+      submitLabel={isEditing ? 'Save Changes' : 'Create'}
+    />
   );
 }

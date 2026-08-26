@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useCrud } from '@maw/ui-web';
+import { Drawer } from '@maw/ui-web';
 import type { UserResponseDto } from '@maw/users';
 import type { IUserApiService } from './types';
 import { UsersList } from './UsersList';
@@ -8,11 +9,12 @@ import { UserDetails } from './UserDetails';
 
 export interface UsersManagerProps {
   api: IUserApiService;
+  formLayout?: 'page' | 'drawer';
 }
 
 type ViewState = 'list' | 'create' | 'edit' | 'details';
 
-export function UsersManager({ api }: UsersManagerProps) {
+export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   const [view, setView] = useState<ViewState>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
@@ -29,9 +31,6 @@ export function UsersManager({ api }: UsersManagerProps) {
   const crud = useCrud<any>(crudConfig);
 
   const selectedUser = selectedId ? crud.items.find(u => u.id === selectedId) : null;
-
-  // Handle detailed view refresh if needed, but since we have it in list we can use that for now
-  // For production, we'd fetch the specific user if it's not in the list.
 
   const handleCreateNew = () => {
     setSelectedId(null);
@@ -85,34 +84,84 @@ export function UsersManager({ api }: UsersManagerProps) {
     }
   };
 
-  if (view === 'create' || view === 'edit') {
-    return (
-      <UserForm
-        initialData={view === 'edit' ? selectedUser : null}
-        onSave={handleSave}
-        onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
-      />
-    );
+  const isFormView = view === 'create' || view === 'edit';
+  const isDrawerLayout = formLayout === 'drawer';
+
+  // If we are using page layout, mutually exclude views
+  if (!isDrawerLayout) {
+    if (isFormView) {
+      return (
+        <div style={{ padding: 'var(--maw-space-xl)' }}>
+          <UserForm
+            initialData={view === 'edit' ? selectedUser : null}
+            onSave={handleSave}
+            onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+          />
+        </div>
+      );
+    }
+    if (view === 'details' && selectedUser) {
+      return (
+        <UserDetails
+          user={selectedUser}
+          onBack={handleBackToList}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onActivate={handleActivate}
+          onDeactivate={handleDeactivate}
+        />
+      );
+    }
   }
 
-  if (view === 'details' && selectedUser) {
-    return (
-      <UserDetails
-        user={selectedUser}
-        onBack={handleBackToList}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onActivate={handleActivate}
-        onDeactivate={handleDeactivate}
-      />
-    );
-  }
+  const isDetailsView = view === 'details';
 
   return (
-    <UsersList
-      crud={crud}
-      onCreate={handleCreateNew}
-      onView={handleViewDetails}
-    />
+    <>
+      {(!isDrawerLayout && view !== 'list') ? null : (
+        <UsersList
+          crud={crud}
+          onCreate={handleCreateNew}
+          onView={handleViewDetails}
+        />
+      )}
+
+      {isDrawerLayout && (
+        <>
+          <Drawer
+            open={isFormView}
+            onClose={view === 'edit' ? () => setView('details') : handleBackToList}
+            width={600}
+          >
+            {isFormView && (
+              <UserForm
+                initialData={view === 'edit' ? selectedUser : null}
+                onSave={handleSave}
+                onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+              />
+            )}
+          </Drawer>
+
+          <Drawer
+            open={isDetailsView && selectedUser !== null}
+            onClose={handleBackToList}
+            width={700}
+          >
+            {isDetailsView && selectedUser && (
+              <div style={{ margin: 'calc(-1 * var(--maw-space-xl))' }}>
+                <UserDetails
+                  user={selectedUser}
+                  onBack={handleBackToList}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onActivate={handleActivate}
+                  onDeactivate={handleDeactivate}
+                />
+              </div>
+            )}
+          </Drawer>
+        </>
+      )}
+    </>
   );
 }

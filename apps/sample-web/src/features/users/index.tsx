@@ -7,11 +7,11 @@ const userApiAdapter: IUserApiService = {
     if (params.page) q.set('page', params.page.toString());
     if (params.pageSize) q.set('limit', params.pageSize.toString());
     if (params.filter) q.set('search', params.filter);
-    
+
     // We assume client.request returns the data payload from our standardized backend response
     const res = await client.request<{ data: { items: any[], total: number, page: number, pageSize: number } }>(`/api/v1/users?${q.toString()}`);
     const data = res.data;
-    
+
     return {
       data: data.items,
       total: data.total,
@@ -45,7 +45,5 @@ const userApiAdapter: IUserApiService = {
 };
 
 export function UsersView() {
-  return (
-    <UsersManager api={userApiAdapter} />
-  );
+  return <UsersManager api={userApiAdapter} formLayout="drawer" />;
 }

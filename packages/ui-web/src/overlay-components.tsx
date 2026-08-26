@@ -512,7 +512,7 @@ export function ConfirmationDialog({
 
   if (!open) return null;
 
-  const confirmBg = variant === 'danger' ? 'var(--maw-danger)' : 'var(--maw-primary)';
+  const confirmBg = variant === 'danger' ? 'var(--maw-danger)' : 'var(--maw-brand)';
 
   return (
     <div

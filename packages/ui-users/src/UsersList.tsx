@@ -13,8 +13,6 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps) {
   const schema = useMemo<DataGridSchema<UserResponseDto>>(() => ({
     id: 'users-list',
     keyField: 'id',
-    title: 'Users',
-    description: 'Manage all users in this tenant',
     search: {
       enabled: true,
       placeholder: 'Search by name or email...',
@@ -95,6 +93,8 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps) {
       <DataGrid
         schema={schema}
         dataSource={dataSource}
+        title="Users"
+        description="Manage all users in this tenant"
         headerActions={<Button onClick={onCreate}>New User</Button>}
       />
     </div>

@@ -248,7 +248,7 @@ function DataGridFilterChips({
       {filters.length > 1 && (
         <button
           onClick={onClear}
-          style={{ ...base, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maw-primary)', fontSize: 'var(--maw-text-xs)', textDecoration: 'underline' }}
+          style={{ ...base, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maw-brand)', fontSize: 'var(--maw-text-xs)', textDecoration: 'underline' }}
         >Clear all</button>
       )}
     </div>
@@ -292,8 +292,8 @@ function DataGridBulkActions<T extends object>({
                 padding: '4px 12px',
                 borderRadius: 'var(--maw-radius-sm)',
                 border: action.variant === 'danger' ? 'none' : '1px solid var(--maw-border)',
-                background: action.variant === 'danger' ? 'var(--maw-danger)' : action.variant === 'primary' ? 'var(--maw-primary)' : 'transparent',
-                color: action.variant && action.variant !== 'default' ? '#fff' : 'var(--maw-fg)',
+                background: action.variant === 'danger' ? 'var(--maw-danger)' : action.variant === 'primary' ? 'var(--maw-brand)' : 'transparent',
+                color: action.variant && action.variant !== 'default' ? 'var(--maw-brandContrast)' : 'var(--maw-fg)',
                 fontSize: 'var(--maw-text-xs)',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.5 : 1,
@@ -796,8 +796,8 @@ function DataGridError({
           padding: 'var(--maw-space-sm) var(--maw-space-lg)',
           borderRadius: 'var(--maw-radius-md)',
           border: 'none',
-          background: 'var(--maw-primary)',
-          color: '#fff',
+          background: 'var(--maw-brand)',
+          color: 'var(--maw-brandContrast)',
           cursor: 'pointer',
           fontSize: 'var(--maw-text-sm)',
         }}

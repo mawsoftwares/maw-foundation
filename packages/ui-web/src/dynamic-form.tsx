@@ -736,8 +736,8 @@ function FormActions({
           padding: 'var(--maw-space-sm) var(--maw-space-lg)',
           borderRadius: 'var(--maw-radius-md)',
           border: 'none',
-          background: engine.submitting ? 'var(--maw-bgSubtle)' : 'var(--maw-primary)',
-          color: '#fff',
+          background: engine.submitting ? 'var(--maw-bgSubtle)' : 'var(--maw-brand)',
+          color: 'var(--maw-brandContrast)',
           cursor: engine.submitting ? 'not-allowed' : 'pointer',
           fontSize: 'var(--maw-text-sm)',
           fontWeight: 500,
@@ -765,7 +765,7 @@ function ActionButton({
   const disabled = action.disabled || (isSubmit && engine.submitting);
 
   const variantStyles: Record<string, CSSProperties> = {
-    primary: { background: 'var(--maw-primary)', color: '#fff', border: 'none' },
+    primary: { background: 'var(--maw-brand)', color: 'var(--maw-brandContrast)', border: 'none' },
     danger: { background: 'var(--maw-danger)', color: '#fff', border: 'none' },
     ghost: { background: 'transparent', color: 'var(--maw-fg)', border: 'none' },
     default: { background: 'transparent', color: 'var(--maw-fg)', border: '1px solid var(--maw-border)' },

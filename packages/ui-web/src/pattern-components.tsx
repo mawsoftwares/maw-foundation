@@ -76,7 +76,7 @@ export function Wizard({
                   fontSize: 'var(--maw-text-xs)',
                   fontWeight: 600,
                   flexShrink: 0,
-                  background: isActive ? 'var(--maw-primary)' : isCompleted ? 'var(--maw-success)' : 'var(--maw-bgSubtle)',
+                  background: isActive ? 'var(--maw-brand)' : isCompleted ? 'var(--maw-success)' : 'var(--maw-bgSubtle)',
                   color: isActive || isCompleted ? '#fff' : 'var(--maw-fgMuted)',
                   border: isActive ? 'none' : '1px solid var(--maw-border)',
                 }}>
@@ -139,7 +139,7 @@ export function Wizard({
             padding: 'var(--maw-space-sm) var(--maw-space-lg)',
             borderRadius: 'var(--maw-radius-md)',
             border: 'none',
-            background: canNext ? 'var(--maw-primary)' : 'var(--maw-bgSubtle)',
+            background: canNext ? 'var(--maw-brand)' : 'var(--maw-bgSubtle)',
             color: canNext ? '#fff' : 'var(--maw-fgMuted)',
             cursor: canNext ? 'pointer' : 'not-allowed',
             fontSize: 'var(--maw-text-sm)',
