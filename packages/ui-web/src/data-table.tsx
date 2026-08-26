@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode, type CSSProperties } from 'react';
-import { Checkbox, Select, IconButton, Stack, Spinner } from './ui-kit';
+import { Checkbox, Select, IconButton, Stack, Spinner } from './components';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode, type CSSProperties } from 'react';
 import { Card } from './components';
-import { Stack } from './ui-kit';
+import { Stack } from './components';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -67,7 +67,7 @@ export {
   Progress,
   Stack,
   DropdownMenu,
-} from './ui-kit';
+} from './components';
 
 // Toast / Notifications
 export { ToastProvider, useToast, type Toast, type ToastVariant } from './toast';
@@ -194,7 +194,7 @@ export {
   type DateRange,
   type DateRangePickerProps,
   type TimePickerProps,
-} from './input-components';
+} from './components';
 
 // Overlay & Feedback Components (Phase 2)
 export {
@@ -212,7 +212,7 @@ export {
   type BannerVariant,
   type BannerProps,
   type ConfirmationDialogProps,
-} from './overlay-components';
+} from './components';
 
 // Layout Components (Phase 3)
 export {
@@ -227,7 +227,7 @@ export {
   type SectionProps,
   type GridProps,
   type SpacerProps,
-} from './layout-components';
+} from './components';
 
 // Pattern Components (Phase 4)
 export {
@@ -239,7 +239,7 @@ export {
   type SettingsGroup,
   type SettingsLayoutProps,
   type SearchBarProps,
-} from './pattern-components';
+} from './components';
 
 // Dynamic Form Engine
 export {

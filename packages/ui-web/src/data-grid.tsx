@@ -17,9 +17,9 @@ import type {
   ServerDataSourceConfig,
 } from '@maw/sdk';
 import { useDataGrid, type UseDataGridReturn } from './data-grid-engine';
-import { Checkbox, Select, IconButton, Spinner, Stack } from './ui-kit';
-import { SearchBar } from './pattern-components';
-import { ConfirmationDialog } from './overlay-components';
+import { Checkbox, Select, IconButton, Spinner, Stack } from './components';
+import { SearchBar } from './components';
+import { ConfirmationDialog } from './components';
 import { useIsMobile } from './responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };

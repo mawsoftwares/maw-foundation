@@ -14,11 +14,11 @@ import type {
 } from '@maw/sdk';
 import { useDynamicForm, evaluateCondition, type UseDynamicFormReturn, type UseDynamicFormOptions, type DynamicFieldState } from './dynamic-form-engine';
 import { TextField } from './components';
-import { TextArea, Select, Checkbox, Toggle, Spinner } from './ui-kit';
-import { RadioGroup, MultiSelect, SearchableSelect, DatePicker, TimePicker } from './input-components';
+import { TextArea, Select, Checkbox, Toggle, Spinner } from './components';
+import { RadioGroup, MultiSelect, SearchableSelect, DatePicker, TimePicker } from './components';
 import { FormField } from './form';
-import { Tabs } from './ui-kit';
-import { Wizard, type WizardStep } from './pattern-components';
+import { Tabs } from './components';
+import { Wizard, type WizardStep } from './components';
 import { useIsMobile } from './responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };

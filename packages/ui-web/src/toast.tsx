@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { IconButton, Stack } from './ui-kit';
+import { IconButton, Stack } from './components';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode, type CSSProperties } from 'react';
 import { Button } from './components';
-import { Spinner } from './ui-kit';
+import { Spinner } from './components';
 
 // ---------------------------------------------------------------------------
 // ErrorBoundary

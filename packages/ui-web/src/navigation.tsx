@@ -9,7 +9,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { Button, Badge } from './components';
-import { IconButton, Stack } from './ui-kit';
+import { IconButton, Stack } from './components';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -11,7 +11,7 @@ import {
 import type { StoredFile } from '@maw/sdk/contracts/IFileStorage';
 import { formatFileSize, getMimeType, isImageFile, sanitizeFilename } from '@maw/sdk/kernel/file';
 import { Button } from './components';
-import { IconButton, Stack, Progress, Spinner } from './ui-kit';
+import { IconButton, Stack, Progress, Spinner } from './components';
 
 // ---------------------------------------------------------------------------
 // Types
