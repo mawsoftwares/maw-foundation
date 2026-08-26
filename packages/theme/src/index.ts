@@ -11,18 +11,18 @@
 // ---------------------------------------------------------------------------
 
 export const palette = {
-  brand: '#4f46e5',
+  brand: '#6366f1',
   brandLight: '#818cf8',
-  brandDark: '#3730a3',
+  brandDark: '#4f46e5',
   brandContrast: '#ffffff',
   bg: '#ffffff',
-  bgMuted: '#f5f6f8',
-  bgSubtle: '#f0f1f3',
-  fg: '#111827',
-  fgMuted: '#6b7280',
-  fgSubtle: '#9ca3af',
-  border: '#e5e7eb',
-  borderFocus: '#4f46e5',
+  bgMuted: '#f8fafc',
+  bgSubtle: '#f1f5f9',
+  fg: '#0f172a',
+  fgMuted: '#64748b',
+  fgSubtle: '#94a3b8',
+  border: '#e2e8f0',
+  borderFocus: '#6366f1',
   success: '#16a34a',
   successBg: '#f0fdf4',
   danger: '#dc2626',
@@ -31,21 +31,21 @@ export const palette = {
   warningBg: '#fffbeb',
   info: '#2563eb',
   infoBg: '#eff6ff',
-  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlay: 'rgba(15, 23, 42, 0.4)',
 } as const;
 
 export const paletteDark = {
   brand: '#818cf8',
   brandLight: '#a5b4fc',
   brandDark: '#6366f1',
-  brandContrast: '#0b1020',
-  bg: '#0b1020',
-  bgMuted: '#151b2e',
-  bgSubtle: '#1e2640',
-  fg: '#f3f4f6',
-  fgMuted: '#9ca3af',
-  fgSubtle: '#6b7280',
-  border: '#273244',
+  brandContrast: '#020617',
+  bg: '#020617',
+  bgMuted: '#0f172a',
+  bgSubtle: '#1e293b',
+  fg: '#f8fafc',
+  fgMuted: '#94a3b8',
+  fgSubtle: '#64748b',
+  border: '#334155',
   borderFocus: '#818cf8',
   success: '#22c55e',
   successBg: '#052e16',
@@ -55,7 +55,7 @@ export const paletteDark = {
   warningBg: '#451a03',
   info: '#60a5fa',
   infoBg: '#172554',
-  overlay: 'rgba(0, 0, 0, 0.7)',
+  overlay: 'rgba(2, 6, 23, 0.7)',
 } as const;
 
 export type PaletteKey = keyof typeof palette;
@@ -67,14 +67,14 @@ export type Palette = { [K in PaletteKey]: string };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
 
-export const radius = { none: 0, sm: 4, md: 8, lg: 12, xl: 16, pill: 999 } as const;
+export const radius = { none: 0, sm: 6, md: 10, lg: 16, xl: 24, pill: 999 } as const;
 
 export const shadows = {
-  sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
+  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05)',
   xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-  inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
+  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
   none: 'none',
 } as const;
 
@@ -93,6 +93,8 @@ export const transitions = {
   fast: '150ms ease',
   normal: '200ms ease',
   slow: '300ms ease',
+  smooth: '300ms cubic-bezier(0.4, 0, 0.2, 1)',
+  bounce: '400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)',
 } as const;
 
 // ---------------------------------------------------------------------------

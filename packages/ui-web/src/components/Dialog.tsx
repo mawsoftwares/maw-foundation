@@ -48,6 +48,7 @@ export function Dialog({
   return (
     <div
       onClick={closeOnOverlay ? onClose : undefined}
+      className="maw-fade-in"
       style={{
         position: 'fixed',
         inset: 0,
@@ -63,6 +64,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        className="maw-animate-in"
         style={{
           ...base,
           background: 'var(--maw-bg)',

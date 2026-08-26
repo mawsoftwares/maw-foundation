@@ -43,6 +43,7 @@ export function Modal({
   return (
     <div
       onClick={onClose}
+      className="maw-fade-in"
       style={{
         position: 'fixed',
         inset: 0,
@@ -55,6 +56,7 @@ export function Modal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        className="maw-animate-in"
         style={{
           ...base,
           background: 'var(--maw-bg)',

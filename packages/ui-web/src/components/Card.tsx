@@ -9,6 +9,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }): ReactNode {
   return (
     <div
+      className="maw-card-hover"
       style={{
         ...base,
         background: 'var(--maw-bg)',

@@ -48,6 +48,7 @@ export function Drawer({
   return (
     <div
       onClick={onClose}
+      className="maw-fade-in"
       style={{
         position: 'fixed',
         inset: 0,
@@ -60,6 +61,7 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        className="maw-fade-in"
         style={{
           ...base,
           position: 'absolute',

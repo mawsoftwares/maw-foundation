@@ -28,6 +28,7 @@ export function TextField({
       )}
       <input
         {...props}
+        className={`maw-focus-ring ${props.className || ''}`.trim()}
         style={{
           ...base,
           width: '100%',

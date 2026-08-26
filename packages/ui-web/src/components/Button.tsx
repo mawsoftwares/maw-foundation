@@ -31,6 +31,7 @@ export function Button({
   return (
     <button
       {...props}
+      className={`maw-btn-hover ${props.className || ''}`.trim()}
       style={{
         ...base,
         padding: 'var(--maw-space-sm) var(--maw-space-lg)',
@@ -39,7 +40,7 @@ export function Button({
         fontWeight: 600,
         cursor: props.disabled === true ? 'not-allowed' : 'pointer',
         opacity: props.disabled === true ? 0.6 : 1,
-        transition: 'var(--maw-transition-fast)',
+        transition: 'all var(--maw-transition-smooth)',
         ...styles[variant],
         ...style,
       }}

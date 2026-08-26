@@ -97,7 +97,65 @@ export function ThemeProvider({ overrides, defaultColorMode, children }: ThemePr
     [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+const GLOBAL_CSS = `
+  .maw-btn-hover:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: var(--maw-shadow-sm);
+  }
+  .maw-btn-hover:active {
+    filter: brightness(0.95);
+    transform: scale(0.98);
+    box-shadow: none;
+  }
+  
+  .maw-card-hover {
+    transition: transform var(--maw-transition-smooth), box-shadow var(--maw-transition-smooth), border-color var(--maw-transition-smooth);
+  }
+  .maw-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--maw-shadow-md);
+    border-color: var(--maw-borderFocus);
+  }
+
+  .maw-focus-ring {
+    transition: box-shadow var(--maw-transition-fast), border-color var(--maw-transition-fast), background var(--maw-transition-fast);
+  }
+  .maw-focus-ring:focus, .maw-focus-ring:focus-within {
+    box-shadow: 0 0 0 3px var(--maw-brandLight);
+    border-color: var(--maw-brand);
+    outline: none;
+  }
+
+  @keyframes maw-fade-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .maw-animate-in {
+    animation: maw-fade-slide-up var(--maw-transition-bounce) forwards;
+  }
+  
+  @keyframes maw-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .maw-fade-in {
+    animation: maw-fade-in var(--maw-transition-normal) forwards;
+  }
+`;
+
+  return (
+    <ThemeContext.Provider value={value}>
+      <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {
