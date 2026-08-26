@@ -42,7 +42,7 @@ import { AesEncryptionService } from '@maw/platform/security/AesEncryptionServic
 import { MemoryRateLimiter } from '@maw/platform/security/MemoryRateLimiter';
 import { redact } from '@maw/platform/security/LogRedactor';
 import { LoginProtection } from '@maw/auth-core';
-import { DEFAULT_SECURITY_CONFIG } from '@maw/sdk/security/SecurityConfig';
+import { DEFAULT_SECURITY_CONFIG, parseCorsOrigins } from '@maw/sdk/security/SecurityConfig';
 import multer from 'multer';
 import * as path from 'node:path';
 import type { Session } from '@maw/sdk/contracts/identity';
@@ -415,11 +415,24 @@ const ordersExportProvider: IExportDataProvider = {
 
 const rateLimiter = new MemoryRateLimiter();
 
+function corsAllowedOrigins(): string[] {
+  const origins = parseCorsOrigins(
+    getEnv('CORS_ORIGINS') ?? 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000',
+  );
+  // Vite falls through to 5174+ when 5173 is taken; browsers treat that as a new origin.
+  if (getEnv('NODE_ENV', 'development') === 'development') {
+    for (const extra of ['http://localhost:*', 'http://127.0.0.1:*'] as const) {
+      if (!origins.includes(extra)) origins.push(extra);
+    }
+  }
+  return origins;
+}
+
 const securityConfig = {
   ...DEFAULT_SECURITY_CONFIG,
   cors: {
     ...DEFAULT_SECURITY_CONFIG.cors,
-    allowedOrigins: (getEnv('CORS_ORIGINS') ?? 'http://localhost:5173,http://localhost:3000').split(','),
+    allowedOrigins: corsAllowedOrigins(),
   },
   csrf: { ...DEFAULT_SECURITY_CONFIG.csrf, enabled: false },
 };

@@ -164,3 +164,31 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     ignorePaths: ['/health', '/ready'],
   },
 };
+
+/** Split a comma-separated CORS_ORIGINS value, trimming empty entries. */
+export function parseCorsOrigins(value: string): string[] {
+  return value.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+}
+
+/**
+ * Exact match, or `http://localhost:*` / `http://127.0.0.1:*` style port wildcards.
+ * An empty allow-list means every origin is accepted (and should be reflected).
+ */
+export function isOriginAllowed(origin: string, allowedOrigins: readonly string[]): boolean {
+  if (allowedOrigins.length === 0) return true;
+
+  for (const raw of allowedOrigins) {
+    const allowed = raw.trim();
+    if (allowed.length === 0) continue;
+    if (allowed === origin) return true;
+    if (!allowed.endsWith(':*')) continue;
+
+    const base = allowed.slice(0, -2);
+    if (origin === base) return true;
+    if (!origin.startsWith(`${base}:`)) continue;
+    const port = origin.slice(base.length + 1);
+    if (/^\d+$/.test(port)) return true;
+  }
+
+  return false;
+}

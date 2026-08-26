@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import type { CorsConfig } from '@maw/sdk/security/SecurityConfig';
+import { isOriginAllowed, type CorsConfig } from '@maw/sdk/security/SecurityConfig';
 
 export function createCorsMiddleware(config: Partial<CorsConfig> = {}): MiddlewareHandler {
   const {
@@ -11,7 +11,6 @@ export function createCorsMiddleware(config: Partial<CorsConfig> = {}): Middlewa
     maxAge = 86400,
   } = config;
 
-  const originsSet = new Set(allowedOrigins);
   const methodsStr = allowedMethods.join(', ');
   const headersStr = allowedHeaders.join(', ');
   const exposedStr = exposedHeaders.join(', ');
@@ -24,7 +23,7 @@ export function createCorsMiddleware(config: Partial<CorsConfig> = {}): Middlewa
       return;
     }
 
-    if (originsSet.size > 0 && !originsSet.has(origin)) {
+    if (!isOriginAllowed(origin, allowedOrigins)) {
       return c.json({ error: 'Origin not allowed' }, 403);
     }
 
