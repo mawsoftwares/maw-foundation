@@ -829,12 +829,50 @@ app.post('/api/v1/jobs', auth.requireAuth, (req, res) => {
   })();
 });
 
+app.get('/api/v1/jobs', auth.requireAuth, (req, res) => {
+  void (async () => {
+    const type = req.query.type as string | undefined;
+    const status = req.query.status as string | undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const jobs = await queueProvider.listJobs(type ?? 'audit.cleanup', status as import('@maw/sdk').JobStatusValue | undefined, limit);
+    res.json({ data: jobs });
+  })();
+});
+
 app.get('/api/v1/jobs/:id', auth.requireAuth, (req, res) => {
   void (async () => {
     const job = await queueService.getJob(req.params.id as string);
     if (!job) { res.status(HttpStatus.NOT_FOUND).json({ error: 'Job not found' }); return; }
     res.json({ data: job });
   })();
+});
+
+// --- Notification routes ---
+
+app.post('/api/v1/notifications/send', auth.requireAuth, (req, res) => {
+  void (async () => {
+    const maw = (req as DynamicAuthedRequest).maw!;
+    const { channel, email, subject, body } = req.body as {
+      channel?: string; email: string; subject: string; body: string;
+    };
+    await communication.service.send({
+      channel: (channel ?? 'EMAIL') as NotificationChannelValue,
+      metadata: { tenantId: maw.claims.tenantId, source: 'manual' },
+      email: { to: email, subject, body },
+    });
+    res.json({ data: { sent: true, channel: channel ?? 'EMAIL', to: email } });
+  })();
+});
+
+app.get('/api/v1/notifications/channels', auth.requireAuth, (_req, res) => {
+  res.json({
+    data: [
+      { id: 'EMAIL', name: 'Email', enabled: true, description: 'Email notifications via console provider' },
+      { id: 'SMS', name: 'SMS', enabled: false, description: 'SMS notifications (not configured)' },
+      { id: 'PUSH', name: 'Push', enabled: false, description: 'Push notifications (not configured)' },
+      { id: 'IN_APP', name: 'In-App', enabled: false, description: 'In-app notification center (not configured)' },
+    ],
+  });
 });
 
 // --- Health check (composable) ---

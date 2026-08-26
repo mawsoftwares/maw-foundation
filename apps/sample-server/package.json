@@ -13,6 +13,7 @@
     "@maw/masters": "*",
     "@maw/queue": "*",
     "@maw/rbac-core": "*",
+    "@maw/reporting": "*",
     "@maw/sdk": "*",
     "@maw/server-express": "*",
     "express": "^5.0.0",

@@ -41,13 +41,16 @@ import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';
 import { MastersView } from './features/masters';
+import { PlatformView } from './features/platform';
+import { JobsView } from './features/jobs';
+import { NotificationsView } from './features/notifications';
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
 const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset';
 
@@ -64,10 +67,13 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
   { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 9 },
+  { key: 'platform', label: 'Platform', icon: '🧩', path: '/platform', group: 'Dev', sortOrder: 95 },
+  { key: 'jobs', label: 'Jobs', icon: '⏳', path: '/jobs', group: 'Dev', sortOrder: 96 },
+  { key: 'notifications', label: 'Notifications', icon: '🔔', path: '/notifications', group: 'Dev', sortOrder: 97 },
   { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
-const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase']);
+const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications']);
 
 function PageContent({ page, onFeatureChange, featureOverrides }: {
   page: Page;
@@ -84,6 +90,9 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'audit-logs': return <AuditLogsView />;
     case 'account': return <AccountView />;
     case 'masters': return <MastersView />;
+    case 'platform': return <PlatformView />;
+    case 'jobs': return <JobsView />;
+    case 'notifications': return <NotificationsView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }
