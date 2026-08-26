@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode, type CSSProperties } from 'react';
-import { Checkbox, Select, IconButton, Stack, Spinner } from './components';
+import { Checkbox, Select, IconButton, Stack, Spinner, Card } from './components';
+import { useIsMobile } from './responsive';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,6 +52,7 @@ export interface DataTableProps<T> {
   emptyMessage?: string;
   compact?: boolean;
   stickyHeader?: boolean;
+  responsive?: boolean;
   style?: CSSProperties;
 }
 
@@ -79,9 +81,11 @@ export function DataTable<T extends object>({
   emptyMessage = 'No data',
   compact,
   stickyHeader,
+  responsive = true,
   style,
 }: DataTableProps<T>): ReactNode {
   const cellPadding = compact ? '6px 10px' : '10px 14px';
+  const isMobile = useIsMobile();
 
   const handleSort = useCallback(
     (col: string) => {
@@ -122,9 +126,65 @@ export function DataTable<T extends object>({
 
   const totalPages = pagination ? Math.ceil(pagination.total / pagination.pageSize) : 0;
 
+  const renderMobileCards = () => {
+    if (data.length === 0 && !loading) {
+      return <div style={{ padding: 'var(--maw-space-xl)', textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{emptyMessage}</div>;
+    }
+    return (
+      <Stack direction="column" gap="var(--maw-space-md)" style={{ padding: 'var(--maw-space-md)' }}>
+        {selectable && (
+          <div style={{ padding: '0 var(--maw-space-xs)' }}>
+            <Checkbox label="Select All" checked={allSelected} onChange={toggleAll} />
+          </div>
+        )}
+        {data.map((row, idx) => {
+          const key = String(row[keyField]);
+          const isSelected = selectedKeys?.has(key) ?? false;
+          return (
+            <Card
+              key={key}
+              padding="var(--maw-space-md)"
+              style={{
+                cursor: onRowClick ? 'pointer' : undefined,
+                background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-bg)',
+                border: isSelected ? '1px solid var(--maw-brandLight)' : '1px solid var(--maw-border)',
+              }}
+            >
+              <div onClick={onRowClick ? () => onRowClick(row) : undefined}>
+                {selectable && (
+                  <div style={{ marginBottom: 'var(--maw-space-sm)' }} onClick={(e) => e.stopPropagation()}>
+                    <Checkbox label="Select" checked={isSelected} onChange={() => toggleRow(key)} />
+                  </div>
+                )}
+                <Stack direction="column" gap="var(--maw-space-sm)">
+                  {columns.map((col) => (
+                    <div key={col.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', width: '35%', flexShrink: 0 }}>
+                        {col.header}
+                      </span>
+                      <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fg)', flex: 1, textAlign: 'right', wordBreak: 'break-word' }}>
+                        {col.render ? col.render(row, idx) : ((row as Record<string, unknown>)[col.key] as ReactNode)}
+                      </span>
+                    </div>
+                  ))}
+                </Stack>
+                {rowActions !== undefined && (
+                  <div style={{ marginTop: 'var(--maw-space-md)', paddingTop: 'var(--maw-space-sm)', borderTop: '1px solid var(--maw-border)', display: 'flex', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
+                    {rowActions(row)}
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </Stack>
+    );
+  };
+
   return (
-    <div style={{ ...base, ...style }}>
-      <div style={{ overflowX: 'auto' }}>
+    <div style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-lg)', overflow: 'hidden', ...style }}>
+      {responsive && isMobile ? renderMobileCards() : (
+      <div style={{ overflowX: 'auto', background: 'var(--maw-bg)' }}>
         <table
           style={{
             width: '100%',
@@ -151,7 +211,7 @@ export function DataTable<T extends object>({
                     width: col.width,
                     cursor: col.sortable ? 'pointer' : 'default',
                     userSelect: col.sortable ? 'none' : undefined,
-                    fontWeight: 600,
+                    fontWeight: 700,
                     fontSize: 'var(--maw-text-xs)',
                     color: 'var(--maw-fgMuted)',
                     textTransform: 'uppercase',
@@ -191,10 +251,11 @@ export function DataTable<T extends object>({
               return (
                 <tr
                   key={key}
+                  className="maw-table-row-hover"
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
-                    background: isSelected ? 'var(--maw-bgSubtle)' : undefined,
+                    background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-bg)',
                     borderBottom: '1px solid var(--maw-border)',
                   }}
                 >
@@ -225,6 +286,7 @@ export function DataTable<T extends object>({
           </tbody>
         </table>
       </div>
+      )}
 
       {pagination !== undefined && totalPages > 0 && (
         <Stack

@@ -17,14 +17,16 @@ export class MemoryUsersRepository implements IUsersRepository {
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      deletedAt: null,
     });
   }
 
-  async create(user: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
+  async create(user: Omit<User, 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<User> {
     const u: User = {
       ...user,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      deletedAt: null,
     };
     this.users.set(u.id, u);
     return u;

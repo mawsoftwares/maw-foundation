@@ -148,6 +148,21 @@ const GLOBAL_CSS = `
   .maw-fade-in {
     animation: maw-fade-in var(--maw-transition-normal) forwards;
   }
+
+  @keyframes maw-slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .maw-slide-in-right {
+    animation: maw-slide-in-right var(--maw-transition-smooth) forwards;
+  }
+
+  .maw-table-row-hover {
+    transition: background-color var(--maw-transition-fast);
+  }
+  .maw-table-row-hover:hover {
+    background-color: var(--maw-bgSubtle) !important;
+  }
 `;
 
   return (

@@ -8,8 +8,9 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { Button, Badge } from './components';
-import { IconButton, Stack } from './components';
+import { Button, Badge, Drawer } from './components';
+import { IconButton } from './components';
+import { useIsMobile } from './responsive';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -144,14 +145,17 @@ export function Sidebar({
     return groups;
   }, [items]);
 
+  const isMobile = useIsMobile();
+  const effectiveWidth = isMobile ? '100%' : (collapsed ? 64 : 260);
+
   return (
     <aside
       style={{
         ...base,
-        width: collapsed ? 64 : 260,
-        minHeight: '100vh',
+        width: effectiveWidth,
+        minHeight: isMobile ? '100%' : '100vh',
         background: 'var(--maw-bgMuted)',
-        borderRight: '1px solid var(--maw-border)',
+        borderRight: isMobile ? 'none' : '1px solid var(--maw-border)',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 0.2s ease',
@@ -161,27 +165,29 @@ export function Sidebar({
       }}
     >
       {header !== undefined && (
-        <div style={{ padding: collapsed ? 'var(--maw-space-md)' : 'var(--maw-space-lg)', borderBottom: '1px solid var(--maw-border)' }}>
+        <div style={{ padding: collapsed && !isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-lg)', borderBottom: '1px solid var(--maw-border)' }}>
           {header}
         </div>
       )}
 
-      <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
-        <IconButton label={collapsed ? 'Expand' : 'Collapse'} onClick={toggleSidebar}>
-          {collapsed ? '→' : '←'}
-        </IconButton>
-      </div>
+      {!isMobile && (
+        <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
+          <IconButton label={collapsed ? 'Expand' : 'Collapse'} onClick={toggleSidebar}>
+            {collapsed ? '→' : '←'}
+          </IconButton>
+        </div>
+      )}
 
       <nav style={{ flex: 1, overflowY: 'auto', padding: 'var(--maw-space-xs)' }}>
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
-            {group !== '' && !collapsed && (
+            {group !== '' && (!collapsed || isMobile) && (
               <div style={{ padding: '8px 12px 4px', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {group}
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} active={activeKey === item.key} collapsed={collapsed} onNavigate={navigate} />
+              <SidebarItem key={item.key} item={item} active={activeKey === item.key} collapsed={collapsed && !isMobile} onNavigate={navigate} />
             ))}
           </div>
         ))}
@@ -312,9 +318,17 @@ export function AppShell({
   children: ReactNode;
   style?: CSSProperties;
 }): ReactNode {
+  const isMobile = useIsMobile();
+  const { collapsed, toggleSidebar, setCollapsed } = useNavigation();
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--maw-bgSubtle)', ...style }}>
-      {sidebar}
+      {!isMobile && sidebar}
+      {isMobile && (
+        <Drawer open={!collapsed} onClose={() => setCollapsed(true)} side="left" width={280} style={{ padding: 0 }}>
+          {sidebar}
+        </Drawer>
+      )}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {header !== undefined && (
           <header
@@ -331,7 +345,14 @@ export function AppShell({
               zIndex: 'var(--maw-z-sticky)' as unknown as number,
             }}
           >
-            {header}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-md)' }}>
+              {isMobile && (
+                <IconButton label="Menu" onClick={toggleSidebar}>
+                  ☰
+                </IconButton>
+              )}
+              {header}
+            </div>
           </header>
         )}
         <main style={{ flex: 1, padding: 'var(--maw-space-xl)' }}>{children}</main>

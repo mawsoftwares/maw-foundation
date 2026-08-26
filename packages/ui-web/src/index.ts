@@ -285,7 +285,11 @@ export {
   Responsive,
   VisuallyHidden,
   useContainerWidth,
+  useResponsiveProp,
+  ResponsiveContainer,
   type Breakpoint,
   type ResponsiveProps,
   type VisuallyHiddenProps,
+  type ResponsiveProp,
+  type ResponsiveContainerProps,
 } from './responsive';

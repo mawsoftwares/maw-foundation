@@ -19,7 +19,7 @@ import { RadioGroup, MultiSelect, SearchableSelect, DatePicker, TimePicker } fro
 import { FormField } from './form';
 import { Tabs } from './components';
 import { Wizard, type WizardStep } from './components';
-import { useIsMobile } from './responsive';
+import { useResponsiveProp } from './responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -358,7 +358,6 @@ export function DynamicForm({
   const engine = useDynamicForm(engineOptions);
   const registry = useFieldRegistry();
   const { schema } = engineOptions;
-  const isMobile = useIsMobile();
 
   const layoutType = schema.layout?.type ?? 'single';
   const isReadOnly = engine.mode === 'readonly';
@@ -381,9 +380,9 @@ export function DynamicForm({
         ) : layoutType === 'wizard' && schema.sections ? (
           <WizardLayout schema={schema} engine={engine} registry={registry} onSubmit={engine.handleSubmit} submitLabel={submitLabel} />
         ) : layoutType === 'sections' && schema.sections ? (
-          <SectionsLayout schema={schema} engine={engine} registry={registry} isMobile={isMobile} />
+          <SectionsLayout schema={schema} engine={engine} registry={registry} />
         ) : (
-          <GridLayout schema={schema} engine={engine} registry={registry} isMobile={isMobile} layoutType={layoutType} />
+          <GridLayout schema={schema} engine={engine} registry={registry} layoutType={layoutType} />
         )}
 
         {/* Custom children */}
@@ -414,18 +413,17 @@ function GridLayout({
   schema,
   engine,
   registry,
-  isMobile,
   layoutType,
 }: {
   readonly schema: FormSchema;
   readonly engine: UseDynamicFormReturn;
   readonly registry: IFieldRegistry;
-  readonly isMobile: boolean;
   readonly layoutType: string;
 }): ReactNode {
-  const columns = layoutType === 'two-column' ? 2 : (schema.layout?.columns ?? 1);
-  const effectiveColumns = isMobile ? 1 : columns;
-  const gap = schema.layout?.gap ?? 'var(--maw-space-md)';
+  // Gracefully handle responsive column config even if FormSchema is typed as `number` in SDK
+  const columnsProp = layoutType === 'two-column' ? { xs: 1, md: 2 } : (schema.layout?.columns ?? 1);
+  const effectiveColumns = useResponsiveProp<number>(columnsProp as any, 1);
+  const gap = useResponsiveProp<string>((schema.layout?.gap ?? 'var(--maw-space-md)') as any, 'var(--maw-space-md)');
 
   return (
     <div style={{
@@ -446,16 +444,60 @@ function GridLayout({
   );
 }
 
+function SectionBlock({
+  section,
+  schema,
+  engine,
+  registry,
+  sectionFields,
+  isFirst,
+}: {
+  readonly section: NonNullable<FormSchema['sections']>[number];
+  readonly schema: FormSchema;
+  readonly engine: UseDynamicFormReturn;
+  readonly registry: IFieldRegistry;
+  readonly sectionFields: DynamicFieldState[];
+  readonly isFirst: boolean;
+}) {
+  const columnsProp = section.columns ?? schema.layout?.columns ?? 1;
+  const effectiveColumns = useResponsiveProp<number>(columnsProp as any, 1);
+
+  return (
+    <div style={{ marginBottom: 'var(--maw-space-xl)' }}>
+      {!isFirst && <div style={{ borderTop: '1px solid var(--maw-border)', marginBottom: 'var(--maw-space-lg)' }} />}
+      {section.title && (
+        <h3 style={{ margin: '0 0 var(--maw-space-xs)', fontSize: 'var(--maw-text-md)', fontWeight: 600, color: 'var(--maw-fg)' }}>
+          {section.title}
+        </h3>
+      )}
+      {section.description && (
+        <p style={{ margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
+          {section.description}
+        </p>
+      )}
+      <div style={{
+        display: effectiveColumns > 1 ? 'grid' : 'block',
+        gridTemplateColumns: effectiveColumns > 1 ? `repeat(${effectiveColumns}, 1fr)` : undefined,
+        gap: schema.layout?.gap ?? 'var(--maw-space-md)',
+      }}>
+        {sectionFields.map((state) => (
+          <div key={state.field.name} style={{ gridColumn: state.field.colSpan ? `span ${Math.min(state.field.colSpan, effectiveColumns)}` : undefined }}>
+            <DynamicField state={state} registry={registry} engine={engine} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SectionsLayout({
   schema,
   engine,
   registry,
-  isMobile,
 }: {
   readonly schema: FormSchema;
   readonly engine: UseDynamicFormReturn;
   readonly registry: IFieldRegistry;
-  readonly isMobile: boolean;
 }): ReactNode {
   return (
     <div>
@@ -469,34 +511,16 @@ function SectionsLayout({
 
         if (sectionFields.length === 0) return null;
 
-        const columns = section.columns ?? schema.layout?.columns ?? 1;
-        const effectiveColumns = isMobile ? 1 : columns;
-
         return (
-          <div key={section.id} style={{ marginBottom: 'var(--maw-space-xl)' }}>
-            {idx > 0 && <div style={{ borderTop: '1px solid var(--maw-border)', marginBottom: 'var(--maw-space-lg)' }} />}
-            {section.title && (
-              <h3 style={{ ...base, margin: '0 0 var(--maw-space-xs)', fontSize: 'var(--maw-text-md)', fontWeight: 600, color: 'var(--maw-fg)' }}>
-                {section.title}
-              </h3>
-            )}
-            {section.description && (
-              <p style={{ ...base, margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-                {section.description}
-              </p>
-            )}
-            <div style={{
-              display: effectiveColumns > 1 ? 'grid' : 'block',
-              gridTemplateColumns: effectiveColumns > 1 ? `repeat(${effectiveColumns}, 1fr)` : undefined,
-              gap: schema.layout?.gap ?? 'var(--maw-space-md)',
-            }}>
-              {sectionFields.map((state) => (
-                <div key={state.field.name} style={{ gridColumn: state.field.colSpan ? `span ${Math.min(state.field.colSpan, effectiveColumns)}` : undefined }}>
-                  <DynamicField state={state} registry={registry} engine={engine} />
-                </div>
-              ))}
-            </div>
-          </div>
+          <SectionBlock
+            key={section.id}
+            section={section}
+            schema={schema}
+            engine={engine}
+            registry={registry}
+            sectionFields={sectionFields}
+            isFirst={idx === 0}
+          />
         );
       })}
     </div>

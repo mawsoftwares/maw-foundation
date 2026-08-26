@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { useIsMobile } from '../responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -45,6 +46,8 @@ export function Dialog({
 
   if (!open) return null;
 
+  const isMobile = useIsMobile();
+
   return (
     <div
       onClick={closeOnOverlay ? onClose : undefined}
@@ -68,14 +71,16 @@ export function Dialog({
         style={{
           ...base,
           background: 'var(--maw-bg)',
-          borderRadius: 'var(--maw-radius-lg)',
+          borderRadius: isMobile ? 'var(--maw-radius-lg) var(--maw-radius-lg) 0 0' : 'var(--maw-radius-lg)',
           boxShadow: 'var(--maw-shadow-xl)',
-          width,
-          maxWidth: '90vw',
-          maxHeight: '85vh',
+          width: isMobile ? '100%' : width,
+          maxWidth: isMobile ? '100vw' : '90vw',
+          maxHeight: isMobile ? '95vh' : '85vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          position: isMobile ? 'absolute' : undefined,
+          bottom: isMobile ? 0 : undefined,
           ...style,
         }}
       >

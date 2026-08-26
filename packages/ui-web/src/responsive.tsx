@@ -139,3 +139,72 @@ export function useContainerWidth(ref: React.RefObject<HTMLElement | null>): num
 
   return width;
 }
+
+// ---------------------------------------------------------------------------
+// useResponsiveProp — resolve a prop value based on the current breakpoint
+// ---------------------------------------------------------------------------
+
+export type ResponsiveProp<T> = T | {
+  readonly xs?: T;
+  readonly sm?: T;
+  readonly md?: T;
+  readonly lg?: T;
+  readonly xl?: T;
+  readonly '2xl'?: T;
+};
+
+export function useResponsiveProp<T>(prop: ResponsiveProp<T> | undefined, fallback: T): T {
+  const breakpoint = useBreakpoint();
+
+  if (prop === undefined) return fallback;
+  if (typeof prop !== 'object' || prop === null) return prop as T;
+
+  const p = prop as Record<string, T>;
+
+  if (breakpoint === '2xl') return p['2xl'] ?? p.xl ?? p.lg ?? p.md ?? p.sm ?? p.xs ?? fallback;
+  if (breakpoint === 'xl') return p.xl ?? p.lg ?? p.md ?? p.sm ?? p.xs ?? fallback;
+  if (breakpoint === 'lg') return p.lg ?? p.md ?? p.sm ?? p.xs ?? fallback;
+  if (breakpoint === 'md') return p.md ?? p.sm ?? p.xs ?? fallback;
+  if (breakpoint === 'sm') return p.sm ?? p.xs ?? fallback;
+  return p.xs ?? fallback;
+}
+
+// ---------------------------------------------------------------------------
+// ResponsiveContainer — standard container with responsive padding/max-width
+// ---------------------------------------------------------------------------
+
+export interface ResponsiveContainerProps {
+  readonly children: ReactNode;
+  readonly style?: CSSProperties;
+  readonly className?: string;
+  readonly as?: 'div' | 'section' | 'main' | 'article';
+}
+
+export function ResponsiveContainer({
+  children,
+  style,
+  className,
+  as: Tag = 'div',
+}: ResponsiveContainerProps): ReactNode {
+  const padding = useResponsiveProp({
+    xs: 'var(--maw-space-md)',
+    md: 'var(--maw-space-xl)',
+  }, 'var(--maw-space-xl)');
+
+  return (
+    <Tag
+      className={className}
+      style={{
+        width: '100%',
+        maxWidth: 'var(--maw-container-xl, 1280px)',
+        margin: '0 auto',
+        padding: `0 ${padding}`,
+        boxSizing: 'border-box',
+        fontFamily: 'var(--maw-font-family)',
+        ...style,
+      }}
+    >
+      {children}
+    </Tag>
+  );
+}

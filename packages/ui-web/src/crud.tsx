@@ -177,12 +177,12 @@ export function ListPage({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={style}>
-      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-lg)' }}>
+    <div style={style} className="maw-fade-in">
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h1>
+          <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xxl)', fontWeight: 800, color: 'var(--maw-fg)', letterSpacing: '-0.02em' }}>{title}</h1>
           {description !== undefined && (
-            <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{description}</p>
+            <p style={{ margin: '8px 0 0', fontSize: 'var(--maw-text-md)', color: 'var(--maw-fgMuted)' }}>{description}</p>
           )}
         </div>
         <Stack direction="row" gap="var(--maw-space-sm)" align="center">
@@ -288,13 +288,13 @@ export function DetailPage({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={style}>
-      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xl)' }}>
-        <Stack direction="row" align="center" gap="var(--maw-space-md)">
+    <div style={style} className="maw-fade-in">
+      <Stack direction="row" align="center" style={{ justifyContent: 'space-between', marginBottom: 'var(--maw-space-xxl)' }}>
+        <Stack direction="row" align="center" gap="var(--maw-space-lg)">
           {onBack !== undefined && (
             <IconButton label="Go back" onClick={onBack}>←</IconButton>
           )}
-          <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h1>
+          <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xxl)', fontWeight: 800, color: 'var(--maw-fg)', letterSpacing: '-0.02em' }}>{title}</h1>
         </Stack>
         <Stack direction="row" gap="var(--maw-space-sm)">
           {actions}
@@ -326,11 +326,11 @@ export function DetailField({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ marginBottom: 'var(--maw-space-md)', ...style }}>
-      <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', fontWeight: 500, marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+    <div style={{ marginBottom: 'var(--maw-space-lg)', ...style }}>
+      <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
         {label}
       </div>
-      <div style={{ fontSize: 'var(--maw-text-md)', color: 'var(--maw-fg)' }}>
+      <div style={{ fontSize: 'var(--maw-text-md)', fontWeight: 500, color: 'var(--maw-fg)' }}>
         {value ?? <span style={{ color: 'var(--maw-fgSubtle)' }}>—</span>}
       </div>
     </div>

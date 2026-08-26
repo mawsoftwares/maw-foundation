@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DetailPage, DetailField, Button } from '@maw/ui-web';
-import { Stack } from '@maw/ui-web/ui-kit';
+import { Stack } from '@maw/ui-web';
 import type { UserResponseDto } from '@maw/users';
 
 export interface UserDetailsProps {

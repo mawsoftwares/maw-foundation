@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, CSSProperties } from 'react';
+import { useResponsiveProp, type ResponsiveProp } from '../responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -6,7 +7,18 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Card
 // ---------------------------------------------------------------------------
 
-export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }): ReactNode {
+export interface CardProps {
+  readonly children: ReactNode;
+  readonly padding?: ResponsiveProp<string>;
+  readonly style?: CSSProperties;
+}
+
+export function Card({ children, padding, style }: CardProps): ReactNode {
+  const resolvedPadding = useResponsiveProp(
+    padding ?? { xs: 'var(--maw-space-lg)', md: 'var(--maw-space-xl)' },
+    'var(--maw-space-xl)'
+  );
+
   return (
     <div
       className="maw-card-hover"
@@ -15,7 +27,7 @@ export function Card({ children, style }: { children: ReactNode; style?: CSSProp
         background: 'var(--maw-bg)',
         border: '1px solid var(--maw-border)',
         borderRadius: 'var(--maw-radius-lg)',
-        padding: 'var(--maw-space-xl)',
+        padding: resolvedPadding,
         boxShadow: 'var(--maw-shadow-sm)',
         ...style,
       }}

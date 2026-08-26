@@ -51,7 +51,7 @@ export function UserForm({ initialData, onSave, onCancel }: UserFormProps) {
       ...(isEditing ? [] : [
         {
           name: 'password',
-          type: 'password',
+          type: 'password' as const,
           label: 'Password',
           required: true,
           colSpan: 2,
@@ -82,7 +82,7 @@ export function UserForm({ initialData, onSave, onCancel }: UserFormProps) {
   return (
     <DynamicForm
       schema={schema}
-      initialValues={initialData ?? {}}
+      initialValues={(initialData as any) ?? {}}
       onSubmit={handleSubmit}
       onCancel={onCancel}
       submitLabel={isEditing ? 'Save Changes' : 'Create'}

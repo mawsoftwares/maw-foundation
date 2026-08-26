@@ -81,8 +81,8 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps) {
     total: crud.total,
     // When DataGrid requests data changes, we forward them to our crud hook
     onLoad: async (req: any) => {
-      if (req.search !== undefined) crud.setFilter({ ...crud.filter, search: req.search });
-      if (req.sort) crud.setSort({ field: req.sort.field, direction: req.sort.direction });
+      if (req.search !== undefined) crud.setFilter({ ...((crud.filter as unknown as object) || {}), search: req.search } as any);
+      if (req.sort) crud.setSort({ column: req.sort.field, direction: req.sort.direction } as any);
       if (req.pagination) crud.setPage(req.pagination.page);
       return { data: crud.items, total: crud.total };
     }

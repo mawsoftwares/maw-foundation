@@ -61,7 +61,7 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="maw-fade-in"
+        className="maw-slide-in-right"
         style={{
           ...base,
           position: 'absolute',
@@ -79,14 +79,14 @@ export function Drawer({
       >
         {title !== undefined && (
           <div style={{
-            padding: 'var(--maw-space-lg) var(--maw-space-xl)',
+            padding: 'var(--maw-space-xl)',
             borderBottom: '1px solid var(--maw-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexShrink: 0,
           }}>
-            <h2 style={{ margin: 0, fontSize: 'var(--maw-text-lg)', fontWeight: 600, color: 'var(--maw-fg)' }}>{title}</h2>
+            <h2 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 600, color: 'var(--maw-fg)' }}>{title}</h2>
             <button
               onClick={onClose}
               aria-label="Close"

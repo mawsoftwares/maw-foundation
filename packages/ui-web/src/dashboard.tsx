@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode, type CSSProperties } from 'react';
-import { Card } from './components';
-import { Stack } from './components';
+import { Card, Grid, Stack } from './components';
+import { useResponsiveProp, type ResponsiveProp } from './responsive';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,27 +72,23 @@ export function KpiCard({
 
 export function KpiGrid({
   kpis,
-  columns = 4,
+  columns = { xs: 1, sm: 2, lg: 4 },
   style,
 }: {
   kpis: readonly KpiConfig[];
-  columns?: number;
+  columns?: ResponsiveProp<number>;
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: 'var(--maw-space-lg)',
-        marginBottom: 'var(--maw-space-xl)',
-        ...style,
-      }}
+    <Grid
+      columns={columns}
+      gap="var(--maw-space-lg)"
+      style={{ marginBottom: 'var(--maw-space-xl)', ...style }}
     >
       {kpis.map((kpi, i) => (
         <KpiCard key={i} {...kpi} />
       ))}
-    </div>
+    </Grid>
   );
 }
 
@@ -111,19 +107,21 @@ export function Widget({
   title: string;
   actions?: ReactNode;
   children: ReactNode;
-  span?: 1 | 2 | 3 | 4;
+  span?: ResponsiveProp<1 | 2 | 3 | 4>;
   height?: number;
   style?: CSSProperties;
 }): ReactNode {
+  const currentSpan = useResponsiveProp(span, 1);
+
   return (
     <Card
+      padding="0"
       style={{
-        gridColumn: `span ${span}`,
+        gridColumn: `span ${currentSpan}`,
         display: 'flex',
         flexDirection: 'column',
         height,
         overflow: 'hidden',
-        padding: 0,
         ...style,
       }}
     >
@@ -152,24 +150,17 @@ export function Widget({
 
 export function WidgetGrid({
   children,
-  columns = 4,
+  columns = { xs: 1, md: 2, xl: 4 },
   style,
 }: {
   children: ReactNode;
-  columns?: number;
+  columns?: ResponsiveProp<number>;
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: 'var(--maw-space-lg)',
-        ...style,
-      }}
-    >
+    <Grid columns={columns} gap="var(--maw-space-lg)" style={style}>
       {children}
-    </div>
+    </Grid>
   );
 }
 

@@ -110,10 +110,18 @@ export const typography = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// Breakpoints (for responsive design)
+// Breakpoints & Containers (for responsive design)
 // ---------------------------------------------------------------------------
 
 export const breakpoints = {
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  xxl: 1536,
+} as const;
+
+export const containerWidths = {
   sm: 640,
   md: 768,
   lg: 1024,
@@ -135,6 +143,7 @@ export const tokens = {
   transitions,
   typography,
   breakpoints,
+  containerWidths,
 } as const;
 
 export type Tokens = typeof tokens;
@@ -175,6 +184,7 @@ export interface Theme {
     lineHeight: { [K in keyof typeof typography.lineHeight]: number };
   };
   breakpoints: { [K in keyof typeof breakpoints]: number };
+  containerWidths: { [K in keyof typeof containerWidths]: number };
   branding: TenantBranding;
 }
 
@@ -215,6 +225,7 @@ export function createTheme(overrides?: ThemeOverrides): Theme {
     transitions,
     typography: mergedTypo,
     breakpoints,
+    containerWidths,
     branding,
   };
 }
@@ -396,6 +407,7 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   for (const [k, v] of Object.entries(t.shadows)) vars[`--maw-shadow-${k}`] = v;
   for (const [k, v] of Object.entries(t.zIndex)) vars[`--maw-z-${k}`] = `${v}`;
   for (const [k, v] of Object.entries(t.transitions)) vars[`--maw-transition-${k}`] = v;
+  for (const [k, v] of Object.entries(t.containerWidths)) vars[`--maw-container-${k}`] = `${v}px`;
 
   vars['--maw-font-family'] = t.typography.fontFamily;
   vars['--maw-font-mono'] = t.typography.monoFamily;
