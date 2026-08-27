@@ -1,6 +1,6 @@
-import type { ExportFormatValue } from '@maw/import-export';
-import type { FilterOperatorValue } from '@maw/sdk';
-import { ExportFormat } from '@maw/import-export';
+import type { ExportFormatValue } from '@mawsoftwares/import-export';
+import type { FilterOperatorValue } from '@mawsoftwares/sdk';
+import { ExportFormat } from '@mawsoftwares/import-export';
 import type {
   ReportDefinition,
   ReportColumnDefinition,

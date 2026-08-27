@@ -5,7 +5,7 @@
 
 export class ChangePasswordUseCase {
   constructor(
-    private readonly passwordChangeService: unknown, // PasswordChangeService from @maw/auth-core
+    private readonly passwordChangeService: unknown, // PasswordChangeService from @mawsoftwares/auth-core
     private readonly auditService?: any,
     private readonly eventBus?: any,
   ) {}
@@ -36,7 +36,7 @@ export class ChangePasswordUseCase {
 
 export class ResetPasswordUseCase {
   constructor(
-    private readonly passwordResetService: unknown, // PasswordResetService from @maw/auth-core
+    private readonly passwordResetService: unknown, // PasswordResetService from @mawsoftwares/auth-core
     private readonly auditService?: any,
     private readonly eventBus?: any,
   ) {}

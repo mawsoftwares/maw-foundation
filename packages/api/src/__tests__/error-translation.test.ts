@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { translateError, withErrorTranslation } from '../errors/translate';
-import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
 
 describe('translateError', () => {
   it('maps AppError to correct status via toHttpStatus', () => {

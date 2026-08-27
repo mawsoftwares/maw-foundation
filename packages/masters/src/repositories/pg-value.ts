@@ -1,6 +1,6 @@
-import type { PgPool, PgClient } from '@maw/database';
-import { QueryBuilder, withPgErrorTranslation } from '@maw/database';
-import { paginate, type PaginatedResult, Pagination } from '@maw/sdk/config/constants';
+import type { PgPool, PgClient } from '@mawsoftwares/database';
+import { QueryBuilder, withPgErrorTranslation } from '@mawsoftwares/database';
+import { paginate, type PaginatedResult, Pagination } from '@mawsoftwares/sdk/config/constants';
 import type { MasterValue, MasterOption } from '../types/entities';
 import type { CreateValueInput, UpdateValueInput, ValueListQuery, OperationContext } from '../types/dto';
 import type { IMasterValueRepository } from '../types/ports';

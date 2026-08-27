@@ -1,4 +1,4 @@
-import { FilterOperator, type FilterOperatorValue } from '@maw/sdk';
+import { FilterOperator, type FilterOperatorValue } from '@mawsoftwares/sdk';
 import type { ReportDefinition, ReportColumnDefinition, ComputedColumnDefinition } from '../definition/types';
 import { ColumnType, type ColumnTypeValue } from '../types';
 import type { FilterGroup, FilterCondition } from './types';

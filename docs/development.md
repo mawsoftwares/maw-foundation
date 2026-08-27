@@ -47,7 +47,7 @@ pnpm verify
      README.md
    ```
 
-2. Set `"name": "@maw/<name>"` in `package.json`
+2. Set `"name": "@mawsoftwares/<name>"` in `package.json`
 
 3. Add the `exports` field:
    ```json

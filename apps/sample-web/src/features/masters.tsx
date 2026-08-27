@@ -1,13 +1,13 @@
 import { useState, useCallback, type ReactNode } from 'react';
-import { ApiError } from '@maw/api-client';
-import type { ApiSuccessResponse } from '@maw/api/response/types';
+import { ApiError } from '@mawsoftwares/api-client';
+import type { ApiSuccessResponse } from '@mawsoftwares/api/response/types';
 import type {
   Master, MasterField, MasterValue,
-} from '@maw/masters';
+} from '@mawsoftwares/masters';
 import {
   ListPage, DataTable, Badge, Button, Modal, TextField, useForm, FormField,
   useToast, ErrorState, PageLoader, Tabs, type ColumnDef, type SortState,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 // ---------------------------------------------------------------------------

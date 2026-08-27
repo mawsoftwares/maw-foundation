@@ -1,7 +1,7 @@
 /**
- * @maw/billing — Placeholder package.
+ * @mawsoftwares/billing — Placeholder package.
  * This package will be implemented in a future iteration.
  */
 
-// TODO: Implement @maw/billing
+// TODO: Implement @mawsoftwares/billing
 export {};

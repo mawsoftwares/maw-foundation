@@ -1,4 +1,4 @@
-import type { INetworkManager, NetworkStatus } from '@maw/sdk/contracts/INetworkManager';
+import type { INetworkManager, NetworkStatus } from '@mawsoftwares/sdk/contracts/INetworkManager';
 
 interface NetInfoState {
   readonly isConnected: boolean | null;

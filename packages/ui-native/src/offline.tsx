@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useNativeTheme } from './theme';
-import type { NetworkStatus } from '@maw/sdk/contracts/INetworkManager';
+import type { NetworkStatus } from '@mawsoftwares/sdk/contracts/INetworkManager';
 
 // ---------------------------------------------------------------------------
 // NetworkStatusBadge

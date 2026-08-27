@@ -1,5 +1,5 @@
-import type { ExportDefinition, ExportFieldDefinition, ExportFormatValue } from '@maw/import-export';
-import { formatMoney } from '@maw/sdk';
+import type { ExportDefinition, ExportFieldDefinition, ExportFormatValue } from '@mawsoftwares/import-export';
+import { formatMoney } from '@mawsoftwares/sdk';
 import type { ReportDefinition } from '../definition/types';
 import { isComputedColumn } from '../definition/types';
 import { ColumnType } from '../types';

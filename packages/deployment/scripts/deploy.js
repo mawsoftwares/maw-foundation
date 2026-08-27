@@ -37,11 +37,11 @@ const {
 function printHelp() {
   console.log('Usage:')
   console.log(
-    '  npx @maw/deploy <environment> [--dry-run] [--skip-nginx] [--skip-build] [--yes-nginx] [--ssl-ready] [--setup-https] [--project-root <path>]'
+    '  npx @mawsoftwares/deploy <environment> [--dry-run] [--skip-nginx] [--skip-build] [--yes-nginx] [--ssl-ready] [--setup-https] [--project-root <path>]'
   )
-  console.log('  npx @maw/deploy list')
-  console.log('  npx @maw/deploy init                     Scaffold a deploy/ folder in the current project')
-  console.log('  npx @maw/deploy info                     Show resolved paths and available environments')
+  console.log('  npx @mawsoftwares/deploy list')
+  console.log('  npx @mawsoftwares/deploy init                     Scaffold a deploy/ folder in the current project')
+  console.log('  npx @mawsoftwares/deploy info                     Show resolved paths and available environments')
   console.log('')
   console.log('Options:')
   console.log('  --dry-run       Show what would happen without executing')

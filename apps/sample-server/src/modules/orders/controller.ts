@@ -1,7 +1,7 @@
-import type { Controller } from '@maw/api';
-import { ok, created, paginated, errorResult } from '@maw/api';
-import { parseListQuery } from '@maw/api/dto/query-parser';
-import { paginate } from '@maw/sdk/config/constants';
+import type { Controller } from '@mawsoftwares/api';
+import { ok, created, paginated, errorResult } from '@mawsoftwares/api';
+import { parseListQuery } from '@mawsoftwares/api/dto/query-parser';
+import { paginate } from '@mawsoftwares/sdk/config/constants';
 import type { CreateOrderBody, OrderResponse, OrderListQuery } from './dto';
 
 const DEMO_ORDERS: OrderResponse[] = [

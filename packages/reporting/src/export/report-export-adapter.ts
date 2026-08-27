@@ -1,4 +1,4 @@
-import type { IExportDataProvider, OperationContext } from '@maw/import-export';
+import type { IExportDataProvider, OperationContext } from '@mawsoftwares/import-export';
 import type { IReportDataSource } from '../datasource/types';
 import type { FilterGroup } from '../filters/types';
 import type { SortField } from '../sorting/types';

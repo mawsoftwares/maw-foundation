@@ -1,4 +1,4 @@
-# @maw/api
+# @mawsoftwares/api
 
 Framework-agnostic API foundation for MAW projects. Provides a standard response envelope, controller contract, error translation, DTO conventions, pagination/filtering/sorting, idempotency, and OpenAPI metadata — all without coupling to Express or Hono.
 
@@ -6,7 +6,7 @@ Framework-agnostic API foundation for MAW projects. Provides a standard response
 
 ```
 Route → Middleware (auth, validation) → Controller → DTO → Service → Repository
-         ↑ framework adapter               ↑ framework-agnostic (@maw/api)
+         ↑ framework adapter               ↑ framework-agnostic (@mawsoftwares/api)
 ```
 
 ## Response Contract
@@ -45,8 +45,8 @@ Route → Middleware (auth, validation) → Controller → DTO → Service → R
 Controllers are framework-agnostic async functions:
 
 ```ts
-import type { Controller } from '@maw/api';
-import { ok, created, errorResult } from '@maw/api';
+import type { Controller } from '@mawsoftwares/api';
+import { ok, created, errorResult } from '@mawsoftwares/api';
 
 const getUser: Controller = async ({ params, context }) => {
   const user = await userService.findById(params.id);
@@ -63,7 +63,7 @@ const createUser: Controller = async ({ body, context }) => {
 ## Express Adapter
 
 ```ts
-import { createApiRouter, populateRequestContext, correlationIdMiddleware, createRequestLogger } from '@maw/server-express';
+import { createApiRouter, populateRequestContext, correlationIdMiddleware, createRequestLogger } from '@mawsoftwares/server-express';
 
 // Global middleware (after security pipeline)
 app.use(correlationIdMiddleware());
@@ -80,7 +80,7 @@ app.use('/api/v1/users', router);
 ## Hono Adapter
 
 ```ts
-import { createApiRouter, populateRequestContext, correlationIdMiddleware, createRequestLogger } from '@maw/server-hono';
+import { createApiRouter, populateRequestContext, correlationIdMiddleware, createRequestLogger } from '@mawsoftwares/server-hono';
 
 app.use(correlationIdMiddleware());
 app.use(createRequestLogger({ logger: log }));
@@ -98,7 +98,7 @@ All `AppError` instances thrown inside a controller are automatically caught by 
 ## Pagination / Sorting / Filtering
 
 ```ts
-import { parseListQuery } from '@maw/api/dto/query-parser';
+import { parseListQuery } from '@mawsoftwares/api/dto/query-parser';
 
 // In a controller:
 const { page, pageSize, sortBy, sortOrder, search } = parseListQuery(query, {
@@ -109,7 +109,7 @@ const { page, pageSize, sortBy, sortOrder, search } = parseListQuery(query, {
 ## Idempotency
 
 ```ts
-import { IdempotencyService, MemoryIdempotencyStore } from '@maw/api';
+import { IdempotencyService, MemoryIdempotencyStore } from '@mawsoftwares/api';
 
 const store = new MemoryIdempotencyStore();
 const idempotency = new IdempotencyService(store);
@@ -121,9 +121,9 @@ const result = await idempotency.process(idempotencyKey, () => orderService.crea
 ## Test Helpers
 
 ```ts
-import { assertSuccessEnvelope, assertErrorEnvelope, createMockRequestContext } from '@maw/api/testing';
+import { assertSuccessEnvelope, assertErrorEnvelope, createMockRequestContext } from '@mawsoftwares/api/testing';
 ```
 
 ## Dependency Law
 
-`@maw/api` imports only `@maw/sdk`. Framework adapters (`@maw/server-express`, `@maw/server-hono`) import `@maw/api`.
+`@mawsoftwares/api` imports only `@mawsoftwares/sdk`. Framework adapters (`@mawsoftwares/server-express`, `@mawsoftwares/server-hono`) import `@mawsoftwares/api`.

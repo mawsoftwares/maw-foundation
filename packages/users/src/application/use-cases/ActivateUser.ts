@@ -1,5 +1,5 @@
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
-import { AccountStatus } from '@maw/sdk/security/AccountStatus';
+import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
 export class ActivateUserUseCase {
   constructor(

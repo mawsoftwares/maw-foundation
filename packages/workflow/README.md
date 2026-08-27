@@ -1,4 +1,4 @@
-# @maw/workflow
+# @mawsoftwares/workflow
 
 Workflow engine foundation for the MAW ecosystem.
 

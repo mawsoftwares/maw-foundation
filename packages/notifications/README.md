@@ -1,4 +1,4 @@
-# @maw/notifications
+# @mawsoftwares/notifications
 
 Notification foundation for the MAW ecosystem.
 

@@ -44,8 +44,8 @@
     "commands": {
       "pull": "git fetch origin && git checkout -B main origin/main",
       "install": "npm install",
-      "build": "npm run -w @maw/sample-server typecheck",
-      "migrate": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run -w @maw/sample-server db:migrate"
+      "build": "npm run -w @mawsoftwares/sample-server typecheck",
+      "migrate": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env npm run -w @mawsoftwares/sample-server db:migrate"
     }
   },
   "health": {

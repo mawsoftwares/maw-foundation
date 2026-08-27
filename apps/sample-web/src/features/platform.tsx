@@ -12,7 +12,7 @@ import {
   useBrand,
   useBrandColors,
   type ColumnDef,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 
 interface StorageEntry {
   readonly key: string;
@@ -83,7 +83,7 @@ export function PlatformView(): ReactNode {
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>Platform</h1>
           <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-            @maw/platform integration demo — offline storage, sync engine, brand config
+            @mawsoftwares/platform integration demo — offline storage, sync engine, brand config
           </p>
         </div>
       </Stack>

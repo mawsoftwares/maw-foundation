@@ -11,7 +11,7 @@ export { OfflineModuleRegistry } from './offline/OfflineModuleRegistry';
 export { offlineModule } from './offline/module';
 
 // Security (browser-safe only — AesEncryptionService and EnvSecretProvider use
-// node:crypto / process.env and live in @maw/platform/security for server consumers)
+// node:crypto / process.env and live in @mawsoftwares/platform/security for server consumers)
 export { MemoryRateLimiter } from './security/MemoryRateLimiter';
 export { isPasswordAllowed, type PasswordCheckResult } from './security/PasswordPolicyValidator';
 export { redact } from './security/LogRedactor';

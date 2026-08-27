@@ -1,4 +1,4 @@
-import { ApiClient, webSecureStore } from '@maw/api-client';
+import { ApiClient, webSecureStore } from '@mawsoftwares/api-client';
 
 import { API_BASE_URL } from './config';
 

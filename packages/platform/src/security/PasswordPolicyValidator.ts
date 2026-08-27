@@ -3,7 +3,7 @@ import {
   type PasswordPolicyConfig,
   type PasswordValidationError,
   DEFAULT_PASSWORD_POLICY,
-} from '@maw/sdk/security/PasswordPolicy';
+} from '@mawsoftwares/sdk/security/PasswordPolicy';
 
 const COMMON_PASSWORDS = new Set([
   'password', 'password1', 'password123', '123456', '12345678', '123456789',

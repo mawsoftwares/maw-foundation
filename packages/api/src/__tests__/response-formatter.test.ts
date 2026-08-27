@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ApiResponse } from '../response/formatter';
-import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
 
 describe('ApiResponse', () => {
   describe('success', () => {

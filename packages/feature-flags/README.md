@@ -1,4 +1,4 @@
-# @maw/feature-flags
+# @mawsoftwares/feature-flags
 
 Tenant-aware feature flag foundation for the MAW ecosystem.
 
@@ -13,7 +13,7 @@ Tenant-aware feature flag foundation for the MAW ecosystem.
 ## Usage
 
 ```ts
-import { createFeatureFlagService } from '@maw/feature-flags';
+import { createFeatureFlagService } from '@mawsoftwares/feature-flags';
 
 const flags = createFeatureFlagService();
 

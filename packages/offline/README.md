@@ -1,4 +1,4 @@
-# @maw/offline
+# @mawsoftwares/offline
 
 Offline-first foundation for the MAW ecosystem.
 

@@ -1,11 +1,14 @@
 {
-  "name": "@maw/theme",
+  "name": "@mawsoftwares/theme",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

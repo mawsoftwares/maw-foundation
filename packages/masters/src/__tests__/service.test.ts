@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MasterService } from '../services/master-service';
 import type { IMasterRepository, IMasterFieldRepository, IMasterValueRepository } from '../types/ports';
 import type { Master } from '../types/entities';
-import { AppError } from '@maw/sdk/kernel/errors';
+import { AppError } from '@mawsoftwares/sdk/kernel/errors';
 
 const mockMaster: Master = {
   id: 'uuid-1',

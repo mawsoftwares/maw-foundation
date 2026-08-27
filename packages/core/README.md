@@ -1,4 +1,4 @@
-# @maw/core
+# @mawsoftwares/core
 
 Framework-independent primitives for the MAW ecosystem.
 
@@ -16,10 +16,10 @@ Framework-independent primitives for the MAW ecosystem.
 ## Usage
 
 ```ts
-import { ok, err, generateId, AppError } from '@maw/core';
+import { ok, err, generateId, AppError } from '@mawsoftwares/core';
 ```
 
 ## Architecture
 
-`@maw/core` is the bottom-most tier. It imports nothing from the MAW ecosystem.
+`@mawsoftwares/core` is the bottom-most tier. It imports nothing from the MAW ecosystem.
 All other packages may depend on it; it depends on none.

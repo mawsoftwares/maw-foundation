@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
-import type { Logger } from '@maw/sdk/kernel/logger';
-import type { AuthClaims } from '@maw/auth-core';
+import type { Logger } from '@mawsoftwares/sdk/kernel/logger';
+import type { AuthClaims } from '@mawsoftwares/auth-core';
 
 export interface RequestLoggerOptions {
   readonly logger: Logger;

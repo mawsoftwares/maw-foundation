@@ -1,7 +1,7 @@
 {
-  "name": "@maw/api",
+  "name": "@mawsoftwares/api",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Framework-agnostic API foundation — response envelope, controller contract, request context, DTOs, error translation, idempotency, OpenAPI metadata.",
   "main": "src/index.ts",
@@ -19,6 +19,9 @@
     "./testing": "./src/testing/index.ts"
   },
   "dependencies": {
-    "@maw/sdk": "*"
+    "@mawsoftwares/sdk": "*"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

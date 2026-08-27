@@ -1,8 +1,8 @@
-import type { ISyncEngine, SyncOperation, SyncState, SyncProgress } from '@maw/sdk/contracts/ISyncEngine';
-import type { IOfflineStorage } from '@maw/sdk/contracts/IOfflineStorage';
-import type { INetworkManager } from '@maw/sdk/contracts/INetworkManager';
-import type { IConflictResolver, ConflictDetail } from '@maw/sdk/contracts/IConflictResolver';
-import type { ConflictStrategy } from '@maw/sdk/contracts/IConflictResolver';
+import type { ISyncEngine, SyncOperation, SyncState, SyncProgress } from '@mawsoftwares/sdk/contracts/ISyncEngine';
+import type { IOfflineStorage } from '@mawsoftwares/sdk/contracts/IOfflineStorage';
+import type { INetworkManager } from '@mawsoftwares/sdk/contracts/INetworkManager';
+import type { IConflictResolver, ConflictDetail } from '@mawsoftwares/sdk/contracts/IConflictResolver';
+import type { ConflictStrategy } from '@mawsoftwares/sdk/contracts/IConflictResolver';
 import type { ApiClient, ApiError } from '../index';
 
 const QUEUE_ENTITY_TYPE = '__sync_queue';

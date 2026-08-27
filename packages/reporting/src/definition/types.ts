@@ -1,4 +1,4 @@
-import type { ExportFormatValue } from '@maw/import-export';
+import type { ExportFormatValue } from '@mawsoftwares/import-export';
 import type { ColumnTypeValue, AggregationTypeValue, DateRangePresetValue } from '../types';
 import type { FilterGroup } from '../filters/types';
 import type { SortField } from '../sorting/types';

@@ -27,7 +27,7 @@ const ADVANCED_REPORTS_FLAG: FeatureFlagDefinition = {
   scope: 'global',
 };
 
-describe('@maw/feature-flags — FeatureFlagService', () => {
+describe('@mawsoftwares/feature-flags — FeatureFlagService', () => {
   it('should return false for unknown flags', () => {
     const svc = createFeatureFlagService();
     expect(svc.isEnabled('nonexistent')).toBe(false);

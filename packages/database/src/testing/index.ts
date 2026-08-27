@@ -16,7 +16,7 @@ export async function withTestTransaction<T>(
 }
 
 export async function createTestPool(): Promise<PgTransactionPool> {
-  const { getEnv } = await import('@maw/sdk/config/env');
+  const { getEnv } = await import('@mawsoftwares/sdk/config/env');
   const connectionString = getEnv('TEST_DATABASE_URL') ?? getEnv('DATABASE_URL');
   if (!connectionString) {
     throw new Error('TEST_DATABASE_URL or DATABASE_URL must be set for test pool');

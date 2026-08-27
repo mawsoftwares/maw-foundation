@@ -1,5 +1,5 @@
-import type { IQueueProvider, Job, JobDefinition, JobStatusValue } from '@maw/sdk';
-import { JobStatus } from '@maw/sdk';
+import type { IQueueProvider, Job, JobDefinition, JobStatusValue } from '@mawsoftwares/sdk';
+import { JobStatus } from '@mawsoftwares/sdk';
 import { mergeRetryPolicy } from './retry';
 
 export class InMemoryQueueProvider implements IQueueProvider {

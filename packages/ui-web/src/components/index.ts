@@ -1,4 +1,5 @@
 export * from './Avatar';
+export * from './ProfileAvatarUpload';
 export * from './IconButton';
 export * from './TextArea';
 export * from './Select';

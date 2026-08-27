@@ -1,4 +1,4 @@
-import type { Session } from '@maw/sdk/contracts/identity';
+import type { Session } from '@mawsoftwares/sdk/contracts/identity';
 import { client } from './api';
 
 interface MeResponse {

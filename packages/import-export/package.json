@@ -1,10 +1,13 @@
 {
-  "name": "@maw/import-export",
+  "name": "@mawsoftwares/import-export",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "main": "src/index.ts",
   "dependencies": {
-    "@maw/sdk": "*",
-    "@maw/queue": "*"
+    "@mawsoftwares/sdk": "*",
+    "@mawsoftwares/queue": "*"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

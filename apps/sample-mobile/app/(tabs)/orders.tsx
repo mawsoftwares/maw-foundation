@@ -1,8 +1,8 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import { Text, View, type TextStyle } from 'react-native';
-import { ApiError } from '@maw/api-client';
-import type { Order } from '@maw/sdk';
-import type { ApiSuccessResponse } from '@maw/api/response/types';
+import { ApiError } from '@mawsoftwares/api-client';
+import type { Order } from '@mawsoftwares/sdk';
+import type { ApiSuccessResponse } from '@mawsoftwares/api/response/types';
 import {
   useNativeTheme,
   useToast,
@@ -16,7 +16,7 @@ import {
   PageLoader,
   Modal,
   type DataListColumn,
-} from '@maw/ui-native';
+} from '@mawsoftwares/ui-native';
 import { client } from '../../src/api';
 
 export default function OrdersScreen(): ReactNode {

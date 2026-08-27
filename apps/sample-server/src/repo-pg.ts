@@ -1,6 +1,6 @@
-import type { PgPool } from '@maw/database';
-import type { IRefreshTokenStore, RefreshRecord } from '@maw/auth-core';
-import type { TenantRolePolicy } from '@maw/rbac-core';
+import type { PgPool } from '@mawsoftwares/database';
+import type { IRefreshTokenStore, RefreshRecord } from '@mawsoftwares/auth-core';
+import type { TenantRolePolicy } from '@mawsoftwares/rbac-core';
 
 /**
  * Postgres-backed data layer — same interface shapes as the in-memory repo, but reads/

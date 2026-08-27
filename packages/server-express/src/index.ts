@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
-import type { IFileStorage, StoredFile, UploadRequest } from '@maw/sdk/contracts/IFileStorage';
-import { sanitizeFilename, getMimeType } from '@maw/sdk/kernel/file';
-import { verifyAccessToken, csrfTokensMatch, UNSAFE_METHODS, type AuthClaims } from '@maw/auth-core';
+import type { IFileStorage, StoredFile, UploadRequest } from '@mawsoftwares/sdk/contracts/IFileStorage';
+import { sanitizeFilename, getMimeType } from '@mawsoftwares/sdk/kernel/file';
+import { verifyAccessToken, csrfTokensMatch, UNSAFE_METHODS, type AuthClaims } from '@mawsoftwares/auth-core';
 import {
   resolveEffectiveAccess,
   type RbacConfig,
@@ -10,8 +10,8 @@ import {
   type AuthzContext,
   type MasterCache,
   checkPermissionDynamic,
-} from '@maw/rbac-core';
-import { HttpStatus } from '@maw/sdk';
+} from '@mawsoftwares/rbac-core';
+import { HttpStatus } from '@mawsoftwares/sdk';
 
 /** What the middleware attaches to the request once authenticated. */
 export interface MawAuthState {
@@ -56,7 +56,7 @@ function bearer(req: Request): string | null {
 }
 
 /**
- * Express adapter binding `@maw/auth-core` (token verify) + `@maw/rbac-core` (the single
+ * Express adapter binding `@mawsoftwares/auth-core` (token verify) + `@mawsoftwares/rbac-core` (the single
  * `resolveEffectiveAccess` resolver) into middleware. Semantics ported from Restaurant OS
  * `requireAuth`/`requirePermission` and Sushmapet `audienceGuard`/`csrf` — but the
  * authorization decision runs through the SAME resolver the client uses.

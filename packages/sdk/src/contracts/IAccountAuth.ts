@@ -22,8 +22,8 @@ export interface AuthResult {
 
 /**
  * Account (server) authentication port — transport only, persists nothing. Implemented
- * by the product's API layer / `@maw/api-client`; the token-issuing side lives in
- * `@maw/auth-core`.
+ * by the product's API layer / `@mawsoftwares/api-client`; the token-issuing side lives in
+ * `@mawsoftwares/auth-core`.
  */
 export interface RegistrationInput {
   readonly email: string;

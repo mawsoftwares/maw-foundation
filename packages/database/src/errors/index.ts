@@ -1,4 +1,4 @@
-import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
 
 export interface PgError {
   code: string;

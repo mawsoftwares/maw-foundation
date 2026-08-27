@@ -1,5 +1,5 @@
-import { AccountStatus, type AccountStatusValue } from '@maw/sdk';
-import { AppError, ErrorCode } from '@maw/sdk';
+import { AccountStatus, type AccountStatusValue } from '@mawsoftwares/sdk';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk';
 
 export const AccountEvent = {
   VERIFY_EMAIL: 'VERIFY_EMAIL',

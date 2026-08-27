@@ -1,6 +1,6 @@
 import { useState, useCallback, type ReactNode, type ChangeEvent } from 'react';
-import { ApiError } from '@maw/api-client';
-import type { ApiSuccessResponse } from '@maw/api/response/types';
+import { ApiError } from '@mawsoftwares/api-client';
+import type { ApiSuccessResponse } from '@mawsoftwares/api/response/types';
 import {
   Card,
   Badge,
@@ -16,7 +16,7 @@ import {
   TextField,
   Select,
   type ColumnDef,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 interface JobRecord {

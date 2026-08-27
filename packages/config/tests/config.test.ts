@@ -6,7 +6,7 @@ import {
   type TenantConfig,
 } from '../src/index';
 
-describe('@maw/config — ConfigEngine', () => {
+describe('@mawsoftwares/config — ConfigEngine', () => {
   it('should return undefined for unset keys', () => {
     const engine = createConfigEngine();
     expect(engine.get('nonexistent')).toBeUndefined();
@@ -82,7 +82,7 @@ describe('@maw/config — ConfigEngine', () => {
   });
 });
 
-describe('@maw/config — applyTenantConfig', () => {
+describe('@mawsoftwares/config — applyTenantConfig', () => {
   it('should apply tenant branding and localization', () => {
     const engine = createConfigEngine();
     const tenant: TenantConfig = {
@@ -104,7 +104,7 @@ describe('@maw/config — applyTenantConfig', () => {
   });
 });
 
-describe('@maw/config — applyModuleConfig', () => {
+describe('@mawsoftwares/config — applyModuleConfig', () => {
   it('should load module-level config', () => {
     const engine = createConfigEngine();
     applyModuleConfig(engine, 'billing', { invoicePrefix: 'INV', taxRate: 18 });

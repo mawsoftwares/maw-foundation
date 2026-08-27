@@ -16,5 +16,5 @@ export interface MigrationRunnerConfig {
   pool: import('../types').PgTransactionPool;
   migrationsDir: string;
   table?: string;
-  logger?: import('@maw/sdk/kernel/logger').Logger;
+  logger?: import('@mawsoftwares/sdk/kernel/logger').Logger;
 }

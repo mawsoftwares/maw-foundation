@@ -1,7 +1,7 @@
-import type { IOfflineRepository, EntityMeta, OfflineEntityConfig } from '@maw/sdk/contracts/IOfflineRepository';
-import type { IOfflineStorage, OfflineRecord } from '@maw/sdk/contracts/IOfflineStorage';
-import type { ISyncEngine } from '@maw/sdk/contracts/ISyncEngine';
-import type { INetworkManager } from '@maw/sdk/contracts/INetworkManager';
+import type { IOfflineRepository, EntityMeta, OfflineEntityConfig } from '@mawsoftwares/sdk/contracts/IOfflineRepository';
+import type { IOfflineStorage, OfflineRecord } from '@mawsoftwares/sdk/contracts/IOfflineStorage';
+import type { ISyncEngine } from '@mawsoftwares/sdk/contracts/ISyncEngine';
+import type { INetworkManager } from '@mawsoftwares/sdk/contracts/INetworkManager';
 import type { ApiClient } from '../index';
 
 export interface OfflineRepositoryOptions {

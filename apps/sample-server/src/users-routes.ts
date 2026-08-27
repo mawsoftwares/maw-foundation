@@ -10,11 +10,12 @@ import {
   DeactivateUserUseCase,
   ChangePasswordUseCase,
   ResetPasswordUseCase,
-} from '@maw/users';
-import type { IUsersRepository } from '@maw/users';
+} from '@mawsoftwares/users';
+import type { IUsersRepository } from '@mawsoftwares/users';
 
 export function createUsersRouter(repo: IUsersRepository, requireAuth: any) {
   const router = Router();
+  router.use(requireAuth);
   router.get('/test', (req, res) => {
     res.json({ message: 'users router is mounted!' });
   });

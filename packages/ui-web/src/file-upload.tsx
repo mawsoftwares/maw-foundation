@@ -8,8 +8,8 @@ import {
   type ChangeEvent,
   type CSSProperties,
 } from 'react';
-import type { StoredFile } from '@maw/sdk/contracts/IFileStorage';
-import { formatFileSize, getMimeType, isImageFile, sanitizeFilename } from '@maw/sdk/kernel/file';
+import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
+import { formatFileSize, getMimeType, isImageFile, sanitizeFilename } from '@mawsoftwares/sdk/kernel/file';
 import { Button } from './components';
 import { IconButton, Stack, Progress, Spinner } from './components';
 

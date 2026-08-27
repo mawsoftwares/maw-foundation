@@ -18,26 +18,26 @@ corresponding `packages/` implementations and are exempt from layering.
 
 | Package | May import | Must NOT import |
 |---|---|---|
-| `@maw/sdk` | (nothing of ours) | everything above |
-| `@maw/core` | `sdk` | everything above |
-| `@maw/config` | `sdk`, `core` | everything above |
-| `@maw/tenancy` | `sdk`, `core` | everything above |
-| `@maw/modules` | `sdk`, `core` | everything above |
-| `@maw/feature-flags` | `sdk`, `core` | everything above |
-| `@maw/database` | `sdk` | platform/rbac/auth/adapters/api/ui |
-| `@maw/platform` | `sdk` | rbac/auth/adapters/api/ui |
-| `@maw/rbac-core` | `sdk` | auth/adapters/api/ui/platform |
-| `@maw/auth-core` | `sdk`, `platform` | adapters/api/ui |
-| `@maw/server-express` | `sdk`, `platform`, `auth-core`, `rbac-core` | the other adapter, ui |
-| `@maw/server-hono` | `sdk`, `platform`, `auth-core`, `rbac-core` | the other adapter, ui |
-| `@maw/api-client` | `sdk`, `rbac-core` | adapters, ui |
-| `@maw/theme` | `sdk` | everything else |
-| `@maw/ui-web` | `sdk`, `rbac-core`, `theme`, `api-client` | adapters, `ui-native` |
-| `@maw/ui-native` | `sdk`, `rbac-core`, `theme`, `api-client` | adapters, `ui-web` |
+| `@mawsoftwares/sdk` | (nothing of ours) | everything above |
+| `@mawsoftwares/core` | `sdk` | everything above |
+| `@mawsoftwares/config` | `sdk`, `core` | everything above |
+| `@mawsoftwares/tenancy` | `sdk`, `core` | everything above |
+| `@mawsoftwares/modules` | `sdk`, `core` | everything above |
+| `@mawsoftwares/feature-flags` | `sdk`, `core` | everything above |
+| `@mawsoftwares/database` | `sdk` | platform/rbac/auth/adapters/api/ui |
+| `@mawsoftwares/platform` | `sdk` | rbac/auth/adapters/api/ui |
+| `@mawsoftwares/rbac-core` | `sdk` | auth/adapters/api/ui/platform |
+| `@mawsoftwares/auth-core` | `sdk`, `platform` | adapters/api/ui |
+| `@mawsoftwares/server-express` | `sdk`, `platform`, `auth-core`, `rbac-core` | the other adapter, ui |
+| `@mawsoftwares/server-hono` | `sdk`, `platform`, `auth-core`, `rbac-core` | the other adapter, ui |
+| `@mawsoftwares/api-client` | `sdk`, `rbac-core` | adapters, ui |
+| `@mawsoftwares/theme` | `sdk` | everything else |
+| `@mawsoftwares/ui-web` | `sdk`, `rbac-core`, `theme`, `api-client` | adapters, `ui-native` |
+| `@mawsoftwares/ui-native` | `sdk`, `rbac-core`, `theme`, `api-client` | adapters, `ui-web` |
 | `apps/*` | anything | — (composition roots) |
 
 **Why two UI kits, not one:** React web components (Radix/shadcn/Tailwind + DOM) and
 React Native components (`View`/`Text`/`StyleSheet`) cannot share a render tree. So the
 foundation shares everything *below* the view layer (auth, RBAC, API client, tokens) and
-splits only the views. `@maw/theme` holds platform-agnostic **token values** that both
+splits only the views. `@mawsoftwares/theme` holds platform-agnostic **token values** that both
 kits consume, so the two look identical without sharing components.

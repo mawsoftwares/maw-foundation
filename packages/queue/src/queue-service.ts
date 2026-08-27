@@ -1,5 +1,5 @@
-import type { IQueueProvider, IQueueService, Job, JobDefinition, JobStatusValue, Logger } from '@maw/sdk';
-import { createLogger } from '@maw/sdk';
+import type { IQueueProvider, IQueueService, Job, JobDefinition, JobStatusValue, Logger } from '@mawsoftwares/sdk';
+import { createLogger } from '@mawsoftwares/sdk';
 
 export interface QueueServiceOptions {
   readonly provider: IQueueProvider;

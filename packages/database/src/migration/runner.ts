@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createLogger } from '@maw/sdk/kernel/logger';
+import { createLogger } from '@mawsoftwares/sdk/kernel/logger';
 import type { PgTransactionPool } from '../types';
 import { withTransaction } from '../transaction/index';
 import type { Migration, MigrationRecord, MigrationRunnerConfig } from './types';

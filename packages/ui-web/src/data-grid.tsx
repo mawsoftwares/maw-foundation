@@ -15,12 +15,12 @@ import type {
   IDataSource,
   ClientDataSourceConfig,
   ServerDataSourceConfig,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 import { useDataGrid, type UseDataGridReturn } from './data-grid-engine';
 import { Checkbox, Select, IconButton, Spinner, Stack } from './components';
 import { SearchBar } from './components';
 import { ConfirmationDialog } from './components';
-import { useIsMobile } from './responsive';
+import { useIsMobile, useMediaQuery, BREAKPOINTS } from './responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -69,7 +69,8 @@ export function DataGrid<T extends object>({
     permissions,
   });
 
-  const isMobile = useIsMobile();
+  const mobileBreakpoint = schema.responsive?.breakpoint ?? BREAKPOINTS.md;
+  const isMobile = !useMediaQuery(`(min-width: ${mobileBreakpoint}px)`);
   const useCardLayout = isMobile && (schema.responsive?.cardLayout !== false);
 
   return (
@@ -214,7 +215,7 @@ function DataGridFilterChips({
   onClear,
 }: {
   readonly filters: readonly ActiveFilter[];
-  readonly definitions: readonly import('@maw/sdk').DataGridFilterDef[];
+  readonly definitions: readonly import('@mawsoftwares/sdk').DataGridFilterDef[];
   readonly onRemove: (field: string) => void;
   readonly onClear: () => void;
 }): ReactNode {
@@ -710,7 +711,7 @@ function DataGridPagination({
   onPageChange,
   onPageSizeChange,
 }: {
-  readonly config?: import('@maw/sdk').DataGridPaginationConfig;
+  readonly config?: import('@mawsoftwares/sdk').DataGridPaginationConfig;
   readonly pagination: DataGridPaginationState;
   readonly onPageChange: (page: number) => void;
   readonly onPageSizeChange: (size: number) => void;
@@ -761,7 +762,7 @@ function DataGridPagination({
 function DataGridEmpty({
   config,
 }: {
-  readonly config?: import('@maw/sdk').DataGridEmptyConfig;
+  readonly config?: import('@mawsoftwares/sdk').DataGridEmptyConfig;
 }): ReactNode {
   return (
     <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)', color: 'var(--maw-fgMuted)' }}>

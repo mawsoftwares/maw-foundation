@@ -1,24 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createCommunication } from '../factory';
-import { MustacheTemplateRenderer } from '../template-renderer';
-import { NotificationProviderRegistry } from '../provider-registry';
-import { NotificationService } from '../notification-service';
-import { ConsoleNotificationProvider } from '../providers/console-provider';
-import { InMemoryInAppNotificationStore } from '../in-app-store';
-import { NotificationChannel, DeliveryStatus } from '@maw/sdk';
-import type { ITemplateStore, NotificationTemplate } from '@maw/sdk';
-
-class InMemoryTemplateStore implements ITemplateStore {
-  private readonly templates = new Map<string, NotificationTemplate>();
-
-  add(template: NotificationTemplate): void {
-    this.templates.set(template.id, template);
-  }
-
-  async get(id: string): Promise<NotificationTemplate | null> {
-    return this.templates.get(id) ?? null;
-  }
-}
+import { InMemoryTemplateStore } from '../template-store';
+import { NotificationChannel, DeliveryStatus } from '@mawsoftwares/sdk';
 
 describe('Communication Integration', () => {
   it('sends email via factory-created service', async () => {
@@ -39,12 +22,11 @@ describe('Communication Integration', () => {
     expect(result.provider).toContain('console');
   });
 
-  it('sends SMS via factory-created service', async () => {
-    const { service } = createCommunication();
+  it('sends SMS via smsService facade', async () => {
+    const { smsService } = createCommunication();
 
-    const result = await service.send({
-      channel: NotificationChannel.SMS,
-      metadata: { tenantId: 'restaurant-1' },
+    const result = await smsService.send({
+      tenantId: 'restaurant-1',
       sms: { to: '+1234567890', message: 'Your table is ready!' },
     });
 
@@ -53,11 +35,8 @@ describe('Communication Integration', () => {
   });
 
   it('sends notification with template rendering', async () => {
-    const registry = new NotificationProviderRegistry();
-    registry.register(new ConsoleNotificationProvider(NotificationChannel.EMAIL));
-
     const templateStore = new InMemoryTemplateStore();
-    templateStore.add({
+    await templateStore.save({
       id: 'welcome-email',
       name: 'Welcome Email',
       channel: NotificationChannel.EMAIL,
@@ -65,30 +44,25 @@ describe('Communication Integration', () => {
       body: 'Hi {{customerName}}, thanks for joining {{restaurantName}}.',
       html: '<h1>Welcome {{customerName}}</h1><p>Thanks for joining {{restaurantName}}.</p>',
       variables: [
-        { name: 'customerName', required: true, type: 'string' },
-        { name: 'restaurantName', required: true, type: 'string' },
+        { name: 'customerName', required: true },
+        { name: 'restaurantName', required: true },
       ],
     });
 
-    const service = new NotificationService({
-      registry,
-      templateRenderer: new MustacheTemplateRenderer(),
-      templateStore,
-    });
+    const { emailService } = createCommunication({ templateStore });
 
-    const result = await service.send({
-      channel: NotificationChannel.EMAIL,
-      metadata: { tenantId: 'restaurant-1', correlationId: 'signup-42' },
+    const result = await emailService.send({
+      tenantId: 'restaurant-1',
       email: {
         to: 'newuser@example.com',
         subject: 'placeholder',
-        body: 'placeholder',
         templateId: 'welcome-email',
         templateVariables: {
           customerName: 'Alice',
           restaurantName: 'Green Bistro',
         },
       },
+      metadata: { correlationId: 'signup-42' },
     });
 
     expect(result.status).toBe(DeliveryStatus.SENT);
@@ -119,58 +93,55 @@ describe('Communication Integration', () => {
     results.forEach((r) => expect(r.status).toBe(DeliveryStatus.SENT));
   });
 
-  it('manages in-app notifications lifecycle', async () => {
-    const store = new InMemoryInAppNotificationStore();
+  it('manages in-app notifications lifecycle via facade', async () => {
+    const { inAppNotificationService } = createCommunication();
 
-    await store.create({
-      id: 'n1',
-      userId: 'waiter-1',
+    await inAppNotificationService.send({
       tenantId: 'restaurant-1',
-      type: 'order',
-      title: 'New Order',
-      message: 'Table 5 placed an order.',
-      read: false,
-      createdAt: new Date().toISOString(),
+      inApp: {
+        userId: 'waiter-1',
+        type: 'order',
+        title: 'New Order',
+        message: 'Table 5 placed an order.',
+      },
     });
 
-    await store.create({
-      id: 'n2',
-      userId: 'waiter-1',
+    await inAppNotificationService.send({
       tenantId: 'restaurant-1',
-      type: 'alert',
-      title: 'Kitchen Alert',
-      message: 'Item 42 is out of stock.',
-      read: false,
-      createdAt: new Date(Date.now() + 1000).toISOString(),
+      inApp: {
+        userId: 'waiter-1',
+        type: 'alert',
+        title: 'Kitchen Alert',
+        message: 'Item 42 is out of stock.',
+      },
     });
 
-    await store.create({
-      id: 'n3',
-      userId: 'waiter-2',
+    await inAppNotificationService.send({
       tenantId: 'restaurant-1',
-      type: 'order',
-      title: 'New Order',
-      message: 'Table 3 placed an order.',
-      read: false,
-      createdAt: new Date().toISOString(),
+      inApp: {
+        userId: 'waiter-2',
+        type: 'order',
+        title: 'New Order',
+        message: 'Table 3 placed an order.',
+      },
     });
 
-    const waiter1Notifications = await store.list('waiter-1', 'restaurant-1');
+    const waiter1Notifications = await inAppNotificationService.list('waiter-1', 'restaurant-1');
     expect(waiter1Notifications).toHaveLength(2);
 
-    const unreadCount = await store.unreadCount('waiter-1', 'restaurant-1');
+    const unreadCount = await inAppNotificationService.unreadCount('waiter-1', 'restaurant-1');
     expect(unreadCount).toBe(2);
 
-    await store.markAsRead('n1', 'waiter-1');
-    expect(await store.unreadCount('waiter-1', 'restaurant-1')).toBe(1);
+    await inAppNotificationService.markAsRead(waiter1Notifications[1]!.id, 'waiter-1');
+    expect(await inAppNotificationService.unreadCount('waiter-1', 'restaurant-1')).toBe(1);
 
-    await store.markAllAsRead('waiter-1', 'restaurant-1');
-    expect(await store.unreadCount('waiter-1', 'restaurant-1')).toBe(0);
+    await inAppNotificationService.markAllAsRead('waiter-1', 'restaurant-1');
+    expect(await inAppNotificationService.unreadCount('waiter-1', 'restaurant-1')).toBe(0);
 
-    await store.delete('n2', 'waiter-1');
-    expect(await store.list('waiter-1', 'restaurant-1')).toHaveLength(1);
+    await inAppNotificationService.delete(waiter1Notifications[0]!.id, 'waiter-1');
+    expect(await inAppNotificationService.list('waiter-1', 'restaurant-1')).toHaveLength(1);
 
-    const waiter2Notifications = await store.list('waiter-2', 'restaurant-1');
+    const waiter2Notifications = await inAppNotificationService.list('waiter-2', 'restaurant-1');
     expect(waiter2Notifications).toHaveLength(1);
   });
 });

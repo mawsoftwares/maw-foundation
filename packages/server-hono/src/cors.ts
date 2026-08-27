@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import { isOriginAllowed, type CorsConfig } from '@maw/sdk/security/SecurityConfig';
+import { isOriginAllowed, type CorsConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
 
 export function createCorsMiddleware(config: Partial<CorsConfig> = {}): MiddlewareHandler {
   const {

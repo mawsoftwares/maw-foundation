@@ -1,4 +1,4 @@
-import type { FilterOperatorValue } from '@maw/sdk';
+import type { FilterOperatorValue } from '@mawsoftwares/sdk';
 
 export interface FilterCondition {
   readonly field: string;

@@ -1,5 +1,5 @@
 import type { RequestHandler, Request, Response, NextFunction } from 'express';
-import { isOriginAllowed, type CorsConfig } from '@maw/sdk/security/SecurityConfig';
+import { isOriginAllowed, type CorsConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
 
 export function createCorsMiddleware(config: Partial<CorsConfig> = {}): RequestHandler {
   const {

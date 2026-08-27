@@ -1,4 +1,4 @@
-import type { SortDirection } from '@maw/sdk/config/constants';
+import type { SortDirection } from '@mawsoftwares/sdk/config/constants';
 import type { MasterStatusValue, FieldDataTypeValue, MasterConfig, FieldConfig } from './entities';
 
 export interface ListQueryParams {

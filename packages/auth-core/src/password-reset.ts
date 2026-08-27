@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { type PasswordPolicyConfig, validatePassword, type PasswordResetConfig } from '@maw/sdk';
-import type { IUserRepository } from '@maw/sdk/contracts/IUserRepository';
-import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import { type PasswordPolicyConfig, validatePassword, type PasswordResetConfig, type Logger } from '@mawsoftwares/sdk';
+import type { IUserRepository } from '@mawsoftwares/sdk/contracts/IUserRepository';
+import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 import { hashToken } from './refresh';
 import { TokenExpiredError, TokenAlreadyUsedError, PasswordPolicyError } from './auth-errors';
 import type { SessionService } from './session-store';
@@ -48,6 +48,7 @@ export interface PasswordResetServiceOptions {
   readonly store: IPasswordResetStore;
   readonly sendResetEmail?: SendResetEmail;
   readonly sessionService?: SessionService;
+  readonly logger?: Logger;
 }
 
 export class PasswordResetService {
@@ -58,6 +59,7 @@ export class PasswordResetService {
   private readonly store: IPasswordResetStore;
   private readonly sendResetEmail?: SendResetEmail;
   private readonly sessionService?: SessionService;
+  private readonly logger?: Logger;
 
   constructor(options: PasswordResetServiceOptions) {
     this.userRepository = options.userRepository;
@@ -67,11 +69,15 @@ export class PasswordResetService {
     this.store = options.store;
     this.sendResetEmail = options.sendResetEmail;
     this.sessionService = options.sessionService;
+    this.logger = options.logger;
   }
 
   async requestReset(tenantId: string, email: string): Promise<void> {
     const user = await this.userRepository.findByEmail(tenantId, email);
-    if (!user) return;
+    if (!user) {
+      this.logger?.info('Password reset requested for non-existent email', { tenantId, email });
+      return;
+    }
 
     await this.store.deleteForUser(user.id);
     const token = randomBytes(32).toString('hex');

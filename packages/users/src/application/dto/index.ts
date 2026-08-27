@@ -4,8 +4,8 @@ import {
   phone,
   minLength,
   maxLength,
-} from '@maw/sdk/kernel/validate';
-import type { AccountStatusValue } from '@maw/sdk/security/AccountStatus';
+} from '@mawsoftwares/sdk/kernel/validate';
+import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 
 export interface CreateUserDto {
   tenantId: string;
@@ -14,7 +14,12 @@ export interface CreateUserDto {
   email: string;
   phone?: string;
   password?: string;
-  roleId?: string; // Optional RBAC role integration
+  /** Auth role code (preferred). Maps to users.role. */
+  role?: string;
+  /** Optional RBAC role id (legacy); prefer `role`. */
+  roleId?: string;
+  /** Profile image URL (e.g. from /files/upload). */
+  avatar?: string;
 }
 
 export const CreateUserSchema = {
@@ -32,6 +37,7 @@ export interface UpdateUserDto {
   email?: string;
   phone?: string;
   avatar?: string;
+  role?: string;
   status?: AccountStatusValue;
 }
 
@@ -60,6 +66,7 @@ export interface UserResponseDto {
   email: string;
   phone?: string;
   avatar?: string;
+  role?: string;
   status: AccountStatusValue;
   emailVerifiedAt?: string;
   phoneVerifiedAt?: string;

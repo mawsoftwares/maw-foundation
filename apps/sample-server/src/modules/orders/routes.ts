@@ -1,4 +1,4 @@
-import { createApiRouter } from '@maw/server-express';
+import { createApiRouter } from '@mawsoftwares/server-express';
 import type { RequestHandler } from 'express';
 import { listOrders, getOrder, createOrder } from './controller';
 

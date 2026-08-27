@@ -1,4 +1,4 @@
-import type { ListQueryParams, EntityResponse } from '@maw/api/dto/types';
+import type { ListQueryParams, EntityResponse } from '@mawsoftwares/api/dto/types';
 
 export interface CreateOrderBody {
   readonly item: string;

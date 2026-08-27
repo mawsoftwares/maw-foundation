@@ -8,9 +8,9 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import type { INetworkManager, NetworkStatus } from '@maw/sdk/contracts/INetworkManager';
-import type { ISyncEngine, SyncProgress, SyncState } from '@maw/sdk/contracts/ISyncEngine';
-import type { ConflictDetail, ConflictResolution } from '@maw/sdk/contracts/IConflictResolver';
+import type { INetworkManager, NetworkStatus } from '@mawsoftwares/sdk/contracts/INetworkManager';
+import type { ISyncEngine, SyncProgress, SyncState } from '@mawsoftwares/sdk/contracts/ISyncEngine';
+import type { ConflictDetail, ConflictResolution } from '@mawsoftwares/sdk/contracts/IConflictResolver';
 import { Button, Card, Badge } from './components';
 import { Spinner, Stack, Modal, Progress } from './components';
 

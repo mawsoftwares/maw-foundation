@@ -17,7 +17,7 @@ const makeTenant = (overrides: Partial<Tenant> = {}): Tenant => ({
   ...overrides,
 });
 
-describe('@maw/tenancy — TenantContextHolder', () => {
+describe('@mawsoftwares/tenancy — TenantContextHolder', () => {
   it('should start with null context', () => {
     const holder = createTenantContextHolder();
     expect(holder.get()).toBeNull();
@@ -66,7 +66,7 @@ describe('@maw/tenancy — TenantContextHolder', () => {
   });
 });
 
-describe('@maw/tenancy — isTenantActive', () => {
+describe('@mawsoftwares/tenancy — isTenantActive', () => {
   it('should return true for active tenants', () => {
     expect(isTenantActive(makeTenant({ status: 'active' }))).toBe(true);
   });
@@ -76,7 +76,7 @@ describe('@maw/tenancy — isTenantActive', () => {
   });
 });
 
-describe('@maw/tenancy — requireActiveTenant', () => {
+describe('@mawsoftwares/tenancy — requireActiveTenant', () => {
   it('should not throw for active tenants', () => {
     expect(() => requireActiveTenant(makeTenant())).not.toThrow();
   });

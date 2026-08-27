@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Card, useDynamicAccess } from '@maw/ui-web';
-import { palette, spacing } from '@maw/theme';
+import { Card, useDynamicAccess } from '@mawsoftwares/ui-web';
+import { palette, spacing } from '@mawsoftwares/theme';
 import { cardStyle, moduleBadgeStyle, permBadgeStyle } from '../styles';
 
 export function PermissionsPanel(): ReactNode {

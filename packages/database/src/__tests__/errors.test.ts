@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isPgError, translatePgError, withPgErrorTranslation } from '../errors/index';
-import { ErrorCode } from '@maw/sdk/kernel/errors';
+import { ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
 
 describe('isPgError', () => {
   it('returns true for objects with a string code', () => {

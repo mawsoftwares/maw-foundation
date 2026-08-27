@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import * as i18n from '@maw/sdk/i18n/index';
+import * as i18n from '@mawsoftwares/sdk/i18n/index';
 
 interface I18nContextValue {
   locale: string;

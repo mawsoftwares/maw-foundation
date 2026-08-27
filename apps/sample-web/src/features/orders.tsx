@@ -1,7 +1,7 @@
 import { useState, useCallback, type ReactNode } from 'react';
-import { ApiError } from '@maw/api-client';
-import type { Order } from '@maw/sdk';
-import type { ApiSuccessResponse } from '@maw/api/response/types';
+import { ApiError } from '@mawsoftwares/api-client';
+import type { Order } from '@mawsoftwares/sdk';
+import type { ApiSuccessResponse } from '@mawsoftwares/api/response/types';
 import {
   ListPage,
   DataTable,
@@ -16,7 +16,7 @@ import {
   PageLoader,
   type ColumnDef,
   type SortState,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 const COLUMNS: ColumnDef<Order>[] = [

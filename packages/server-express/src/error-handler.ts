@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
-import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
-import { HttpStatus } from '@maw/sdk/config/constants';
-import { ApiResponse } from '@maw/api';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
+import { HttpStatus } from '@mawsoftwares/sdk/config/constants';
+import { ApiResponse } from '@mawsoftwares/api';
 
 export interface GlobalErrorHandlerOptions {
   readonly redact?: <T>(obj: T) => T;

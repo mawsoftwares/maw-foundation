@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import { csrfTokensMatch, UNSAFE_METHODS } from '@maw/auth-core';
+import { csrfTokensMatch, UNSAFE_METHODS } from '@mawsoftwares/auth-core';
 
 export interface CsrfOptions {
   readonly cookieName?: string;

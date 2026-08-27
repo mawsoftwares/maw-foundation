@@ -1,6 +1,6 @@
-import { AccountStatus } from '@maw/sdk';
-import type { IUserRepository, UserRecord } from '@maw/sdk/contracts/IUserRepository';
-import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import { AccountStatus } from '@mawsoftwares/sdk';
+import type { IUserRepository, UserRecord } from '@mawsoftwares/sdk/contracts/IUserRepository';
+import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 
 export interface SocialAuthProfile {
   readonly provider: string;

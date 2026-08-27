@@ -6,17 +6,18 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { breakpoints as themeBreakpoints } from '@mawsoftwares/theme';
 
 // ---------------------------------------------------------------------------
-// Breakpoints (matches common Tailwind/MUI breakpoints)
+// Breakpoints — derived from theme (single source of truth)
 // ---------------------------------------------------------------------------
 
 export const BREAKPOINTS = {
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
-  '2xl': 1536,
+  sm: themeBreakpoints.sm,
+  md: themeBreakpoints.md,
+  lg: themeBreakpoints.lg,
+  xl: themeBreakpoints.xl,
+  '2xl': themeBreakpoints.xxl,
 } as const;
 
 export type Breakpoint = keyof typeof BREAKPOINTS;

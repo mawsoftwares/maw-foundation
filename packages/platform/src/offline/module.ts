@@ -1,4 +1,4 @@
-import type { BaseModuleDefinition } from '@maw/sdk/modules/types';
+import type { BaseModuleDefinition } from '@mawsoftwares/sdk/modules/types';
 
 export const offlineModule: BaseModuleDefinition = {
   key: 'offline',

@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { useIsMobile } from '../responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -36,6 +37,8 @@ export function Drawer({
   width = 400,
   style,
 }: DrawerProps): ReactNode {
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -68,8 +71,8 @@ export function Drawer({
           top: 0,
           bottom: 0,
           [side]: 0,
-          width,
-          maxWidth: '90vw',
+          width: isMobile ? '100%' : width,
+          maxWidth: isMobile ? '100%' : '90vw',
           background: 'var(--maw-bg)',
           boxShadow: 'var(--maw-shadow-xl)',
           display: 'flex',

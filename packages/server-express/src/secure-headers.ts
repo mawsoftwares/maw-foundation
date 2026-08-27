@@ -1,5 +1,5 @@
 import type { RequestHandler, Request, Response, NextFunction } from 'express';
-import type { SecurityHeadersConfig } from '@maw/sdk/security/SecurityConfig';
+import type { SecurityHeadersConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
 
 export function createSecureHeadersMiddleware(
   config: Partial<SecurityHeadersConfig> = {},

@@ -49,9 +49,9 @@ import {
   DynamicForm,
   type ColumnDef,
   type DateRange,
-} from '@maw/ui-web';
-import type { DataGridSchema, FormSchema } from '@maw/sdk';
-import type { StoredFile } from '@maw/sdk/contracts/IFileStorage';
+} from '@mawsoftwares/ui-web';
+import type { DataGridSchema, FormSchema } from '@mawsoftwares/sdk';
+import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import { client } from '../api';
 
 const DEMO_TABLE_DATA = [
@@ -249,7 +249,7 @@ export function ShowcaseView(): ReactNode {
         UI Component Showcase
       </h1>
       <p style={{ color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>
-        All @maw/ui-web components using CSS custom properties — responsive to dark mode and tenant branding.
+        All @mawsoftwares/ui-web components using CSS custom properties — responsive to dark mode and tenant branding.
       </p>
 
       <Tabs

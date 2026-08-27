@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
-import type { Logger } from '@maw/sdk/kernel/logger';
+import type { Logger } from '@mawsoftwares/sdk/kernel/logger';
 import type { DynamicAuthedRequest } from './index';
 
 export interface RequestLoggerOptions {

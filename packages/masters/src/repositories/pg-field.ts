@@ -1,5 +1,5 @@
-import type { PgPool, PgClient } from '@maw/database';
-import { withPgErrorTranslation } from '@maw/database';
+import type { PgPool, PgClient } from '@mawsoftwares/database';
+import { withPgErrorTranslation } from '@mawsoftwares/database';
 import type { MasterField } from '../types/entities';
 import type { CreateFieldInput, UpdateFieldInput, OperationContext } from '../types/dto';
 import type { IMasterFieldRepository } from '../types/ports';

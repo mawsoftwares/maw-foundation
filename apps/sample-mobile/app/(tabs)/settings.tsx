@@ -8,7 +8,7 @@ import {
   Divider,
   Stack,
   Badge,
-} from '@maw/ui-native';
+} from '@mawsoftwares/ui-native';
 
 export default function SettingsScreen(): ReactNode {
   const { session, logout } = useAuth();

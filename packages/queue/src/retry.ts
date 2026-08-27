@@ -1,4 +1,4 @@
-import { BackoffStrategy, DEFAULT_RETRY_POLICY, type RetryPolicy } from '@maw/sdk';
+import { BackoffStrategy, DEFAULT_RETRY_POLICY, type RetryPolicy } from '@mawsoftwares/sdk';
 
 export function computeDelay(policy: RetryPolicy, attempt: number): number {
   const { delayMs, backoff, maxDelayMs } = policy;

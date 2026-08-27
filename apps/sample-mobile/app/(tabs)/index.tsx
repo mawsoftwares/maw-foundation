@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { ScrollView, Text, View, type TextStyle } from 'react-native';
-import { useAuth, useNativeTheme, Card, Badge, Stack, Avatar } from '@maw/ui-native';
+import { useAuth, useNativeTheme, Card, Badge, Stack, Avatar } from '@mawsoftwares/ui-native';
 
 export default function DashboardScreen(): ReactNode {
   const { session } = useAuth();

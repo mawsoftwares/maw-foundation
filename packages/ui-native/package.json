@@ -1,7 +1,7 @@
 {
-  "name": "@maw/ui-native",
+  "name": "@mawsoftwares/ui-native",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "main": "src/index.ts",
   "types": "src/index.ts",
   "peerDependencies": {
@@ -11,13 +11,16 @@
     "@react-native-community/netinfo": "*"
   },
   "dependencies": {
-    "@maw/sdk": "*",
-    "@maw/theme": "*",
-    "@maw/api-client": "*",
-    "@maw/rbac-core": "*",
-    "@maw/platform": "*"
+    "@mawsoftwares/sdk": "*",
+    "@mawsoftwares/theme": "*",
+    "@mawsoftwares/api-client": "*",
+    "@mawsoftwares/rbac-core": "*",
+    "@mawsoftwares/platform": "*"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

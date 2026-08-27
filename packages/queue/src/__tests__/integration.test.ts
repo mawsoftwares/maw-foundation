@@ -3,7 +3,7 @@ import { InMemoryQueueProvider } from '../in-memory-provider';
 import { QueueService } from '../queue-service';
 import { WorkerRegistry } from '../worker-registry';
 import { JobRunner } from '../job-runner';
-import { BackoffStrategy, JobStatus } from '@maw/sdk';
+import { BackoffStrategy, JobStatus } from '@mawsoftwares/sdk';
 
 describe('Queue Integration', () => {
   it('enqueue → process → complete end-to-end', async () => {

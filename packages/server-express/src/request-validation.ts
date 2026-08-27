@@ -1,5 +1,5 @@
 import type { RequestHandler, Request, Response, NextFunction } from 'express';
-import { HttpStatus } from '@maw/sdk/config/constants';
+import { HttpStatus } from '@mawsoftwares/sdk/config/constants';
 
 export interface ValidationSchema {
   readonly parse: (data: unknown) => unknown;

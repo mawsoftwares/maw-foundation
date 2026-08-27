@@ -1,12 +1,12 @@
-import type { Controller } from '@maw/api';
-import { ok, created, paginated } from '@maw/api';
-import type { MasterService } from '@maw/masters';
+import type { Controller } from '@mawsoftwares/api';
+import { ok, created, paginated } from '@mawsoftwares/api';
+import type { MasterService } from '@mawsoftwares/masters';
 import type {
   CreateMasterInput, UpdateMasterInput,
   CreateFieldInput, UpdateFieldInput,
   CreateValueInput, UpdateValueInput,
   MasterListQuery, ValueListQuery,
-} from '@maw/masters';
+} from '@mawsoftwares/masters';
 
 type P = { id: string; code: string; masterId: string; fieldId: string; valueId: string };
 

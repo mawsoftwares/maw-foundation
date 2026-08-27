@@ -87,5 +87,5 @@ In a downstream project:
 
 2. Install:
    ```bash
-   pnpm add @maw/core @maw/auth @maw/rbac
+   pnpm add @mawsoftwares/core @mawsoftwares/auth @mawsoftwares/rbac
    ```

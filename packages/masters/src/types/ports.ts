@@ -1,5 +1,5 @@
-import type { PgClient } from '@maw/database';
-import type { PaginatedResult } from '@maw/sdk/config/constants';
+import type { PgClient } from '@mawsoftwares/database';
+import type { PaginatedResult } from '@mawsoftwares/sdk/config/constants';
 import type { Master, MasterField, MasterValue, MasterOption } from './entities';
 import type {
   CreateMasterInput, UpdateMasterInput,

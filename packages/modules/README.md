@@ -1,4 +1,4 @@
-# @maw/modules
+# @mawsoftwares/modules
 
 Module registry foundation for the MAW ecosystem.
 
@@ -13,7 +13,7 @@ Module registry foundation for the MAW ecosystem.
 ## Usage
 
 ```ts
-import { BaseModuleRegistry, type BaseModuleDefinition } from '@maw/modules';
+import { BaseModuleRegistry, type BaseModuleDefinition } from '@mawsoftwares/modules';
 
 const registry = new BaseModuleRegistry();
 

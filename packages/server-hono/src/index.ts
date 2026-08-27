@@ -1,12 +1,12 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { verifyAccessToken, type AuthClaims } from '@maw/auth-core';
+import { verifyAccessToken, type AuthClaims } from '@mawsoftwares/auth-core';
 import {
   resolveEffectiveAccess,
   type RbacConfig,
   type UserAccessContext,
   type EffectiveAccess,
   type AuthzContext,
-} from '@maw/rbac-core';
+} from '@mawsoftwares/rbac-core';
 
 export interface HonoAuthOptions {
   readonly jwtSecret: string;
@@ -30,7 +30,7 @@ function bearer(c: Context): string | null {
 }
 
 /**
- * Hono adapter — identical surface and behavior to `@maw/server-express`, over Hono's
+ * Hono adapter — identical surface and behavior to `@mawsoftwares/server-express`, over Hono's
  * `Context` instead of Express's `(req,res,next)`. That two frameworks share one auth +
  * RBAC core, with only these thin adapters differing, is the whole point of the
  * "framework-agnostic core + adapters" decision.

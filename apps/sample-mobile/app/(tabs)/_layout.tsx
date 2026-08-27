@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
-import { useNativeTheme } from '@maw/ui-native';
+import { useNativeTheme } from '@mawsoftwares/ui-native';
 
 export default function TabLayout(): ReactNode {
   const { styles: t } = useNativeTheme();

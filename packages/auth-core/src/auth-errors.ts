@@ -1,4 +1,4 @@
-import { AppError, ErrorCode, type ErrorCodeValue } from '@maw/sdk';
+import { AppError, ErrorCode, type ErrorCodeValue } from '@mawsoftwares/sdk';
 
 export class AuthError extends AppError {
   constructor(code: ErrorCodeValue, message: string, status = 401) {

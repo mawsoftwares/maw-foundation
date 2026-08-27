@@ -11,7 +11,7 @@ import type {
   FieldRenderer,
   FieldRendererProps,
   IFieldRegistry,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 import { useDynamicForm, evaluateCondition, type UseDynamicFormReturn, type UseDynamicFormOptions, type DynamicFieldState } from './dynamic-form-engine';
 import { TextField } from './components';
 import { TextArea, Select, Checkbox, Toggle, Spinner } from './components';

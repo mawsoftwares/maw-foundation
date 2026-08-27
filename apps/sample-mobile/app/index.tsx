@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { Redirect } from 'expo-router';
-import { useAuth, PageLoader } from '@maw/ui-native';
+import { useAuth, PageLoader } from '@mawsoftwares/ui-native';
 
 export default function Index(): ReactNode {
   const { session, loading } = useAuth();

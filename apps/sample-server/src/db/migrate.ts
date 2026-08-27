@@ -1,7 +1,7 @@
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MigrationRunner, createDatabasePool, closeDatabasePool } from '@maw/database';
-import { createLogger } from '@maw/sdk';
+import { MigrationRunner, createDatabasePool, closeDatabasePool } from '@mawsoftwares/database';
+import { createLogger } from '@mawsoftwares/sdk';
 
 const log = createLogger('migrate');
 const __dirname = dirname(fileURLToPath(import.meta.url));

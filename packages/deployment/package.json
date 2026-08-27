@@ -1,7 +1,7 @@
 {
-  "name": "@maw/deploy",
+  "name": "@mawsoftwares/deploy",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Configuration-driven deployment engine — shared scripts + templates, per-project config",
   "bin": {
     "maw-deploy": "bin/maw-deploy.js"
@@ -10,5 +10,13 @@
     "deploy": "node bin/maw-deploy.js",
     "test": "node scripts/utils/deployEnv.test.mjs && node scripts/utils/topology.test.mjs"
   },
-  "keywords": ["deployment", "devops", "pm2", "nginx"]
+  "keywords": [
+    "deployment",
+    "devops",
+    "pm2",
+    "nginx"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
 }

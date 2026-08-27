@@ -1,7 +1,7 @@
-import { TenantScopedRepository, QueryBuilder } from '@maw/database';
-import type { PgPool, PgClient } from '@maw/database';
+import { TenantScopedRepository, QueryBuilder } from '@mawsoftwares/database';
+import type { PgPool, PgClient } from '@mawsoftwares/database';
 import type { User } from '../../domain/entities/User';
-import type { AccountStatusValue } from '@maw/sdk/security/AccountStatus';
+import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 
 export interface IUsersRepository {
   create(user: Omit<User, 'createdAt' | 'updatedAt'>, client?: PgClient): Promise<User>;

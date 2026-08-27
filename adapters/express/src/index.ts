@@ -1,6 +1,6 @@
 /**
- * @maw/express — Express adapter.
- * Re-exports everything from @maw/server-express.
+ * @mawsoftwares/express — Express adapter.
+ * Re-exports everything from @mawsoftwares/server-express.
  * Only Express-specific functionality belongs here.
  */
-export * from '@maw/server-express';
+export * from '@mawsoftwares/server-express';

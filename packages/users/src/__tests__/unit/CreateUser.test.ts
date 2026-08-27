@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CreateUserUseCase } from '../../application/use-cases/CreateUser';
 import { CreateUserDto } from '../../application/dto';
-import { AccountStatus } from '@maw/sdk/security/AccountStatus';
+import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
-vi.mock('@maw/auth-core', () => ({
+vi.mock('@mawsoftwares/auth-core', () => ({
   hashPassword: vi.fn().mockResolvedValue('hashed_password'),
 }));
 

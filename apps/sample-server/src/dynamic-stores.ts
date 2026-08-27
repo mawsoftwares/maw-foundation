@@ -1,4 +1,4 @@
-import type { ISyncStore, ICacheStore, RbacRole, RbacPermission, RbacModule, ModulePermission, FeatureSyncDefinition } from '@maw/rbac-core';
+import type { ISyncStore, ICacheStore, RbacRole, RbacPermission, RbacModule, ModulePermission, FeatureSyncDefinition } from '@mawsoftwares/rbac-core';
 
 /**
  * In-memory ISyncStore — for running the sample without Postgres.

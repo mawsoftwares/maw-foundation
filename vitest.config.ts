@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
-/** Resolve @maw/<pkg> and @maw/<pkg>/<subpath> to package source — no build step. */
+/** Resolve @mawsoftwares/<pkg> and @mawsoftwares/<pkg>/<subpath> to package source — no build step. */
 const pkgs = [
   // Core
   'sdk',
@@ -26,6 +26,7 @@ const pkgs = [
   // UI
   'theme',
   'ui-web',
+  'ui-auth',
   'ui-native',
   // Placeholder packages
   'notifications',
@@ -40,15 +41,17 @@ const pkgs = [
   'communication',
   'import-export',
   'reporting',
+  'testing',
+  'observability',
 ];
 
 const alias = pkgs.flatMap((p) => [
   {
-    find: new RegExp(`^@maw/${p}$`),
+    find: new RegExp(`^@mawsoftwares/${p}$`),
     replacement: fileURLToPath(new URL(`./packages/${p}/src/index.ts`, import.meta.url)),
   },
   {
-    find: new RegExp(`^@maw/${p}/(.*)$`),
+    find: new RegExp(`^@mawsoftwares/${p}/(.*)$`),
     replacement: fileURLToPath(new URL(`./packages/${p}/src/$1`, import.meta.url)),
   },
 ]);
@@ -63,11 +66,11 @@ const adapterPkgs = [
 for (const a of adapterPkgs) {
   alias.push(
     {
-      find: new RegExp(`^@maw/${a.name}$`),
+      find: new RegExp(`^@mawsoftwares/${a.name}$`),
       replacement: fileURLToPath(new URL(`./${a.dir}/src/index.ts`, import.meta.url)),
     },
     {
-      find: new RegExp(`^@maw/${a.name}/(.*)$`),
+      find: new RegExp(`^@mawsoftwares/${a.name}/(.*)$`),
       replacement: fileURLToPath(new URL(`./${a.dir}/src/$1`, import.meta.url)),
     },
   );
@@ -83,5 +86,17 @@ export default defineConfig({
       'adapters/**/*.test.{ts,tsx}',
       'apps/**/*.test.{ts,tsx}',
     ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary'],
+      include: ['packages/*/src/**/*.ts', 'adapters/*/src/**/*.ts'],
+      exclude: [
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        '**/index.ts',
+        '**/__tests__/**',
+        '**/testing/**',
+      ],
+    },
   },
 });

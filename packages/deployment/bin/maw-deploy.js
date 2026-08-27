@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * CLI entry point for @maw/deploy.
+ * CLI entry point for @mawsoftwares/deploy.
  *
  * Usage (from any project that has a deploy/ folder):
- *   npx @maw/deploy list
- *   npx @maw/deploy staging
- *   npx @maw/deploy production --dry-run
- *   npx @maw/deploy production --setup-https
+ *   npx @mawsoftwares/deploy list
+ *   npx @mawsoftwares/deploy staging
+ *   npx @mawsoftwares/deploy production --dry-run
+ *   npx @mawsoftwares/deploy production --setup-https
  *
  * The engine resolves project-specific paths (environments, generated, logs)
  * from the project root — no need to copy the deployment package into every repo.
  *
  * Quick setup for a new project:
- *   npx @maw/deploy init
+ *   npx @mawsoftwares/deploy init
  */
 const path = require('path')
 const fs = require('fs')
@@ -37,7 +37,7 @@ if (command === 'info') {
         .filter((e) => e.isDirectory())
         .map((e) => e.name)
     : []
-  console.log('Environments:      ', envs.length > 0 ? envs.join(', ') : '(none — run `npx @maw/deploy init`)')
+  console.log('Environments:      ', envs.length > 0 ? envs.join(', ') : '(none — run `npx @mawsoftwares/deploy init`)')
   process.exit(0)
 }
 
@@ -138,7 +138,7 @@ function initProject() {
   if (!fs.existsSync(deployConfig)) {
     fs.writeFileSync(deployConfig, JSON.stringify({
       deployDir: 'deploy',
-      description: 'Deployment config for @maw/deploy. The deployDir points to the folder containing environments/, generated/, logs/.',
+      description: 'Deployment config for @mawsoftwares/deploy. The deployDir points to the folder containing environments/, generated/, logs/.',
     }, null, 2) + '\n')
   }
 
@@ -158,5 +158,5 @@ function initProject() {
   console.log('Next steps:')
   console.log('  1. Edit deploy/environments/staging/app.config.json')
   console.log('  2. Copy .env.example → .env and fill in secrets')
-  console.log('  3. npx @maw/deploy staging --dry-run')
+  console.log('  3. npx @mawsoftwares/deploy staging --dry-run')
 }

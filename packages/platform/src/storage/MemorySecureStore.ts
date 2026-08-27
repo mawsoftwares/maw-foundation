@@ -1,4 +1,4 @@
-import type { ISecureStore } from '@maw/sdk/contracts/ISecureStore';
+import type { ISecureStore } from '@mawsoftwares/sdk/contracts/ISecureStore';
 
 /**
  * In-memory `ISecureStore` — for Node, tests, and SSR. Web and native apps provide

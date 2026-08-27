@@ -1,4 +1,4 @@
-import type { IWorkerRegistry, JobHandler } from '@maw/sdk';
+import type { IWorkerRegistry, JobHandler } from '@mawsoftwares/sdk';
 
 export class WorkerRegistry implements IWorkerRegistry {
   private readonly handlers = new Map<string, JobHandler>();

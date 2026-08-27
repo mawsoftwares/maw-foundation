@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
-import type { IRateLimiter } from '@maw/sdk/contracts/IRateLimiter';
-import type { RateLimitTier } from '@maw/sdk/security/SecurityConfig';
+import type { IRateLimiter } from '@mawsoftwares/sdk/contracts/IRateLimiter';
+import type { RateLimitTier } from '@mawsoftwares/sdk/security/SecurityConfig';
 
 export interface RateLimitTierMapping {
   readonly prefix: string;

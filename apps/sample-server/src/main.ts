@@ -7,19 +7,13 @@ import {
   type AuthClaims,
   type IRefreshTokenStore,
   ScryptHasher,
-  MemorySessionStore,
   SessionService,
   EmailVerification,
-  MemoryEmailVerificationStore,
   RegistrationService,
   PasswordResetService,
-  MemoryPasswordResetStore,
   PasswordChangeService,
   OtpService,
   MfaService,
-  MemoryOtpSecretStore,
-  MemoryLoginAttemptStore,
-  MemoryMfaChallengeStore,
   AuthenticationService,
   type AuthenticateContext,
   type ServerSession,
@@ -29,79 +23,73 @@ import {
   type IOtpSecretStore,
   type ILoginAttemptStore,
   type IMfaChallengeStore,
-} from '@maw/auth-core';
+} from '@mawsoftwares/auth-core';
 import {
   MasterCache,
   syncModules,
   type ISyncStore,
   type ICacheStore,
-} from '@maw/rbac-core';
-import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, correlationIdMiddleware, createRequestLogger, populateRequestContext, type DynamicAuthedRequest, type UploadedRequest } from '@maw/server-express';
-import { LocalFileStorage } from '@maw/platform';
-import { AesEncryptionService } from '@maw/platform/security/AesEncryptionService';
-import { MemoryRateLimiter } from '@maw/platform/security/MemoryRateLimiter';
-import { redact } from '@maw/platform/security/LogRedactor';
-import { LoginProtection } from '@maw/auth-core';
-import { DEFAULT_SECURITY_CONFIG, parseCorsOrigins } from '@maw/sdk/security/SecurityConfig';
+} from '@mawsoftwares/rbac-core';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, populateRequestContext, type DynamicAuthedRequest, type UploadedRequest } from '@mawsoftwares/server-express';
+import { initializeObservability } from '@mawsoftwares/observability';
+import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
+import { LocalFileStorage } from '@mawsoftwares/platform';
+import { AesEncryptionService } from '@mawsoftwares/platform/security/AesEncryptionService';
+import { MemoryRateLimiter } from '@mawsoftwares/platform/security/MemoryRateLimiter';
+import { redact } from '@mawsoftwares/platform/security/LogRedactor';
+import { LoginProtection } from '@mawsoftwares/auth-core';
+import { DEFAULT_SECURITY_CONFIG, parseCorsOrigins } from '@mawsoftwares/sdk/security/SecurityConfig';
 import multer from 'multer';
 import * as path from 'node:path';
-import type { Session } from '@maw/sdk/contracts/identity';
-import type { IUserRepository, UserRecord } from '@maw/sdk/contracts/IUserRepository';
+import type { Session } from '@mawsoftwares/sdk/contracts/identity';
+import type { IUserRepository, UserRecord } from '@mawsoftwares/sdk/contracts/IUserRepository';
 import {
-  createLogger,
   getEnv,
   getEnvInt,
+  getRequiredEnv,
   HttpStatus,
   createHealthChecker,
   createConfigEngine,
   APP_CONFIG_DEFAULTS,
   type ConfigEngine,
-} from '@maw/sdk';
-import {
-  MemoryRefreshStore,
-  MemoryUserRepository,
-  DEMO_TENANT,
-  USERS,
-} from './repo';
+} from '@mawsoftwares/sdk';
+import { DEMO_TENANT } from './repo';
 import { registry } from './modules/index';
-import { MemorySyncStore, MemoryCacheStore } from './dynamic-stores';
 import { createReportingService } from './reporting-setup';
 import { createReportingRoutes } from './reporting-routes';
 import {
-  MemoryAuditStore,
   PgAuditStore,
   createAuditMiddleware,
   type IAuditStore,
-} from '@maw/audit';
-import { createCommunication } from '@maw/communication';
-import { NotificationChannel, type NotificationChannelValue } from '@maw/sdk/communication/types';
+} from '@mawsoftwares/audit';
+import { createCommunication, SmtpNotificationProvider } from '@mawsoftwares/communication';
+import { createAuthEmailSender } from './auth-emails';
 import {
   QueueService,
   JobRunner,
   WorkerRegistry,
-  InMemoryQueueProvider,
-} from '@maw/queue';
+} from '@mawsoftwares/queue';
 import {
   ExportService,
   InMemoryHistoryStore,
   ExportFormat,
   type ExportDefinition,
   type IExportDataProvider,
-} from '@maw/import-export';
+} from '@mawsoftwares/import-export';
 
-const log = createLogger('sample-server');
+const obs = initializeObservability();
+const log = obs.logger.child('sample-server');
 
 const JWT_SECRET = getEnv('JWT_SECRET', 'dev-only-secret-change-me')!;
 const PORT = getEnvInt('PORT', 4000);
-const DATABASE_URL = getEnv('DATABASE_URL');
-const USE_PG = DATABASE_URL !== undefined && DATABASE_URL !== '';
+const DATABASE_URL = getRequiredEnv('DATABASE_URL');
 
 // ---------------------------------------------------------------------------
-// Data layer — Postgres or in-memory, selected by DATABASE_URL env var
+// Data layer — Postgres only (auth + users module share the same users table)
 // ---------------------------------------------------------------------------
 
 interface DataLayer {
-  pool?: import('@maw/database').PgTransactionPool;
+  pool: import('@mawsoftwares/database').PgTransactionPool;
   syncStore: ISyncStore;
   cacheStore: ICacheStore;
   refreshStore: IRefreshTokenStore;
@@ -116,60 +104,30 @@ interface DataLayer {
   mfaChallengeStore: IMfaChallengeStore;
 }
 
-const ROLES = [
-  { id: 0, code: 'super_admin', name: 'Super Admin', isActive: true as const, sortOrder: -1 },
-  { id: 1, code: 'admin', name: 'Admin', isActive: true as const, sortOrder: 0 },
-  { id: 2, code: 'manager', name: 'Manager', isActive: true as const, sortOrder: 1 },
-  { id: 3, code: 'clerk', name: 'Clerk', isActive: true as const, sortOrder: 2 },
-];
-
 async function buildDataLayer(): Promise<DataLayer> {
-  if (USE_PG) {
-    const { createDatabasePool } = await import('@maw/database');
-    const pool = await createDatabasePool({ connectionString: DATABASE_URL! });
-    const { PgSyncStore, PgCacheStore } = await import('./pg-stores');
-    const { PgRefreshStore } = await import('./repo-pg');
-    const {
-      PgUserRepository, PgSessionStore, PgEmailVerificationStore,
-      PgPasswordResetStore, PgOtpSecretStore, PgLoginAttemptStore, PgMfaChallengeStore,
-    } = await import('./auth-stores-pg');
+  const { createDatabasePool } = await import('@mawsoftwares/database');
+  const pool = await createDatabasePool({ connectionString: DATABASE_URL });
+  const { PgSyncStore, PgCacheStore } = await import('./pg-stores');
+  const { PgRefreshStore } = await import('./repo-pg');
+  const {
+    PgUserRepository, PgSessionStore, PgEmailVerificationStore,
+    PgPasswordResetStore, PgOtpSecretStore, PgLoginAttemptStore, PgMfaChallengeStore,
+  } = await import('./auth-stores-pg');
 
-    log.info('Using Postgres data layer');
-    return {
-      pool,
-      syncStore: new PgSyncStore(pool),
-      cacheStore: new PgCacheStore(pool),
-      refreshStore: new PgRefreshStore(pool),
-      auditStore: new PgAuditStore(pool),
-      userRepository: new PgUserRepository(pool),
-      sessionStore: new PgSessionStore(pool),
-      emailVerificationStore: new PgEmailVerificationStore(pool),
-      passwordResetStore: new PgPasswordResetStore(pool),
-      otpSecretStore: new PgOtpSecretStore(pool),
-      loginAttemptStore: new PgLoginAttemptStore(pool),
-      mfaChallengeStore: new PgMfaChallengeStore(pool),
-    };
-  }
-
-  const syncStore = new MemorySyncStore();
-  const memoryRolePerms: Record<number, string[]> = {
-    0: [],
-    1: [],
-    2: ['Read_Reports', 'Create_Reports', 'Read_Orders', 'Create_Orders', 'Update_Orders', 'Read_Inventory', 'Create_Billing', 'Read_AuditLogs'],
-    3: ['Read_Orders', 'Create_Orders', 'Create_Billing'],
-  };
+  log.info('Using Postgres data layer');
   return {
-    syncStore,
-    cacheStore: new MemoryCacheStore(syncStore, ROLES, memoryRolePerms),
-    refreshStore: new MemoryRefreshStore(),
-    auditStore: new MemoryAuditStore(),
-    userRepository: new MemoryUserRepository(USERS),
-    sessionStore: new MemorySessionStore(),
-    emailVerificationStore: new MemoryEmailVerificationStore(),
-    passwordResetStore: new MemoryPasswordResetStore(),
-    otpSecretStore: new MemoryOtpSecretStore(),
-    loginAttemptStore: new MemoryLoginAttemptStore(),
-    mfaChallengeStore: new MemoryMfaChallengeStore(),
+    pool,
+    syncStore: new PgSyncStore(pool),
+    cacheStore: new PgCacheStore(pool),
+    refreshStore: new PgRefreshStore(pool),
+    auditStore: new PgAuditStore(pool),
+    userRepository: new PgUserRepository(pool),
+    sessionStore: new PgSessionStore(pool),
+    emailVerificationStore: new PgEmailVerificationStore(pool),
+    passwordResetStore: new PgPasswordResetStore(pool),
+    otpSecretStore: new PgOtpSecretStore(pool),
+    loginAttemptStore: new PgLoginAttemptStore(pool),
+    mfaChallengeStore: new PgMfaChallengeStore(pool),
   };
 }
 
@@ -261,18 +219,45 @@ const emailVerification = new EmailVerification({
 });
 
 // ---------------------------------------------------------------------------
-// Communication — uses ConsoleNotificationProvider (logs to stdout in dev)
+// Communication — registers SmtpNotificationProvider if env vars are present
 // ---------------------------------------------------------------------------
 
-const communication = createCommunication({ logger: log.child('communication') });
+const smtpHost = getEnv('SMTP_HOST');
+const smtpPort = getEnvInt('SMTP_PORT', 587);
+const smtpUser = getEnv('SMTP_USER');
+const smtpPass = getEnv('SMTP_PASS');
+const smtpFrom = getEnv('SMTP_FROM', 'no-reply@example.com')!;
+const hasSmtp = Boolean(smtpHost && smtpUser && smtpPass);
 
-const deliverToken = (kind: string) => async (email: string, token: string): Promise<void> => {
-  await communication.service.send({
-    channel: NotificationChannel.EMAIL,
-    metadata: { tenantId: DEMO_TENANT, source: 'auth' },
-    email: { to: email, subject: `${kind} token`, body: `Your ${kind.toLowerCase()} token: ${token}` },
-  });
-};
+const communication = createCommunication({
+  logger: log.child('communication'),
+  defaultFromEmail: smtpFrom,
+  useConsoleProviders: !hasSmtp,
+});
+
+if (hasSmtp && smtpHost && smtpUser && smtpPass) {
+  log.info('Registering real SMTP email provider', { host: smtpHost, port: smtpPort });
+  communication.registry.register(
+    new SmtpNotificationProvider({
+      host: smtpHost,
+      port: smtpPort,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    })
+  );
+} else {
+  log.warn('SMTP environment variables missing; falling back to Console log provider');
+}
+
+const authEmails = createAuthEmailSender({
+  emailService: communication.emailService,
+  tenantId: DEMO_TENANT,
+  webOrigin: getEnv('PUBLIC_WEB_URL', 'http://localhost:5173')!,
+  from: smtpFrom,
+  logger: log.child('auth-email'),
+});
 
 const registrationService = new RegistrationService({
   userRepository,
@@ -280,7 +265,7 @@ const registrationService = new RegistrationService({
   passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
   registrationConfig: DEFAULT_SECURITY_CONFIG.registration,
   emailVerification,
-  sendVerificationEmail: deliverToken('Email verification'),
+  sendVerificationEmail: authEmails.sendVerificationEmail,
 });
 
 const passwordResetService = new PasswordResetService({
@@ -289,8 +274,9 @@ const passwordResetService = new PasswordResetService({
   passwordPolicy: DEFAULT_SECURITY_CONFIG.passwordPolicy,
   resetConfig: DEFAULT_SECURITY_CONFIG.passwordReset,
   store: data.passwordResetStore,
-  sendResetEmail: deliverToken('Password reset'),
+  sendResetEmail: authEmails.sendResetEmail,
   sessionService,
+  logger: log.child('password-reset'),
 });
 
 const passwordChangeService = new PasswordChangeService({
@@ -326,15 +312,12 @@ const authService = new AuthenticationService({
 });
 
 // ---------------------------------------------------------------------------
-// Queue — background job processing (Postgres when USE_PG, else in-memory)
+// Queue — background job processing (Postgres)
 // ---------------------------------------------------------------------------
 
 const queueProvider = await (async () => {
-  if (USE_PG) {
-    const { PgQueueProvider } = await import('./queue-pg');
-    return new PgQueueProvider(data.pool!);
-  }
-  return new InMemoryQueueProvider();
+  const { PgQueueProvider } = await import('./queue-pg');
+  return new PgQueueProvider(data.pool);
 })();
 const queueService = new QueueService({ provider: queueProvider, logger: log.child('queue') });
 const workerRegistry = new WorkerRegistry();
@@ -346,13 +329,13 @@ workerRegistry.register('audit.cleanup', async (job) => {
 });
 
 workerRegistry.register('notification.send', async (job) => {
-  const { channel, email: emailAddr, subject, body } = job.data as {
-    channel: string; email: string; subject: string; body: string;
+  const { email: emailAddr, subject, body } = job.data as {
+    email: string; subject: string; body: string;
   };
-  await communication.service.send({
-    channel: channel as NotificationChannelValue,
-    metadata: { tenantId: job.context.tenantId, source: 'queue' },
+  await communication.emailService.send({
+    tenantId: job.context.tenantId,
     email: { to: emailAddr, subject, body },
+    metadata: { source: 'queue' },
   });
   return { success: true };
 });
@@ -429,8 +412,8 @@ const { middleware: securityMiddleware, errorHandler: securityErrorHandler } = c
 const app = express();
 app.use(express.json());
 for (const mw of securityMiddleware) app.use(mw);
-app.use(correlationIdMiddleware());
-app.use(createRequestLogger({ logger: log, ignorePaths: ['/health'] }));
+app.use(observabilityContextMiddleware());
+app.use(createObsRequestLogger({ logger: log, ignorePaths: ['/health'] }));
 app.use(populateRequestContext());
 
 // --- Auth routes ---
@@ -562,6 +545,7 @@ app.use('/auth', createAuthRoutes({
   passwordChangeService,
   sessionService,
   mfaService,
+  logger: log,
 }));
 
 // --- Reporting routes ---
@@ -687,11 +671,8 @@ const uploadHandler = createFileUploadHandler({
 const fileRoutes = createFileRoutes(fileStorage);
 
 const fileMetadataStore = await (async () => {
-  if (USE_PG) {
-    const { PgFileMetadataStore } = await import('./file-metadata-pg');
-    return new PgFileMetadataStore(data.pool!);
-  }
-  return null;
+  const { PgFileMetadataStore } = await import('./file-metadata-pg');
+  return new PgFileMetadataStore(data.pool);
 })();
 
 app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), uploadHandler, async (req, res) => {
@@ -771,13 +752,21 @@ app.use('/api/v1/orders', createOrdersRouter({
   requirePermission: (perm) => auth.requirePermission(perm),
 }));
 
-// --- Users routes (User module) ---
+// --- Users routes (User module — same Postgres users table as auth) ---
 import { createUsersRouter } from './users-routes';
-import { MemoryUsersRepository } from './memory-users-repo';
-import { PgUserRepository } from '@maw/users';
+import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 
-const usersRepo = data.pool ? new PgUserRepository(data.pool) : new MemoryUsersRepository();
+const usersRepo = new AuthSchemaUsersRepository(data.pool);
 app.use('/api/v1/users', createUsersRouter(usersRepo, auth.requireAuth));
+
+app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
+  const master = cache.getCache();
+  const roles = (master?.roles ?? [])
+    .filter((r) => r.isActive && r.code !== 'super_admin')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((r) => ({ code: r.code, name: r.name, id: r.id }));
+  res.json({ data: roles });
+});
 
 // --- Masters routes (dynamic master data) ---
 import { createMastersRouter } from './modules/masters/routes';
@@ -786,12 +775,12 @@ import {
   PgMasterRepository,
   PgMasterFieldRepository,
   PgMasterValueRepository,
-} from '@maw/masters';
+} from '@mawsoftwares/masters';
 
-const masterRepo = new PgMasterRepository(data.pool!);
-const masterFieldRepo = new PgMasterFieldRepository(data.pool!);
-const masterValueRepo = new PgMasterValueRepository(data.pool!);
-const masterService = new MasterService({ pool: data.pool!, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
+const masterRepo = new PgMasterRepository(data.pool);
+const masterFieldRepo = new PgMasterFieldRepository(data.pool);
+const masterValueRepo = new PgMasterValueRepository(data.pool);
+const masterService = new MasterService({ pool: data.pool, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
 
 app.use('/api/v1/masters', createMastersRouter({
   service: masterService,
@@ -842,7 +831,7 @@ app.get('/api/v1/jobs', auth.requireAuth, (req, res) => {
     const type = req.query.type as string | undefined;
     const status = req.query.status as string | undefined;
     const limit = req.query.limit ? Number(req.query.limit) : 50;
-    const jobs = await queueProvider.listJobs(type ?? 'audit.cleanup', status as import('@maw/sdk').JobStatusValue | undefined, limit);
+    const jobs = await queueProvider.listJobs(type ?? 'audit.cleanup', status as import('@mawsoftwares/sdk').JobStatusValue | undefined, limit);
     res.json({ data: jobs });
   })();
 });
@@ -863,22 +852,39 @@ app.post('/api/v1/notifications/send', auth.requireAuth, (req, res) => {
     const { channel, email, subject, body } = req.body as {
       channel?: string; email: string; subject: string; body: string;
     };
-    await communication.service.send({
-      channel: (channel ?? 'EMAIL') as NotificationChannelValue,
-      metadata: { tenantId: maw.claims.tenantId, source: 'manual' },
+    await communication.emailService.send({
+      tenantId: maw.claims.tenantId,
       email: { to: email, subject, body },
+      metadata: { source: 'manual' },
     });
     res.json({ data: { sent: true, channel: channel ?? 'EMAIL', to: email } });
+  })();
+});
+
+app.get('/api/v1/notifications/in-app', auth.requireAuth, (req, res) => {
+  void (async () => {
+    const maw = (req as DynamicAuthedRequest).maw!;
+    const unreadOnly = req.query.unreadOnly === 'true';
+    const notifications = await communication.inAppNotificationService.list(
+      maw.claims.userId,
+      maw.claims.tenantId,
+      { unreadOnly },
+    );
+    const unreadCount = await communication.inAppNotificationService.unreadCount(
+      maw.claims.userId,
+      maw.claims.tenantId,
+    );
+    res.json({ data: { notifications, unreadCount } });
   })();
 });
 
 app.get('/api/v1/notifications/channels', auth.requireAuth, (_req, res) => {
   res.json({
     data: [
-      { id: 'EMAIL', name: 'Email', enabled: true, description: 'Email notifications via console provider' },
-      { id: 'SMS', name: 'SMS', enabled: false, description: 'SMS notifications (not configured)' },
+      { id: 'EMAIL', name: 'Email', enabled: true, description: 'Email notifications via EmailService' },
+      { id: 'SMS', name: 'SMS', enabled: true, description: 'SMS notifications via SmsService' },
       { id: 'PUSH', name: 'Push', enabled: false, description: 'Push notifications (not configured)' },
-      { id: 'IN_APP', name: 'In-App', enabled: false, description: 'In-app notification center (not configured)' },
+      { id: 'IN_APP', name: 'In-App', enabled: true, description: 'In-app notification center via InAppNotificationService' },
     ],
   });
 });
@@ -889,28 +895,25 @@ const health = createHealthChecker();
 health.register('cache', () => {
   if (cache.getCache() === null) throw new Error('Cache not loaded');
 });
-if (USE_PG) {
-  const { createDatabasePool, poolHealthCheck } = await import('@maw/database');
-  const healthPool = await createDatabasePool({ connectionString: DATABASE_URL! });
-  health.register('postgres', async () => {
-    const result = await poolHealthCheck(healthPool);
-    if (!result.healthy) throw new Error(result.message);
-  });
-}
+const { poolHealthCheck } = await import('@mawsoftwares/database');
+health.register('postgres', async () => {
+  const result = await poolHealthCheck(data.pool);
+  if (!result.healthy) throw new Error(result.message);
+});
 
 app.get('/health', (_req, res) => {
   void (async () => {
     const report = await health.run();
     const statusCode = report.status === 'healthy' ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
-    res.status(statusCode).json({ ...report, mode: USE_PG ? 'postgres' : 'memory' });
+    res.status(statusCode).json({ ...report, mode: 'postgres' });
   })();
 });
 
 app.use(securityErrorHandler);
 
 const server = app.listen(PORT, () => {
-  log.info(`http://localhost:${PORT} (${USE_PG ? 'Postgres' : 'in-memory'})`);
-  log.info('Users: superadmin@ / owner@ / manager@ / clerk@demo.test (pw: password123)');
+  log.info(`http://localhost:${PORT} (Postgres)`);
+  log.info('Users: superadmin@ / owner Gmail accounts / manager@ / clerk@demo.test (pw: password123)');
   log.info('Try: GET /modules to see all registered modules + permissions');
 });
 

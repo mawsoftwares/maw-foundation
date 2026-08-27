@@ -1,5 +1,5 @@
-import { AppError, isAppError, type ErrorCodeValue } from '@maw/sdk/kernel/errors';
-import type { PaginatedResult } from '@maw/sdk/config/constants';
+import { AppError, isAppError, type ErrorCodeValue } from '@mawsoftwares/sdk/kernel/errors';
+import type { PaginatedResult } from '@mawsoftwares/sdk/config/constants';
 import type {
   ApiSuccessResponse,
   ApiErrorResponse,

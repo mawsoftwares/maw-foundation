@@ -1,4 +1,4 @@
-import type { IOfflineRepository, EntityMeta, OfflineEntityConfig } from '@maw/sdk/contracts/IOfflineRepository';
+import type { IOfflineRepository, EntityMeta, OfflineEntityConfig } from '@mawsoftwares/sdk/contracts/IOfflineRepository';
 import type { ApiClient } from '../index';
 
 /**

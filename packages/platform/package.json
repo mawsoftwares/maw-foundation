@@ -1,7 +1,7 @@
 {
-  "name": "@maw/platform",
+  "name": "@mawsoftwares/platform",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -10,17 +10,24 @@
     "./native": "./src/native/index.ts"
   },
   "dependencies": {
-    "@maw/sdk": "*"
+    "@mawsoftwares/sdk": "*"
   },
   "peerDependencies": {
     "expo-secure-store": "*",
     "@react-native-community/netinfo": "*"
   },
   "peerDependenciesMeta": {
-    "expo-secure-store": { "optional": true },
-    "@react-native-community/netinfo": { "optional": true }
+    "expo-secure-store": {
+      "optional": true
+    },
+    "@react-native-community/netinfo": {
+      "optional": true
+    }
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Session } from '@maw/sdk/contracts/identity';
-import type { AuthzContext } from '@maw/sdk/contracts/IAuthorization';
-import type { Credentials } from '@maw/sdk/contracts/IAccountAuth';
-import { resolveEffectiveAccess, type RbacConfig, type EffectiveAccess, type UserAccessContext } from '@maw/rbac-core';
-import { ApiClient } from '@maw/api-client';
+import type { Session } from '@mawsoftwares/sdk/contracts/identity';
+import type { AuthzContext } from '@mawsoftwares/sdk/contracts/IAuthorization';
+import type { Credentials } from '@mawsoftwares/sdk/contracts/IAccountAuth';
+import { resolveEffectiveAccess, type RbacConfig, type EffectiveAccess, type UserAccessContext } from '@mawsoftwares/rbac-core';
+import { ApiClient } from '@mawsoftwares/api-client';
 
 /** Build the resolver input from a server-issued session. */
 function contextFromSession(session: Session): UserAccessContext {

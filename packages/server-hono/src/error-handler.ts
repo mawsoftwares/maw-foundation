@@ -1,6 +1,6 @@
 import type { ErrorHandler } from 'hono';
-import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
-import { ApiResponse } from '@maw/api';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
+import { ApiResponse } from '@mawsoftwares/api';
 
 export interface GlobalErrorHandlerOptions {
   readonly redact?: <T>(obj: T) => T;

@@ -4,7 +4,7 @@
  * elapsed time, amount, plant/scope) so "operator may edit an entry only in their own
  * plant" is expressible without a policy language.
  *
- * Contract only — implemented by `@maw/rbac-core`.
+ * Contract only — implemented by `@mawsoftwares/rbac-core`.
  */
 export type Permission = string; // 'resource.action', e.g. 'reports.view'
 

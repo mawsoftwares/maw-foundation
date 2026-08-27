@@ -3,7 +3,7 @@ import type {
   ConflictDetail,
   ConflictStrategy,
   ResolvedConflict,
-} from '@maw/sdk/contracts/IConflictResolver';
+} from '@mawsoftwares/sdk/contracts/IConflictResolver';
 
 type EntityResolver<T = unknown> = (conflict: ConflictDetail<T>) => Promise<ResolvedConflict<T>>;
 

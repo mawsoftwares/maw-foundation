@@ -4,8 +4,8 @@ import { WorkerRegistry } from '../worker-registry';
 import { InMemoryQueueProvider } from '../in-memory-provider';
 import { QueueService } from '../queue-service';
 import { JobRunner } from '../job-runner';
-import { BackoffStrategy, DEFAULT_RETRY_POLICY, JobStatus } from '@maw/sdk';
-import type { JobDefinition, JobResult, RetryPolicy } from '@maw/sdk';
+import { BackoffStrategy, DEFAULT_RETRY_POLICY, JobStatus } from '@mawsoftwares/sdk';
+import type { JobDefinition, JobResult, RetryPolicy } from '@mawsoftwares/sdk';
 
 const FAST_RETRY: Partial<RetryPolicy> = { delayMs: 5, backoff: BackoffStrategy.FIXED };
 

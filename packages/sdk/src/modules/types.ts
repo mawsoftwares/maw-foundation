@@ -3,7 +3,7 @@
  *
  * The Module Registry is the central mechanism for managing modules across
  * the 4-level architecture (Foundation → Business Platform → Optional Engines
- * → Project Logic). Packages like @maw/rbac-core extend these base types
+ * → Project Logic). Packages like @mawsoftwares/rbac-core extend these base types
  * with domain-specific fields (permissions, features).
  */
 

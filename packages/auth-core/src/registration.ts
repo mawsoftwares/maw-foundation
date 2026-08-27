@@ -1,6 +1,6 @@
-import { AccountStatus, type PasswordPolicyConfig, validatePassword, type RegistrationConfig } from '@maw/sdk';
-import type { IUserRepository, UserRecord, CreateUserInput } from '@maw/sdk/contracts/IUserRepository';
-import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import { AccountStatus, type PasswordPolicyConfig, validatePassword, type RegistrationConfig } from '@mawsoftwares/sdk';
+import type { IUserRepository, UserRecord, CreateUserInput } from '@mawsoftwares/sdk/contracts/IUserRepository';
+import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 import type { EmailVerification } from './email-verification';
 import { DuplicateEmailError, PasswordPolicyError } from './auth-errors';
 

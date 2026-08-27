@@ -1,9 +1,9 @@
 /**
- * @maw/modules — Module registry foundation.
+ * @mawsoftwares/modules — Module registry foundation.
  *
  * Re-exports the module types, registry, event bus, and cross-platform
- * module definitions from @maw/sdk where they were originally implemented.
- * New consumers should import from "@maw/modules".
+ * module definitions from @mawsoftwares/sdk where they were originally implemented.
+ * New consumers should import from "@mawsoftwares/modules".
  */
 
 // Module types
@@ -21,25 +21,25 @@ export {
   type BaseModuleDefinition,
   type ModuleStatus,
   type ModuleState,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Registry
 export {
   BaseModuleRegistry,
   RegistryEvent,
   type RegistryEventPayload,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Event bus
 export {
   createEventBus,
   type EventBus,
   type EventHandler,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Cross-platform module definitions
 export {
   type CrossPlatformDomainDescriptor,
   type PlatformScreenDescriptor,
   type CrossPlatformModuleDefinition,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';

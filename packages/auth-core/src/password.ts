@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 
 /**
  * Password hashing with Node's built-in scrypt — no native dependency. Format:
@@ -34,4 +34,4 @@ export {
   type PasswordPolicyConfig,
   type PasswordValidationError,
   DEFAULT_PASSWORD_POLICY,
-} from '@maw/sdk/security/PasswordPolicy';
+} from '@mawsoftwares/sdk/security/PasswordPolicy';

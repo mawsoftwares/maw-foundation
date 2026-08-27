@@ -1,5 +1,5 @@
-import type { ID } from '@maw/sdk';
-import type { Validator } from '@maw/sdk';
+import type { ID } from '@mawsoftwares/sdk';
+import type { Validator } from '@mawsoftwares/sdk';
 
 export const ImportStatus = {
   UPLOADED: 'UPLOADED',

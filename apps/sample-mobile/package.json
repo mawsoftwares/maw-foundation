@@ -1,5 +1,5 @@
 {
-  "name": "@maw/sample-mobile",
+  "name": "@mawsoftwares/sample-mobile",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
@@ -10,13 +10,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@maw/api": "*",
-    "@maw/sdk": "*",
-    "@maw/theme": "*",
-    "@maw/platform": "*",
-    "@maw/api-client": "*",
-    "@maw/rbac-core": "*",
-    "@maw/ui-native": "*",
+    "@mawsoftwares/api": "*",
+    "@mawsoftwares/sdk": "*",
+    "@mawsoftwares/theme": "*",
+    "@mawsoftwares/platform": "*",
+    "@mawsoftwares/api-client": "*",
+    "@mawsoftwares/rbac-core": "*",
+    "@mawsoftwares/ui-native": "*",
     "expo": "~52.0.0",
     "expo-router": "~4.0.0",
     "expo-secure-store": "~14.0.0",

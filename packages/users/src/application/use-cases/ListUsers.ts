@@ -1,7 +1,7 @@
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
 import { ListUsersQueryDto, PaginatedUserResponse } from '../dto';
 import { toUserResponseDto } from './CreateUser';
-import { QueryBuilder } from '@maw/database';
+import { QueryBuilder } from '@mawsoftwares/database';
 
 export class ListUsersUseCase {
   constructor(private readonly userRepository: IUsersRepository) {}

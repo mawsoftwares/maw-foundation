@@ -1,7 +1,7 @@
 import type { RequestHandler, ErrorRequestHandler, Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'node:crypto';
-import type { IRateLimiter } from '@maw/sdk/contracts/IRateLimiter';
-import type { SecurityConfig } from '@maw/sdk/security/SecurityConfig';
+import type { IRateLimiter } from '@mawsoftwares/sdk/contracts/IRateLimiter';
+import type { SecurityConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
 import { createSecureHeadersMiddleware } from './secure-headers';
 import { createCorsMiddleware } from './cors';
 import { createRateLimitMiddleware } from './rate-limit';

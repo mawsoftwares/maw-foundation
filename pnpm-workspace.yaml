@@ -2,3 +2,6 @@ packages:
   - 'packages/*'
   - 'adapters/*'
   - 'apps/*'
+  - '!packages/ui-native'
+  - '!apps/sample-mobile'
+

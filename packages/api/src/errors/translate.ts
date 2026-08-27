@@ -1,4 +1,4 @@
-import { isAppError, ErrorCode, toHttpStatus } from '@maw/sdk/kernel/errors';
+import { isAppError, ErrorCode, toHttpStatus } from '@mawsoftwares/sdk/kernel/errors';
 import type { ControllerResult, Controller } from '../controller/types';
 import { ApiResponse } from '../response/formatter';
 

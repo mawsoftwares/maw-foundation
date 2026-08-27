@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { DeviceInfo } from '@maw/sdk/contracts/identity';
-import type { SessionConfig } from '@maw/sdk/security/SecurityConfig';
+import type { DeviceInfo } from '@mawsoftwares/sdk/contracts/identity';
+import type { SessionConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
 
 export interface ServerSession {
   readonly id: string;

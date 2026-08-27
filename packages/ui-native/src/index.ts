@@ -118,6 +118,16 @@ export {
   type OfflineBannerProps,
 } from './offline';
 
+// Responsive
+export {
+  useBreakpoint,
+  useIsMobile,
+  useResponsiveProp,
+  BREAKPOINTS,
+  type Breakpoint,
+  type ResponsiveProp,
+} from './responsive';
+
 // Navigation helpers
 export {
   filterNavByPermissions,

@@ -55,6 +55,7 @@ export { Button, TextField, Card, Badge, Divider } from './components';
 // UI Kit expansion
 export {
   Avatar,
+  ProfileAvatarUpload,
   IconButton,
   TextArea,
   Select,
@@ -68,6 +69,7 @@ export {
   Stack,
   DropdownMenu,
 } from './components';
+export type { ProfileAvatarUploadProps } from './components';
 
 // Toast / Notifications
 export { ToastProvider, useToast, type Toast, type ToastVariant } from './toast';

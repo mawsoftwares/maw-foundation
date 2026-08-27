@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 
 /**
- * Frontend counterpart of `@maw/rbac-core` `ModuleRegistry`.
+ * Frontend counterpart of `@mawsoftwares/rbac-core` `ModuleRegistry`.
  *
  * Each product feature is a definition: key (must match the server module key),
  * optional permission codes that gate the panel, and a React panel. Adding a

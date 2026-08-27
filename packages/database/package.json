@@ -1,7 +1,7 @@
 {
-  "name": "@maw/database",
+  "name": "@mawsoftwares/database",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -23,7 +23,7 @@
     "./testing": "./src/testing/index.ts"
   },
   "dependencies": {
-    "@maw/sdk": "*"
+    "@mawsoftwares/sdk": "*"
   },
   "peerDependencies": {
     "pg": ">=8"
@@ -35,5 +35,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

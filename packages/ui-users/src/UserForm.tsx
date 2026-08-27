@@ -1,16 +1,33 @@
-import { useMemo } from 'react';
-import { DynamicForm } from '@maw/ui-web';
-import type { FormSchema } from '@maw/sdk';
-import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@maw/users';
+import { useMemo, useState, type ReactNode } from 'react';
+import { DynamicForm, ProfileAvatarUpload, Stack } from '@mawsoftwares/ui-web';
+import type { FormSchema } from '@mawsoftwares/sdk';
+import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
+import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
+import type { RoleOption } from './types';
 
 export interface UserFormProps {
   initialData?: UserResponseDto | null;
   onSave: (data: CreateUserDto | UpdateUserDto) => Promise<void>;
   onCancel: () => void;
+  roles?: readonly RoleOption[];
+  uploadAvatar?: (file: File, onProgress: (percent: number) => void) => Promise<StoredFile>;
 }
 
-export function UserForm({ initialData, onSave, onCancel }: UserFormProps) {
+export function UserForm({
+  initialData,
+  onSave,
+  onCancel,
+  roles = [],
+  uploadAvatar,
+}: UserFormProps): ReactNode {
   const isEditing = !!initialData;
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialData?.avatar);
+  const [avatarError, setAvatarError] = useState<string | undefined>();
+
+  const roleOptions = useMemo(
+    () => roles.map((r) => ({ value: r.code, label: r.name })),
+    [roles],
+  );
 
   const schema = useMemo<FormSchema>(() => ({
     id: 'user-form',
@@ -46,46 +63,95 @@ export function UserForm({ initialData, onSave, onCancel }: UserFormProps) {
         name: 'phone',
         type: 'phone',
         label: 'Phone Number',
-        colSpan: 2,
+        colSpan: roleOptions.length > 0 ? 1 : 2,
       },
-      ...(isEditing ? [] : [
-        {
-          name: 'password',
-          type: 'password' as const,
-          label: 'Password',
-          required: true,
-          colSpan: 2,
-        }
-      ]),
+      ...(roleOptions.length > 0
+        ? [{
+            name: 'role',
+            type: 'select' as const,
+            label: 'Role',
+            required: true,
+            colSpan: 1,
+            options: roleOptions,
+            placeholder: 'Select a role',
+          }]
+        : []),
+      ...(isEditing
+        ? []
+        : [{
+            name: 'password',
+            type: 'password' as const,
+            label: 'Password',
+            required: true,
+            colSpan: 2,
+            hint: 'At least 8 characters',
+          }]),
     ],
-  }), [isEditing]);
+  }), [isEditing, roleOptions]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
-    const data: any = {
-      firstName: values.firstName,
-      lastName: values.lastName,
-      email: values.email,
-      phone: values.phone || undefined,
+    if (isEditing) {
+      const data: UpdateUserDto = {
+        firstName: String(values.firstName ?? ''),
+        lastName: String(values.lastName ?? ''),
+        email: String(values.email ?? ''),
+        phone: values.phone ? String(values.phone) : undefined,
+        avatar: avatarUrl,
+        role: values.role ? String(values.role) : undefined,
+      };
+      await onSave(data);
+      return;
+    }
+
+    const data: CreateUserDto = {
+      tenantId: 'demo-tenant',
+      firstName: String(values.firstName ?? ''),
+      lastName: String(values.lastName ?? ''),
+      email: String(values.email ?? ''),
+      phone: values.phone ? String(values.phone) : undefined,
+      password: values.password ? String(values.password) : undefined,
+      role: values.role ? String(values.role) : undefined,
+      avatar: avatarUrl,
     };
-
-    if (!isEditing && values.password) {
-      data.password = values.password;
-    }
-
-    if (!isEditing) {
-      data.tenantId = 'tenant-1';
-    }
-
     await onSave(data);
   };
 
   return (
-    <DynamicForm
-      schema={schema}
-      initialValues={(initialData as any) ?? {}}
-      onSubmit={handleSubmit}
-      onCancel={onCancel}
-      submitLabel={isEditing ? 'Save Changes' : 'Create'}
-    />
+    <Stack gap="var(--maw-space-lg)">
+      {uploadAvatar && (
+        <div>
+          <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)', marginBottom: 'var(--maw-space-sm)' }}>
+            Profile image
+          </div>
+          <ProfileAvatarUpload
+            src={avatarUrl}
+            name={initialData ? `${initialData.firstName} ${initialData.lastName}` : 'New User'}
+            size={88}
+            upload={uploadAvatar}
+            onChange={(url) => {
+              setAvatarUrl(url);
+              setAvatarError(undefined);
+            }}
+            onError={setAvatarError}
+          />
+          {avatarError && (
+            <div style={{ marginTop: 'var(--maw-space-xs)', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-danger)' }}>
+              {avatarError}
+            </div>
+          )}
+        </div>
+      )}
+
+      <DynamicForm
+        schema={schema}
+        initialValues={{
+          ...(initialData ?? {}),
+          role: initialData?.role ?? roleOptions[0]?.value,
+        }}
+        onSubmit={handleSubmit}
+        onCancel={onCancel}
+        submitLabel={isEditing ? 'Save Changes' : 'Create'}
+      />
+    </Stack>
   );
 }

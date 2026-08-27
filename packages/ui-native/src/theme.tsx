@@ -7,7 +7,7 @@ import {
   type ThemeOverrides,
   type TenantBranding,
   type RNStyles,
-} from '@maw/theme';
+} from '@mawsoftwares/theme';
 
 export type ColorMode = 'light' | 'dark' | 'system';
 
@@ -92,4 +92,4 @@ export function useSpacing() {
   return useNativeTheme().styles.spacing;
 }
 
-export { type Theme, type ThemeOverrides, type TenantBranding, type RNStyles } from '@maw/theme';
+export { type Theme, type ThemeOverrides, type TenantBranding, type RNStyles } from '@mawsoftwares/theme';

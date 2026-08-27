@@ -1,4 +1,4 @@
-import type { ErrorCodeValue } from '@maw/sdk/kernel/errors';
+import type { ErrorCodeValue } from '@mawsoftwares/sdk/kernel/errors';
 
 export interface PaginationMeta {
   readonly page: number;

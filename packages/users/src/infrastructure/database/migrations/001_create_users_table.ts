@@ -1,4 +1,4 @@
-import type { Migration } from '@maw/database';
+import type { Migration } from '@mawsoftwares/database';
 
 export const CreateUsersTableMigration: Migration = {
   version: '001',

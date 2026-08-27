@@ -1,4 +1,4 @@
-import { FeatureRegistry } from '@maw/ui-web';
+import { FeatureRegistry } from '@mawsoftwares/ui-web';
 import { UsersView } from './users';
 import { ReportsView } from './reports';
 import { OrdersView } from './orders';

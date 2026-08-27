@@ -1,9 +1,9 @@
 /**
- * @maw/config — Central configuration foundation.
+ * @mawsoftwares/config — Central configuration foundation.
  *
  * Re-exports the multi-level config engine, env utilities, app/tenant/UI config
- * shapes, health checker, and version utilities from @maw/sdk where they were
- * originally implemented. New consumers should import from "@maw/config".
+ * shapes, health checker, and version utilities from @mawsoftwares/sdk where they were
+ * originally implemented. New consumers should import from "@mawsoftwares/config".
  */
 
 // Config engine (multi-level: environment → app → tenant → module → user)
@@ -16,7 +16,7 @@ export {
   type ConfigValue,
   type ConfigObject,
   type ConfigChangeListener,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Config schemas
 export {
@@ -25,7 +25,7 @@ export {
   type TenantConfig,
   type UIConfig,
   UI_CONFIG_DEFAULTS,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Env utilities
 export {
@@ -40,7 +40,7 @@ export {
   isReactNative,
   detectRuntime,
   type Runtime,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Health
 export {
@@ -53,7 +53,7 @@ export {
   type HealthStatus,
   type CheckResult,
   type HealthCheckFn,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // Version
 export {
@@ -67,4 +67,4 @@ export {
   getAppVersion,
   type AppVersion,
   type BuildInfo,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';

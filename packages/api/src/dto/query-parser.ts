@@ -1,4 +1,4 @@
-import { Pagination, type SortDirection } from '@maw/sdk/config/constants';
+import { Pagination, type SortDirection } from '@mawsoftwares/sdk/config/constants';
 import type { ListQueryParams } from './types';
 
 export interface QueryParseOptions {

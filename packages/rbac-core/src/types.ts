@@ -1,4 +1,4 @@
-import type { Permission, AuthzContext, RolePolicy } from '@maw/sdk/contracts/IAuthorization';
+import type { Permission, AuthzContext, RolePolicy } from '@mawsoftwares/sdk/contracts/IAuthorization';
 
 export type { Permission, AuthzContext, RolePolicy };
 

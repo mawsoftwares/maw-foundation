@@ -18,7 +18,7 @@ import { validateReportDefinition } from '../definition/validation';
 import { extractMetadata } from '../definition/metadata';
 import { ReportValidationError } from '../errors';
 import type { ReportDefinition, ComputedColumnDefinition } from '../definition/types';
-import { FilterOperator } from '@maw/sdk';
+import { FilterOperator } from '@mawsoftwares/sdk';
 
 function makeSalesDefinition(): ReportDefinition {
   return {

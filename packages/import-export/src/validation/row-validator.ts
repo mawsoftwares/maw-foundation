@@ -1,4 +1,4 @@
-import { required, email, phone, url, minLength, maxLength, minValue, maxValue, pattern } from '@maw/sdk';
+import { required, email, phone, url, minLength, maxLength, minValue, maxValue, pattern } from '@mawsoftwares/sdk';
 import type { ImportDefinition, FieldDefinition, RowError } from '../types';
 import { ErrorSeverity, FieldType } from '../types';
 import { sanitizeRowValue } from '../security';

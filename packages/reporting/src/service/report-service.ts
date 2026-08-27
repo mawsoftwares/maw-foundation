@@ -1,7 +1,7 @@
-import type { Logger, EventBus, IAuthorization } from '@maw/sdk';
-import { createLogger } from '@maw/sdk';
-import type { ExportFormatValue, ExportService } from '@maw/import-export';
-import type { IQueueService } from '@maw/sdk/queue/contracts';
+import type { Logger, EventBus, IAuthorization } from '@mawsoftwares/sdk';
+import { createLogger } from '@mawsoftwares/sdk';
+import type { ExportFormatValue, ExportService } from '@mawsoftwares/import-export';
+import type { IQueueService } from '@mawsoftwares/sdk/queue/contracts';
 import type { IReportDefinitionRegistry, IReportDataSourceRegistry } from '../execution/registries';
 import { ReportExecutor } from '../execution/report-executor';
 import type { ReportRequest, ReportResult, ReportPreviewResult } from '../execution/types';

@@ -2,7 +2,7 @@ import type {
   IOfflineStorage,
   OfflineRecord,
   OfflineQuery,
-} from '@maw/sdk/contracts/IOfflineStorage';
+} from '@mawsoftwares/sdk/contracts/IOfflineStorage';
 
 /**
  * In-memory IOfflineStorage for tests and SSR.

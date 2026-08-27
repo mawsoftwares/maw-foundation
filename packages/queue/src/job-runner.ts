@@ -1,5 +1,5 @@
-import type { IQueueProvider, IWorkerRegistry, Job, JobResult, Logger, RetryPolicy, WorkerOptions } from '@maw/sdk';
-import { createLogger } from '@maw/sdk';
+import type { IQueueProvider, IWorkerRegistry, Job, JobResult, Logger, RetryPolicy, WorkerOptions } from '@mawsoftwares/sdk';
+import { createLogger } from '@mawsoftwares/sdk';
 import { computeDelay, mergeRetryPolicy, shouldRetry } from './retry';
 
 export interface JobRunnerOptions {

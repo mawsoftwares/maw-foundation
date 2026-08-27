@@ -1,4 +1,4 @@
-import type { PgPool } from '@maw/database';
+import type { PgPool } from '@mawsoftwares/database';
 import type {
   ISyncStore,
   ICacheStore,
@@ -7,7 +7,7 @@ import type {
   RbacModule,
   ModulePermission,
   FeatureSyncDefinition,
-} from '@maw/rbac-core';
+} from '@mawsoftwares/rbac-core';
 
 /**
  * Postgres ISyncStore — the sync engine writes module permissions and features

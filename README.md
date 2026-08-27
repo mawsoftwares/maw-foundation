@@ -2,7 +2,7 @@
 
 One reusable base for every MAW app — **React Native** mobile (iOS/Android),
 **React/Next** web, and **Node** backends — so common features (auth, RBAC, theming,
-API client, backend middleware) are written **once** in `@maw/*` and shared, instead of
+API client, backend middleware) are written **once** in `@mawsoftwares/*` and shared, instead of
 re-implemented per project.
 
 ## Why
@@ -21,22 +21,22 @@ on one shared base.
 
 ```
 packages/
-  core           @maw/core — Result, errors, IDs, money, contracts (ports)
-  config         @maw/config — multi-level config engine, env, health, version
-  sdk            @maw/sdk — kernel + contracts (canonical source, re-exported by core)
-  platform       @maw/platform — session, crypto, storage engines
-  rbac-core      @maw/rbac — capability→permission vocab + resolveEffectiveAccess()
-  auth-core      @maw/auth — JWT, refresh, password, MFA (framework-agnostic)
-  users          @maw/users — user management foundation
-  tenancy        @maw/tenancy — multi-tenant context, resolution, isolation
-  modules        @maw/modules — module registry + lifecycle + events
-  feature-flags  @maw/feature-flags — tenant-aware feature flag service
-  api-client     @maw/api-client — typed HTTP client with token management
+  core           @mawsoftwares/core — Result, errors, IDs, money, contracts (ports)
+  config         @mawsoftwares/config — multi-level config engine, env, health, version
+  sdk            @mawsoftwares/sdk — kernel + contracts (canonical source, re-exported by core)
+  platform       @mawsoftwares/platform — session, crypto, storage engines
+  rbac-core      @mawsoftwares/rbac — capability→permission vocab + resolveEffectiveAccess()
+  auth-core      @mawsoftwares/auth — JWT, refresh, password, MFA (framework-agnostic)
+  users          @mawsoftwares/users — user management foundation
+  tenancy        @mawsoftwares/tenancy — multi-tenant context, resolution, isolation
+  modules        @mawsoftwares/modules — module registry + lifecycle + events
+  feature-flags  @mawsoftwares/feature-flags — tenant-aware feature flag service
+  api-client     @mawsoftwares/api-client — typed HTTP client with token management
 
 adapters/
-  express        @maw/express — Express auth/RBAC middleware
-  hono           @maw/hono — Hono security middleware
-  postgres       @maw/postgres — PostgreSQL repository + tenant + migration
+  express        @mawsoftwares/express — Express auth/RBAC middleware
+  hono           @mawsoftwares/hono — Hono security middleware
+  postgres       @mawsoftwares/postgres — PostgreSQL repository + tenant + migration
 
 apps/
   sample-server  Express proof backend (in-memory, no DB)
@@ -91,9 +91,9 @@ Authentication uses `NODE_AUTH_TOKEN` — see `.npmrc`.
 
 ## Package Creation Rules
 
-1. Every package uses the `@maw/` namespace
+1. Every package uses the `@mawsoftwares/` namespace
 2. Public API goes through `src/index.ts` only
-3. Consumers import `from "@maw/auth"`, never `from "@maw/auth/src/internal/..."`
+3. Consumers import `from "@mawsoftwares/auth"`, never `from "@mawsoftwares/auth/src/internal/..."`
 4. No `any` unless documented
 5. No hardcoded secrets, strings, or business rules
 6. Framework-specific code goes in adapters

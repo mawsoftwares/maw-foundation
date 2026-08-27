@@ -11,7 +11,7 @@ const makeModule = (overrides: Partial<BaseModuleDefinition> = {}): BaseModuleDe
   ...overrides,
 });
 
-describe('@maw/modules — BaseModuleRegistry', () => {
+describe('@mawsoftwares/modules — BaseModuleRegistry', () => {
   it('should register a module', () => {
     const registry = new BaseModuleRegistry();
     registry.register(makeModule());
@@ -116,7 +116,7 @@ describe('@maw/modules — BaseModuleRegistry', () => {
   });
 });
 
-describe('@maw/modules — EventBus', () => {
+describe('@mawsoftwares/modules — EventBus', () => {
   it('should emit and receive events', async () => {
     const bus = createEventBus();
     const received: string[] = [];

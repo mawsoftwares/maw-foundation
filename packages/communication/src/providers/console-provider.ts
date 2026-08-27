@@ -1,5 +1,5 @@
-import type { INotificationProvider, NotificationRequest, NotificationResult, NotificationChannelValue } from '@maw/sdk';
-import { DeliveryStatus, createLogger } from '@maw/sdk';
+import type { INotificationProvider, NotificationRequest, NotificationResult, NotificationChannelValue } from '@mawsoftwares/sdk';
+import { DeliveryStatus, createLogger } from '@mawsoftwares/sdk';
 
 export class ConsoleNotificationProvider implements INotificationProvider {
   readonly channel: NotificationChannelValue;

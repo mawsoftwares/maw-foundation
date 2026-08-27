@@ -10,7 +10,7 @@ import {
   TextField,
   Card,
   FormField,
-} from '@maw/ui-native';
+} from '@mawsoftwares/ui-native';
 
 export default function LoginScreen(): ReactNode {
   const { login } = useAuth();

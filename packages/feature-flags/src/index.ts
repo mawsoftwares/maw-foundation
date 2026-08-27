@@ -1,5 +1,5 @@
 /**
- * @maw/feature-flags — Tenant-aware feature flag foundation.
+ * @mawsoftwares/feature-flags — Tenant-aware feature flag foundation.
  *
  * Provides a centralized feature flag evaluation service supporting:
  *   - Global flags (apply to all tenants)
@@ -18,7 +18,7 @@ export {
   isRolledOut,
   type FlagStore,
   type FlagChangeListener,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // ---------------------------------------------------------------------------
 // Feature flag scopes

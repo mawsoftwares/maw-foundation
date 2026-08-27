@@ -1,4 +1,4 @@
-import type { IRateLimiter, RateLimitConfig, RateLimitResult } from '@maw/sdk/contracts/IRateLimiter';
+import type { IRateLimiter, RateLimitConfig, RateLimitResult } from '@mawsoftwares/sdk/contracts/IRateLimiter';
 
 interface Entry {
   timestamps: number[];

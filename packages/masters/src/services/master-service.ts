@@ -1,8 +1,8 @@
-import type { PgTransactionPool } from '@maw/database';
-import { withTransaction } from '@maw/database';
-import type { Logger } from '@maw/sdk/kernel/logger';
-import { createLogger } from '@maw/sdk/kernel/logger';
-import type { PaginatedResult } from '@maw/sdk/config/constants';
+import type { PgTransactionPool } from '@mawsoftwares/database';
+import { withTransaction } from '@mawsoftwares/database';
+import type { Logger } from '@mawsoftwares/sdk/kernel/logger';
+import { createLogger } from '@mawsoftwares/sdk/kernel/logger';
+import type { PaginatedResult } from '@mawsoftwares/sdk/config/constants';
 import type {
   Master, MasterField, MasterValue, MasterOption,
 } from '../types/entities';

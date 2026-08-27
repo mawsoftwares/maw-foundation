@@ -1,5 +1,5 @@
-import { ApiClient } from '@maw/api-client';
-import { NativeSecureStore } from '@maw/platform/native';
+import { ApiClient } from '@mawsoftwares/api-client';
+import { NativeSecureStore } from '@mawsoftwares/platform/native';
 
 const API_URL = 'http://localhost:4000';
 

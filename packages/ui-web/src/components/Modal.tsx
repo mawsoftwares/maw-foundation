@@ -10,6 +10,7 @@ import {
   type TextareaHTMLAttributes,
   type SelectHTMLAttributes,
 } from 'react';
+import { useIsMobile } from '../responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -32,6 +33,8 @@ export function Modal({
   footer?: ReactNode;
   width?: number;
 }): ReactNode {
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -49,7 +52,7 @@ export function Modal({
         inset: 0,
         background: 'var(--maw-overlay)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
         zIndex: 'var(--maw-z-modal)' as unknown as number,
       }}
@@ -60,11 +63,13 @@ export function Modal({
         style={{
           ...base,
           background: 'var(--maw-bg)',
-          borderRadius: 'var(--maw-radius-lg)',
+          borderRadius: isMobile
+            ? 'var(--maw-radius-lg) var(--maw-radius-lg) 0 0'
+            : 'var(--maw-radius-lg)',
           boxShadow: 'var(--maw-shadow-xl)',
-          width,
-          maxWidth: '90vw',
-          maxHeight: '85vh',
+          width: isMobile ? '100%' : width,
+          maxWidth: isMobile ? '100%' : '90vw',
+          maxHeight: isMobile ? '90vh' : '85vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

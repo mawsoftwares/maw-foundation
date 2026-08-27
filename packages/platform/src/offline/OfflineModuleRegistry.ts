@@ -1,7 +1,7 @@
 import type {
   OfflineModuleRegistration,
   OfflineEntityRegistration,
-} from '@maw/sdk/offline/types';
+} from '@mawsoftwares/sdk/offline/types';
 
 /**
  * Tracks which modules and entities have opted into offline support.

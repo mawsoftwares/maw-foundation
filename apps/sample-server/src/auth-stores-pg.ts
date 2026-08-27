@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { PgPool } from '@maw/database';
+import type { PgPool } from '@mawsoftwares/database';
 import type {
   IEmailVerificationStore,
   ILoginAttemptStore,
@@ -12,14 +12,14 @@ import type {
   ResetRecord,
   ServerSession,
   VerificationRecord,
-} from '@maw/auth-core';
-import type { DeviceInfo } from '@maw/sdk/contracts/identity';
-import type { AccountStatusValue } from '@maw/sdk/security/AccountStatus';
-import type { CreateUserInput, IUserRepository, UserRecord } from '@maw/sdk/contracts/IUserRepository';
+} from '@mawsoftwares/auth-core';
+import type { DeviceInfo } from '@mawsoftwares/sdk/contracts/identity';
+import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
+import type { CreateUserInput, IUserRepository, UserRecord } from '@mawsoftwares/sdk/contracts/IUserRepository';
 
 /**
  * Postgres implementations of the auth ports, backed by `migrations/004_auth_foundation.sql`.
- * Each one mirrors an in-memory twin from @maw/auth-core, so the sample server picks a
+ * Each one mirrors an in-memory twin from @mawsoftwares/auth-core, so the sample server picks a
  * side at the composition root and nothing downstream knows the difference.
  */
 

@@ -1,4 +1,4 @@
-import { getExtension, getMimeType, formatFileSize } from '@maw/sdk';
+import { getExtension, getMimeType, formatFileSize } from '@mawsoftwares/sdk';
 import type { ImportDefinition, ImportFormatValue } from '../types';
 import { ImportFormat } from '../types';
 import { FileValidationError } from '../errors';

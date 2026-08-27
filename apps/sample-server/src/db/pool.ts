@@ -1,4 +1,4 @@
-import { createDatabasePool, registerShutdownHook, type PgTransactionPool } from '@maw/database';
+import { createDatabasePool, registerShutdownHook, type PgTransactionPool } from '@mawsoftwares/database';
 
 let _pool: PgTransactionPool | null = null;
 

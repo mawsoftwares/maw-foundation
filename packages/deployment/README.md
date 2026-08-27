@@ -1,4 +1,4 @@
-# @maw/deploy — Configuration-Driven Deployment Engine
+# @mawsoftwares/deploy — Configuration-Driven Deployment Engine
 
 Reusable deployment engine — shared scripts + templates live here once; each
 project only adds a thin `deploy/` folder with its own environment configs.
@@ -6,7 +6,7 @@ project only adds a thin `deploy/` folder with its own environment configs.
 ## How it works
 
 ```
-@maw/deploy (this package — shared engine)
+@mawsoftwares/deploy (this package — shared engine)
 ├── scripts/        # deploy.js, generate-runtime-files.js, health-check.js, rollback.js
 ├── templates/      # PM2, nginx, Docker, runtime templates
 ├── topology/       # Hosting topology samples (subpath vs dedicated domain)
@@ -31,7 +31,7 @@ your-project/ (any consuming project)
 
 ```bash
 # 1. Scaffold the deploy/ folder with sample configs
-npx @maw/deploy init
+npx @mawsoftwares/deploy init
 
 # 2. Edit your environment config
 vim deploy/environments/staging/app.config.json
@@ -40,24 +40,24 @@ vim deploy/environments/staging/app.config.json
 cp deploy/environments/staging/.env.example deploy/environments/staging/.env
 
 # 4. Dry run to verify
-npx @maw/deploy staging --dry-run
+npx @mawsoftwares/deploy staging --dry-run
 
 # 5. Deploy
-npx @maw/deploy staging
+npx @mawsoftwares/deploy staging
 ```
 
 ## Commands
 
 ```bash
-npx @maw/deploy list                           # List available environments
-npx @maw/deploy info                           # Show resolved paths
-npx @maw/deploy <environment>                  # Deploy
-npx @maw/deploy <environment> --dry-run        # Preview without executing
-npx @maw/deploy <environment> --setup-https    # First-time HTTPS setup
-npx @maw/deploy <environment> --ssl-ready      # Use HTTPS template (certs exist)
-npx @maw/deploy <environment> --skip-nginx     # App deploy only, skip nginx
-npx @maw/deploy <environment> --yes-nginx      # Auto-confirm nginx install
-npx @maw/deploy <environment> --skip-build     # Skip frontend local build or backend remote build
+npx @mawsoftwares/deploy list                           # List available environments
+npx @mawsoftwares/deploy info                           # Show resolved paths
+npx @mawsoftwares/deploy <environment>                  # Deploy
+npx @mawsoftwares/deploy <environment> --dry-run        # Preview without executing
+npx @mawsoftwares/deploy <environment> --setup-https    # First-time HTTPS setup
+npx @mawsoftwares/deploy <environment> --ssl-ready      # Use HTTPS template (certs exist)
+npx @mawsoftwares/deploy <environment> --skip-nginx     # App deploy only, skip nginx
+npx @mawsoftwares/deploy <environment> --yes-nginx      # Auto-confirm nginx install
+npx @mawsoftwares/deploy <environment> --skip-build     # Skip frontend local build or backend remote build
 ```
 
 ## Environment contract

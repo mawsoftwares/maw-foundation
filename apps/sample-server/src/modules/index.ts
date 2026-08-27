@@ -1,5 +1,5 @@
-import { ModuleRegistry } from '@maw/rbac-core';
-import { createLogger, RegistryEvent, type RegistryEventPayload } from '@maw/sdk';
+import { ModuleRegistry } from '@mawsoftwares/rbac-core';
+import { createLogger, RegistryEvent, type RegistryEventPayload } from '@mawsoftwares/sdk';
 import { usersModule } from './users';
 import { reportsModule } from './reports';
 import { ordersModule } from './orders';

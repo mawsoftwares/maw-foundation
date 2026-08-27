@@ -1,4 +1,4 @@
-import type { Permission } from '@maw/sdk/contracts/IAuthorization';
+import type { Permission } from '@mawsoftwares/sdk/contracts/IAuthorization';
 import type { RbacConfig, TenantRolePolicy } from './types';
 
 /**

@@ -1,7 +1,7 @@
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
 import { UpdateUserDto, UpdateUserSchema, UserResponseDto } from '../dto';
 import { toUserResponseDto } from './CreateUser';
-import { validateFields } from '@maw/sdk/kernel/validate';
+import { validateFields } from '@mawsoftwares/sdk/kernel/validate';
 
 export class UpdateUserUseCase {
   constructor(

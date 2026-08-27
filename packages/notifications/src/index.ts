@@ -1,7 +1,7 @@
 /**
- * @maw/notifications — Placeholder package.
+ * @mawsoftwares/notifications — Placeholder package.
  * This package will be implemented in a future iteration.
  */
 
-// TODO: Implement @maw/notifications
+// TODO: Implement @mawsoftwares/notifications
 export {};

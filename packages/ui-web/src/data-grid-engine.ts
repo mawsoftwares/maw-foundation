@@ -12,7 +12,7 @@ import type {
   DataSourceMode,
   ExportFormatValue,
   DataGridColumn,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // ---------------------------------------------------------------------------
 // Client-side data source

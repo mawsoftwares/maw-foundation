@@ -1,7 +1,7 @@
 import type { RequestContext } from '../context/types';
 import { createRequestContext } from '../context/types';
 import type { ApiSuccessResponse, ApiErrorResponse } from '../response/types';
-import type { ErrorCodeValue } from '@maw/sdk/kernel/errors';
+import type { ErrorCodeValue } from '@mawsoftwares/sdk/kernel/errors';
 
 export function assertSuccessEnvelope<T>(
   response: unknown,

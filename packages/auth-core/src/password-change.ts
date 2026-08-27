@@ -1,6 +1,6 @@
-import { type PasswordPolicyConfig, validatePassword } from '@maw/sdk';
-import type { IUserRepository } from '@maw/sdk/contracts/IUserRepository';
-import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import { type PasswordPolicyConfig, validatePassword } from '@mawsoftwares/sdk';
+import type { IUserRepository } from '@mawsoftwares/sdk/contracts/IUserRepository';
+import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 import { InvalidCredentialsError, PasswordPolicyError } from './auth-errors';
 
 export interface PasswordChangeServiceOptions {

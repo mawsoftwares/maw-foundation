@@ -1,14 +1,14 @@
-import type { ConfigEngine } from '@maw/sdk/config/config-engine';
-import type { IOfflineStorage } from '@maw/sdk/contracts/IOfflineStorage';
-import type { INetworkManager } from '@maw/sdk/contracts/INetworkManager';
-import type { IConflictResolver } from '@maw/sdk/contracts/IConflictResolver';
-import type { ISyncEngine } from '@maw/sdk/contracts/ISyncEngine';
-import { BrowserNetworkManager } from '@maw/platform';
-import { MemoryOfflineStorage } from '@maw/platform';
-import { DefaultConflictResolver } from '@maw/platform';
-import { SyncEngine, installOfflineInterceptor } from '@maw/api-client';
-import type { ApiClient } from '@maw/api-client';
-import type { OfflineInterceptorHandle } from '@maw/api-client';
+import type { ConfigEngine } from '@mawsoftwares/sdk/config/config-engine';
+import type { IOfflineStorage } from '@mawsoftwares/sdk/contracts/IOfflineStorage';
+import type { INetworkManager } from '@mawsoftwares/sdk/contracts/INetworkManager';
+import type { IConflictResolver } from '@mawsoftwares/sdk/contracts/IConflictResolver';
+import type { ISyncEngine } from '@mawsoftwares/sdk/contracts/ISyncEngine';
+import { BrowserNetworkManager } from '@mawsoftwares/platform';
+import { MemoryOfflineStorage } from '@mawsoftwares/platform';
+import { DefaultConflictResolver } from '@mawsoftwares/platform';
+import { SyncEngine, installOfflineInterceptor } from '@mawsoftwares/api-client';
+import type { ApiClient } from '@mawsoftwares/api-client';
+import type { OfflineInterceptorHandle } from '@mawsoftwares/api-client';
 
 export interface OfflineSetupResult {
   readonly enabled: boolean;

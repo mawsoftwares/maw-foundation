@@ -1,5 +1,5 @@
-import type { Logger } from '@maw/sdk';
-import { createLogger } from '@maw/sdk';
+import type { Logger } from '@mawsoftwares/sdk';
+import { createLogger } from '@mawsoftwares/sdk';
 import type { ReportDefinition, ComputedColumnDefinition } from '../definition/types';
 import { isComputedColumn } from '../definition/types';
 import type { IReportDataSource } from '../datasource/types';

@@ -1,7 +1,7 @@
-import type { Logger, EventBus } from '@maw/sdk';
-import { createLogger } from '@maw/sdk';
-import type { Job, JobResult } from '@maw/sdk/queue/types';
-import type { JobHandler } from '@maw/sdk/queue/contracts';
+import type { Logger, EventBus } from '@mawsoftwares/sdk';
+import { createLogger } from '@mawsoftwares/sdk';
+import type { Job, JobResult } from '@mawsoftwares/sdk/queue/types';
+import type { JobHandler } from '@mawsoftwares/sdk/queue/contracts';
 import type { IReportDefinitionRegistry, IReportDataSourceRegistry } from './registries';
 import { ReportExecutor } from './report-executor';
 import type { ReportRequest } from './types';

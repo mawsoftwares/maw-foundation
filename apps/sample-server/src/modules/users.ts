@@ -1,4 +1,4 @@
-import type { ModuleDefinition } from '@maw/rbac-core';
+import type { ModuleDefinition } from '@mawsoftwares/rbac-core';
 
 export const usersModule: ModuleDefinition = {
   key: 'users',

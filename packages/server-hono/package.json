@@ -1,15 +1,15 @@
 {
-  "name": "@maw/server-hono",
+  "name": "@mawsoftwares/server-hono",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@maw/sdk": "*",
-    "@maw/api": "*",
-    "@maw/auth-core": "*",
-    "@maw/rbac-core": "*"
+    "@mawsoftwares/sdk": "*",
+    "@mawsoftwares/api": "*",
+    "@mawsoftwares/auth-core": "*",
+    "@mawsoftwares/rbac-core": "*"
   },
   "peerDependencies": {
     "hono": "^4"
@@ -19,5 +19,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

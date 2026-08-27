@@ -1,4 +1,4 @@
-import { AppError, ErrorCode } from '@maw/sdk';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk';
 
 export const ImportExportErrorCode = {
   IMPORT_FAILED: 'IMPORT_FAILED',

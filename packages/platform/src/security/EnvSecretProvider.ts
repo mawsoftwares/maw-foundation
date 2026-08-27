@@ -1,4 +1,4 @@
-import type { ISecretProvider } from '@maw/sdk/contracts/ISecretProvider';
+import type { ISecretProvider } from '@mawsoftwares/sdk/contracts/ISecretProvider';
 
 export class EnvSecretProvider implements ISecretProvider {
   async get(name: string): Promise<string | undefined> {

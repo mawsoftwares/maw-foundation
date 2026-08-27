@@ -135,7 +135,7 @@ describe('Import — end-to-end lifecycle', () => {
     };
 
     const history = new InMemoryHistoryStore();
-    const service = new ImportService({ history, eventBus: eventBus as unknown as import('@maw/sdk').EventBus });
+    const service = new ImportService({ history, eventBus: eventBus as unknown as import('@mawsoftwares/sdk').EventBus });
     const processor = createProcessor();
 
     const csv = 'First Name,Last Name,Email\nAlice,A,a@test.com';
@@ -253,7 +253,7 @@ describe('Export — end-to-end lifecycle', () => {
     };
 
     const history = new InMemoryHistoryStore();
-    const service = new ExportService({ history, eventBus: eventBus as unknown as import('@maw/sdk').EventBus });
+    const service = new ExportService({ history, eventBus: eventBus as unknown as import('@mawsoftwares/sdk').EventBus });
     const provider = createProvider(sampleData);
 
     const record = await service.createExport(exportDef, context);

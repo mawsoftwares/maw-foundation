@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { BrandConfig, IBrandConfigProvider } from '@maw/sdk';
-import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@maw/sdk';
-import { brandConfigToThemeOverrides, createTheme, tokensToCssVars, type Theme } from '@maw/theme';
+import type { BrandConfig, IBrandConfigProvider } from '@mawsoftwares/sdk';
+import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@mawsoftwares/sdk';
+import { brandConfigToThemeOverrides, createTheme, tokensToCssVars, type Theme } from '@mawsoftwares/theme';
 import { ThemeProvider } from './theme';
 
 export type BrandColorMode = 'light' | 'dark' | 'system';

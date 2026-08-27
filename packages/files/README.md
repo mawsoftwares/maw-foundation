@@ -1,4 +1,4 @@
-# @maw/files
+# @mawsoftwares/files
 
 File management foundation for the MAW ecosystem.
 

@@ -1,5 +1,5 @@
-import type { ITemplateRenderer } from '@maw/sdk';
-import { TemplateError } from '@maw/sdk';
+import type { ITemplateRenderer } from '@mawsoftwares/sdk';
+import { TemplateError } from '@mawsoftwares/sdk';
 
 export class MustacheTemplateRenderer implements ITemplateRenderer {
   render(template: string, variables: Readonly<Record<string, unknown>>): string {

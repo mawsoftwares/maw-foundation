@@ -8,8 +8,8 @@ import {
   routeRegistry,
   type HttpMethod,
   withErrorTranslation,
-} from '@maw/api';
-import type { AuthClaims } from '@maw/auth-core';
+} from '@mawsoftwares/api';
+import type { AuthClaims } from '@mawsoftwares/auth-core';
 
 export function populateRequestContext(): MiddlewareHandler {
   return async (c, next) => {

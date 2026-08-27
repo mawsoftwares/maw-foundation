@@ -5,7 +5,7 @@ import {
   type Theme,
   type ThemeOverrides,
   type TenantBranding,
-} from '@maw/theme';
+} from '@mawsoftwares/theme';
 
 export type ColorMode = 'light' | 'dark' | 'system';
 
@@ -184,4 +184,4 @@ export function useColorMode(): Pick<ThemeContextValue, 'colorMode' | 'isDark' |
   return { colorMode, isDark, setColorMode, toggleColorMode };
 }
 
-export { type Theme, type ThemeOverrides, type TenantBranding } from '@maw/theme';
+export { type Theme, type ThemeOverrides, type TenantBranding } from '@mawsoftwares/theme';

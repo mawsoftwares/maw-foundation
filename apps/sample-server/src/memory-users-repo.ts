@@ -1,24 +1,31 @@
-import type { IUsersRepository } from '@maw/users';
-import type { User } from '@maw/users/src/domain/entities/User';
+import type { IUsersRepository, User } from '@mawsoftwares/users';
 import { randomUUID } from 'crypto';
 
 export class MemoryUsersRepository implements IUsersRepository {
   private users: Map<string, User> = new Map();
 
   constructor() {
-    const id = randomUUID();
-    this.users.set(id, {
-      id,
-      tenantId: 'demo-tenant',
-      firstName: 'Admin',
-      lastName: 'User',
-      email: 'admin@demo.com',
-      passwordHash: 'hash',
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-    });
+    const seedUsers = [
+      { id: 'u-superadmin', firstName: 'Super', lastName: 'Admin', email: 'superadmin@demo.test' },
+      { id: 'u-owner', firstName: 'Owner', lastName: 'User', email: 'owner@demo.test' },
+      { id: 'u-manager', firstName: 'Manager', lastName: 'User', email: 'manager@demo.test' },
+      { id: 'u-clerk', firstName: 'Clerk', lastName: 'User', email: 'clerk@demo.test' },
+    ];
+
+    for (const u of seedUsers) {
+      this.users.set(u.id, {
+        id: u.id,
+        tenantId: 'demo-tenant',
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        passwordHash: 'hash',
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deletedAt: null,
+      });
+    }
   }
 
   async create(user: Omit<User, 'createdAt' | 'updatedAt' | 'deletedAt'>): Promise<User> {

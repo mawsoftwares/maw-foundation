@@ -1,5 +1,5 @@
 import { randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
-import type { IEncryptionService } from '@maw/sdk/contracts/IEncryptionService';
+import type { IEncryptionService } from '@mawsoftwares/sdk/contracts/IEncryptionService';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;

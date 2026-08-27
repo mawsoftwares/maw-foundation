@@ -1,20 +1,23 @@
 {
-  "name": "@maw/ui-users",
+  "name": "@mawsoftwares/ui-users",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@maw/ui-web": "*",
-    "@maw/users": "*",
-    "@maw/sdk": "*",
+    "@mawsoftwares/ui-web": "*",
+    "@mawsoftwares/users": "*",
+    "@mawsoftwares/sdk": "*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "typescript": "^5.5.4"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

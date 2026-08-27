@@ -1,6 +1,6 @@
-import { createDatabasePool, closeDatabasePool, runSeed } from '@maw/database';
-import { hashPassword } from '@maw/auth-core';
-import { createLogger } from '@maw/sdk';
+import { createDatabasePool, closeDatabasePool, runSeed } from '@mawsoftwares/database';
+import { hashPassword } from '@mawsoftwares/auth-core';
+import { createLogger } from '@mawsoftwares/sdk';
 import { registry } from '../modules/index';
 
 const log = createLogger('seed');
@@ -8,17 +8,21 @@ const log = createLogger('seed');
 const TENANT = 'demo-tenant';
 
 const users = [
-  { id: 'u-superadmin', email: 'superadmin@demo.test', role: 'super_admin', audience: 'admin',    scopeId: null },
-  { id: 'u-owner',      email: 'owner@demo.test',      role: 'owner',       audience: 'admin',    scopeId: null },
-  { id: 'u-manager',    email: 'manager@demo.test',     role: 'manager',     audience: 'admin',    scopeId: 'plant-1' },
-  { id: 'u-clerk',      email: 'clerk@demo.test',       role: 'clerk',       audience: 'operator', scopeId: 'plant-1' },
+  { id: 'u-superadmin', email: 'superadmin@demo.test', role: 'super_admin', audience: 'admin', scopeId: null as string | null, name: 'Super Admin' },
+  { id: 'u-owner', email: 'owner@demo.test', role: 'owner', audience: 'admin', scopeId: null, name: 'Owner Demo' },
+  { id: 'u-owner-maw', email: 'mindsatworksolutions@gmail.com', role: 'owner', audience: 'admin', scopeId: null, name: 'MAW Owner' },
+  { id: 'u-owner-poonam', email: 'poonamdhomane89@gmail.com', role: 'owner', audience: 'admin', scopeId: null, name: 'Poonam Dhomane' },
+  { id: 'u-manager', email: 'manager@demo.test', role: 'manager', audience: 'admin', scopeId: 'plant-1', name: 'Manager' },
+  { id: 'u-clerk', email: 'clerk@demo.test', role: 'clerk', audience: 'operator', scopeId: 'plant-1', name: 'Clerk' },
 ];
 
 const roles = [
   { code: 'super_admin', name: 'Super Admin', sortOrder: -1 },
-  { code: 'admin',       name: 'Admin',       sortOrder: 0 },
-  { code: 'manager',     name: 'Manager',     sortOrder: 1 },
-  { code: 'clerk',       name: 'Clerk',       sortOrder: 2 },
+  { code: 'owner',       name: 'Owner',       sortOrder: 0 },
+  { code: 'admin',       name: 'Admin',       sortOrder: 1 },
+  { code: 'manager',     name: 'Manager',     sortOrder: 2 },
+  { code: 'clerk',       name: 'Clerk',       sortOrder: 3 },
+  { code: 'viewer',      name: 'Viewer',      sortOrder: 4 },
 ];
 
 const rolePermissionMap: Record<string, string[]> = {
@@ -41,17 +45,13 @@ const pool = await createDatabasePool();
 
 try {
   await runSeed({ pool }, async (client) => {
-    // --- Users ---
+    // --- Users (replace demo-tenant seed set so auth + users module stay aligned) ---
+    await client.query(`DELETE FROM users WHERE tenant_id = $1`, [TENANT]);
     for (const u of users) {
       await client.query(
-        `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id, account_status, email_verified)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', TRUE)
-         ON CONFLICT (tenant_id, email) DO UPDATE SET
-           role = EXCLUDED.role, audience = EXCLUDED.audience,
-           password_hash = EXCLUDED.password_hash, scope_id = EXCLUDED.scope_id,
-           account_status = EXCLUDED.account_status, email_verified = EXCLUDED.email_verified,
-           updated_at = NOW()`,
-        [u.id, TENANT, u.email, u.role, u.audience, hashPassword('password123'), u.scopeId],
+        `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id, name, account_status, email_verified)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'ACTIVE', TRUE)`,
+        [u.id, TENANT, u.email, u.role, u.audience, hashPassword('password123'), u.scopeId, u.name],
       );
     }
     log.info('Users upserted', { count: users.length });

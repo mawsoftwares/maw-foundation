@@ -1,4 +1,4 @@
-import type { IInAppNotificationStore, InAppNotification } from '@maw/sdk';
+import type { IInAppNotificationStore, InAppNotification } from '@mawsoftwares/sdk';
 
 export class InMemoryInAppNotificationStore implements IInAppNotificationStore {
   private readonly notifications: InAppNotification[] = [];

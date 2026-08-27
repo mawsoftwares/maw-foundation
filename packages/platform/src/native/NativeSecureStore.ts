@@ -1,4 +1,4 @@
-import type { ISecureStore } from '@maw/sdk/contracts/ISecureStore';
+import type { ISecureStore } from '@mawsoftwares/sdk/contracts/ISecureStore';
 
 let SecureStore: {
   getItemAsync(key: string): Promise<string | null>;

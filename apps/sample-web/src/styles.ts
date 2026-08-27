@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { palette, spacing, typography } from '@maw/theme';
+import { palette, spacing, typography } from '@mawsoftwares/theme';
 
 export const rootStyle: CSSProperties = {
   fontFamily: typography.fontFamily,

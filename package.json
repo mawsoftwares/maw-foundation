@@ -8,13 +8,17 @@
   "scripts": {
     "build": "pnpm -r --filter './packages/**' --filter './adapters/**' run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint .",
     "test": "vitest run",
+    "test:unit": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run --include '**/*.integration.test.ts'",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "sample:server": "pnpm --filter @maw/sample-server dev",
-    "sample:web": "pnpm --filter @maw/sample-web dev",
+    "sample:server": "pnpm --filter @mawsoftwares/sample-server dev",
+    "sample:web": "pnpm --filter @mawsoftwares/sample-web dev",
     "deploy:server": "node packages/deployment/bin/maw-deploy.js --project-root apps/sample-server",
     "deploy:web": "node packages/deployment/bin/maw-deploy.js --project-root apps/sample-web",
     "changeset": "changeset",
@@ -29,6 +33,7 @@
     "prettier": "^3.5.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
+    "@vitest/coverage-v8": "^3.0.0",
     "vitest": "^3.0.0"
   },
   "engines": {

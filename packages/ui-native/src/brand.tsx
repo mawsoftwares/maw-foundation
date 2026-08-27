@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Appearance } from 'react-native';
-import type { BrandConfig, IBrandConfigProvider } from '@maw/sdk';
-import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@maw/sdk';
-import { brandConfigToThemeOverrides, createTheme, tokensToRNStyles, type Theme, type RNStyles } from '@maw/theme';
+import type { BrandConfig, IBrandConfigProvider } from '@mawsoftwares/sdk';
+import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@mawsoftwares/sdk';
+import { brandConfigToThemeOverrides, createTheme, tokensToRNStyles, type Theme, type RNStyles } from '@mawsoftwares/theme';
 
 export type BrandColorMode = 'light' | 'dark' | 'system';
 

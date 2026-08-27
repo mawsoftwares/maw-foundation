@@ -34,14 +34,14 @@ describe('tokensToRNStyles', () => {
   it('returns palette colors as strings', () => {
     const styles = tokensToRNStyles();
     expect(typeof styles.colors.brand).toBe('string');
-    expect(styles.colors.brand).toBe('#4f46e5');
+    expect(styles.colors.brand).toBe('#6366f1');
   });
 
   it('uses dark palette when dark=true', () => {
     const light = tokensToRNStyles(false);
     const dark = tokensToRNStyles(true);
     expect(light.colors.bg).toBe('#ffffff');
-    expect(dark.colors.bg).toBe('#0b1020');
+    expect(dark.colors.bg).toBe('#020617');
   });
 
   it('strips font fallback chains to first face', () => {

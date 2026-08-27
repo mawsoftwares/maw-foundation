@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { DetailPage, DetailField, Button } from '@maw/ui-web';
-import { Stack } from '@maw/ui-web';
-import type { UserResponseDto } from '@maw/users';
+import { DetailPage, DetailField, Button } from '@mawsoftwares/ui-web';
+import { Stack } from '@mawsoftwares/ui-web';
+import type { UserResponseDto } from '@mawsoftwares/users';
 
 export interface UserDetailsProps {
   user: UserResponseDto;
@@ -66,6 +66,13 @@ export function UserDetails({ user, onEdit, onBack, onDelete, onActivate, onDeac
         
         <DetailField label="Email" value={user.email} />
         <DetailField label="Phone" value={user.phone} />
+        <DetailField label="Role" value={user.role ?? '—'} />
+        <DetailField
+          label="Avatar"
+          value={user.avatar
+            ? <img src={user.avatar} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+            : '—'}
+        />
         
         <DetailField label="Created At" value={new Date(user.createdAt).toLocaleString()} />
         <DetailField label="Last Updated" value={new Date(user.updatedAt).toLocaleString()} />

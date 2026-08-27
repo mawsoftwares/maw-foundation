@@ -1,10 +1,17 @@
 {
-  "name": "@maw/communication",
-  "private": true,
+  "name": "@mawsoftwares/communication",
+  "private": false,
   "version": "0.1.0",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@maw/sdk": "*"
+    "@mawsoftwares/sdk": "*",
+    "nodemailer": "^6.9.13"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.14"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

@@ -1,4 +1,4 @@
-import { FilterOperator } from '@maw/sdk';
+import { FilterOperator } from '@mawsoftwares/sdk';
 import type { FilterCondition, FilterGroup } from './types';
 
 export class FilterBuilder {

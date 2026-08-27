@@ -1,11 +1,11 @@
-import type { ISecureStore } from '@maw/sdk/contracts/ISecureStore';
+import type { ISecureStore } from '@mawsoftwares/sdk/contracts/ISecureStore';
 import type {
   IAccountAuth,
   AuthResult,
   Credentials,
   TokenPair,
-} from '@maw/sdk/contracts/IAccountAuth';
-import type { Session } from '@maw/sdk/contracts/identity';
+} from '@mawsoftwares/sdk/contracts/IAccountAuth';
+import type { Session } from '@mawsoftwares/sdk/contracts/identity';
 
 const KEYS = {
   access: 'maw:auth:accessToken',

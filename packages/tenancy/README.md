@@ -1,4 +1,4 @@
-# @maw/tenancy
+# @mawsoftwares/tenancy
 
 Multi-tenant foundation for the MAW ecosystem.
 
@@ -7,14 +7,14 @@ Multi-tenant foundation for the MAW ecosystem.
 - **Tenant** — Identity model with status lifecycle (`active`, `inactive`, `suspended`, `pending`, `archived`)
 - **TenantContext** — Lightweight context object carried through requests
 - **ITenantResolver** — Contract for resolving tenant from hostname, header, path, or JWT
-- **ITenantRepository** — CRUD contract (implemented by adapters like `@maw/postgres`)
+- **ITenantRepository** — CRUD contract (implemented by adapters like `@mawsoftwares/postgres`)
 - **ITenantContextHolder** — Per-request context storage with `run()` scoping
 - **ITenantScoped** — Marker interface for tenant-scoped repositories
 
 ## Usage
 
 ```ts
-import { createTenantContextHolder, type TenantContext } from '@maw/tenancy';
+import { createTenantContextHolder, type TenantContext } from '@mawsoftwares/tenancy';
 
 const holder = createTenantContextHolder();
 const ctx: TenantContext = { tenantId: 'acme-123', tenantName: 'Acme Corp' };

@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto';
-import type { OtpConfig } from '@maw/sdk/security/SecurityConfig';
+import type { OtpConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
 
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 

@@ -1,4 +1,4 @@
-import type { Permission, AuthzContext } from '@maw/sdk/contracts/IAuthorization';
+import type { Permission, AuthzContext } from '@mawsoftwares/sdk/contracts/IAuthorization';
 import type { EffectiveAccess, RbacConfig, UserAccessContext } from './types';
 
 /** The module a permission belongs to, per this config (first occurrence wins). */

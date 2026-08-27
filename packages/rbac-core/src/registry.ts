@@ -1,4 +1,4 @@
-import { BaseModuleRegistry } from '@maw/sdk';
+import { BaseModuleRegistry } from '@mawsoftwares/sdk';
 import type { ModuleDefinition, PermissionDefinition, FeatureSyncDefinition } from './module-types';
 
 /**

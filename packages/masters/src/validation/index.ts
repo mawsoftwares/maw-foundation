@@ -1,8 +1,8 @@
 import {
   required, minLength, maxLength, pattern,
   validateFields, type FieldError, type Validator,
-} from '@maw/sdk/kernel/validate';
-import { AppError, ErrorCode } from '@maw/sdk/kernel/errors';
+} from '@mawsoftwares/sdk/kernel/validate';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
 import { FieldDataType, type FieldDataTypeValue } from '../types/entities';
 import type { CreateMasterInput, CreateFieldInput, CreateValueInput } from '../types/dto';
 

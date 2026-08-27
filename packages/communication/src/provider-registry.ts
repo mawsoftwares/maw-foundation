@@ -1,5 +1,5 @@
-import type { INotificationProvider, INotificationProviderRegistry, NotificationChannelValue } from '@maw/sdk';
-import { ProviderNotFoundError } from '@maw/sdk';
+import type { INotificationProvider, INotificationProviderRegistry, NotificationChannelValue } from '@mawsoftwares/sdk';
+import { ProviderNotFoundError } from '@mawsoftwares/sdk';
 
 export class NotificationProviderRegistry implements INotificationProviderRegistry {
   private readonly providers = new Map<NotificationChannelValue, INotificationProvider>();

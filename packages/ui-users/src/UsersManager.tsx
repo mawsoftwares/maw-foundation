@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useCrud } from '@maw/ui-web';
-import { Drawer } from '@maw/ui-web';
-import type { UserResponseDto } from '@maw/users';
-import type { IUserApiService } from './types';
+import { useState, useEffect, useMemo } from 'react';
+import { useCrud } from '@mawsoftwares/ui-web';
+import { Drawer } from '@mawsoftwares/ui-web';
+import type { UserResponseDto } from '@mawsoftwares/users';
+import type { IUserApiService, RoleOption } from './types';
 import { UsersList } from './UsersList';
 import { UserForm } from './UserForm';
 import { UserDetails } from './UserDetails';
@@ -17,6 +17,14 @@ type ViewState = 'list' | 'create' | 'edit' | 'details';
 export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   const [view, setView] = useState<ViewState>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+
+  useEffect(() => {
+    if (!api.listRoles) return;
+    void api.listRoles()
+      .then((items) => setRoles([...items]))
+      .catch(() => setRoles([]));
+  }, [api]);
   
   const crudConfig = useMemo(() => ({
     resourceName: 'Users',
@@ -31,6 +39,11 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   const crud = useCrud<any>(crudConfig);
 
   const selectedUser = selectedId ? crud.items.find(u => u.id === selectedId) : null;
+
+  const formProps = {
+    roles,
+    uploadAvatar: api.uploadAvatar,
+  };
 
   const handleCreateNew = () => {
     setSelectedId(null);
@@ -96,6 +109,7 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
             initialData={view === 'edit' ? selectedUser : null}
             onSave={handleSave}
             onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+            {...formProps}
           />
         </div>
       );
@@ -138,6 +152,7 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
                 initialData={view === 'edit' ? selectedUser : null}
                 onSave={handleSave}
                 onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+                {...formProps}
               />
             )}
           </Drawer>

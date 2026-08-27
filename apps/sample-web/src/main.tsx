@@ -1,24 +1,17 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrandProvider, I18nProvider, ToastProvider } from '@maw/ui-web';
-import * as i18n from '@maw/sdk/i18n/index';
+import { BrandProvider, I18nProvider, ToastProvider } from '@mawsoftwares/ui-web';
+import * as i18n from '@mawsoftwares/sdk/i18n/index';
+import { AUTH_EN_MESSAGES } from '@mawsoftwares/ui-auth';
 import { App } from './App';
 import { staticBrandProvider, DEFAULT_TENANT } from './brand-setup';
 
 i18n.registerLocale('en', {
-  'common.save': 'Save',
-  'common.cancel': 'Cancel',
+  ...AUTH_EN_MESSAGES,
   'common.delete': 'Delete',
-  'common.edit': 'Edit',
   'common.search': 'Search...',
-  'common.loading': 'Loading...',
   'common.noData': 'No data found',
   'common.confirm': 'Are you sure?',
-  'auth.login': 'Sign in',
-  'auth.logout': 'Log out',
-  'auth.email': 'Email',
-  'auth.password': 'Password',
-  'auth.invalidCredentials': 'Invalid credentials',
   'nav.dashboard': 'Dashboard',
   'nav.orders': 'Orders',
   'nav.reports': 'Reports',
@@ -45,6 +38,10 @@ i18n.registerLocale('hi', {
   'auth.logout': 'लॉग आउट',
   'auth.email': 'ईमेल',
   'auth.password': 'पासवर्ड',
+  'auth.createAccount': 'खाता बनाएं',
+  'auth.forgotPassword': 'पासवर्ड भूल गए?',
+  'auth.haveVerificationToken': 'मेरे पास सत्यापन कोड है',
+  'auth.backToLogin': 'लॉगिन पर वापस जाएं',
   'nav.dashboard': 'डैशबोर्ड',
   'nav.orders': 'ऑर्डर',
   'nav.reports': 'रिपोर्ट',
@@ -59,8 +56,15 @@ i18n.registerLocale('mr', {
   'common.cancel': 'रद्द करा',
   'common.delete': 'काढून टाका',
   'common.search': 'शोधा...',
+  'common.loading': 'लोड होत आहे...',
   'auth.login': 'साइन इन',
   'auth.logout': 'लॉग आउट',
+  'auth.email': 'ईमेल',
+  'auth.password': 'पासवर्ड',
+  'auth.createAccount': 'खाते तयार करा',
+  'auth.forgotPassword': 'पासवर्ड विसरलात?',
+  'auth.haveVerificationToken': 'माझ्याकडे पडताळणी कोड आहे',
+  'auth.backToLogin': 'लॉगिनवर परत जा',
   'nav.dashboard': 'डॅशबोर्ड',
   'nav.orders': 'ऑर्डर',
   'dashboard.welcome': 'पुन्हा स्वागत, {name}',

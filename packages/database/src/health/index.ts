@@ -1,4 +1,4 @@
-import { pgCheck } from '@maw/sdk/config/health';
+import { pgCheck } from '@mawsoftwares/sdk/config/health';
 import type { PgPool } from '../types';
 import type { MigrationRunner } from '../migration/runner';
 

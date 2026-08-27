@@ -14,7 +14,7 @@ import {
   type FilterCondition,
   type FilterGroup,
   isFilterGroup,
-} from '@maw/reporting';
+} from '@mawsoftwares/reporting';
 
 const SAMPLE_ORDERS = Array.from({ length: 200 }, (_, i) => ({
   id: `ORD-${String(i + 1).padStart(4, '0')}`,

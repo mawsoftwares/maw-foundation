@@ -6,8 +6,8 @@ import type {
   NotificationRequest,
   NotificationResult,
   Logger,
-} from '@maw/sdk';
-import { DeliveryStatus, NotificationError, createLogger } from '@maw/sdk';
+} from '@mawsoftwares/sdk';
+import { DeliveryStatus, NotificationError, createLogger } from '@mawsoftwares/sdk';
 
 export interface NotificationServiceOptions {
   readonly registry: INotificationProviderRegistry;

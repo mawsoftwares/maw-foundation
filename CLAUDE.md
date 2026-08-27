@@ -65,7 +65,7 @@ If an existing utility already provides pagination, date formatting, currency fo
 
 ### 4. Existing UI Components Are Mandatory
 
-Before creating any UI component, search `@maw/ui-web` and `@maw/ui-native`. Reuse: Button, Input, Select, Form, Table, DataTable, Modal, Drawer, Dialog, Card, Badge, Tabs, Dropdown, Pagination, Search, Filter, Avatar, Toast, Loading, EmptyState, ErrorState, ConfirmationDialog.
+Before creating any UI component, search `@mawsoftwares/ui-web` and `@mawsoftwares/ui-native`. Reuse: Button, Input, Select, Form, Table, DataTable, Modal, Drawer, Dialog, Card, Badge, Tabs, Dropdown, Pagination, Search, Filter, Avatar, Toast, Loading, EmptyState, ErrorState, ConfirmationDialog.
 
 Use existing components exactly according to their established API. Do not introduce another UI library or create custom CSS/component implementations when the design system already supports the requirement.
 

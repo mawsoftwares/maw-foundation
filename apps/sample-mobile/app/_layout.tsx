@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Slot } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NativeThemeProvider, AuthProvider, ToastProvider } from '@maw/ui-native';
+import { NativeThemeProvider, AuthProvider, ToastProvider } from '@mawsoftwares/ui-native';
 import { client } from '../src/api';
 import { restoreSession } from '../src/session';
 import { EXAMPLE_RBAC } from '../src/rbac';

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { DataGrid, useCrud, type UseCrudReturn, Button } from '@maw/ui-web';
-import type { DataGridSchema } from '@maw/sdk';
-import type { UserResponseDto } from '@maw/users';
+import { DataGrid, useCrud, type UseCrudReturn, Button } from '@mawsoftwares/ui-web';
+import type { DataGridSchema } from '@mawsoftwares/sdk';
+import type { UserResponseDto } from '@mawsoftwares/users';
 
 export interface UsersListProps {
   crud: UseCrudReturn<UserResponseDto>;
@@ -41,6 +41,13 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps) {
       },
       { id: 'email', field: 'email', header: 'Email', sortable: true },
       { id: 'phone', field: 'phone', header: 'Phone' },
+      { 
+        id: 'role', 
+        field: 'role',
+        header: 'Role',
+        sortable: true,
+        render: (user) => user.role ?? '—',
+      },
       { 
         id: 'status', 
         field: 'status',

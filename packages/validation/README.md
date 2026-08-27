@@ -1,4 +1,4 @@
-# @maw/validation
+# @mawsoftwares/validation
 
 Validation foundation for the MAW ecosystem.
 

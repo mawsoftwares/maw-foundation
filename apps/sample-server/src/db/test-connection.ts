@@ -1,5 +1,5 @@
-import { createDatabasePool, closeDatabasePool, pgCheck } from '@maw/database';
-import { createLogger } from '@maw/sdk';
+import { createDatabasePool, closeDatabasePool, pgCheck } from '@mawsoftwares/database';
+import { createLogger } from '@mawsoftwares/sdk';
 
 const log = createLogger('db:test');
 const pool = await createDatabasePool();

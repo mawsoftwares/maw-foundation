@@ -1,10 +1,10 @@
 /**
- * @maw/tenancy — Multi-tenant foundation.
+ * @mawsoftwares/tenancy — Multi-tenant foundation.
  *
  * Provides tenant identity, status, context, and resolution abstractions
  * that are completely database- and framework-agnostic.
  *
- * Infrastructure packages (e.g. @maw/postgres) implement the repository
+ * Infrastructure packages (e.g. @mawsoftwares/postgres) implement the repository
  * and context-setting contracts defined here.
  */
 

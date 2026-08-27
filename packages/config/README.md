@@ -1,4 +1,4 @@
-# @maw/config
+# @mawsoftwares/config
 
 Central configuration foundation for the MAW ecosystem.
 
@@ -13,7 +13,7 @@ Central configuration foundation for the MAW ecosystem.
 ## Usage
 
 ```ts
-import { createConfigEngine, getRequiredEnv, type AppConfig } from '@maw/config';
+import { createConfigEngine, getRequiredEnv, type AppConfig } from '@mawsoftwares/config';
 
 const config = createConfigEngine();
 config.loadLayer('app', {
@@ -27,4 +27,4 @@ config.get('currency'); // → 'INR'
 
 ## Architecture
 
-`@maw/config` depends only on `@maw/core`. It is framework-agnostic and works on Node, browser, and React Native.
+`@mawsoftwares/config` depends only on `@mawsoftwares/core`. It is framework-agnostic and works on Node, browser, and React Native.

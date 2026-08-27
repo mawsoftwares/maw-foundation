@@ -1,6 +1,6 @@
-import type { IAccountAuth, AuthResult, Credentials, TokenPair } from '@maw/sdk/contracts/IAccountAuth';
-import type { ISecureStore } from '@maw/sdk/contracts/ISecureStore';
-import type { Session } from '@maw/sdk/contracts/identity';
+import type { IAccountAuth, AuthResult, Credentials, TokenPair } from '@mawsoftwares/sdk/contracts/IAccountAuth';
+import type { ISecureStore } from '@mawsoftwares/sdk/contracts/ISecureStore';
+import type { Session } from '@mawsoftwares/sdk/contracts/identity';
 
 /** Secure-storage keys. Passwords are never among them. */
 export const SESSION_KEYS = {

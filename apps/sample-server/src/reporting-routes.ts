@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type RequestHandler } from 'express';
-import type { ReportService } from '@maw/reporting';
-import type { DynamicAuthedRequest } from '@maw/server-express';
+import type { ReportService } from '@mawsoftwares/reporting';
+import type { DynamicAuthedRequest } from '@mawsoftwares/server-express';
 
 export function createReportingRoutes(reportService: ReportService, requireAuth: RequestHandler): Router {
   const router = Router();

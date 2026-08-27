@@ -1,4 +1,4 @@
-import type { PgPool } from '@maw/database';
+import type { PgPool } from '@mawsoftwares/database';
 
 export interface FileMetadataRecord {
   readonly id: string;

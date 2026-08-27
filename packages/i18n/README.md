@@ -1,4 +1,4 @@
-# @maw/i18n
+# @mawsoftwares/i18n
 
 Internationalization foundation for the MAW ecosystem.
 

@@ -1,5 +1,5 @@
-import type { Logger, EventBus } from '@maw/sdk';
-import { createLogger } from '@maw/sdk';
+import type { Logger, EventBus } from '@mawsoftwares/sdk';
+import { createLogger } from '@mawsoftwares/sdk';
 import type {
   ExportDefinition,
   OperationContext,

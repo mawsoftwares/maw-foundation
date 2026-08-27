@@ -3,7 +3,7 @@
  *
  * Handles registration, enable/disable, configuration, dependency validation,
  * lifecycle hooks, and discovery. Domain-specific registries (e.g. RBAC's
- * ModuleRegistry in @maw/rbac-core) extend BaseModuleDefinition with their
+ * ModuleRegistry in @mawsoftwares/rbac-core) extend BaseModuleDefinition with their
  * own fields and delegate to this core registry for lifecycle management.
  */
 

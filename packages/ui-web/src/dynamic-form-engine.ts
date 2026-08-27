@@ -9,7 +9,7 @@ import type {
   FieldOption,
   OptionsSource,
   FormMode,
-} from '@maw/sdk';
+} from '@mawsoftwares/sdk';
 
 // ---------------------------------------------------------------------------
 // Condition evaluator

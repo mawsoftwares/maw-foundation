@@ -1,13 +1,28 @@
-import { hashPassword } from '@maw/auth-core';
-import { validateFields } from '@maw/sdk/kernel/validate';
+import { hashPassword } from '@mawsoftwares/auth-core';
+import { validateFields } from '@mawsoftwares/sdk/kernel/validate';
 import { randomUUID } from 'crypto';
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
 import { CreateUserDto, CreateUserSchema, UserResponseDto } from '../dto';
-import { AccountStatus } from '@maw/sdk/security/AccountStatus';
+import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
 // Basic mapping function
 export function toUserResponseDto(user: unknown): UserResponseDto {
-  const u = user as any;
+  const u = user as {
+    id: string;
+    tenantId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    avatar?: string;
+    role?: string;
+    status: string;
+    emailVerifiedAt?: string;
+    phoneVerifiedAt?: string;
+    lastLoginAt?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
   return {
     id: u.id,
     tenantId: u.tenantId,
@@ -16,7 +31,8 @@ export function toUserResponseDto(user: unknown): UserResponseDto {
     email: u.email,
     phone: u.phone,
     avatar: u.avatar,
-    status: u.status,
+    role: u.role,
+    status: u.status as UserResponseDto['status'],
     emailVerifiedAt: u.emailVerifiedAt,
     phoneVerifiedAt: u.phoneVerifiedAt,
     lastLoginAt: u.lastLoginAt,
@@ -29,21 +45,19 @@ export function toUserResponseDto(user: unknown): UserResponseDto {
 export class CreateUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly rbacService?: any, // optional RBAC integration
-    private readonly auditService?: any, // optional Audit integration
-    private readonly eventBus?: any, // optional Event bus
+    private readonly rbacService?: unknown,
+    private readonly auditService?: unknown,
+    private readonly eventBus?: unknown,
   ) {}
 
   async execute(input: CreateUserDto, actorId?: string): Promise<UserResponseDto> {
-    const errors = validateFields(input as unknown as Record<string, unknown>, CreateUserSchema as any);
+    const errors = validateFields(input as unknown as Record<string, unknown>, CreateUserSchema as never);
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${JSON.stringify(errors)}`);
     }
 
-    // Normalize email
     const email = input.email.trim().toLowerCase();
-    
-    // Check duplicates
+
     const emailExists = await this.userRepository.existsByEmail(input.tenantId, email);
     if (emailExists) {
       throw new Error('USER_EMAIL_ALREADY_EXISTS');
@@ -56,11 +70,10 @@ export class CreateUserUseCase {
       }
     }
 
-    // Hash password
     const passwordHash = input.password ? await hashPassword(input.password) : '';
-
     const id = randomUUID();
     const now = new Date().toISOString();
+    const role = input.role?.trim() || 'viewer';
 
     const user = await this.userRepository.create({
       id,
@@ -70,20 +83,24 @@ export class CreateUserUseCase {
       email,
       phone: input.phone,
       passwordHash,
+      avatar: input.avatar,
+      role,
       status: AccountStatus.ACTIVE,
       createdBy: actorId,
       deletedAt: null,
     });
 
     if (input.roleId && this.rbacService) {
-      await (this.rbacService as any).assignRole(user.id, input.roleId, input.tenantId);
+      await (this.rbacService as { assignRole: (userId: string, roleId: string, tenantId: string) => Promise<void> })
+        .assignRole(user.id, input.roleId, input.tenantId);
       if (this.auditService) {
-         (this.auditService as any).log('ROLE_ASSIGNED', { actor: actorId, target: user.id, metadata: { roleId: input.roleId } });
+        (this.auditService as { log: (event: string, data: Record<string, unknown>) => void })
+          .log('ROLE_ASSIGNED', { actor: actorId, target: user.id, metadata: { roleId: input.roleId } });
       }
     }
 
     if (this.eventBus) {
-      (this.eventBus as any).emit('UserCreated', {
+      (this.eventBus as { emit: (name: string, payload: Record<string, unknown>) => void }).emit('UserCreated', {
         type: 'USER_CREATED',
         userId: user.id,
         tenantId: user.tenantId,
@@ -93,7 +110,8 @@ export class CreateUserUseCase {
     }
 
     if (this.auditService) {
-      (this.auditService as any).log('USER_CREATED', { actor: actorId, target: user.id, metadata: { email: user.email } });
+      (this.auditService as { log: (event: string, data: Record<string, unknown>) => void })
+        .log('USER_CREATED', { actor: actorId, target: user.id, metadata: { email: user.email, role } });
     }
 
     return toUserResponseDto(user);

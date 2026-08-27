@@ -1,4 +1,4 @@
-# @maw/billing
+# @mawsoftwares/billing
 
 Billing foundation for the MAW ecosystem.
 

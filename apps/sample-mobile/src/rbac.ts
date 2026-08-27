@@ -1,3 +1,3 @@
-import { EXAMPLE_RBAC } from '@maw/rbac-core';
+import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 
 export { EXAMPLE_RBAC };

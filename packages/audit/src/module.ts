@@ -3,7 +3,7 @@
  * permissions, menus, and feature sync for audit logs.
  */
 
-import type { BaseModuleDefinition } from '@maw/sdk';
+import type { BaseModuleDefinition } from '@mawsoftwares/sdk';
 
 export const auditModule: BaseModuleDefinition = {
   key: 'audit-logs',

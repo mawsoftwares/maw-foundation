@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { GetUserUseCase } from '../../application/use-cases/GetUser';
-import { AccountStatus } from '@maw/sdk/security/AccountStatus';
+import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
 describe('GetUserUseCase', () => {
   it('should return a user', async () => {

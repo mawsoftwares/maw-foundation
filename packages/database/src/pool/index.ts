@@ -1,5 +1,5 @@
-import { getEnv, getRequiredEnv, getEnvInt, getEnvBool } from '@maw/sdk/config/env';
-import { createLogger } from '@maw/sdk/kernel/logger';
+import { getEnv, getRequiredEnv, getEnvInt, getEnvBool } from '@mawsoftwares/sdk/config/env';
+import { createLogger } from '@mawsoftwares/sdk/kernel/logger';
 import type { PgTransactionPool } from '../types';
 
 const logger = createLogger('database');

@@ -1,7 +1,7 @@
 /**
- * @maw/offline — Placeholder package.
+ * @mawsoftwares/offline — Placeholder package.
  * This package will be implemented in a future iteration.
  */
 
-// TODO: Implement @maw/offline
+// TODO: Implement @mawsoftwares/offline
 export {};

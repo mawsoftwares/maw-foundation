@@ -1,5 +1,5 @@
 /**
- * Platform-agnostic design tokens. Both UI kits (@maw/ui-web, @maw/ui-native) consume
+ * Platform-agnostic design tokens. Both UI kits (@mawsoftwares/ui-web, @mawsoftwares/ui-native) consume
  * these so web and native apps render with the same palette, spacing, and type scale.
  *
  * Per-tenant branding: call `createTheme(tenantOverrides)` to produce a merged token set

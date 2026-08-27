@@ -1,4 +1,4 @@
-import type { SortDirection } from '@maw/sdk/config/constants';
+import type { SortDirection } from '@mawsoftwares/sdk/config/constants';
 
 export interface ListQueryParams {
   readonly page?: number;

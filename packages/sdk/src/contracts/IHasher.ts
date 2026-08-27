@@ -1,5 +1,5 @@
 /**
- * Password hashing port. Implemented by `@maw/auth-core` (scrypt, no native dep).
+ * Password hashing port. Implemented by `@mawsoftwares/auth-core` (scrypt, no native dep).
  * Kept a contract so a product can swap in argon2/bcrypt without touching auth logic.
  */
 export interface IHasher {

@@ -11,7 +11,7 @@ import {
   DataTable,
   type ColumnDef,
   type SortState,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 interface ReportColumnDef {

@@ -1,6 +1,6 @@
-import type { ErrorCodeValue } from '@maw/sdk/kernel/errors';
-import { toHttpStatus } from '@maw/sdk/kernel/errors';
-import type { PaginatedResult } from '@maw/sdk/config/constants';
+import type { ErrorCodeValue } from '@mawsoftwares/sdk/kernel/errors';
+import { toHttpStatus } from '@mawsoftwares/sdk/kernel/errors';
+import type { PaginatedResult } from '@mawsoftwares/sdk/config/constants';
 import type { RequestContext } from '../context/types';
 import type { ApiEnvelope } from '../response/types';
 import { ApiResponse } from '../response/formatter';

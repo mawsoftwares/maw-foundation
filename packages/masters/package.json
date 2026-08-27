@@ -1,11 +1,14 @@
 {
-  "name": "@maw/masters",
+  "name": "@mawsoftwares/masters",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@maw/sdk": "*",
-    "@maw/database": "*"
+    "@mawsoftwares/sdk": "*",
+    "@mawsoftwares/database": "*"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

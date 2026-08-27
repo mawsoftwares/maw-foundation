@@ -4,8 +4,8 @@ import type {
   UploadRequest,
   FileListOptions,
   FileListResult,
-} from '@maw/sdk/contracts/IFileStorage';
-import { getMimeType } from '@maw/sdk/kernel/file';
+} from '@mawsoftwares/sdk/contracts/IFileStorage';
+import { getMimeType } from '@mawsoftwares/sdk/kernel/file';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 

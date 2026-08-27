@@ -7,7 +7,7 @@ import {
   Button,
   Divider,
   useToast,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 
 interface FeatureToggle {
   readonly key: string;

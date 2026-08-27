@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { AccountStatus, DEFAULT_SECURITY_CONFIG } from '@maw/sdk';
-import type { AccountStatusValue } from '@maw/sdk/security/AccountStatus';
-import type { IUserRepository, UserRecord, CreateUserInput } from '@maw/sdk/contracts/IUserRepository';
-import type { IEncryptionService } from '@maw/sdk/contracts/IEncryptionService';
+import { AccountStatus, DEFAULT_SECURITY_CONFIG } from '@mawsoftwares/sdk';
+import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
+import type { IUserRepository, UserRecord, CreateUserInput } from '@mawsoftwares/sdk/contracts/IUserRepository';
+import type { IEncryptionService } from '@mawsoftwares/sdk/contracts/IEncryptionService';
 import {
   AuthenticationService,
   MemoryMfaChallengeStore,

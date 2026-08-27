@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react';
-import { createConfigEngine } from '@maw/sdk/config/config-engine';
-import { EXAMPLE_RBAC } from '@maw/rbac-core';
+import { createConfigEngine } from '@mawsoftwares/sdk/config/config-engine';
+import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 import {
   AuthProvider,
   DynamicAccessProvider,
@@ -21,15 +21,12 @@ import {
   SyncStatusIndicator,
   type NavItem,
   type NavigationConfig,
-} from '@maw/ui-web';
+} from '@mawsoftwares/ui-web';
 import { client } from './api';
 import { loadDynamicAccess, restoreSession } from './session';
 import { setupOffline } from './offline-setup';
 import { AVAILABLE_TENANTS } from './brand-setup';
-import { LoginForm } from './shell/LoginForm';
-import { RegisterForm } from './shell/RegisterForm';
-import { ForgotPasswordForm } from './shell/ForgotPasswordForm';
-import { ResetPasswordForm } from './shell/ResetPasswordForm';
+import { LoginForm, RegisterForm, VerifyEmailForm, ForgotPasswordForm, ResetPasswordForm } from '@mawsoftwares/ui-auth';
 import { DashboardView } from './shell/Dashboard';
 import { OrdersView } from './features/orders';
 import { ReportsView } from './features/reports';
@@ -52,7 +49,22 @@ const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
 type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications';
 
-type AuthPage = 'login' | 'register' | 'forgot' | 'reset';
+type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
+
+function readAuthDeepLink(): { page: AuthPage; token: string } {
+  const params = new URLSearchParams(window.location.search);
+  const verifyToken = params.get('verifyToken');
+  const resetToken = params.get('resetToken');
+  if (verifyToken) return { page: 'verify', token: verifyToken };
+  if (resetToken) return { page: 'reset', token: resetToken };
+  return { page: 'login', token: '' };
+}
+
+function clearAuthQuery(): void {
+  if (window.location.search) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}
 
 const SUPERADMIN_ROLES = new Set(['owner', 'super_admin']);
 
@@ -107,7 +119,17 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const { isDark, toggleColorMode, brand, switchTenant } = useBrand();
   const toast = useToast();
   const [page, setPage] = useState<Page>('dashboard');
-  const [authPage, setAuthPage] = useState<AuthPage>('login');
+  const deepLink = useMemo(() => readAuthDeepLink(), []);
+  const [authPage, setAuthPage] = useState<AuthPage>(deepLink.page);
+  const [authToken, setAuthToken] = useState(deepLink.token);
+
+  const goAuth = useCallback((next: AuthPage, token = '') => {
+    setAuthPage(next);
+    setAuthToken(token);
+    if (next === 'login' || next === 'register' || next === 'forgot') {
+      clearAuthQuery();
+    }
+  }, []);
 
   const navigate = useCallback((path: string) => {
     const key = path.replace('/', '') as Page;
@@ -140,10 +162,17 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{t('common.loading')}</div>;
   if (session === null) {
     switch (authPage) {
-      case 'register': return <RegisterForm onSwitchToLogin={() => setAuthPage('login')} />;
-      case 'forgot': return <ForgotPasswordForm onSwitchToLogin={() => setAuthPage('login')} onResetReady={() => setAuthPage('reset')} />;
-      case 'reset': return <ResetPasswordForm onSwitchToLogin={() => setAuthPage('login')} />;
-      default: return <LoginForm onSwitchToRegister={() => setAuthPage('register')} onSwitchToForgot={() => setAuthPage('forgot')} />;
+      case 'register': return <RegisterForm client={client} onSwitchToLogin={() => goAuth('login')} onVerifyReady={() => goAuth('verify')} tenantId="demo-tenant" />;
+      case 'forgot': return <ForgotPasswordForm client={client} onSwitchToLogin={() => goAuth('login')} onResetReady={() => goAuth('reset')} tenantId="demo-tenant" initialEmail={authToken} />;
+      case 'reset': return <ResetPasswordForm client={client} onSwitchToLogin={() => goAuth('login')} initialToken={authToken} />;
+      case 'verify': return <VerifyEmailForm client={client} onSwitchToLogin={() => goAuth('login')} initialToken={authToken} />;
+      default: return (
+        <LoginForm
+          onSwitchToRegister={() => goAuth('register')}
+          onSwitchToForgot={(email) => goAuth('forgot', email)}
+          onSwitchToVerify={() => goAuth('verify')}
+        />
+      );
     }
   }
 

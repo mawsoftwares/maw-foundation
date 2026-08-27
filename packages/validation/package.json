@@ -1,7 +1,7 @@
 {
-  "name": "@maw/validation",
+  "name": "@mawsoftwares/validation",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -9,9 +9,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@maw/core": "*"
+    "@mawsoftwares/core": "*"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }

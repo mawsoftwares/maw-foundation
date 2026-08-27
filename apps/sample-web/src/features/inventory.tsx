@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { ApiError } from '@maw/api-client';
-import { ListPage, DataTable, Badge, Button, ErrorState, PageLoader, useToast, type ColumnDef } from '@maw/ui-web';
+import { ApiError } from '@mawsoftwares/api-client';
+import { ListPage, DataTable, Badge, Button, ErrorState, PageLoader, useToast, type ColumnDef } from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 interface InventoryItem {

@@ -2,7 +2,7 @@ import type {
   IOfflineStorage,
   OfflineRecord,
   OfflineQuery,
-} from '@maw/sdk/contracts/IOfflineStorage';
+} from '@mawsoftwares/sdk/contracts/IOfflineStorage';
 
 export interface IndexedDbOfflineStorageOptions {
   readonly tenantId: string;

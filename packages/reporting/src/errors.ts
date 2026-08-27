@@ -1,4 +1,4 @@
-import { AppError, ErrorCode } from '@maw/sdk';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk';
 
 export const ReportErrorCode = {
   REPORT_FAILED: 'REPORT_FAILED',

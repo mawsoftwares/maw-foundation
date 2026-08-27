@@ -1,6 +1,6 @@
-import { createApiRouter } from '@maw/server-express';
+import { createApiRouter } from '@mawsoftwares/server-express';
 import type { RequestHandler } from 'express';
-import type { MasterService } from '@maw/masters';
+import type { MasterService } from '@mawsoftwares/masters';
 import { createMasterControllers } from './controller';
 
 export function createMastersRouter(deps: {

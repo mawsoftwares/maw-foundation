@@ -8,7 +8,7 @@ import {
   routeRegistry,
   type HttpMethod,
   withErrorTranslation,
-} from '@maw/api';
+} from '@mawsoftwares/api';
 import type { DynamicAuthedRequest } from './index';
 
 declare global {

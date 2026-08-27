@@ -37,8 +37,26 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Test
-        run: pnpm test
+      - name: Unit Tests
+        run: pnpm test:unit
+
+      - name: Integration Tests
+        if: env.TEST_DATABASE_URL != ''
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: pnpm test:integration
+
+      - name: Coverage Report
+        if: always()
+        run: pnpm test:coverage
+        continue-on-error: true
+
+      - name: Upload Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
 
       - name: Build
         run: pnpm build

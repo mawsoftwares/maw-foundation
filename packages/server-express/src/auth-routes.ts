@@ -1,12 +1,12 @@
 import { Router, type Request, type Response } from 'express';
-import { AppError } from '@maw/sdk';
-import { AccountLockedError, PasswordPolicyError } from '@maw/auth-core';
+import { AppError, type Logger } from '@mawsoftwares/sdk';
+import { AccountLockedError, PasswordPolicyError } from '@mawsoftwares/auth-core';
 import type { AuthedRequest } from './index';
-import type { RegistrationService } from '@maw/auth-core';
-import type { PasswordResetService } from '@maw/auth-core';
-import type { PasswordChangeService } from '@maw/auth-core';
-import type { SessionService } from '@maw/auth-core';
-import type { MfaService } from '@maw/auth-core';
+import type { RegistrationService } from '@mawsoftwares/auth-core';
+import type { PasswordResetService } from '@mawsoftwares/auth-core';
+import type { PasswordChangeService } from '@mawsoftwares/auth-core';
+import type { SessionService } from '@mawsoftwares/auth-core';
+import type { MfaService } from '@mawsoftwares/auth-core';
 import type { RequestHandler } from 'express';
 
 export interface AuthRouteDeps {
@@ -16,10 +16,12 @@ export interface AuthRouteDeps {
   readonly passwordChangeService?: PasswordChangeService;
   readonly sessionService?: SessionService;
   readonly mfaService?: MfaService;
+  readonly logger?: Logger;
 }
 
 export function createAuthRoutes(deps: AuthRouteDeps): Router {
   const router = Router();
+  const log = deps.logger;
 
   if (deps.registrationService) {
     const reg = deps.registrationService;
@@ -63,9 +65,13 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
           res.status(400).json({ error: 'tenantId and email are required' });
           return;
         }
+        if (log) log.info('Forgot-password request received', { tenantId, email });
         await prs.requestReset(tenantId, email);
+        if (log) log.info('Forgot-password request completed', { tenantId, email });
         res.json({ message: 'If an account exists, a reset email has been sent' });
-      } catch {
+      } catch (err) {
+        if (log) log.error('Error requesting password reset', { error: String(err), stack: (err as Error).stack });
+        else console.error('[forgot-password] Error requesting password reset:', err);
         res.json({ message: 'If an account exists, a reset email has been sent' });
       }
     });

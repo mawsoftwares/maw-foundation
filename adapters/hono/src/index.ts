@@ -1,6 +1,6 @@
 /**
- * @maw/hono — Hono adapter.
- * Re-exports everything from @maw/server-hono.
+ * @mawsoftwares/hono — Hono adapter.
+ * Re-exports everything from @mawsoftwares/server-hono.
  * Only Hono-specific functionality belongs here.
  */
-export * from '@maw/server-hono';
+export * from '@mawsoftwares/server-hono';

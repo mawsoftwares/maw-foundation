@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
-import { AccountStatus } from '@maw/sdk';
-import type { DeviceInfo } from '@maw/sdk/contracts/identity';
-import type { IUserRepository, UserRecord } from '@maw/sdk/contracts/IUserRepository';
-import type { IHasher } from '@maw/sdk/contracts/IHasher';
+import { AccountStatus } from '@mawsoftwares/sdk';
+import type { DeviceInfo } from '@mawsoftwares/sdk/contracts/identity';
+import type { IUserRepository, UserRecord } from '@mawsoftwares/sdk/contracts/IUserRepository';
+import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 import { hashToken } from './refresh';
 import type { LoginProtection } from './login-protection';
 import type { ILoginAttemptStore } from './login-attempt-store';

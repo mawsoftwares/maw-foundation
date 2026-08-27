@@ -1,5 +1,5 @@
-import type { Session } from '@maw/sdk/contracts/identity';
-import type { CatalogModule, DynamicAccessSnapshot } from '@maw/ui-web';
+import type { Session } from '@mawsoftwares/sdk/contracts/identity';
+import type { CatalogModule, DynamicAccessSnapshot } from '@mawsoftwares/ui-web';
 import { client } from './api';
 
 export interface MeResponse {

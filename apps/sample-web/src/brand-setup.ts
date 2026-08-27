@@ -1,4 +1,4 @@
-import type { IBrandConfigProvider, BrandConfig } from '@maw/sdk';
+import type { IBrandConfigProvider, BrandConfig } from '@mawsoftwares/sdk';
 
 const BRANDS: Record<string, BrandConfig> = {
   'client-a': {

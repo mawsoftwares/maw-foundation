@@ -1,7 +1,7 @@
-import type { PgPool } from '@maw/database';
-import type { IQueueProvider, Job, JobDefinition, JobStatusValue } from '@maw/sdk';
-import { JobStatus } from '@maw/sdk';
-import { mergeRetryPolicy } from '@maw/queue';
+import type { PgPool } from '@mawsoftwares/database';
+import type { IQueueProvider, Job, JobDefinition, JobStatusValue } from '@mawsoftwares/sdk';
+import { JobStatus } from '@mawsoftwares/sdk';
+import { mergeRetryPolicy } from '@mawsoftwares/queue';
 
 interface JobDbRow {
   id: string;

@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { MemoryTokenBlacklist } from './token-blacklist';
 import { LoginProtection } from './login-protection';
 import { signAccessToken, verifyAccessToken } from './jwt';
-import { validatePassword, DEFAULT_PASSWORD_POLICY } from '@maw/sdk/security/PasswordPolicy';
+import { validatePassword, DEFAULT_PASSWORD_POLICY } from '@mawsoftwares/sdk/security/PasswordPolicy';
 
 const SECRET = 'test-secret-please-change';
 
