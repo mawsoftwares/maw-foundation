@@ -15,12 +15,15 @@ export function createGlobalErrorHandler(
   return (err, c) => {
     const requestId = c.req.header('x-request-id');
 
-    if (err instanceof AppError) {
-      const details = err.details !== undefined
-        ? (redact ? redact(err.details) : err.details) as Record<string, unknown>
+    const errObj = err as any;
+    const isAppError = errObj && typeof errObj === 'object' && 'code' in errObj && 'statusCode' in errObj && 'message' in errObj;
+
+    if (isAppError) {
+      const details = errObj.details !== undefined
+        ? (redact ? redact(errObj.details) : errObj.details) as Record<string, unknown>
         : undefined;
-      const body = ApiResponse.error(err.code, err.message, details, requestId);
-      return c.json(body, err.statusCode as 400);
+      const body = ApiResponse.error(errObj.code, errObj.message, details, requestId);
+      return c.json(body, errObj.statusCode as 400);
     }
 
     const message = err instanceof Error ? err.message : 'Unknown error';

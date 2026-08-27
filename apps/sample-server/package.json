@@ -31,7 +31,7 @@
   },
   "scripts": {
     "dev": "node --env-file=.env --import=tsx src/main.ts",
-    "start": "node --import=tsx src/main.ts",
+    "start": "node --env-file=.env --import=tsx src/main.ts",
     "db:migrate": "node --env-file=.env --import=tsx src/db/migrate.ts",
     "db:seed": "node --env-file=.env --import=tsx src/db/seed.ts",
     "db:test": "node --env-file=.env --import=tsx src/db/test-connection.ts",
