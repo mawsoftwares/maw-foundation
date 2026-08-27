@@ -773,9 +773,11 @@ app.use('/api/v1/orders', createOrdersRouter({
 // --- Users routes (User module — same Postgres users table as auth) ---
 import { createUsersRouter } from './users-routes';
 import { AuthSchemaUsersRepository } from './users-from-auth-pg';
+import { createRbacRouter } from './rbac-routes';
 
 const usersRepo = new AuthSchemaUsersRepository(data.pool);
 app.use('/api/v1/users', createUsersRouter(usersRepo, auth.requireAuth));
+app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.pool, cache));
 
 app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
   const master = cache.getCache();
@@ -785,6 +787,7 @@ app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
     .map((r) => ({ code: r.code, name: r.name, id: r.id }));
   res.json({ data: roles });
 });
+
 
 // --- Masters routes (dynamic master data) ---
 import { createMastersRouter } from './modules/masters/routes';

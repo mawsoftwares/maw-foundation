@@ -41,13 +41,15 @@ import { MastersView } from './features/masters';
 import { PlatformView } from './features/platform';
 import { JobsView } from './features/jobs';
 import { NotificationsView } from './features/notifications';
+import { RbacView } from './features/rbac';
+
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
 const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -66,7 +68,7 @@ function clearAuthQuery(): void {
   }
 }
 
-const SUPERADMIN_ROLES = new Set(['owner', 'super_admin']);
+const SUPERADMIN_ROLES = new Set(['owner', 'super_admin', 'admin']);
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard', group: 'Main', sortOrder: 0 },
@@ -78,6 +80,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6 },
   { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
+  { key: 'rbac', label: 'RBAC Admin', icon: '🔑', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
   { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 9 },
   { key: 'platform', label: 'Platform', icon: '🧩', path: '/platform', group: 'Dev', sortOrder: 95 },
   { key: 'jobs', label: 'Jobs', icon: '⏳', path: '/jobs', group: 'Dev', sortOrder: 96 },
@@ -85,7 +88,8 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
-const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications']);
+
+const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications', 'rbac']);
 
 function PageContent({ page, onFeatureChange, featureOverrides }: {
   page: Page;
@@ -105,10 +109,12 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'platform': return <PlatformView />;
     case 'jobs': return <JobsView />;
     case 'notifications': return <NotificationsView />;
+    case 'rbac': return <RbacView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }
 }
+
 
 function Shell({ offlineEnabled, setOfflineEnabled }: {
   offlineEnabled: boolean;
@@ -184,7 +190,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
             header={
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 20 }}>⚡</span>
-                <span style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)' }}>{brand.name}</span>
+                <span style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)' }}>MAW Foundation Admin</span>
               </div>
             }
             footer={

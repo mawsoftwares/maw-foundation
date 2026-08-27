@@ -8,11 +8,13 @@ import { AuditLogsView } from './audit-logs';
 import { PlatformView } from './platform';
 import { JobsView } from './jobs';
 import { NotificationsView } from './notifications';
+import { RbacView } from './rbac';
 
 export const registry = new FeatureRegistry();
 
 registry.register(
   { key: 'users', name: 'Users', permissions: ['Read_Users'], Panel: UsersView },
+  { key: 'rbac', name: 'RBAC Management', permissions: [], Panel: RbacView },
   { key: 'reports', name: 'Reports', permissions: ['Read_Reports'], Panel: ReportsView },
   { key: 'orders', name: 'Orders', permissions: ['Read_Orders', 'Create_Orders'], Panel: OrdersView },
   { key: 'inventory', name: 'Inventory', permissions: ['Read_Inventory'], Panel: InventoryView },
@@ -22,3 +24,4 @@ registry.register(
   { key: 'jobs', name: 'Jobs', permissions: [], Panel: JobsView },
   { key: 'notifications', name: 'Notifications', permissions: [], Panel: NotificationsView },
 );
+
