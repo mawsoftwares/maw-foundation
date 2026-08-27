@@ -4,6 +4,7 @@ import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 import {
   AuthProvider,
   DynamicAccessProvider,
+  useDynamicAccess,
   useAuth,
   useBrand,
   NavigationProvider,
@@ -72,12 +73,12 @@ const SUPERADMIN_ROLES = new Set(['owner', 'super_admin', 'admin']);
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard', group: 'Main', sortOrder: 0 },
-  { key: 'orders', label: 'Orders', icon: '📦', path: '/orders', group: 'Main', sortOrder: 1 },
-  { key: 'reports', label: 'Reports', icon: '📈', path: '/reports', group: 'Main', sortOrder: 2 },
-  { key: 'inventory', label: 'Inventory', icon: '📋', path: '/inventory', group: 'Main', sortOrder: 3 },
-  { key: 'billing', label: 'Billing', icon: '💳', path: '/billing', group: 'Finance', sortOrder: 4 },
+  { key: 'orders', label: 'Orders', icon: '📦', path: '/orders', group: 'Main', sortOrder: 1, permission: 'Read_Orders' },
+  { key: 'reports', label: 'Reports', icon: '📈', path: '/reports', group: 'Main', sortOrder: 2, permission: 'Read_Reports' },
+  { key: 'inventory', label: 'Inventory', icon: '📋', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
+  { key: 'billing', label: 'Billing', icon: '💳', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
   { key: 'users', label: 'Users', icon: '👤', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
-  { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6 },
+  { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
   { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
   { key: 'rbac', label: 'RBAC Admin', icon: '🔑', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
@@ -88,14 +89,46 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
+/** Maps a page key to the permission required to view it. */
+const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
+  orders: 'Read_Orders',
+  reports: 'Read_Reports',
+  inventory: 'Read_Inventory',
+  billing: 'Read_Billing',
+  users: 'Read_Users',
+  'audit-logs': 'Read_AuditLogs',
+  masters: 'Master_View',
+};
 
 const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications', 'rbac']);
+
+function AccessDenied({ permission }: { permission: string }): ReactNode {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '60vh', gap: 16, textAlign: 'center',
+    }}>
+      <div style={{ fontSize: 48 }}>🔒</div>
+      <h2 style={{ margin: 0, color: 'var(--maw-fg)' }}>Access Denied</h2>
+      <p style={{ color: 'var(--maw-fgMuted)', maxWidth: 360 }}>
+        You don't have the <strong>{permission}</strong> permission required to view this page.
+        Contact your administrator to request access.
+      </p>
+    </div>
+  );
+}
 
 function PageContent({ page, onFeatureChange, featureOverrides }: {
   page: Page;
   onFeatureChange?: (key: string, enabled: boolean) => void;
   featureOverrides?: Record<string, boolean>;
 }): ReactNode {
+  const { can } = useDynamicAccess();
+  const requiredPermission = PAGE_PERMISSIONS[page];
+  if (requiredPermission !== undefined && !can(requiredPermission)) {
+    return <AccessDenied permission={requiredPermission} />;
+  }
+
   switch (page) {
     case 'dashboard': return <DashboardView />;
     case 'orders': return <OrdersView />;
@@ -149,11 +182,18 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const featureOverrides = useMemo(() => ({ offline: offlineEnabled }), [offlineEnabled]);
 
   const isSuperadmin = session !== null && SUPERADMIN_ROLES.has(session.role);
+  const { can: canDynamic, loading: accessLoading } = useDynamicAccess();
 
   const navConfig = useMemo<NavigationConfig>(() => {
-    const items = isSuperadmin
-      ? NAV_ITEMS
-      : NAV_ITEMS.filter((item) => !SUPERADMIN_ONLY_KEYS.has(item.key));
+    const items = NAV_ITEMS.filter((item) => {
+      // Hide dev/admin-only pages from non-superadmins
+      if (SUPERADMIN_ONLY_KEYS.has(item.key) && !isSuperadmin) return false;
+      // If the item requires a permission, check it against the live RBAC snapshot
+      if (item.permission !== undefined && !accessLoading) {
+        return canDynamic(item.permission);
+      }
+      return true;
+    });
     return {
       items,
       activeKey: page,
@@ -163,7 +203,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         { label: NAV_ITEMS.find((n) => n.key === page)?.label ?? page },
       ],
     };
-  }, [page, navigate, isSuperadmin]);
+  }, [page, navigate, isSuperadmin, canDynamic, accessLoading]);
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{t('common.loading')}</div>;
   if (session === null) {

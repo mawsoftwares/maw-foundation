@@ -207,7 +207,6 @@ log.info('Cache loaded', { roles: cache.getCache()!.roles.length, permissions: c
 const auth = createDynamicExpressAuth({
   jwtSecret: JWT_SECRET,
   cache,
-  superuserRoles: ['super_admin', 'owner'],
   loadUserContext: async (claims) => {
     const role = cache.getRoleByCode(claims.role);
     return { roleId: role?.id };
@@ -478,6 +477,7 @@ function requestContext(req: express.Request): AuthenticateContext {
 }
 
 app.post('/auth/login', (req, res) => {
+  console.log('--- POST /auth/login START ---', req.body);
   void (async () => {
     try {
       const { email, password, tenantId, rememberMe } = req.body as {
@@ -488,6 +488,7 @@ app.post('/auth/login', (req, res) => {
         return;
       }
 
+      console.log('Calling authService.authenticate...');
       const result = await authService.authenticate({
         tenantId: tenantId ?? DEMO_TENANT,
         email,

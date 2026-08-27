@@ -26,13 +26,6 @@ export async function checkPermissionDynamic(
 ): Promise<PermissionCheckResult> {
   const data = await cache.ensureLoaded();
 
-  if (ctx.roleId !== undefined) {
-    const role = data.roles.find((r) => r.id === ctx.roleId);
-    if (role !== undefined && isAdminRole(role.code, role.name)) {
-      return { granted: true, reason: 'admin_bypass' };
-    }
-  }
-
   if (ctx.roleId === undefined) {
     return { granted: false, reason: 'no_role' };
   }

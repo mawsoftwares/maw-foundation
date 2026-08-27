@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
 import {
-  ListPage, DataTable, Badge, Button, Modal, FormField, useForm,
+  ListPage, DataTable, Badge, Button, Modal, TextField, useForm,
   useToast, ErrorState, PageLoader, Tabs, type ColumnDef
 } from '@mawsoftwares/ui-web';
 import { client } from '../api';
@@ -203,18 +203,34 @@ function RolesTab(): ReactNode {
       {/* Create Modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Role">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <FormField label="Role Code" error={createForm.errors.code} required>
-            <input className="maw-input" value={createForm.values.code} onChange={(e) => createForm.setValue('code', e.target.value)} placeholder="e.g. clerk" />
-          </FormField>
-          <FormField label="Name" error={createForm.errors.name} required>
-            <input className="maw-input" value={createForm.values.name} onChange={(e) => createForm.setValue('name', e.target.value)} placeholder="e.g. Clerk" />
-          </FormField>
-          <FormField label="Description">
-            <input className="maw-input" value={createForm.values.description} onChange={(e) => createForm.setValue('description', e.target.value)} placeholder="Optional description" />
-          </FormField>
-          <FormField label="Sort Order">
-            <input className="maw-input" type="number" value={createForm.values.sortOrder} onChange={(e) => createForm.setValue('sortOrder', Number(e.target.value))} />
-          </FormField>
+          <TextField
+            label="Role Code"
+            required
+            error={createForm.errors.code}
+            value={createForm.values.code}
+            onChange={(e) => createForm.setValue('code', (e.target as HTMLInputElement).value)}
+            placeholder="e.g. clerk"
+          />
+          <TextField
+            label="Name"
+            required
+            error={createForm.errors.name}
+            value={createForm.values.name}
+            onChange={(e) => createForm.setValue('name', (e.target as HTMLInputElement).value)}
+            placeholder="e.g. Clerk"
+          />
+          <TextField
+            label="Description"
+            value={createForm.values.description}
+            onChange={(e) => createForm.setValue('description', (e.target as HTMLInputElement).value)}
+            placeholder="Optional description"
+          />
+          <TextField
+            label="Sort Order"
+            type="number"
+            value={String(createForm.values.sortOrder)}
+            onChange={(e) => createForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
+          />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
             <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
@@ -225,15 +241,24 @@ function RolesTab(): ReactNode {
       {/* Edit Modal */}
       <Modal open={!!editingRole} onClose={() => setEditingRole(null)} title={`Edit Role: ${editingRole?.code}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <FormField label="Name" error={editForm.errors.name} required>
-            <input className="maw-input" value={editForm.values.name} onChange={(e) => editForm.setValue('name', e.target.value)} />
-          </FormField>
-          <FormField label="Description">
-            <input className="maw-input" value={editForm.values.description} onChange={(e) => editForm.setValue('description', e.target.value)} />
-          </FormField>
-          <FormField label="Sort Order">
-            <input className="maw-input" type="number" value={editForm.values.sortOrder} onChange={(e) => editForm.setValue('sortOrder', Number(e.target.value))} />
-          </FormField>
+          <TextField
+            label="Name"
+            required
+            error={editForm.errors.name}
+            value={editForm.values.name}
+            onChange={(e) => editForm.setValue('name', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Description"
+            value={editForm.values.description}
+            onChange={(e) => editForm.setValue('description', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Sort Order"
+            type="number"
+            value={String(editForm.values.sortOrder)}
+            onChange={(e) => editForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
+          />
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--maw-text-sm)' }}>
             <input type="checkbox" checked={editForm.values.isActive} onChange={(e) => editForm.setValue('isActive', e.target.checked)} />
             Active
@@ -505,18 +530,34 @@ function PermissionsTab(): ReactNode {
       {/* Create Modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Permission">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <FormField label="Permission Code" error={createForm.errors.code} required>
-            <input className="maw-input" value={createForm.values.code} onChange={(e) => createForm.setValue('code', e.target.value)} placeholder="e.g. Create_Orders" />
-          </FormField>
-          <FormField label="Name" error={createForm.errors.name} required>
-            <input className="maw-input" value={createForm.values.name} onChange={(e) => createForm.setValue('name', e.target.value)} placeholder="e.g. Create Orders" />
-          </FormField>
-          <FormField label="Description">
-            <input className="maw-input" value={createForm.values.description} onChange={(e) => createForm.setValue('description', e.target.value)} placeholder="Optional description" />
-          </FormField>
-          <FormField label="Sort Order">
-            <input className="maw-input" type="number" value={createForm.values.sortOrder} onChange={(e) => createForm.setValue('sortOrder', Number(e.target.value))} />
-          </FormField>
+          <TextField
+            label="Permission Code"
+            required
+            error={createForm.errors.code}
+            value={createForm.values.code}
+            onChange={(e) => createForm.setValue('code', (e.target as HTMLInputElement).value)}
+            placeholder="e.g. Create_Orders"
+          />
+          <TextField
+            label="Name"
+            required
+            error={createForm.errors.name}
+            value={createForm.values.name}
+            onChange={(e) => createForm.setValue('name', (e.target as HTMLInputElement).value)}
+            placeholder="e.g. Create Orders"
+          />
+          <TextField
+            label="Description"
+            value={createForm.values.description}
+            onChange={(e) => createForm.setValue('description', (e.target as HTMLInputElement).value)}
+            placeholder="Optional description"
+          />
+          <TextField
+            label="Sort Order"
+            type="number"
+            value={String(createForm.values.sortOrder)}
+            onChange={(e) => createForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
+          />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
             <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
@@ -527,15 +568,24 @@ function PermissionsTab(): ReactNode {
       {/* Edit Modal */}
       <Modal open={!!editingPerm} onClose={() => setEditingPerm(null)} title={`Edit Permission: ${editingPerm?.code}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <FormField label="Name" error={editForm.errors.name} required>
-            <input className="maw-input" value={editForm.values.name} onChange={(e) => editForm.setValue('name', e.target.value)} />
-          </FormField>
-          <FormField label="Description">
-            <input className="maw-input" value={editForm.values.description} onChange={(e) => editForm.setValue('description', e.target.value)} />
-          </FormField>
-          <FormField label="Sort Order">
-            <input className="maw-input" type="number" value={editForm.values.sortOrder} onChange={(e) => editForm.setValue('sortOrder', Number(e.target.value))} />
-          </FormField>
+          <TextField
+            label="Name"
+            required
+            error={editForm.errors.name}
+            value={editForm.values.name}
+            onChange={(e) => editForm.setValue('name', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Description"
+            value={editForm.values.description}
+            onChange={(e) => editForm.setValue('description', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Sort Order"
+            type="number"
+            value={String(editForm.values.sortOrder)}
+            onChange={(e) => editForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
+          />
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--maw-text-sm)' }}>
             <input type="checkbox" checked={editForm.values.isActive} onChange={(e) => editForm.setValue('isActive', e.target.checked)} />
             Active
@@ -688,21 +738,40 @@ function ModulesTab(): ReactNode {
       {/* Create Modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Module">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <FormField label="Module Code" error={createForm.errors.code} required>
-            <input className="maw-input" value={createForm.values.code} onChange={(e) => createForm.setValue('code', e.target.value)} placeholder="e.g. orders" />
-          </FormField>
-          <FormField label="Name" error={createForm.errors.name} required>
-            <input className="maw-input" value={createForm.values.name} onChange={(e) => createForm.setValue('name', e.target.value)} placeholder="e.g. Orders" />
-          </FormField>
-          <FormField label="Description">
-            <input className="maw-input" value={createForm.values.description} onChange={(e) => createForm.setValue('description', e.target.value)} placeholder="Optional description" />
-          </FormField>
-          <FormField label="Parent Module ID">
-            <input className="maw-input" type="number" value={createForm.values.parentModuleId} onChange={(e) => createForm.setValue('parentModuleId', e.target.value)} placeholder="Optional parent module ID" />
-          </FormField>
-          <FormField label="Sort Order">
-            <input className="maw-input" type="number" value={createForm.values.sortOrder} onChange={(e) => createForm.setValue('sortOrder', Number(e.target.value))} />
-          </FormField>
+          <TextField
+            label="Module Code"
+            required
+            error={createForm.errors.code}
+            value={createForm.values.code}
+            onChange={(e) => createForm.setValue('code', (e.target as HTMLInputElement).value)}
+            placeholder="e.g. orders"
+          />
+          <TextField
+            label="Name"
+            required
+            error={createForm.errors.name}
+            value={createForm.values.name}
+            onChange={(e) => createForm.setValue('name', (e.target as HTMLInputElement).value)}
+            placeholder="e.g. Orders"
+          />
+          <TextField
+            label="Description"
+            value={createForm.values.description}
+            onChange={(e) => createForm.setValue('description', (e.target as HTMLInputElement).value)}
+            placeholder="Optional description"
+          />
+          <TextField
+            label="Parent Module ID"
+            value={createForm.values.parentModuleId}
+            onChange={(e) => createForm.setValue('parentModuleId', (e.target as HTMLInputElement).value)}
+            placeholder="Optional parent module ID"
+          />
+          <TextField
+            label="Sort Order"
+            type="number"
+            value={String(createForm.values.sortOrder)}
+            onChange={(e) => createForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
+          />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
             <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
@@ -713,18 +782,29 @@ function ModulesTab(): ReactNode {
       {/* Edit Modal */}
       <Modal open={!!editingMod} onClose={() => setEditingMod(null)} title={`Edit Module: ${editingMod?.code}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <FormField label="Name" error={editForm.errors.name} required>
-            <input className="maw-input" value={editForm.values.name} onChange={(e) => editForm.setValue('name', e.target.value)} />
-          </FormField>
-          <FormField label="Description">
-            <input className="maw-input" value={editForm.values.description} onChange={(e) => editForm.setValue('description', e.target.value)} />
-          </FormField>
-          <FormField label="Parent Module ID">
-            <input className="maw-input" type="number" value={editForm.values.parentModuleId} onChange={(e) => editForm.setValue('parentModuleId', e.target.value)} />
-          </FormField>
-          <FormField label="Sort Order">
-            <input className="maw-input" type="number" value={editForm.values.sortOrder} onChange={(e) => editForm.setValue('sortOrder', Number(e.target.value))} />
-          </FormField>
+          <TextField
+            label="Name"
+            required
+            error={editForm.errors.name}
+            value={editForm.values.name}
+            onChange={(e) => editForm.setValue('name', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Description"
+            value={editForm.values.description}
+            onChange={(e) => editForm.setValue('description', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Parent Module ID"
+            value={editForm.values.parentModuleId}
+            onChange={(e) => editForm.setValue('parentModuleId', (e.target as HTMLInputElement).value)}
+          />
+          <TextField
+            label="Sort Order"
+            type="number"
+            value={String(editForm.values.sortOrder)}
+            onChange={(e) => editForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
+          />
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--maw-text-sm)' }}>
             <input type="checkbox" checked={editForm.values.isActive} onChange={(e) => editForm.setValue('isActive', e.target.checked)} />
             Active

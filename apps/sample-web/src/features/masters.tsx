@@ -6,7 +6,7 @@ import type {
 } from '@mawsoftwares/masters';
 import {
   ListPage, DataTable, Badge, Button, Modal, TextField, useForm, FormField,
-  useToast, ErrorState, PageLoader, Tabs, type ColumnDef, type SortState,
+  useDynamicAccess, useToast, ErrorState, PageLoader, Tabs, type ColumnDef, type SortState,
 } from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
@@ -33,6 +33,9 @@ const MASTER_COLUMNS: ColumnDef<Master>[] = [
 
 function MasterList({ onSelect }: { onSelect: (m: Master) => void }): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
+  const canCreate = can('Master_Create');
+  const canDelete = can('Master_Delete');
   const [masters, setMasters] = useState<Master[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -79,7 +82,7 @@ function MasterList({ onSelect }: { onSelect: (m: Master) => void }): ReactNode 
 
   if (!loaded && !loading && !error) {
     return (
-      <ListPage title="Master Data" createLabel="New Master" onCreate={() => setShowCreate(true)}>
+      <ListPage title="Master Data" createLabel="New Master" onCreate={canCreate ? () => setShowCreate(true) : undefined}>
         <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)' }}>
           <Button onClick={load}>Load Masters from API</Button>
         </div>
@@ -109,7 +112,7 @@ function MasterList({ onSelect }: { onSelect: (m: Master) => void }): ReactNode 
         title="Master Data"
         description={`${masters.length} masters defined`}
         createLabel="New Master"
-        onCreate={() => setShowCreate(true)}
+        onCreate={canCreate ? () => setShowCreate(true) : undefined}
         filter={filter}
         onFilterChange={setFilter}
       >
@@ -126,6 +129,20 @@ function MasterList({ onSelect }: { onSelect: (m: Master) => void }): ReactNode 
                 </Button>
               ),
             },
+            ...(canDelete ? [{
+              key: 'delete' as keyof Master,
+              header: '',
+              width: 70,
+              render: (row: Master) => (
+                <Button variant="ghost" onClick={() => {
+                  client.request(`/api/v1/masters/${row.id}`, { method: 'DELETE' })
+                    .then(() => { toast.success('Deleted'); load(); })
+                    .catch((e: ApiError) => toast.error(e.message));
+                }} style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-danger)' }}>
+                  Delete
+                </Button>
+              ),
+            }] : []),
           ]}
           data={sorted}
           keyField="id"
@@ -223,6 +240,9 @@ const VALUE_COLUMNS: ColumnDef<MasterValue>[] = [
 
 function MasterDetail({ master, onBack }: { master: Master; onBack: () => void }): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
+  const canManageValues = can('Master_Manage_Values');
+  const canManageFields = can('Master_Manage_Fields');
   const [tab, setTab] = useState('values');
 
   // Fields state
@@ -345,8 +365,8 @@ function MasterDetail({ master, onBack }: { master: Master; onBack: () => void }
           loaded={valuesLoaded}
           loading={valuesLoading}
           onLoad={loadValues}
-          onCreate={() => setShowCreateValue(true)}
-          onDelete={deleteValue}
+          onCreate={canManageValues ? () => setShowCreateValue(true) : undefined}
+          onDelete={canManageValues ? deleteValue : undefined}
         />
       )}
 
@@ -356,8 +376,8 @@ function MasterDetail({ master, onBack }: { master: Master; onBack: () => void }
           loaded={fieldsLoaded}
           loading={fieldsLoading}
           onLoad={loadFields}
-          onCreate={() => setShowCreateField(true)}
-          onDelete={deleteField}
+          onCreate={canManageFields ? () => setShowCreateField(true) : undefined}
+          onDelete={canManageFields ? deleteField : undefined}
         />
       )}
 
@@ -453,8 +473,8 @@ function ValuesTab({ values, loaded, loading, onLoad, onCreate, onDelete }: {
   loaded: boolean;
   loading: boolean;
   onLoad: () => void;
-  onCreate: () => void;
-  onDelete: (id: string) => void;
+  onCreate?: () => void;
+  onDelete?: (id: string) => void;
 }): ReactNode {
   if (!loaded && !loading) {
     return (
@@ -469,21 +489,21 @@ function ValuesTab({ values, loaded, loading, onLoad, onCreate, onDelete }: {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--maw-space-md)' }}>
         <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{values.length} values</span>
-        <Button onClick={onCreate}>+ Add Value</Button>
+        {onCreate !== undefined && <Button onClick={onCreate}>+ Add Value</Button>}
       </div>
       <DataTable
         columns={[
           ...VALUE_COLUMNS,
-          {
+          ...(onDelete !== undefined ? [{
             key: 'actions' as keyof MasterValue,
             header: '',
             width: 70,
-            render: (row) => (
+            render: (row: MasterValue) => (
               <Button variant="ghost" onClick={() => onDelete(row.id)} style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-danger)' }}>
                 Delete
               </Button>
             ),
-          },
+          }] : []),
         ]}
         data={values}
         keyField="id"
@@ -498,8 +518,8 @@ function FieldsTab({ fields, loaded, loading, onLoad, onCreate, onDelete }: {
   loaded: boolean;
   loading: boolean;
   onLoad: () => void;
-  onCreate: () => void;
-  onDelete: (id: string) => void;
+  onCreate?: () => void;
+  onDelete?: (id: string) => void;
 }): ReactNode {
   if (!loaded && !loading) {
     return (
@@ -514,21 +534,21 @@ function FieldsTab({ fields, loaded, loading, onLoad, onCreate, onDelete }: {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--maw-space-md)' }}>
         <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{fields.length} fields</span>
-        <Button onClick={onCreate}>+ Add Field</Button>
+        {onCreate !== undefined && <Button onClick={onCreate}>+ Add Field</Button>}
       </div>
       <DataTable
         columns={[
           ...FIELD_COLUMNS,
-          {
+          ...(onDelete !== undefined ? [{
             key: 'actions' as keyof MasterField,
             header: '',
             width: 70,
-            render: (row) => (
+            render: (row: MasterField) => (
               <Button variant="ghost" onClick={() => onDelete(row.id)} style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-danger)' }}>
                 Delete
               </Button>
             ),
-          },
+          }] : []),
         ]}
         data={fields}
         keyField="id"

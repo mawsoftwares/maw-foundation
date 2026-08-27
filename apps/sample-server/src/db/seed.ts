@@ -118,6 +118,11 @@ try {
     log.info('Master modules upserted', { count: registry.getAll().length });
 
     // --- Dynamic RBAC: role_permissions ---
+    const allPermCodes = allPerms.map((p) => p.code);
+    rolePermissionMap.super_admin = allPermCodes;
+    rolePermissionMap.owner = allPermCodes;
+    rolePermissionMap.admin = allPermCodes;
+
     let rpCount = 0;
     for (const [roleCode, permCodes] of Object.entries(rolePermissionMap)) {
       const roleId = roleIdMap[roleCode];

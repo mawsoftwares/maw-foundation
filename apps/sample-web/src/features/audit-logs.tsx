@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
-import { ListPage, DataTable, Badge, Button, TextField, useToast, ErrorState, PageLoader, type ColumnDef } from '@mawsoftwares/ui-web';
+import { ListPage, DataTable, Badge, Button, TextField, useDynamicAccess, useToast, ErrorState, PageLoader, type ColumnDef } from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 interface AuditEntry {
@@ -46,6 +46,7 @@ const COLUMNS: ColumnDef<AuditEntry>[] = [
 
 export function AuditLogsView(): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -91,7 +92,7 @@ export function AuditLogsView(): ReactNode {
       title="Audit Logs"
       description={loaded ? `${logs.length} entries` : undefined}
       toolbar={
-        loaded ? <Button variant="ghost" onClick={handleExport}>Export CSV</Button> : undefined
+        loaded && can('Export_AuditLogs') ? <Button variant="ghost" onClick={handleExport}>Export CSV</Button> : undefined
       }
     >
       <div style={{ display: 'flex', gap: 'var(--maw-space-sm)', marginBottom: 'var(--maw-space-md)', alignItems: 'flex-end' }}>

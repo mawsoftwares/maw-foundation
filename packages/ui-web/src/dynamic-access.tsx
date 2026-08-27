@@ -34,10 +34,12 @@ export interface DynamicAccessProviderProps {
   readonly children: ReactNode;
 }
 
-const defaultIsAdmin = (role: string): boolean => {
-  const lower = role.toLowerCase();
-  return lower === 'owner' || lower === 'admin' || lower === 'super_admin' || lower === 'superadmin';
-};
+/**
+ * By default, no role bypasses the permission check — all access is driven by the
+ * explicit permissions returned in the snapshot from the backend. Pass a custom
+ * `isAdminRole` to the provider if you need role-based bypass for a specific product.
+ */
+const defaultIsAdmin = (_role: string): boolean => false;
 
 const EMPTY: DynamicAccessSnapshot = { permissions: [], modules: [], role: '' };
 
@@ -82,7 +84,10 @@ export function DynamicAccessProvider({
       modules: snapshot.modules,
       isAdmin,
       loading: authLoading || loading,
-      can: (permission) => isAdmin || matchesPermission(snapshot.permissions, permission),
+      // Permission is purely data-driven from the snapshot — no role bypass.
+      // isAdmin is still exposed for role-level UI decisions (e.g. showing admin chrome)
+      // but does NOT grant permission access automatically.
+      can: (permission) => matchesPermission(snapshot.permissions, permission),
       reload,
     }),
     [snapshot, isAdmin, authLoading, loading, reload],

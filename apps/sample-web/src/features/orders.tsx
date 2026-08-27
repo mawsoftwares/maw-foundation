@@ -11,6 +11,7 @@ import {
   TextField,
   useForm,
   FormField,
+  useDynamicAccess,
   useToast,
   ErrorState,
   PageLoader,
@@ -33,6 +34,7 @@ const COLUMNS: ColumnDef<Order>[] = [
 
 export function OrdersView(): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -94,7 +96,7 @@ export function OrdersView(): ReactNode {
 
   if (!loaded && !loading && !error) {
     return (
-      <ListPage title="Orders" createLabel="New Order" onCreate={() => setShowCreate(true)}>
+      <ListPage title="Orders" createLabel="New Order" onCreate={can('Create_Orders') ? () => setShowCreate(true) : undefined}>
         <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)' }}>
           <Button onClick={loadOrders}>Load Orders from API</Button>
         </div>
@@ -124,10 +126,10 @@ export function OrdersView(): ReactNode {
         title="Orders"
         description={`${orders.length} total orders`}
         createLabel="New Order"
-        onCreate={() => setShowCreate(true)}
+        onCreate={can('Create_Orders') ? () => setShowCreate(true) : undefined}
         filter={filter}
         onFilterChange={setFilter}
-        toolbar={<Button variant="ghost" onClick={exportCsv}>Export CSV</Button>}
+        toolbar={can('Create_Orders') ? <Button variant="ghost" onClick={exportCsv}>Export CSV</Button> : undefined}
       >
         <DataTable
           columns={COLUMNS}

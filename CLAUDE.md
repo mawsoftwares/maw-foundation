@@ -129,3 +129,41 @@ Before coding, search for at least: User, UserService, UserRepository, Role, Per
 ### 17. Implementation Report Must Include Reuse Decisions
 
 At completion, report what existing infrastructure was reused (components, services, utilities, packages, API/DB/Auth/RBAC infrastructure) vs. what was newly created. For every new abstraction, explain why the existing implementation could not be reused.
+
+---
+
+## RBAC Mandatory Rules — Every New Module
+
+> **Full detail in `.agents/AGENTS.md`**. The summary below is mandatory.
+
+This project uses **data-driven RBAC**. All permission checks are driven exclusively by the permissions returned from `GET /me`. No hardcoded role bypasses are permitted.
+
+### Adding a new module — required steps
+
+1. **Backend**: Register in `registry.register(...)` in `apps/sample-server/src/main.ts` with `actions` array using `Read`, `Create`, `Update`, `Delete`, `Export` etc.  
+2. **Backend**: Add `auth.requirePermission('Action_Module')` to every route handler.  
+3. **Seed**: Re-run seed — the existing loop in `apps/sample-server/src/db/seed.ts` assigns all permissions to admin roles automatically.  
+4. **Frontend nav**: Add `permission: 'Read_MyModule'` to the `NAV_ITEMS` entry in `apps/sample-web/src/App.tsx`. This is what hides the sidebar item for unauthorized users.  
+5. **Frontend nav**: Add `'my-module': 'Read_MyModule'` to `PAGE_PERMISSIONS` in `App.tsx` so direct URL navigation is also blocked.  
+6. **Frontend buttons**: In the feature component, `import { useDynamicAccess } from '@mawsoftwares/ui-web'` and check `can('Create_MyModule')` / `can('Delete_MyModule')` before rendering action buttons. Pass `onCreate={undefined}` to `ListPage` when the user lacks the create permission — the button disappears automatically.
+
+### Forbidden patterns
+
+```ts
+// FORBIDDEN — hardcoded role bypass
+if (role === 'super_admin') { /* show button */ }
+
+// FORBIDDEN — isAdmin short-circuit in can()
+can: (p) => isAdmin || matchesPermission(permissions, p)
+
+// FORBIDDEN — nav item without a permission field when the module has a Read permission
+{ key: 'my-module', label: 'My Module', path: '/my-module' }  // missing permission:
+```
+
+### Permission naming convention
+
+```
+Action_ModuleName     →   Read_Orders | Create_Billing | Export_AuditLogs | Master_Manage_Values
+```
+
+The `DynamicAccessProvider` in `packages/ui-web/src/dynamic-access.tsx` has `defaultIsAdmin = () => false` by design — `can()` is purely data-driven for all roles including `super_admin`. Do not change this.

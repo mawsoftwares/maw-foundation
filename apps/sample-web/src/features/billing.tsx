@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
-import { ListPage, DataTable, Badge, Button, useToast, ErrorState, PageLoader, type ColumnDef } from '@mawsoftwares/ui-web';
+import { ListPage, DataTable, Badge, Button, useDynamicAccess, useToast, ErrorState, PageLoader, type ColumnDef } from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
 interface Bill {
@@ -28,6 +28,7 @@ const COLUMNS: ColumnDef<Bill>[] = [
 
 export function BillingView(): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -53,9 +54,11 @@ export function BillingView(): ReactNode {
   if (error) return <ErrorState title="Failed to load billing" message={error} retry={load} />;
   if (loading && !loaded) return <PageLoader message="Loading bills..." />;
 
+  const canCreate = can('Create_Billing');
+
   if (!loaded) {
     return (
-      <ListPage title="Billing" createLabel="New Bill" onCreate={createBill}>
+      <ListPage title="Billing" createLabel="New Bill" onCreate={canCreate ? createBill : undefined}>
         <div style={{ textAlign: 'center', padding: 'var(--maw-space-xxl)' }}>
           <Button onClick={load}>Load Bills</Button>
         </div>
@@ -64,7 +67,7 @@ export function BillingView(): ReactNode {
   }
 
   return (
-    <ListPage title="Billing" description={`${bills.length} bills`} createLabel="New Bill" onCreate={createBill}>
+    <ListPage title="Billing" description={`${bills.length} bills`} createLabel="New Bill" onCreate={canCreate ? createBill : undefined}>
       <DataTable columns={COLUMNS} data={bills} keyField="id" stickyHeader />
     </ListPage>
   );

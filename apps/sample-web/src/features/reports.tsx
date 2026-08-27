@@ -7,6 +7,7 @@ import {
   Alert,
   PageLoader,
   ErrorState,
+  useDynamicAccess,
   useToast,
   DataTable,
   type ColumnDef,
@@ -41,6 +42,7 @@ type OrderRow = Record<string, unknown> & { id: string };
 
 export function ReportsView(): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
   const [definitions, setDefinitions] = useState<ReportDefinitionInfo[]>([]);
   const [selectedDef, setSelectedDef] = useState<ReportDefinitionInfo | null>(null);
   const [result, setResult] = useState<ReportResult | null>(null);
@@ -180,9 +182,11 @@ export function ReportsView(): ReactNode {
                 style={{ padding: '6px 8px', borderRadius: 'var(--maw-radius-sm)', border: '1px solid var(--maw-border)', fontSize: 'var(--maw-text-xs)', background: 'var(--maw-bg)', color: 'var(--maw-fg)', width: 160 }}
               />
             )}
-            <Button onClick={() => void runReport(1)} disabled={loading}>
-              {loading ? 'Running...' : 'Run Report'}
-            </Button>
+            {can('Create_Reports') && (
+              <Button onClick={() => void runReport(1)} disabled={loading}>
+                {loading ? 'Running...' : 'Run Report'}
+              </Button>
+            )}
           </Stack>
         </Card>
       )}
