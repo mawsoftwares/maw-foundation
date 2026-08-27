@@ -6,7 +6,10 @@ import {
   Stack,
   Button,
   Divider,
-  useToast
+  Tabs,
+  useToast,
+  useFeatureFlags,
+  useDynamicAccess
 } from '@mawsoftwares/ui-web';
 
 interface FeatureToggle {
@@ -36,11 +39,19 @@ export interface SettingsViewProps {
 
 export function SettingsView({ featureOverrides, onFeatureChange }: SettingsViewProps = {}): ReactNode {
   const toast = useToast();
+  const { flags: ffFlags, _demoToggleFlag } = useFeatureFlags();
+  const { can } = useDynamicAccess();
+  const canUpdateFeatureFlags = can('Update_FeatureFlags');
+
   const [flags, setFlags] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
     for (const f of FEATURES) defaults[f.key] = featureOverrides?.[f.key] ?? (f.key === 'darkMode' || f.key === 'auditLogs');
     return defaults;
   });
+
+  const categories = [...new Set(FEATURES.map((f) => f.category))];
+  const allTabs = [...categories, 'Feature Flags'];
+  const [activeTab, setActiveTab] = useState(allTabs[0] || 'Core');
 
   const toggle = (key: string) => {
     setFlags((prev) => {
@@ -50,8 +61,6 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
       return next;
     });
   };
-
-  const categories = [...new Set(FEATURES.map((f) => f.category))];
 
   return (
     <div>
@@ -65,14 +74,22 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
         <Badge variant="warning">Superadmin Only</Badge>
       </Stack>
 
-      {categories.map((category) => (
-        <div key={category} style={{ marginBottom: 'var(--maw-space-xl)' }}>
-          <h2 style={{ margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-md)', fontWeight: 600, color: 'var(--maw-fg)' }}>
-            {category}
-          </h2>
-          <Card style={{ padding: 0, overflow: 'hidden' }}>
-            {FEATURES.filter((f) => f.category === category).map((feature, i, arr) => (
-              <div key={feature.key}>
+      <Tabs
+        tabs={allTabs.map(c => ({ key: c, label: c }))}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        style={{ marginBottom: 'var(--maw-space-lg)' }}
+      />
+
+      {activeTab === 'Feature Flags' ? (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          {Object.keys(ffFlags).length === 0 ? (
+            <div style={{ padding: 'var(--maw-space-md)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>
+              No feature flags loaded.
+            </div>
+          ) : (
+            Object.entries(ffFlags).map(([key, isEnabled], i, arr) => (
+              <div key={key}>
                 <Stack
                   direction="row"
                   align="center"
@@ -81,47 +98,76 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
                 >
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
-                      {feature.label}
-                    </div>
-                    <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
-                      {feature.description}
+                      {key}
                     </div>
                   </div>
                   <Toggle
-                    checked={flags[feature.key] ?? false}
-                    onChange={() => toggle(feature.key)}
-                    label={feature.label}
+                    checked={isEnabled}
+                    onChange={(checked) => _demoToggleFlag?.(key, checked)}
+                    label={isEnabled ? 'Enabled' : 'Disabled'}
                   />
                 </Stack>
                 {i < arr.length - 1 && <Divider />}
               </div>
-            ))}
-          </Card>
-        </div>
-      ))}
+            ))
+          )}
+        </Card>
+      ) : (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          {FEATURES.filter((f) => f.category === activeTab).map((feature, i, arr) => (
+            <div key={feature.key}>
+              <Stack
+                direction="row"
+                align="center"
+                gap="var(--maw-space-lg)"
+                style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
+                    {feature.label}
+                  </div>
+                  <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
+                    {feature.description}
+                  </div>
+                </div>
+                <Toggle
+                  checked={flags[feature.key] ?? false}
+                  onChange={() => toggle(feature.key)}
+                  label={feature.label}
+                />
+              </Stack>
+              {i < arr.length - 1 && <Divider />}
+            </div>
+          ))}
+        </Card>
+      )}
 
-      <Card style={{ padding: 'var(--maw-space-lg)', marginTop: 'var(--maw-space-lg)' }}>
-        <Stack direction="row" align="center" gap="var(--maw-space-md)">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 600, color: 'var(--maw-fg)' }}>
-              Active features
+      {activeTab !== 'Feature Flags' && (
+        <Card style={{ padding: 'var(--maw-space-lg)', marginTop: 'var(--maw-space-lg)' }}>
+          <Stack direction="row" align="center" gap="var(--maw-space-md)">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 600, color: 'var(--maw-fg)' }}>
+                Active features
+              </div>
+              <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
+                {Object.values(flags).filter(Boolean).length} of {FEATURES.length} features enabled
+              </div>
             </div>
-            <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
-              {Object.values(flags).filter(Boolean).length} of {FEATURES.length} features enabled
-            </div>
-          </div>
-          <Stack direction="row" gap="4px" style={{ flexWrap: 'wrap' }}>
-            {FEATURES.filter((f) => flags[f.key]).map((f) => (
-              <Badge key={f.key} variant="success">{f.label}</Badge>
-            ))}
+            <Stack direction="row" gap="4px" style={{ flexWrap: 'wrap' }}>
+              {FEATURES.filter((f) => flags[f.key]).map((f) => (
+                <Badge key={f.key} variant="success">{f.label}</Badge>
+              ))}
+            </Stack>
           </Stack>
-        </Stack>
-      </Card>
+        </Card>
+      )}
 
-      <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-xl)', justifyContent: 'flex-end' }}>
-        <Button variant="ghost" onClick={() => toast.info('Changes discarded')}>Reset</Button>
-        <Button onClick={() => toast.success('Settings saved')}>Save Changes</Button>
-      </Stack>
+      {activeTab !== 'Feature Flags' && (
+        <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-xl)', justifyContent: 'flex-end' }}>
+          <Button variant="ghost" onClick={() => toast.info('Changes discarded')}>Reset</Button>
+          <Button onClick={() => toast.success('Settings saved')}>Save Changes</Button>
+        </Stack>
+      )}
     </div>
   );
 }
