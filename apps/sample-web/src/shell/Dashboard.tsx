@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAuth, useI18n, DashboardPage, KpiGrid, WidgetGrid, Widget, MiniBarChart, MiniLineChart, ActivityFeed } from '@mawsoftwares/ui-web';
+import { useAuth, useI18n, DashboardPage, KpiGrid, WidgetGrid, Widget, MiniBarChart, MiniLineChart, ActivityFeed, FeatureFlagProvider } from '@mawsoftwares/ui-web';
 
 const SAMPLE_ORDERS = [12, 19, 8, 15, 22, 30, 25, 18, 27, 35, 20, 28];
 const SAMPLE_REVENUE = [45000, 52000, 48000, 61000, 55000, 72000, 68000, 75000, 81000, 79000, 85000, 92000];
@@ -66,6 +66,9 @@ export function DashboardView(): ReactNode {
             </div>
           </div>
         </Widget>
+
+
+
       </WidgetGrid>
     </DashboardPage>
   );

@@ -33,6 +33,13 @@ export {
   type DynamicAccessProviderProps,
 } from './dynamic-access';
 export { FeatureHost, type FeatureHostProps } from './feature-host';
+export {
+  FeatureFlagProvider,
+  useFeatureFlags,
+  useFeatureFlag,
+  FeatureGuard,
+  type FeatureFlagProviderProps,
+} from './feature-flags';
 
 // i18n
 export { I18nProvider, useI18n, useT, useNamespacedT, type I18nProviderProps } from './i18n';

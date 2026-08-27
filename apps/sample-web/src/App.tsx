@@ -20,6 +20,7 @@ import {
   NetworkStatusBadge,
   OfflineBanner,
   SyncStatusIndicator,
+  FeatureFlagProvider,
   type NavItem,
   type NavigationConfig,
 } from '@mawsoftwares/ui-web';
@@ -324,9 +325,9 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
                     {session.role}
                   </span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => void logout()} 
+                <Button
+                  variant="ghost"
+                  onClick={() => void logout()}
                   style={{ padding: '6px 12px', fontSize: 'var(--maw-text-xs)', borderRadius: 'var(--maw-radius-pill)', color: 'var(--maw-danger)' }}
                 >
                   Logout
@@ -349,13 +350,15 @@ export function App(): ReactNode {
   return (
     <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
       <DynamicAccessProvider load={loadDynamicAccess}>
-        <OfflineProvider
-          networkManager={offlineInfra.networkManager}
-          syncEngine={offlineInfra.syncEngine}
-          enabled={offlineEnabled}
-        >
-          <Shell offlineEnabled={offlineEnabled} setOfflineEnabled={setOfflineEnabled} />
-        </OfflineProvider>
+        <FeatureFlagProvider fetchFlags={async () => ({ 'advanced_reports': true })}>
+          <OfflineProvider
+            networkManager={offlineInfra.networkManager}
+            syncEngine={offlineInfra.syncEngine}
+            enabled={offlineEnabled}
+          >
+            <Shell offlineEnabled={offlineEnabled} setOfflineEnabled={setOfflineEnabled} />
+          </OfflineProvider>
+        </FeatureFlagProvider>
       </DynamicAccessProvider>
     </AuthProvider>
   );
