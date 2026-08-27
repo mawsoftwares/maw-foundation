@@ -353,20 +353,20 @@ export function AppShell({
               boxShadow: '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
               position: 'sticky',
               top: 0,
               zIndex: 'var(--maw-z-sticky)' as unknown as number,
               flexShrink: 0,
               transition: 'all 0.3s ease',
+              gap: 'var(--maw-space-md)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-md)' }}>
-              {isMobile && (
-                <IconButton label="Menu" onClick={toggleSidebar}>
-                  ☰
-                </IconButton>
-              )}
+            {isMobile && (
+              <IconButton label="Menu" onClick={toggleSidebar}>
+                ☰
+              </IconButton>
+            )}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
               {header}
             </div>
           </header>

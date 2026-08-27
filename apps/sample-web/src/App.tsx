@@ -246,59 +246,92 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         header={
           <>
             <Breadcrumbs />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <select
-                value={brand.tenantId}
-                onChange={(e) => {
-                  void switchTenant(e.target.value);
-                  toast.success(`Brand: ${e.target.value}`);
-                }}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: 'var(--maw-radius-sm)',
-                  border: '2px solid var(--maw-brand)',
-                  fontSize: 'var(--maw-text-xs)',
-                  background: 'var(--maw-bg)',
-                  color: 'var(--maw-fg)',
-                  fontWeight: 600,
-                }}
-              >
-                {AVAILABLE_TENANTS.map((tid) => (
-                  <option key={tid} value={tid}>{tid}</option>
-                ))}
-              </select>
-              <select
-                value={locale}
-                onChange={(e) => {
-                  setLocale(e.target.value);
-                  toast.info(`Language: ${e.target.value.toUpperCase()}`);
-                }}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: 'var(--maw-radius-sm)',
-                  border: '1px solid var(--maw-border)',
-                  fontSize: 'var(--maw-text-xs)',
-                  background: 'var(--maw-bg)',
-                  color: 'var(--maw-fg)',
-                }}
-              >
-                {availableLocales.map((l) => (
-                  <option key={l} value={l}>{l.toUpperCase()}</option>
-                ))}
-              </select>
-              <Button
-                variant="ghost"
-                onClick={toggleColorMode}
-                style={{ padding: '4px 10px', fontSize: 14 }}
-              >
-                {isDark ? '☀️' : '🌙'}
-              </Button>
-              <NetworkStatusBadge />
-              <SyncStatusIndicator />
-              <Badge variant="info">{session.role}</Badge>
-              <Button variant="ghost" onClick={() => void logout()} style={{ fontSize: 'var(--maw-text-sm)' }}>
-                {t('auth.logout')}
-              </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <select
+                  value={brand.tenantId}
+                  onChange={(e) => {
+                    void switchTenant(e.target.value);
+                    toast.success(`Brand: ${e.target.value}`);
+                  }}
+                  className="maw-btn-hover"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 'var(--maw-radius-pill)',
+                    border: '1px solid color-mix(in srgb, var(--maw-brand) 50%, transparent)',
+                    fontSize: 'var(--maw-text-xs)',
+                    background: 'color-mix(in srgb, var(--maw-brand) 10%, transparent)',
+                    color: 'var(--maw-brand)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    paddingRight: 24,
+                  }}
+                >
+                  {AVAILABLE_TENANTS.map((tid) => (
+                    <option key={tid} value={tid}>{tid}</option>
+                  ))}
+                </select>
+                <select
+                  value={locale}
+                  onChange={(e) => {
+                    setLocale(e.target.value);
+                    toast.info(`Language: ${e.target.value.toUpperCase()}`);
+                  }}
+                  className="maw-btn-hover"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 'var(--maw-radius-pill)',
+                    border: '1px solid var(--maw-border)',
+                    fontSize: 'var(--maw-text-xs)',
+                    background: 'var(--maw-surface)',
+                    color: 'var(--maw-fg)',
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                >
+                  {availableLocales.map((l) => (
+                    <option key={l} value={l}>{l.toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ width: 1, height: 24, background: 'var(--maw-border)' }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Button
+                  variant="ghost"
+                  onClick={toggleColorMode}
+                  style={{ padding: '6px', fontSize: 16, borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Toggle Theme"
+                >
+                  {isDark ? '☀️' : '🌙'}
+                </Button>
+                <NetworkStatusBadge />
+                <SyncStatusIndicator />
+              </div>
+
+              <div style={{ width: 1, height: 24, background: 'var(--maw-border)' }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                  <span style={{ fontSize: 'var(--maw-text-xs)', fontWeight: 600, color: 'var(--maw-fg)' }}>
+                    {session.userId}
+                  </span>
+                  <span style={{ fontSize: 10, color: 'var(--maw-brand)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                    {session.role}
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => void logout()} 
+                  style={{ padding: '6px 12px', fontSize: 'var(--maw-text-xs)', borderRadius: 'var(--maw-radius-pill)', color: 'var(--maw-danger)' }}
+                >
+                  Logout
+                </Button>
+              </div>
             </div>
           </>
         }
