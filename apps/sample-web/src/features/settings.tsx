@@ -6,7 +6,7 @@ import {
   Stack,
   Button,
   Divider,
-  useToast,
+  useToast
 } from '@mawsoftwares/ui-web';
 
 interface FeatureToggle {

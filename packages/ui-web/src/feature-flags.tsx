@@ -8,6 +8,7 @@ interface FeatureFlagContextValue {
   error: Error | null;
   isEnabled: (flagKey: string) => boolean;
   refresh: () => Promise<void>;
+  _demoToggleFlag?: (key: string, enabled: boolean) => void;
 }
 
 const FeatureFlagContext = createContext<FeatureFlagContextValue | undefined>(undefined);
@@ -53,6 +54,7 @@ export function FeatureFlagProvider({ children, fetchFlags }: FeatureFlagProvide
     error,
     isEnabled: (flagKey: string) => !!flags[flagKey],
     refresh: loadFlags,
+    _demoToggleFlag: (key, enabled) => setFlags(prev => ({ ...prev, [key]: enabled })),
   }), [flags, isLoading, error]);
 
   return (

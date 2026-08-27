@@ -21,6 +21,7 @@ import {
   OfflineBanner,
   SyncStatusIndicator,
   FeatureFlagProvider,
+  useFeatureFlags,
   type NavItem,
   type NavigationConfig,
 } from '@mawsoftwares/ui-web';
@@ -44,6 +45,7 @@ import { PlatformView } from './features/platform';
 import { JobsView } from './features/jobs';
 import { NotificationsView } from './features/notifications';
 import { RbacView } from './features/rbac';
+import { FeatureFlagsView } from './features/feature-flags';
 
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
@@ -51,7 +53,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -83,6 +85,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
   { key: 'rbac', label: 'RBAC Admin', icon: '🔑', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
+  { key: 'feature-flags', label: 'Feature Flags', icon: '🚩', path: '/feature-flags', group: 'Admin', sortOrder: 8.6, permission: 'Read_FeatureFlags' },
   { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 9 },
   { key: 'platform', label: 'Platform', icon: '🧩', path: '/platform', group: 'Dev', sortOrder: 95 },
   { key: 'jobs', label: 'Jobs', icon: '⏳', path: '/jobs', group: 'Dev', sortOrder: 96 },
@@ -99,6 +102,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   users: 'Read_Users',
   'audit-logs': 'Read_AuditLogs',
   masters: 'Master_View',
+  'feature-flags': 'Read_FeatureFlags',
 };
 
 const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications', 'rbac']);
@@ -144,6 +148,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'jobs': return <JobsView />;
     case 'notifications': return <NotificationsView />;
     case 'rbac': return <RbacView />;
+    case 'feature-flags': return <FeatureFlagsView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }
@@ -184,6 +189,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 
   const isSuperadmin = session !== null && SUPERADMIN_ROLES.has(session.role);
   const { can: canDynamic, loading: accessLoading } = useDynamicAccess();
+  const { isEnabled } = useFeatureFlags();
 
   const navConfig = useMemo<NavigationConfig>(() => {
     const items = NAV_ITEMS.filter((item) => {
@@ -191,8 +197,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       if (SUPERADMIN_ONLY_KEYS.has(item.key) && !isSuperadmin) return false;
       // If the item requires a permission, check it against the live RBAC snapshot
       if (item.permission !== undefined && !accessLoading) {
-        return canDynamic(item.permission);
+        if (!canDynamic(item.permission)) return false;
       }
+      
+      // Feature flag gating for modules (except core dev ones)
+      if (!SUPERADMIN_ONLY_KEYS.has(item.key) && !isEnabled(`module.${item.key}`)) {
+        return false;
+      }
+
       return true;
     });
     return {
@@ -204,7 +216,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         { label: NAV_ITEMS.find((n) => n.key === page)?.label ?? page },
       ],
     };
-  }, [page, navigate, isSuperadmin, canDynamic, accessLoading]);
+  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled]);
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{t('common.loading')}</div>;
   if (session === null) {
@@ -350,7 +362,18 @@ export function App(): ReactNode {
   return (
     <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
       <DynamicAccessProvider load={loadDynamicAccess}>
-        <FeatureFlagProvider fetchFlags={async () => ({ 'advanced_reports': true })}>
+        <FeatureFlagProvider fetchFlags={async () => ({ 
+          'advanced_reports': true,
+          'module.dashboard': true,
+          'module.orders': true,
+          'module.reports': true,
+          'module.inventory': true,
+          'module.billing': true,
+          'module.users': true,
+          'module.audit-logs': true,
+          'module.account': true,
+          'module.masters': true
+        })}>
           <OfflineProvider
             networkManager={offlineInfra.networkManager}
             syncEngine={offlineInfra.syncEngine}
