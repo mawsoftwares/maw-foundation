@@ -98,6 +98,11 @@ export function ThemeProvider({ overrides, defaultColorMode, children }: ThemePr
   );
 
 const GLOBAL_CSS = `
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
   .maw-btn-hover:hover {
     filter: brightness(1.05);
     transform: translateY(-1px);

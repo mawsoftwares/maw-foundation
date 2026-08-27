@@ -154,8 +154,10 @@ export function Sidebar({
         ...base,
         width: effectiveWidth,
         minHeight: isMobile ? '100%' : '100vh',
-        background: 'var(--maw-bgMuted)',
-        borderRight: isMobile ? 'none' : '1px solid var(--maw-border)',
+        background: isMobile ? 'transparent' : 'color-mix(in srgb, var(--maw-bgMuted) 85%, transparent)',
+        backdropFilter: isMobile ? 'none' : 'blur(16px)',
+        WebkitBackdropFilter: isMobile ? 'none' : 'blur(16px)',
+        borderRight: isMobile ? 'none' : '1px solid color-mix(in srgb, var(--maw-border) 40%, transparent)',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 0.2s ease',
@@ -216,6 +218,7 @@ function SidebarItem({
   depth?: number;
 }): ReactNode {
   const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const hasChildren = item.children !== undefined && item.children.length > 0;
 
   return (
@@ -225,42 +228,50 @@ function SidebarItem({
           if (hasChildren) setExpanded(!expanded);
           else onNavigate(item.path);
         }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         title={collapsed ? item.label : undefined}
         style={{
           ...base,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 12,
           width: '100%',
-          padding: collapsed ? '8px' : `8px 12px 8px ${12 + depth * 16}px`,
+          padding: collapsed ? '10px' : `10px 16px 10px ${16 + depth * 16}px`,
           border: 'none',
           borderRadius: 'var(--maw-radius-md)',
-          background: active ? 'var(--maw-brand)' : 'transparent',
-          color: active ? 'var(--maw-brandContrast)' : 'var(--maw-fg)',
+          background: active 
+            ? 'linear-gradient(135deg, var(--maw-brand) 0%, color-mix(in srgb, var(--maw-brand) 80%, black) 100%)' 
+            : hovered 
+              ? 'var(--maw-bgSubtle)' 
+              : 'transparent',
+          color: active ? 'var(--maw-brandContrast)' : hovered ? 'var(--maw-brand)' : 'var(--maw-fg)',
           fontSize: 'var(--maw-text-sm)',
-          fontWeight: active ? 600 : 400,
+          fontWeight: active ? 600 : 500,
           cursor: 'pointer',
           textAlign: 'left',
           justifyContent: collapsed ? 'center' : undefined,
-          transition: 'var(--maw-transition-fast)',
-          marginBottom: 2,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          marginBottom: 4,
+          transform: hovered && !active ? 'translateX(4px)' : 'none',
+          boxShadow: active ? '0 4px 12px color-mix(in srgb, var(--maw-brand) 30%, transparent)' : 'none',
         }}
       >
-        {item.icon !== undefined && <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>{item.icon}</span>}
+        {item.icon !== undefined && <span style={{ fontSize: 18, width: 22, textAlign: 'center', transition: 'transform 0.2s', transform: hovered ? 'scale(1.15)' : 'scale(1)' }}>{item.icon}</span>}
         {!collapsed && (
           <>
             <span style={{ flex: 1 }}>{item.label}</span>
             {item.badge !== undefined && (
-              <Badge style={{ background: active ? 'rgba(255,255,255,0.2)' : undefined, color: active ? 'var(--maw-brandContrast)' : undefined }}>
+              <Badge style={{ background: active ? 'rgba(255,255,255,0.25)' : undefined, color: active ? 'var(--maw-brandContrast)' : undefined }}>
                 {item.badge}
               </Badge>
             )}
-            {hasChildren && <span style={{ fontSize: 10 }}>{expanded ? '▼' : '▶'}</span>}
+            {hasChildren && <span style={{ fontSize: 10, transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>}
           </>
         )}
       </button>
       {hasChildren && expanded && !collapsed && (
-        <div>
+        <div style={{ paddingTop: 4, paddingBottom: 4 }}>
           {item.children!.map((child) => (
             <SidebarItem key={child.key} item={child} active={false} collapsed={false} onNavigate={onNavigate} depth={depth + 1} />
           ))}
@@ -322,27 +333,32 @@ export function AppShell({
   const { collapsed, toggleSidebar, setCollapsed } = useNavigation();
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--maw-bgSubtle)', ...style }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-bgSubtle)', ...style }}>
       {!isMobile && sidebar}
       {isMobile && (
-        <Drawer open={!collapsed} onClose={() => setCollapsed(true)} side="left" width={280} style={{ padding: 0 }}>
+        <Drawer open={!collapsed} onClose={() => setCollapsed(true)} side="left" width={280} style={{ padding: 0 }} contentStyle={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {sidebar}
         </Drawer>
       )}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
         {header !== undefined && (
           <header
             style={{
               ...base,
-              padding: 'var(--maw-space-md) var(--maw-space-xl)',
-              background: 'var(--maw-bg)',
-              borderBottom: '1px solid var(--maw-border)',
+              padding: '12px var(--maw-space-xl)',
+              background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderBottom: '1px solid color-mix(in srgb, var(--maw-border) 40%, transparent)',
+              boxShadow: '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               position: 'sticky',
               top: 0,
               zIndex: 'var(--maw-z-sticky)' as unknown as number,
+              flexShrink: 0,
+              transition: 'all 0.3s ease',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-md)' }}>
@@ -355,7 +371,37 @@ export function AppShell({
             </div>
           </header>
         )}
-        <main style={{ flex: 1, padding: 'var(--maw-space-xl)' }}>{children}</main>
+        <main style={{ flex: 1, padding: 'var(--maw-space-xl)', overflowY: 'auto' }}>{children}</main>
+        <footer style={{
+          padding: 'var(--maw-space-lg) var(--maw-space-xl)',
+          borderTop: '1px solid var(--maw-border)',
+          background: 'var(--maw-bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          fontSize: 'var(--maw-text-sm)',
+          color: 'var(--maw-fgMuted)',
+          flexShrink: 0,
+        }}>
+          Powered by
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 800, fontFamily: 'sans-serif', letterSpacing: '0.02em' }}>
+            <span style={{ color: '#2b7ec2', fontSize: 16 }}>MINDS</span>
+            <span style={{ 
+              background: '#f16d22', 
+              color: 'white', 
+              fontSize: 9, 
+              width: 20, 
+              height: 20, 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontWeight: 700
+            }}>AT</span>
+            <span style={{ color: '#2b7ec2', fontSize: 16 }}>WORK</span>
+          </div>
+        </footer>
       </div>
     </div>
   );

@@ -25,6 +25,7 @@ export interface DrawerProps {
   readonly side?: 'left' | 'right';
   readonly width?: number | string;
   readonly style?: CSSProperties;
+  readonly contentStyle?: CSSProperties;
 }
 
 export function Drawer({
@@ -36,6 +37,7 @@ export function Drawer({
   side = 'right',
   width = 400,
   style,
+  contentStyle,
 }: DrawerProps): ReactNode {
   const isMobile = useIsMobile();
 
@@ -73,8 +75,10 @@ export function Drawer({
           [side]: 0,
           width: isMobile ? '100%' : width,
           maxWidth: isMobile ? '100%' : '90vw',
-          background: 'var(--maw-bg)',
-          boxShadow: 'var(--maw-shadow-xl)',
+          background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          boxShadow: '-4px 0 24px color-mix(in srgb, #000 12%, transparent)',
           display: 'flex',
           flexDirection: 'column',
           ...style,
@@ -105,7 +109,7 @@ export function Drawer({
             >✕</button>
           </div>
         )}
-        <div style={{ flex: 1, overflow: 'auto', padding: 'var(--maw-space-xl)' }}>
+        <div style={{ flex: 1, overflow: 'auto', padding: 'var(--maw-space-xl)', ...contentStyle }}>
           {children}
         </div>
         {footer && (
