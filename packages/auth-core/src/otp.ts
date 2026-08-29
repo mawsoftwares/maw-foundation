@@ -1,5 +1,6 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import type { OtpConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
+import { AppError, ErrorCode } from '@mawsoftwares/sdk';
 
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -192,10 +193,10 @@ export class MfaService {
 
   async activate(userId: string, token: string): Promise<void> {
     const encryptedSecret = await this.store.getSecret(userId);
-    if (!encryptedSecret) throw new Error('MFA enrollment not found');
+    if (!encryptedSecret) throw new AppError(ErrorCode.NOT_FOUND, 'MFA enrollment not found', 404);
     const secret = await this.encryptionService.decrypt(encryptedSecret);
     if (!this.otpService.verify(secret, token)) {
-      throw new Error('Invalid verification code');
+      throw new AppError(ErrorCode.VALIDATION_FAILED, 'Invalid verification code', 400);
     }
     await this.userRepository.updateMfaEnabled(userId, true);
   }
@@ -219,7 +220,7 @@ export class MfaService {
 
   async disable(userId: string, token: string): Promise<void> {
     const valid = await this.verify(userId, token);
-    if (!valid) throw new Error('Invalid verification code');
+    if (!valid) throw new AppError(ErrorCode.VALIDATION_FAILED, 'Invalid verification code', 400);
     await this.store.deleteAll(userId);
     await this.userRepository.updateMfaEnabled(userId, false);
   }

@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "sample-server",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx", "apps/sample-server/src/main.ts"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--env-file=apps/sample-server/.env", "--import=tsx", "apps/sample-server/src/main.ts"],
       "port": 4000
     },
     {

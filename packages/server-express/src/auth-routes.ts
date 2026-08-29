@@ -170,7 +170,7 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
           res.status(401).json({ error: 'not authenticated' });
           return;
         }
-        const { accountName } = req.body as { accountName?: string };
+        const { accountName } = (req.body ?? {}) as { accountName?: string };
         const result = await mfa.enroll(userId, accountName ?? userId);
         res.json({ secret: result.secret, otpauthUri: result.otpauthUri, backupCodes: result.backupCodes });
       } catch (err) {
@@ -232,6 +232,11 @@ export function handleAuthError(res: Response, err: unknown): void {
         ? { retryAfterMs: err.retryAfterMs }
         : {}),
     });
+    return;
+  }
+  const duck = err as Record<string, unknown>;
+  if (duck && typeof duck.statusCode === 'number' && typeof duck.message === 'string') {
+    res.status(duck.statusCode).json({ error: duck.message, ...(duck.code ? { code: duck.code } : {}) });
     return;
   }
   res.status(500).json({ error: 'Internal server error' });
