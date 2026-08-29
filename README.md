@@ -76,6 +76,20 @@ pnpm sample:server  # Express proof backend
 pnpm sample:web     # Vite React proof app
 ```
 
+## Using these packages in another project
+
+Product repos install `@mawsoftwares/*` from **GitHub Packages** (org-private). They do not clone this monorepo.
+
+```bash
+# In the product repo — .npmrc (registry only, no token)
+# @mawsoftwares:registry=https://npm.pkg.github.com
+
+pnpm config set //npm.pkg.github.com/:_authToken ghp_xxxxxxxxxxxx
+pnpm add @mawsoftwares/sdk @mawsoftwares/auth-core @mawsoftwares/ui-web
+```
+
+Full consumer + publish guide: [docs/publishing.md](docs/publishing.md).
+
 ## Versioning & Publishing
 
 Packages are versioned independently using [Changesets](https://github.com/changesets/changesets).
@@ -83,11 +97,11 @@ Packages are versioned independently using [Changesets](https://github.com/chang
 ```bash
 pnpm changeset           # create a changeset
 pnpm version-packages    # bump versions
-pnpm release             # publish to registry
+pnpm release             # publish to GitHub Packages
 ```
 
-Packages are published to GitHub Packages under the `@maw` scope.
-Authentication uses `NODE_AUTH_TOKEN` — see `.npmrc`.
+Packages are published to GitHub Packages under the `@mawsoftwares` scope.
+Put a GitHub PAT in `~/.npmrc` — see [docs/publishing.md](docs/publishing.md).
 
 ## Package Creation Rules
 

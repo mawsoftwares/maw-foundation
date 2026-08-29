@@ -1,6 +1,18 @@
 {
   "name": "@mawsoftwares/theme",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/theme"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.spec.ts"
+  ],
+  "license": "MIT",
   "private": false,
   "type": "module",
   "main": "src/index.ts",
@@ -9,6 +21,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }

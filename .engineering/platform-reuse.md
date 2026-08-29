@@ -2,65 +2,90 @@
 
 This guide walks through starting a new product that reuses the foundation packages.
 
+**Product apps live in their own repos.** They install `@mawsoftwares/*` from GitHub Packages. They do not copy-paste foundation source, and they do not add product apps into this monorepo.
+
+How to authenticate and install: [`docs/publishing.md`](../docs/publishing.md).
+
 ## Prerequisites
 
 - Node.js 22+
 - PostgreSQL 15+
-- pnpm 9+ (workspace-aware)
+- pnpm 9+
+- A GitHub PAT with `read:packages` (org members of `mawsoftwares`)
 
-## Step 1: Add Your App
+## Step 1: Product repo `.npmrc`
 
-Create two directories in the monorepo:
+```
+@mawsoftwares:registry=https://npm.pkg.github.com
+```
+
+Put the token in **your** `~/.npmrc` (not the repo):
+
+```
+//npm.pkg.github.com/:_authToken=ghp_xxxxxxxxxxxx
+```
+
+```bash
+pnpm config set //npm.pkg.github.com/:_authToken ghp_xxxxxxxxxxxx
+```
+
+## Step 2: Add Your App
+
+In the **product** repository, create:
 
 ```
 apps/your-server/     # Express or Hono backend
 apps/your-web/        # React frontend
 ```
 
+Pin Foundation versions (example `0.1.0`). Never use `workspace:*` outside `maw-foundation`.
+
 ### Server `package.json`
 
 ```json
 {
-  "name": "@mawsoftwares/your-server",
+  "name": "@your-product/server",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@mawsoftwares/sdk": "*",
-    "@mawsoftwares/database": "*",
-    "@mawsoftwares/auth-core": "*",
-    "@mawsoftwares/rbac-core": "*",
-    "@mawsoftwares/tenancy": "*",
-    "@mawsoftwares/users": "*",
-    "@mawsoftwares/observability": "*",
-    "@mawsoftwares/server-express": "*",
-    "@mawsoftwares/communication": "*",
-    "@mawsoftwares/queue": "*",
+    "@mawsoftwares/sdk": "0.1.0",
+    "@mawsoftwares/database": "0.1.0",
+    "@mawsoftwares/auth-core": "0.1.0",
+    "@mawsoftwares/rbac-core": "0.1.0",
+    "@mawsoftwares/tenancy": "0.1.0",
+    "@mawsoftwares/observability": "0.1.0",
+    "@mawsoftwares/server-express": "0.1.0",
+    "@mawsoftwares/communication": "0.1.0",
+    "@mawsoftwares/queue": "0.1.0",
     "express": "^5.0.0",
-    "pg": "^8.16.0"
+    "pg": "^8.16.0",
+    "tsx": "^4.19.0"
   }
 }
 ```
+
+Users (and other domain entities) are **not** an installable package. Copy [`templates/users-module`](../templates/users-module) into the product and own the code. See [`docs/module-architecture.md`](../docs/module-architecture.md).
 
 ### Web `package.json`
 
 ```json
 {
-  "name": "@mawsoftwares/your-web",
+  "name": "@your-product/web",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@mawsoftwares/sdk": "*",
-    "@mawsoftwares/theme": "*",
-    "@mawsoftwares/ui-web": "*",
-    "@mawsoftwares/ui-auth": "*",
-    "@mawsoftwares/api-client": "*",
+    "@mawsoftwares/sdk": "0.1.0",
+    "@mawsoftwares/theme": "0.1.0",
+    "@mawsoftwares/ui-web": "0.1.0",
+    "@mawsoftwares/ui-auth": "0.1.0",
+    "@mawsoftwares/api-client": "0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }
 }
 ```
 
-## Step 2: Wire the Server
+## Step 3: Wire the Server
 
 Minimal `main.ts`:
 
@@ -112,7 +137,7 @@ app.use('/api/v1/your-domain', auth.requireAuth, yourRouter);
 app.listen(Number(process.env.PORT ?? 4000));
 ```
 
-## Step 3: Database Setup
+## Step 4: Database Setup
 
 Create a `migrations/` directory in your server app. The foundation provides
 migration patterns in `apps/sample-server/migrations/` — copy the auth, RBAC,
@@ -123,7 +148,7 @@ Run migrations:
 node --env-file=.env --import=tsx src/db/migrate.ts
 ```
 
-## Step 4: Wire the Frontend
+## Step 5: Wire the Frontend
 
 ```typescript
 import { ThemeProvider, createTheme } from '@mawsoftwares/theme';

@@ -8,8 +8,8 @@
 ## Getting Started
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/maw-foundation.git
+# Clone the repository (foundation developers only)
+git clone https://github.com/mawsoftwares/maw-foundation.git
 cd maw-foundation
 
 # Install all dependencies

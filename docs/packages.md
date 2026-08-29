@@ -2,6 +2,8 @@
 
 28 packages in 5 layers. Dependency law: `apps → domains + ui → platform → sdk`.
 
+Published packages are installed by other developers from **GitHub Packages** (`@mawsoftwares/*`). See [`docs/publishing.md`](./publishing.md).
+
 See [`docs/module-architecture.md`](./module-architecture.md) for the full classification rule: **when should a module be a package vs project-owned source code?**
 
 ## SDK Layer

@@ -1,6 +1,12 @@
 {
   "name": "@mawsoftwares/ui-users",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/ui-users"
+  },
+  "license": "MIT",
   "description": "UI layer of the users source module template — copy to your project's modules/users/web directory. NOT a publishable Foundation package.",
   "private": true,
   "main": "src/index.ts",
@@ -9,16 +15,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@mawsoftwares/ui-web": "*",
-    "@mawsoftwares/users": "*",
-    "@mawsoftwares/sdk": "*",
+    "@mawsoftwares/ui-web": "workspace:*",
+    "@mawsoftwares/users": "workspace:*",
+    "@mawsoftwares/sdk": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "typescript": "^5.5.4"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   }
 }

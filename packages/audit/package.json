@@ -1,13 +1,25 @@
 {
   "name": "@mawsoftwares/audit",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/audit"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.spec.ts"
+  ],
+  "license": "MIT",
   "private": false,
   "type": "module",
   "description": "Reusable audit trail — types, store contract, in-memory and Postgres implementations, Express middleware.",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@mawsoftwares/sdk": "*"
+    "@mawsoftwares/sdk": "workspace:*"
   },
   "peerDependencies": {
     "pg": ">=8"
@@ -18,6 +30,7 @@
     }
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }

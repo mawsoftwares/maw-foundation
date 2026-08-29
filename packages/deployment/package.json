@@ -1,6 +1,19 @@
 {
   "name": "@mawsoftwares/deploy",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/deployment"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "templates",
+    "topology",
+    "README.md"
+  ],
+  "license": "MIT",
   "private": false,
   "description": "Configuration-driven deployment engine — shared scripts + templates, per-project config",
   "bin": {
@@ -17,6 +30,7 @@
     "nginx"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }

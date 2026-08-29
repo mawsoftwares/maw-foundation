@@ -1,6 +1,18 @@
 {
   "name": "@mawsoftwares/ui-auth",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/ui-auth"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.spec.ts"
+  ],
+  "license": "MIT",
   "private": false,
   "type": "module",
   "main": "src/index.ts",
@@ -12,9 +24,9 @@
     }
   },
   "dependencies": {
-    "@mawsoftwares/api-client": "*",
-    "@mawsoftwares/sdk": "*",
-    "@mawsoftwares/ui-web": "*"
+    "@mawsoftwares/api-client": "workspace:*",
+    "@mawsoftwares/sdk": "workspace:*",
+    "@mawsoftwares/ui-web": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.3.1 || ^19.0.0",
@@ -24,7 +36,8 @@
     "typescript": "^5.7.3"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

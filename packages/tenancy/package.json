@@ -1,6 +1,18 @@
 {
   "name": "@mawsoftwares/tenancy",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/tenancy"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.spec.ts"
+  ],
+  "license": "MIT",
   "private": false,
   "type": "module",
   "main": "src/index.ts",
@@ -9,10 +21,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@mawsoftwares/core": "*"
+    "@mawsoftwares/core": "workspace:*"
   },
   "peerDependencies": {
-    "@mawsoftwares/database": "*"
+    "@mawsoftwares/database": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@mawsoftwares/database": {
@@ -23,6 +35,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }
