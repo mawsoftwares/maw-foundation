@@ -4,7 +4,7 @@
  * auto-upserts them to the DB on boot; the master cache serves them at runtime.
  *
  * Extends the base ModuleDefinition from @mawsoftwares/sdk with RBAC-specific fields
- * (permissions, featureSync, audience). Framework-agnostic: no Express Router
+ * (permissions, featureSync, audience, source). Framework-agnostic: no Express Router
  * or Hono types here. Route mounting is the server adapter's job.
  */
 
@@ -29,8 +29,27 @@ export interface FeatureSyncDefinition {
 
 export type ModuleAudience = 'admin' | 'operator' | 'shared';
 
+/**
+ * Classifies where a module lives:
+ * - 'foundation'  — a stable npm package from @mawsoftwares/* that is reusable
+ *                   across projects without modification (auth, rbac, queue …).
+ * - 'project'     — project-owned source code (users, orders, customers …).
+ *                   The project developer owns and edits this code freely.
+ *
+ * This field is informational only. The runtime behaviour (permission sync,
+ * route guarding, RBAC) is identical for both. Defaults to 'project' when
+ * omitted.
+ */
+export type ModuleSource = 'foundation' | 'project';
+
 export interface ModuleDefinition extends BaseModuleDefinition {
   routePrefix: string;
+  /**
+   * Whether this module is a stable Foundation package or project-owned source.
+   * Informational only — does not change RBAC behaviour.
+   * @default 'project'
+   */
+  source?: ModuleSource;
   audience?: ModuleAudience;
   permissions?: PermissionDefinition[];
   featureSync?: FeatureSyncDefinition;

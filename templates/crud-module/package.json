@@ -1,0 +1,9 @@
+{
+  "name": "@maw-templates/crud-module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generic CRUD source module template. Copy to your project — do NOT import as a package.",
+  "type": "module",
+  "main": "server/index.ts",
+  "types": "server/index.ts"
+}

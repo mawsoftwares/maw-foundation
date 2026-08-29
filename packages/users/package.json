@@ -1,7 +1,8 @@
 {
   "name": "@mawsoftwares/users",
   "version": "0.1.0",
-  "private": false,
+  "description": "Source module template — copy to your project's modules/users directory and own the code. NOT a publishable Foundation package.",
+  "private": true,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",

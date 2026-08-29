@@ -1,0 +1,9 @@
+export { ButtonsBadgesTab } from './ButtonsBadgesTab';
+export { FormInputsTab } from './FormInputsTab';
+export { AdvancedInputsTab } from './AdvancedInputsTab';
+export { FeedbackTab } from './FeedbackTab';
+export { LayoutDataTab } from './LayoutDataTab';
+export { PatternsTab } from './PatternsTab';
+export { DataGridTab } from './DataGridTab';
+export { DynamicFormsTab } from './DynamicFormsTab';
+export { FileUploadTab } from './FileUploadTab';

@@ -1,0 +1,9 @@
+{
+  "name": "@maw-templates/users-module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Users source module template. Copy to your project's modules/users directory — do NOT import as a package.",
+  "type": "module",
+  "main": "server/index.ts",
+  "types": "server/index.ts"
+}
