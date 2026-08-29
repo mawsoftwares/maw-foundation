@@ -69,7 +69,7 @@ export function ConfirmationDialog({
         aria-label={title}
         style={{
           ...base,
-          background: 'var(--maw-bg)',
+          background: 'var(--maw-surface)',
           borderRadius: 'var(--maw-radius-lg)',
           boxShadow: 'var(--maw-shadow-xl)',
           width: 420,

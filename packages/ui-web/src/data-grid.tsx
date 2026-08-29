@@ -388,7 +388,7 @@ function DataGridTable<T extends object>({
   const totalCols = visibleColumns.length + (selectable ? 1 : 0) + (hasRowActions ? 1 : 0) + (hasExpansion ? 1 : 0);
 
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div style={{ overflowX: 'auto', border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-lg)', background: 'var(--maw-surface)' }}>
       <table
         role="grid"
         aria-busy={loading}
@@ -520,7 +520,7 @@ function DataGridRow<T extends object>({
       <tr
         onClick={schema.onRowClick ? () => schema.onRowClick!(row) : undefined}
         style={rowStyle}
-        className={customClass}
+        className={`maw-table-row-hover ${customClass ?? ''}`.trim()}
         data-selected={isSelected || undefined}
       >
         {hasExpansion && (

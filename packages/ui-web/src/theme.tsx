@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   createTheme,
   tokensToCssVars,
@@ -43,64 +43,31 @@ function readStoredMode(): ColorMode {
 export interface ThemeProviderProps {
   readonly overrides?: ThemeOverrides;
   readonly defaultColorMode?: ColorMode;
+  /** When set, color mode is controlled by the parent (e.g. BrandProvider). */
+  readonly colorMode?: ColorMode;
+  readonly onColorModeChange?: (mode: ColorMode) => void;
   readonly children: ReactNode;
 }
 
-export function ThemeProvider({ overrides, defaultColorMode, children }: ThemeProviderProps): ReactNode {
-  const [theme, setTheme] = useState<Theme>(() => createTheme(overrides));
-  const [colorMode, setColorModeState] = useState<ColorMode>(() => defaultColorMode ?? readStoredMode());
-  const [isDark, setIsDark] = useState(() => resolveIsDark(colorMode));
-
-  useEffect(() => {
-    setIsDark(resolveIsDark(colorMode));
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, colorMode);
-    }
-  }, [colorMode]);
-
-  useEffect(() => {
-    if (colorMode !== 'system' || typeof window === 'undefined') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [colorMode]);
-
-  useEffect(() => {
-    const vars = tokensToCssVars(isDark, theme);
-    const root = document.documentElement;
-    for (const [prop, val] of Object.entries(vars)) {
-      root.style.setProperty(prop, val);
-    }
-    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  }, [isDark, theme]);
-
-  const setColorMode = useCallback((mode: ColorMode) => {
-    setColorModeState(mode);
-    if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, mode);
-  }, []);
-
-  const toggleColorMode = useCallback(() => {
-    setColorModeState((prev) => {
-      const next = prev === 'light' ? 'dark' : prev === 'dark' ? 'light' : getSystemPreference() ? 'light' : 'dark';
-      if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
-
-  const applyBranding = useCallback((branding: TenantBranding) => {
-    setTheme(createTheme({ ...overrides, branding }));
-  }, [overrides]);
-
-  const value = useMemo<ThemeContextValue>(
-    () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding }),
-    [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding],
-  );
-
 const GLOBAL_CSS = `
-  body {
+  html, body, #root {
     margin: 0;
     padding: 0;
+    min-height: 100%;
+    height: 100%;
+    background-color: var(--maw-canvas, var(--maw-bgSubtle));
+    color: var(--maw-fg);
+    font-family: var(--maw-font-family);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .maw-auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--maw-canvas, var(--maw-bgSubtle));
+    color: var(--maw-fg);
   }
 
   .maw-btn-hover:hover {
@@ -214,6 +181,71 @@ const GLOBAL_CSS = `
     background-color: var(--maw-bgSubtle) !important;
   }
 `;
+
+export function ThemeProvider({
+  overrides,
+  defaultColorMode,
+  colorMode: colorModeProp,
+  onColorModeChange,
+  children,
+}: ThemeProviderProps): ReactNode {
+  const isControlled = colorModeProp !== undefined;
+  const [theme, setTheme] = useState<Theme>(() => createTheme(overrides));
+  const [internalMode, setInternalMode] = useState<ColorMode>(() => defaultColorMode ?? readStoredMode());
+  const colorMode = isControlled ? colorModeProp : internalMode;
+  const [isDark, setIsDark] = useState(() => resolveIsDark(colorMode));
+
+  useEffect(() => {
+    setTheme(createTheme(overrides));
+  }, [overrides]);
+
+  useEffect(() => {
+    setIsDark(resolveIsDark(colorMode));
+    if (!isControlled && typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, colorMode);
+    }
+  }, [colorMode, isControlled]);
+
+  useEffect(() => {
+    if (colorMode !== 'system' || typeof window === 'undefined') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [colorMode]);
+
+  useLayoutEffect(() => {
+    const vars = tokensToCssVars(isDark, theme);
+    const root = document.documentElement;
+    for (const [prop, val] of Object.entries(vars)) {
+      root.style.setProperty(prop, val);
+    }
+    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    root.style.colorScheme = isDark ? 'dark' : 'light';
+  }, [isDark, theme]);
+
+  const setColorMode = useCallback((mode: ColorMode) => {
+    if (isControlled) {
+      onColorModeChange?.(mode);
+      return;
+    }
+    setInternalMode(mode);
+    if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, mode);
+  }, [isControlled, onColorModeChange]);
+
+  const toggleColorMode = useCallback(() => {
+    const next = colorMode === 'light' ? 'dark' : colorMode === 'dark' ? 'light' : getSystemPreference() ? 'light' : 'dark';
+    setColorMode(next);
+  }, [colorMode, setColorMode]);
+
+  const applyBranding = useCallback((branding: TenantBranding) => {
+    setTheme(createTheme({ ...overrides, branding }));
+  }, [overrides]);
+
+  const value = useMemo<ThemeContextValue>(
+    () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding }),
+    [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding],
+  );
 
   return (
     <ThemeContext.Provider value={value}>

@@ -75,7 +75,11 @@ createRoot(document.getElementById('root')!).render(
     <BrandProvider
       tenantId={DEFAULT_TENANT}
       provider={staticBrandProvider}
-      loadingFallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#666' }}>Loading brand...</div>}
+      loadingFallback={
+        <div className="maw-auth-screen" style={{ color: 'var(--maw-fgMuted)' }}>
+          Loading brand...
+        </div>
+      }
     >
       <I18nProvider defaultLocale="en">
         <ToastProvider>

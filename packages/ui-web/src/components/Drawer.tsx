@@ -83,9 +83,7 @@ export function Drawer({
           [side]: 0,
           width: panelWidth,
           maxWidth: panelMaxWidth,
-          background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          background: 'var(--maw-surface)',
           boxShadow: side === 'left'
             ? '4px 0 24px color-mix(in srgb, #000 12%, transparent)'
             : '-4px 0 24px color-mix(in srgb, #000 12%, transparent)',

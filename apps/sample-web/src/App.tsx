@@ -6,7 +6,6 @@ import {
   DynamicAccessProvider,
   useDynamicAccess,
   useAuth,
-  useBrand,
   NavigationProvider,
   AppShell,
   Sidebar,
@@ -156,7 +155,6 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const { brand } = useBrand();
   const [page, setPage] = useState<Page>('dashboard');
   const deepLink = useMemo(() => readAuthDeepLink(), []);
   const [authPage, setAuthPage] = useState<AuthPage>(deepLink.page);
@@ -212,7 +210,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     };
   }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled]);
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{t('common.loading')}</div>;
+  if (loading) return <div className="maw-auth-screen">{t('common.loading')}</div>;
   if (session === null) {
     switch (authPage) {
       case 'register': return <RegisterForm client={client} onSwitchToLogin={() => goAuth('login')} onVerifyReady={() => goAuth('verify')} tenantId="demo-tenant" />;
@@ -269,10 +267,10 @@ export function App(): ReactNode {
         <FeatureFlagProvider fetchFlags={async () => ({ 
           'advanced_reports': true,
           'module.dashboard': true,
-          'module.orders': true,
-          'module.reports': true,
-          'module.inventory': true,
-          'module.billing': true,
+          // 'module.orders': true,
+          // 'module.reports': true,
+          // 'module.inventory': true,
+          // 'module.billing': true,
           'module.users': true,
           'module.audit-logs': true,
           'module.account': true,

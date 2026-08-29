@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, Card, TextField, useForm, FormField, useToast, Alert } from '@mawsoftwares/ui-web';
 import { ApiClient } from '@mawsoftwares/api-client';
 import { useAuthT } from '../useAuthT';
+import { AuthScreen } from './AuthScreen';
 
 export interface VerifyEmailFormProps {
   readonly client: ApiClient;
@@ -48,7 +49,7 @@ export function VerifyEmailForm({
 
   if (verified) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+      <AuthScreen>
         <Card style={{ width: 400, maxWidth: '90vw', textAlign: 'center' }}>
           <h2 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>{t('auth.emailVerifiedTitle') || 'Email verified'}</h2>
           <Alert variant="success">
@@ -58,12 +59,12 @@ export function VerifyEmailForm({
             {t('auth.login') || 'Sign In'}
           </Button>
         </Card>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+    <AuthScreen>
       <Card style={{ width: 420, maxWidth: '90vw' }}>
         <h2 style={{ marginTop: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-xl)', fontWeight: 700 }}>
           {t('auth.verifyEmail') || 'Verify Your Email'}
@@ -88,6 +89,6 @@ export function VerifyEmailForm({
           <Button variant="ghost" onClick={onSwitchToLogin}>{t('auth.backToLogin') || 'Back to Login'}</Button>
         </div>
       </Card>
-    </div>
+    </AuthScreen>
   );
 }

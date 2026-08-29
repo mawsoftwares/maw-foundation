@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { BrandConfig, IBrandConfigProvider } from '@mawsoftwares/sdk';
 import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@mawsoftwares/sdk';
-import { brandConfigToThemeOverrides, createTheme, tokensToCssVars, type Theme } from '@mawsoftwares/theme';
+import { brandConfigToThemeOverrides, createTheme, type Theme } from '@mawsoftwares/theme';
 import { ThemeProvider } from './theme';
 
 export type BrandColorMode = 'light' | 'dark' | 'system';
@@ -112,21 +112,6 @@ export function BrandProvider({
     return () => mq.removeEventListener('change', handler);
   }, [colorMode]);
 
-  useEffect(() => {
-    const vars = tokensToCssVars(isDark, theme);
-    const root = document.documentElement;
-    for (const [prop, val] of Object.entries(vars)) {
-      root.style.setProperty(prop, val);
-    }
-    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
-
-    if (brand.customTokens) {
-      for (const [prop, val] of Object.entries(brand.customTokens)) {
-        root.style.setProperty(`--maw-custom-${prop}`, val);
-      }
-    }
-  }, [isDark, theme, brand.customTokens]);
-
   const setColorMode = useCallback((mode: BrandColorMode) => {
     setColorModeState(mode);
   }, []);
@@ -144,6 +129,14 @@ export function BrandProvider({
     await loadBrand(newTenantId);
   }, [resolver, loadBrand]);
 
+  useEffect(() => {
+    if (!brand.customTokens || typeof document === 'undefined') return;
+    const root = document.documentElement;
+    for (const [prop, val] of Object.entries(brand.customTokens)) {
+      root.style.setProperty(`--maw-custom-${prop}`, val);
+    }
+  }, [brand.customTokens]);
+
   const value = useMemo<BrandContextValue>(
     () => ({ brand, theme, colorMode, isDark, loading, error, setColorMode, toggleColorMode, switchTenant }),
     [brand, theme, colorMode, isDark, loading, error, setColorMode, toggleColorMode, switchTenant],
@@ -151,14 +144,14 @@ export function BrandProvider({
 
   const themeOverrides = useMemo(() => brandConfigToThemeOverrides(brand), [brand]);
 
-  if (loading && loadingFallback) {
-    return <>{loadingFallback}</>;
-  }
-
   return (
     <BrandContext.Provider value={value}>
-      <ThemeProvider overrides={themeOverrides} defaultColorMode={colorMode}>
-        {children}
+      <ThemeProvider
+        overrides={themeOverrides}
+        colorMode={colorMode}
+        onColorModeChange={setColorModeState}
+      >
+        {loading && loadingFallback !== undefined ? loadingFallback : children}
       </ThemeProvider>
     </BrandContext.Provider>
   );

@@ -12,11 +12,11 @@ export default function TabLayout(): ReactNode {
         tabBarActiveTintColor: t.colors.brand,
         tabBarInactiveTintColor: t.colors.fgMuted,
         tabBarStyle: {
-          backgroundColor: t.colors.bg,
+          backgroundColor: t.surface,
           borderTopColor: t.colors.border,
         },
         headerStyle: {
-          backgroundColor: t.colors.bg,
+          backgroundColor: t.surface,
         },
         headerTintColor: t.colors.fg,
         headerTitleStyle: {

@@ -104,14 +104,12 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   if (!isDrawerLayout) {
     if (isFormView) {
       return (
-        <div style={{ padding: 'var(--maw-space-xl)' }}>
-          <UserForm
-            initialData={view === 'edit' ? selectedUser : null}
-            onSave={handleSave}
-            onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
-            {...formProps}
-          />
-        </div>
+        <UserForm
+          initialData={view === 'edit' ? selectedUser : null}
+          onSave={handleSave}
+          onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+          {...formProps}
+        />
       );
     }
     if (view === 'details' && selectedUser) {

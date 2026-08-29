@@ -16,7 +16,7 @@ export default function SettingsScreen(): ReactNode {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: t.colors.bgMuted }}
+      style={{ flex: 1, backgroundColor: t.canvas }}
       contentContainerStyle={{ padding: t.spacing.lg }}
     >
       <Card style={{ marginBottom: t.spacing.lg }}>

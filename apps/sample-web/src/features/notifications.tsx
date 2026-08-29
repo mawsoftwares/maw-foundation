@@ -8,7 +8,6 @@ import {
   Stack,
   Divider,
   TextField,
-  Toggle,
   useToast,
   PageLoader,
 } from '@mawsoftwares/ui-web';
@@ -30,15 +29,6 @@ export function NotificationsView(): ReactNode {
   const [toEmail, setToEmail] = useState('test@demo.test');
   const [subject, setSubject] = useState('Test Notification');
   const [body, setBody] = useState('This is a test notification sent from the sample app.');
-
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({
-    orderUpdates: true,
-    billingAlerts: true,
-    systemMaintenance: true,
-    weeklyReport: false,
-    promotions: false,
-    securityAlerts: true,
-  });
 
   const loadChannels = useCallback(() => {
     setLoading(true);
@@ -67,18 +57,6 @@ export function NotificationsView(): ReactNode {
   };
 
   const label: React.CSSProperties = { fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', fontWeight: 500 };
-  const sectionTitle: React.CSSProperties = { margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-md)', fontWeight: 600, color: 'var(--maw-fg)' };
-
-  const PREF_ITEMS = [
-    { key: 'orderUpdates', label: 'Order Updates', description: 'Receive notifications when order status changes', category: 'Operations' },
-    { key: 'billingAlerts', label: 'Billing Alerts', description: 'Payment confirmations and invoice notifications', category: 'Operations' },
-    { key: 'systemMaintenance', label: 'System Maintenance', description: 'Scheduled downtime and maintenance windows', category: 'System' },
-    { key: 'weeklyReport', label: 'Weekly Report', description: 'Weekly summary of key metrics delivered every Monday', category: 'Reports' },
-    { key: 'securityAlerts', label: 'Security Alerts', description: 'Login from new device, password changes, 2FA events', category: 'System' },
-    { key: 'promotions', label: 'Promotions', description: 'Special offers and feature announcements', category: 'Marketing' },
-  ];
-
-  const categories = [...new Set(PREF_ITEMS.map((p) => p.category))];
 
   if (loading) return <PageLoader />;
 
@@ -88,13 +66,13 @@ export function NotificationsView(): ReactNode {
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>Notifications</h1>
           <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-            Communication channels, preferences, and test notifications
+            Communication channels and test notifications
           </p>
         </div>
       </Stack>
 
       {/* Channels */}
-      <h2 style={sectionTitle}>Channels</h2>
+      <h2 style={{ margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-md)', fontWeight: 600, color: 'var(--maw-fg)' }}>Channels</h2>
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 'var(--maw-space-xl)' }}>
         {channels.map((ch, i) => (
           <div key={ch.id}>
@@ -123,7 +101,7 @@ export function NotificationsView(): ReactNode {
       </Card>
 
       {/* Send Test Notification */}
-      <h2 style={sectionTitle}>Send Test Notification</h2>
+      <h2 style={{ margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-md)', fontWeight: 600, color: 'var(--maw-fg)' }}>Send Test Notification</h2>
       <Card style={{ padding: 'var(--maw-space-lg)', marginBottom: 'var(--maw-space-xl)' }}>
         <Stack gap="var(--maw-space-md)">
           <div>
@@ -143,49 +121,6 @@ export function NotificationsView(): ReactNode {
           </div>
         </Stack>
       </Card>
-
-      {/* Notification Preferences */}
-      <h2 style={sectionTitle}>Notification Preferences</h2>
-      {categories.map((category) => (
-        <div key={category} style={{ marginBottom: 'var(--maw-space-lg)' }}>
-          <div style={{ fontSize: 'var(--maw-text-xs)', fontWeight: 600, color: 'var(--maw-fgMuted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--maw-space-sm)' }}>
-            {category}
-          </div>
-          <Card style={{ padding: 0, overflow: 'hidden' }}>
-            {PREF_ITEMS.filter((p) => p.category === category).map((pref, i, arr) => (
-              <div key={pref.key}>
-                <Stack
-                  direction="row" align="center" gap="var(--maw-space-lg)"
-                  style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)', flexWrap: 'wrap' }}
-                >
-                  <div style={{ flex: 1, minWidth: 150 }}>
-                    <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
-                      {pref.label}
-                    </div>
-                    <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
-                      {pref.description}
-                    </div>
-                  </div>
-                  <Toggle
-                    checked={prefs[pref.key] ?? false}
-                    onChange={() => {
-                      setPrefs((prev) => ({ ...prev, [pref.key]: !prev[pref.key] }));
-                      toast.info(`${pref.label} ${!prefs[pref.key] ? 'enabled' : 'disabled'}`);
-                    }}
-                    label={pref.label}
-                  />
-                </Stack>
-                {i < arr.length - 1 && <Divider />}
-              </div>
-            ))}
-          </Card>
-        </div>
-      ))}
-
-      <Stack direction="row" gap="var(--maw-space-sm)" style={{ justifyContent: 'flex-end', marginTop: 'var(--maw-space-md)', flexWrap: 'wrap' }}>
-        <Button variant="ghost" onClick={() => toast.info('Preferences reset')}>Reset</Button>
-        <Button onClick={() => toast.success('Preferences saved')}>Save Preferences</Button>
-      </Stack>
     </div>
   );
 }

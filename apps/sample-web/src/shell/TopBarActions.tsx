@@ -162,7 +162,7 @@ export function TopBarActions(): ReactNode {
             padding: '4px 10px 4px 4px',
             borderRadius: 'var(--maw-radius-pill)',
             border: '1px solid var(--maw-border)',
-            background: 'var(--maw-bg)',
+            background: 'var(--maw-surface)',
             cursor: 'pointer',
             maxWidth: 220,
           }}

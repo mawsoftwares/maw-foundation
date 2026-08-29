@@ -41,7 +41,9 @@ describe('tokensToRNStyles', () => {
     const light = tokensToRNStyles(false);
     const dark = tokensToRNStyles(true);
     expect(light.colors.bg).toBe('#ffffff');
-    expect(dark.colors.bg).toBe('#020617');
+    expect(dark.colors.bg).toBe('#18181b');
+    expect(dark.canvas).toBe('#09090b');
+    expect(dark.surface).toBe('#18181b');
   });
 
   it('strips font fallback chains to first face', () => {

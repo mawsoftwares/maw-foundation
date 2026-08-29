@@ -24,7 +24,7 @@ export function Card({ children, padding, style }: CardProps): ReactNode {
       className="maw-card-hover"
       style={{
         ...base,
-        background: 'var(--maw-bg)',
+        background: 'var(--maw-surface)',
         border: '1px solid var(--maw-border)',
         borderRadius: 'var(--maw-radius-lg)',
         padding: resolvedPadding,

@@ -1,7 +1,17 @@
-import { useMemo } from 'react';
-import { DataGrid, useCrud, type UseCrudReturn, Button } from '@mawsoftwares/ui-web';
-import type { DataGridSchema } from '@mawsoftwares/sdk';
+import { useMemo, type ReactNode } from 'react';
+import {
+  ListPage,
+  DataTable,
+  Badge,
+  Button,
+  Avatar,
+  ErrorState,
+  useDynamicAccess,
+  type ColumnDef,
+  type UseCrudReturn,
+} from '@mawsoftwares/ui-web';
 import type { UserResponseDto } from '@mawsoftwares/users';
+import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 
 export interface UsersListProps {
   crud: UseCrudReturn<UserResponseDto>;
@@ -9,101 +19,96 @@ export interface UsersListProps {
   onView: (id: string) => void;
 }
 
-export function UsersList({ crud, onCreate, onView }: UsersListProps) {
-  const schema = useMemo<DataGridSchema<UserResponseDto>>(() => ({
-    id: 'users-list',
-    keyField: 'id',
-    search: {
-      enabled: true,
-      placeholder: 'Search by name or email...',
-    },
-    pagination: {
-      defaultPageSize: 20,
-    },
-    columns: [
-      {
-        id: 'name',
-        field: 'firstName',
-        header: 'Name',
-        sortable: true,
-        render: (user) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-sm)' }}>
-            {user.avatar ? (
-              <img src={user.avatar} alt="Avatar" style={{ width: 32, height: 32, borderRadius: '50%' }} />
-            ) : (
-              <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--maw-brand-bgMuted)', color: 'var(--maw-brand-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
-                {user.firstName[0]}
-              </div>
-            )}
-            <span>{user.firstName} {user.lastName}</span>
-          </div>
-        )
-      },
-      { id: 'email', field: 'email', header: 'Email', sortable: true },
-      { id: 'phone', field: 'phone', header: 'Phone' },
-      { 
-        id: 'role', 
-        field: 'role',
-        header: 'Role',
-        sortable: true,
-        render: (user) => user.role ?? '—',
-      },
-      { 
-        id: 'status', 
-        field: 'status',
-        header: 'Status', 
-        sortable: true,
-        render: (user) => (
-          <span style={{ 
-            padding: '2px 8px', 
-            borderRadius: 12, 
-            fontSize: 'var(--maw-text-xs)', 
-            fontWeight: 600,
-            backgroundColor: user.status === 'ACTIVE' ? 'var(--maw-success-bgMuted)' : 'var(--maw-danger-bgMuted)',
-            color: user.status === 'ACTIVE' ? 'var(--maw-success-fg)' : 'var(--maw-danger-fg)'
-          }}>
-            {user.status.toUpperCase()}
-          </span>
-        )
-      },
-    ],
-    rowActions: [
-      {
-        id: 'view',
-        label: 'View',
-        handler: (user) => onView(user.id),
-      }
-    ],
-    empty: {
-      title: 'No users found',
-      message: 'There are no users matching your criteria.',
-    }
-  }), [onView]);
+function statusVariant(status: AccountStatusValue): 'success' | 'warning' | 'danger' | 'default' {
+  if (status === 'ACTIVE') return 'success';
+  if (status === 'PENDING_VERIFICATION') return 'warning';
+  if (status === 'SUSPENDED' || status === 'LOCKED' || status === 'DISABLED') return 'danger';
+  return 'default';
+}
 
-  // We map the `useCrud` return values to the DataGrid's expected `ClientDataSourceConfig` format
-  // since `useCrud` already handles fetching and state.
-  const dataSource = useMemo(() => ({
-    data: crud.items,
-    loading: crud.loading,
-    total: crud.total,
-    // When DataGrid requests data changes, we forward them to our crud hook
-    onLoad: async (req: any) => {
-      if (req.search !== undefined) crud.setFilter({ ...((crud.filter as unknown as object) || {}), search: req.search } as any);
-      if (req.sort) crud.setSort({ column: req.sort.field, direction: req.sort.direction } as any);
-      if (req.pagination) crud.setPage(req.pagination.page);
-      return { data: crud.items, total: crud.total };
-    }
-  }), [crud]);
+function displayName(user: UserResponseDto): string {
+  const name = `${user.firstName} ${user.lastName}`.trim();
+  return name.length > 0 ? name : user.email;
+}
+
+export function UsersList({ crud, onCreate, onView }: UsersListProps): ReactNode {
+  const { can } = useDynamicAccess();
+  const canCreate = can('Create_Users');
+
+  const columns = useMemo<ColumnDef<UserResponseDto>[]>(() => [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      render: (user) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-sm)' }}>
+          <Avatar src={user.avatar} name={displayName(user)} size={32} />
+          <span style={{ fontWeight: 600, color: 'var(--maw-fg)' }}>{displayName(user)}</span>
+        </div>
+      ),
+    },
+    { key: 'email', header: 'Email', sortable: true },
+    {
+      key: 'phone',
+      header: 'Phone',
+      render: (user) => user.phone ?? '—',
+    },
+    {
+      key: 'role',
+      header: 'Role',
+      sortable: true,
+      render: (user) => user.role !== undefined && user.role.length > 0
+        ? <Badge>{user.role}</Badge>
+        : '—',
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      width: 160,
+      render: (user) => (
+        <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
+      ),
+    },
+  ], []);
+
+  if (crud.error !== undefined) {
+    return <ErrorState title="Failed to load users" message={crud.error} retry={crud.refresh} />;
+  }
 
   return (
-    <div style={{ padding: 'var(--maw-space-xl)' }}>
-      <DataGrid
-        schema={schema}
-        dataSource={dataSource}
-        title="Users"
-        description="Manage all users in this tenant"
-        headerActions={<Button onClick={onCreate}>New User</Button>}
+    <ListPage
+      title="Users"
+      description={`${crud.total} users`}
+      createLabel="New User"
+      onCreate={canCreate ? onCreate : undefined}
+      filter={crud.filter}
+      onFilterChange={crud.setFilter}
+      searchPlaceholder="Search by name or email..."
+    >
+      <DataTable
+        columns={columns}
+        data={crud.items}
+        keyField="id"
+        sort={crud.sort}
+        onSort={crud.setSort}
+        pagination={{ page: crud.page, pageSize: crud.pageSize, total: crud.total }}
+        onPageChange={crud.setPage}
+        onPageSizeChange={crud.setPageSize}
+        loading={crud.loading}
+        emptyMessage="No users found"
+        stickyHeader
+        onRowClick={(row) => onView(row.id)}
+        rowActions={(row) => (
+          <Button
+            variant="ghost"
+            onClick={() => onView(row.id)}
+            style={{ fontSize: 'var(--maw-text-xs)', padding: '4px 10px' }}
+          >
+            View
+          </Button>
+        )}
       />
-    </div>
+    </ListPage>
   );
 }

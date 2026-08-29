@@ -35,7 +35,7 @@ export default function LoginScreen(): ReactNode {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: t.colors.bgMuted }}
+      style={{ flex: 1, backgroundColor: t.canvas }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView

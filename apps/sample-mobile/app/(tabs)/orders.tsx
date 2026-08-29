@@ -112,14 +112,14 @@ export default function OrdersScreen(): ReactNode {
 
   if (!loaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: t.colors.bgMuted }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: t.canvas }}>
         <Button title="Load Orders from API" onPress={loadOrders} />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.colors.bgMuted }}>
+    <View style={{ flex: 1, backgroundColor: t.canvas }}>
       <View style={{
         flexDirection: 'row',
         justifyContent: 'space-between',

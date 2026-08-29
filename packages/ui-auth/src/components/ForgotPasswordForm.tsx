@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Button, Card, TextField, useForm, FormField, useToast, Alert } from '@mawsoftwares/ui-web';
 import { ApiClient } from '@mawsoftwares/api-client';
 import { useAuthT } from '../useAuthT';
+import { AuthScreen } from './AuthScreen';
 
 export interface ForgotPasswordFormProps {
   readonly client: ApiClient;
@@ -43,7 +44,7 @@ export function ForgotPasswordForm({
 
   if (sent) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+      <AuthScreen>
         <Card style={{ width: 400, maxWidth: '90vw', textAlign: 'center' }}>
           <h2 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>{t('auth.checkEmail') || 'Check Your Email'}</h2>
           <Alert variant="info">
@@ -54,12 +55,12 @@ export function ForgotPasswordForm({
             <Button onClick={onResetReady}>{t('auth.haveResetToken') || 'I have a reset token'}</Button>
           </div>
         </Card>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+    <AuthScreen>
       <Card style={{ width: 400, maxWidth: '90vw' }}>
         <h2 style={{ marginTop: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-xl)', fontWeight: 700 }}>
           {t('auth.forgotPassword') || 'Forgot Password'}
@@ -84,6 +85,6 @@ export function ForgotPasswordForm({
           <Button variant="ghost" onClick={onSwitchToLogin}>{t('auth.backToLogin') || 'Back to Login'}</Button>
         </div>
       </Card>
-    </div>
+    </AuthScreen>
   );
 }

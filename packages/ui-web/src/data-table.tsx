@@ -146,7 +146,7 @@ export function DataTable<T extends object>({
               padding="var(--maw-space-md)"
               style={{
                 cursor: onRowClick ? 'pointer' : undefined,
-                background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-bg)',
+                background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-surface)',
                 border: isSelected ? '1px solid var(--maw-brandLight)' : '1px solid var(--maw-border)',
               }}
             >
@@ -182,9 +182,9 @@ export function DataTable<T extends object>({
   };
 
   return (
-    <div style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-lg)', overflow: 'hidden', ...style }}>
+    <div style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-lg)', overflow: 'hidden', background: 'var(--maw-surface)', ...style }}>
       {responsive && isMobile ? renderMobileCards() : (
-      <div style={{ overflowX: 'auto', background: 'var(--maw-bg)' }}>
+      <div style={{ overflowX: 'auto', background: 'var(--maw-surface)' }}>
         <table
           style={{
             width: '100%',
@@ -255,7 +255,7 @@ export function DataTable<T extends object>({
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
-                    background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-bg)',
+                    background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-surface)',
                     borderBottom: '1px solid var(--maw-border)',
                   }}
                 >

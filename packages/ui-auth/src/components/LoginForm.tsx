@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Button, Card, TextField, useAuth, useForm, FormField, useToast } from '@mawsoftwares/ui-web';
+import { AuthScreen } from './AuthScreen';
 import { useAuthT } from '../useAuthT';
 
 export interface LoginFormProps {
@@ -42,7 +43,7 @@ export function LoginForm({
   });
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+    <AuthScreen>
       <Card style={{ width: 400, maxWidth: '90vw' }}>
         <h2 style={{ marginTop: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-xl)', fontWeight: 700 }}>
           {title}
@@ -101,6 +102,6 @@ export function LoginForm({
           Password: <code>password123</code>
         </div>
       </Card>
-    </div>
+    </AuthScreen>
   );
 }

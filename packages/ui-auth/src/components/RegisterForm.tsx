@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Button, Card, TextField, useForm, FormField, useToast, Alert } from '@mawsoftwares/ui-web';
 import { ApiClient } from '@mawsoftwares/api-client';
 import { useAuthT } from '../useAuthT';
+import { AuthScreen } from './AuthScreen';
 
 export interface RegisterFormProps {
   readonly client: ApiClient;
@@ -51,7 +52,7 @@ export function RegisterForm({ client, onSwitchToLogin, onVerifyReady, tenantId 
 
   if (verificationSent) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+      <AuthScreen>
         <Card style={{ width: 400, maxWidth: '90vw', textAlign: 'center' }}>
           <h2 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>{t('auth.verifyEmail') || 'Verify Your Email'}</h2>
           <Alert variant="info">
@@ -68,12 +69,12 @@ export function RegisterForm({ client, onSwitchToLogin, onVerifyReady, tenantId 
             )}
           </div>
         </Card>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+    <AuthScreen>
       <Card style={{ width: 420, maxWidth: '90vw' }}>
         <h2 style={{ marginTop: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-xl)', fontWeight: 700 }}>
           {t('auth.createAccount') || 'Create Account'}
@@ -126,6 +127,6 @@ export function RegisterForm({ client, onSwitchToLogin, onVerifyReady, tenantId 
           </Button>
         </div>
       </Card>
-    </div>
+    </AuthScreen>
   );
 }

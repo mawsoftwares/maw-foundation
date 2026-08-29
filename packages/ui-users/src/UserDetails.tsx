@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { DetailPage, DetailField, Button } from '@mawsoftwares/ui-web';
-import { Stack } from '@mawsoftwares/ui-web';
+import { DetailPage, DetailField, Button, Badge, Avatar } from '@mawsoftwares/ui-web';
 import type { UserResponseDto } from '@mawsoftwares/users';
 
 export interface UserDetailsProps {
@@ -48,20 +47,9 @@ export function UserDetails({ user, onEdit, onBack, onDelete, onActivate, onDeac
     >
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--maw-space-lg)' }}>
         <DetailField label="User ID" value={user.id} />
-        <DetailField 
-          label="Status" 
-          value={
-            <span style={{ 
-              padding: '2px 8px', 
-              borderRadius: 12, 
-              fontSize: 'var(--maw-text-xs)', 
-              fontWeight: 600,
-              backgroundColor: isActive ? 'var(--maw-success-bgMuted)' : 'var(--maw-danger-bgMuted)',
-              color: isActive ? 'var(--maw-success-fg)' : 'var(--maw-danger-fg)'
-            }}>
-              {user.status.toUpperCase()}
-            </span>
-          } 
+        <DetailField
+          label="Status"
+          value={<Badge variant={isActive ? 'success' : 'danger'}>{user.status}</Badge>}
         />
         
         <DetailField label="Email" value={user.email} />
@@ -69,8 +57,8 @@ export function UserDetails({ user, onEdit, onBack, onDelete, onActivate, onDeac
         <DetailField label="Role" value={user.role ?? '—'} />
         <DetailField
           label="Avatar"
-          value={user.avatar
-            ? <img src={user.avatar} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+          value={user.avatar !== undefined
+            ? <Avatar src={user.avatar} name={`${user.firstName} ${user.lastName}`.trim() || user.email} size={48} />
             : '—'}
         />
         

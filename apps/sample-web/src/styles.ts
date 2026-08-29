@@ -1,43 +1,42 @@
 import type { CSSProperties } from 'react';
-import { palette, spacing, typography } from '@mawsoftwares/theme';
 
 export const rootStyle: CSSProperties = {
-  fontFamily: typography.fontFamily,
+  fontFamily: 'var(--maw-font-family)',
   maxWidth: 700,
   margin: '40px auto',
-  padding: spacing.lg,
-  color: palette.fg,
+  padding: 'var(--maw-space-lg)',
+  color: 'var(--maw-fg)',
 };
 
-export const cardStyle: CSSProperties = { marginTop: spacing.md };
+export const cardStyle: CSSProperties = { marginTop: 'var(--maw-space-md)' };
 
 export const preStyle: CSSProperties = {
-  background: palette.bgMuted,
-  padding: spacing.sm,
-  borderRadius: 6,
-  fontSize: typography.size.sm,
+  background: 'var(--maw-bgMuted)',
+  padding: 'var(--maw-space-sm)',
+  borderRadius: 'var(--maw-radius-sm)',
+  fontSize: 'var(--maw-text-sm)',
   overflow: 'auto',
-  color: palette.success,
+  color: 'var(--maw-success)',
 };
 
 export const tableStyle: CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
-  fontSize: typography.size.sm,
+  fontSize: 'var(--maw-text-sm)',
 };
 
 export const thStyle: CSSProperties = {
   textAlign: 'left',
-  padding: `${spacing.xs}px ${spacing.sm}px`,
-  borderBottom: `2px solid ${palette.border}`,
-  color: palette.fgMuted,
+  padding: 'var(--maw-space-xs) var(--maw-space-sm)',
+  borderBottom: '2px solid var(--maw-border)',
+  color: 'var(--maw-fgMuted)',
   fontWeight: 600,
   whiteSpace: 'nowrap',
 };
 
 export const tdStyle: CSSProperties = {
-  padding: `${spacing.xs}px ${spacing.sm}px`,
-  borderBottom: `1px solid ${palette.border}`,
+  padding: 'var(--maw-space-xs) var(--maw-space-sm)',
+  borderBottom: '1px solid var(--maw-border)',
   whiteSpace: 'nowrap',
 };
 
@@ -47,24 +46,24 @@ export const badgeStyle: CSSProperties = {
   borderRadius: 4,
   color: '#fff',
   fontWeight: 600,
-  fontSize: typography.size.xs,
+  fontSize: 'var(--maw-text-xs)',
 };
 
 export const moduleBadgeStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   padding: '4px 10px',
-  borderRadius: 6,
-  background: palette.bgMuted,
-  border: `1px solid ${palette.border}`,
-  fontSize: typography.size.sm,
+  borderRadius: 'var(--maw-radius-sm)',
+  background: 'var(--maw-bgMuted)',
+  border: '1px solid var(--maw-border)',
+  fontSize: 'var(--maw-text-sm)',
 };
 
 export const permBadgeStyle: CSSProperties = {
   display: 'inline-block',
   padding: '2px 8px',
   borderRadius: 4,
-  background: palette.bgMuted,
-  border: `1px solid ${palette.border}`,
-  fontSize: typography.size.xs,
+  background: 'var(--maw-bgMuted)',
+  border: '1px solid var(--maw-border)',
+  fontSize: 'var(--maw-text-xs)',
 };

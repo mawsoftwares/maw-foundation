@@ -47,7 +47,7 @@ export function DropdownMenu({
             right: 0,
             marginTop: 4,
             minWidth: 160,
-            background: 'var(--maw-bg)',
+            background: 'var(--maw-surface)',
             border: '1px solid var(--maw-border)',
             borderRadius: 'var(--maw-radius-md)',
             boxShadow: 'var(--maw-shadow-lg)',

@@ -43,7 +43,7 @@ export function Modal({ visible, onClose, title, children, style }: ModalProps):
       >
         <Pressable
           style={{
-            backgroundColor: t.colors.bg,
+            backgroundColor: t.surface,
             borderRadius: t.radius.lg,
             padding: t.spacing.xl,
             ...t.shadows.lg,

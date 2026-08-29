@@ -109,7 +109,7 @@ export function TextField({ label, error, style, inputStyle, ...props }: TextFie
           paddingHorizontal: t.spacing.md,
           fontSize: t.typography.size.md,
           color: t.colors.fg,
-          backgroundColor: t.colors.bg,
+          backgroundColor: t.surface,
           fontFamily: t.typography.fontFamily,
           ...(inputStyle as object),
         }}
@@ -142,7 +142,7 @@ export function Card({ children, style }: CardProps): ReactNode {
 
   return (
     <View style={{
-      backgroundColor: t.colors.bg,
+      backgroundColor: t.surface,
       borderWidth: 1,
       borderColor: t.colors.border,
       borderRadius: t.radius.lg,

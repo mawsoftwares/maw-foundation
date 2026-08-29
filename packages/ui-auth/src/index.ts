@@ -1,5 +1,6 @@
 import './i18n';
 
+export { AuthScreen } from './components/AuthScreen';
 export { LoginForm, type LoginFormProps } from './components/LoginForm';
 export { RegisterForm, type RegisterFormProps } from './components/RegisterForm';
 export { VerifyEmailForm, type VerifyEmailFormProps } from './components/VerifyEmailForm';

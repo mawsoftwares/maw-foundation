@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { brandConfigToThemeOverrides, createTheme } from '../index';
+import { brandConfigToThemeOverrides, createTheme, tokensToCssVars } from '../index';
 
 describe('brandConfigToThemeOverrides', () => {
   it('maps primary color to brand token', () => {
@@ -30,6 +30,7 @@ describe('brandConfigToThemeOverrides', () => {
     });
     expect(overrides.palette?.bg).toBe('#FAFAFA');
     expect(overrides.palette?.bgMuted).toBe('#F0F0F0');
+    expect(overrides.palette?.bgSubtle).toBe('#F0F0F0');
   });
 
   it('includes font family in branding', () => {
@@ -71,3 +72,19 @@ describe('brandConfigToThemeOverrides', () => {
     expect(themeA.light.brand).not.toBe(themeB.light.brand);
   });
 });
+
+describe('tokensToCssVars', () => {
+  it('emits canvas and surface aliases from palette roles', () => {
+    const theme = createTheme();
+    const light = tokensToCssVars(false, theme);
+    expect(light['--maw-canvas']).toBe(theme.light.bgSubtle);
+    expect(light['--maw-surface']).toBe(theme.light.bg);
+    expect(light['--maw-canvas']).toBe(light['--maw-bgSubtle']);
+    expect(light['--maw-surface']).toBe(light['--maw-bg']);
+
+    const dark = tokensToCssVars(true, theme);
+    expect(dark['--maw-canvas']).toBe(theme.dark.bgSubtle);
+    expect(dark['--maw-surface']).toBe(theme.dark.bg);
+  });
+});
+

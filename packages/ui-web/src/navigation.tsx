@@ -166,10 +166,8 @@ export function Sidebar({
         ...base,
         width: effectiveWidth,
         minHeight: isMobile ? '100%' : '100vh',
-        background: isMobile ? 'transparent' : 'color-mix(in srgb, var(--maw-bgMuted) 85%, transparent)',
-        backdropFilter: isMobile ? 'none' : 'blur(16px)',
-        WebkitBackdropFilter: isMobile ? 'none' : 'blur(16px)',
-        borderRight: isMobile ? 'none' : '1px solid color-mix(in srgb, var(--maw-border) 40%, transparent)',
+        background: isMobile ? 'transparent' : 'var(--maw-surface)',
+        borderRight: isMobile ? 'none' : '1px solid var(--maw-border)',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 0.2s ease',
@@ -367,7 +365,7 @@ export function AppShell({
     ?? '';
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-bgSubtle)', ...style }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-canvas)', ...style }}>
       {!isMobile && sidebar}
       {isMobile && (
         <Drawer
@@ -388,7 +386,7 @@ export function AppShell({
               ...base,
               minHeight: isMobile ? 48 : undefined,
               padding: isMobile ? '6px 8px 6px 4px' : '12px var(--maw-space-xl)',
-              background: 'var(--maw-bg)',
+              background: 'var(--maw-surface)',
               borderBottom: '1px solid var(--maw-border)',
               boxShadow: isMobile ? 'none' : '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
               overflow: 'visible',
@@ -444,7 +442,7 @@ export function AppShell({
           <footer style={{
             padding: 'var(--maw-space-lg) var(--maw-space-xl)',
             borderTop: '1px solid var(--maw-border)',
-            background: 'var(--maw-bg)',
+            background: 'var(--maw-surface)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

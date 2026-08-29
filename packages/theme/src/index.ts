@@ -10,6 +10,14 @@
 // Palette
 // ---------------------------------------------------------------------------
 
+/**
+ * Palette roles (do not invert these):
+ * - `bg`        elevated surface — cards, inputs, header, sidebar, popovers
+ * - `bgMuted`   nested chrome — table headers, wells, disabled fills
+ * - `bgSubtle`  page canvas — html/body, AppShell, auth screens
+ *
+ * CSS aliases: `--maw-surface` → bg, `--maw-canvas` → bgSubtle
+ */
 export const palette = {
   brand: '#6366f1',
   brandLight: '#818cf8',
@@ -39,9 +47,9 @@ export const paletteDark = {
   brandLight: '#a5b4fc',
   brandDark: '#6366f1',
   brandContrast: '#020617',
-  bg: '#000000',
-  bgMuted: '#09090b',
-  bgSubtle: '#18181b',
+  bg: '#18181b',
+  bgMuted: '#27272a',
+  bgSubtle: '#09090b',
   fg: '#fafafa',
   fgMuted: '#a1a1aa',
   fgSubtle: '#71717a',
@@ -250,6 +258,10 @@ export interface RNShadow {
 
 export interface RNStyles {
   readonly colors: Palette;
+  /** Page / screen background. Same value as `colors.bgSubtle`. */
+  readonly canvas: string;
+  /** Elevated surface (cards, chrome). Same value as `colors.bg`. */
+  readonly surface: string;
   readonly spacing: { readonly [K in keyof typeof spacing]: number };
   readonly radius: { readonly [K in keyof typeof radius]: number };
   readonly shadows: { readonly [K in keyof typeof shadows]: RNShadow };
@@ -314,6 +326,8 @@ export function tokensToRNStyles(dark = false, theme?: Theme): RNStyles {
 
   return {
     colors: p,
+    canvas: p.bgSubtle,
+    surface: p.bg,
     spacing: t.spacing,
     radius: t.radius,
     shadows: rnShadows as RNStyles['shadows'],
@@ -372,7 +386,10 @@ export function brandConfigToThemeOverrides(brand: BrandConfigLike): ThemeOverri
   if (c.warning) paletteOverrides.warning = c.warning;
   if (c.error) paletteOverrides.danger = c.error;
   if (c.background) paletteOverrides.bg = c.background;
-  if (c.surface) paletteOverrides.bgMuted = c.surface;
+  if (c.surface) {
+    paletteOverrides.bgMuted = c.surface;
+    paletteOverrides.bgSubtle = c.surface;
+  }
   if (c.text) paletteOverrides.fg = c.text;
   if (c.textMuted) paletteOverrides.fgMuted = c.textMuted;
   if (c.border) paletteOverrides.border = c.border;
@@ -402,6 +419,8 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   const vars: Record<string, string> = {};
 
   for (const [k, v] of Object.entries(p)) vars[`--maw-${k}`] = v;
+  vars['--maw-canvas'] = p.bgSubtle;
+  vars['--maw-surface'] = p.bg;
   for (const [k, v] of Object.entries(t.spacing)) vars[`--maw-space-${k}`] = `${v}px`;
   for (const [k, v] of Object.entries(t.radius)) vars[`--maw-radius-${k}`] = `${v}px`;
   for (const [k, v] of Object.entries(t.shadows)) vars[`--maw-shadow-${k}`] = v;

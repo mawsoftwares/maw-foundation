@@ -53,7 +53,7 @@ export function DataList<T>({
   const renderItem = useCallback(({ item }: ListRenderItemInfo<T>) => {
     const content = (
       <View style={{
-        backgroundColor: t.colors.bg,
+        backgroundColor: t.surface,
         borderBottomWidth: 1,
         borderBottomColor: t.colors.border,
         padding: t.spacing.lg,

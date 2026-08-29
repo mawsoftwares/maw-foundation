@@ -100,7 +100,7 @@ export function Popover({
         left: Math.min(Math.max(8, pos.left), window.innerWidth - 8),
         transform: translate[placement],
         transformOrigin: transformOrigin[placement],
-        background: 'var(--maw-bg)',
+        background: 'var(--maw-surface)',
         border: '1px solid var(--maw-border)',
         borderRadius: 'var(--maw-radius-lg)',
         boxShadow: 'var(--maw-shadow-lg)',

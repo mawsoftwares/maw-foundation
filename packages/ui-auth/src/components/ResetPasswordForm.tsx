@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Button, Card, TextField, useForm, FormField, useToast, Alert } from '@mawsoftwares/ui-web';
 import { ApiClient } from '@mawsoftwares/api-client';
 import { useAuthT } from '../useAuthT';
+import { AuthScreen } from './AuthScreen';
 
 export interface ResetPasswordFormProps {
   readonly client: ApiClient;
@@ -44,7 +45,7 @@ export function ResetPasswordForm({ client, onSwitchToLogin, initialToken = '' }
 
   if (success) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+      <AuthScreen>
         <Card style={{ width: 400, maxWidth: '90vw', textAlign: 'center' }}>
           <h2 style={{ marginTop: 0, color: 'var(--maw-fg)' }}>{t('auth.passwordReset') || 'Password Reset'}</h2>
           <Alert variant="success">{t('auth.passwordResetDone') || 'Your password has been successfully reset. You can now sign in with your new password.'}</Alert>
@@ -52,12 +53,12 @@ export function ResetPasswordForm({ client, onSwitchToLogin, initialToken = '' }
             {t('auth.login') || 'Sign In'}
           </Button>
         </Card>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--maw-bgSubtle)' }}>
+    <AuthScreen>
       <Card style={{ width: 420, maxWidth: '90vw' }}>
         <h2 style={{ marginTop: 0, color: 'var(--maw-fg)', fontSize: 'var(--maw-text-xl)', fontWeight: 700 }}>
           {t('auth.resetPassword') || 'Reset Password'}
@@ -95,6 +96,6 @@ export function ResetPasswordForm({ client, onSwitchToLogin, initialToken = '' }
           <Button variant="ghost" onClick={onSwitchToLogin}>{t('auth.backToLogin') || 'Back to Login'}</Button>
         </div>
       </Card>
-    </div>
+    </AuthScreen>
   );
 }
