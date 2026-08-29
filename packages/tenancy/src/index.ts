@@ -162,3 +162,14 @@ export function requireActiveTenant(tenant: Tenant): void {
     throw new Error(`Tenant "${tenant.name}" is not active (status: ${tenant.status})`);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Implementations (tree-shakeable — only pulled in when imported)
+// ---------------------------------------------------------------------------
+
+export { PgTenantRepository } from './pg-tenant-repository';
+export { AlsTenantContextHolder } from './als-tenant-context';
+export { HeaderTenantResolver } from './resolvers/header-resolver';
+export { SubdomainTenantResolver } from './resolvers/subdomain-resolver';
+export { JwtTenantResolver } from './resolvers/jwt-resolver';
+export { CompositeTenantResolver } from './resolvers/composite-resolver';

@@ -113,3 +113,6 @@ export {
   type SocialAuthServiceOptions,
   SocialAuthService,
 } from './social-auth';
+export { PgSocialAccountStore } from './pg-social-account-store';
+export { GoogleAuthProvider, type GoogleAuthProviderOptions } from './providers/google-auth-provider';
+export { GitHubAuthProvider, type GitHubAuthProviderOptions } from './providers/github-auth-provider';

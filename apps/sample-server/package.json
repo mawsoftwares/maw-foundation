@@ -17,6 +17,7 @@
     "@mawsoftwares/reporting": "*",
     "@mawsoftwares/sdk": "*",
     "@mawsoftwares/server-express": "*",
+    "@mawsoftwares/tenancy": "*",
     "@mawsoftwares/users": "*",
     "express": "^5.0.0",
     "multer": "^2.2.0",

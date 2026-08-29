@@ -13,3 +13,5 @@ export {
   type SendInAppOptions,
 } from './InAppNotificationService';
 export { SmtpNotificationProvider, type SmtpProviderOptions } from './providers/smtp-provider';
+export { PgInAppNotificationStore } from './pg-notification-store';
+export { PgTemplateStore } from './pg-template-store';

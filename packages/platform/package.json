@@ -15,7 +15,9 @@
   "peerDependencies": {
     "expo-secure-store": "*",
     "@react-native-community/netinfo": "*",
-    "@mawsoftwares/database": "*"
+    "@mawsoftwares/database": "*",
+    "@aws-sdk/client-s3": "^3",
+    "@aws-sdk/s3-request-presigner": "^3"
   },
   "peerDependenciesMeta": {
     "expo-secure-store": {
@@ -25,6 +27,12 @@
       "optional": true
     },
     "@mawsoftwares/database": {
+      "optional": true
+    },
+    "@aws-sdk/client-s3": {
+      "optional": true
+    },
+    "@aws-sdk/s3-request-presigner": {
       "optional": true
     }
   },

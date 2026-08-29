@@ -8,6 +8,14 @@
     "@mawsoftwares/sdk": "*",
     "nodemailer": "^6.9.13"
   },
+  "peerDependencies": {
+    "@mawsoftwares/database": "*"
+  },
+  "peerDependenciesMeta": {
+    "@mawsoftwares/database": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/nodemailer": "^6.4.14"
   },

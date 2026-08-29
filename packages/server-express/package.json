@@ -9,7 +9,8 @@
     "@mawsoftwares/sdk": "*",
     "@mawsoftwares/api": "*",
     "@mawsoftwares/auth-core": "*",
-    "@mawsoftwares/rbac-core": "*"
+    "@mawsoftwares/rbac-core": "*",
+    "@mawsoftwares/tenancy": "*"
   },
   "peerDependencies": {
     "express": "^4 || ^5"

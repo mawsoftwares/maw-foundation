@@ -2,6 +2,7 @@ export { SessionManager, SESSION_KEYS, decodeJwtExp } from './session/SessionMan
 export { MemorySecureStore } from './storage/MemorySecureStore';
 export { LocalFileStorage, type LocalFileStorageOptions } from './storage/LocalFileStorage';
 export { PgFileMetadataStore, type FileMetadataRecord } from './storage/PgFileMetadataStore';
+export { S3FileStorage, type S3FileStorageOptions } from './storage/S3FileStorage';
 
 // Offline
 export { MemoryOfflineStorage } from './offline/MemoryOfflineStorage';

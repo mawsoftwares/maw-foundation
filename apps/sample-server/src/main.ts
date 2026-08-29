@@ -48,7 +48,8 @@ import {
   type ISyncStore,
   type ICacheStore,
 } from '@mawsoftwares/rbac-core';
-import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, populateRequestContext, type DynamicAuthedRequest, type UploadedRequest } from '@mawsoftwares/server-express';
+import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, populateRequestContext, createTenantMiddleware, createTenantRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@mawsoftwares/server-express';
+import { PgTenantRepository, AlsTenantContextHolder, HeaderTenantResolver } from '@mawsoftwares/tenancy';
 import { initializeObservability } from '@mawsoftwares/observability';
 import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
 import { LocalFileStorage, PgFileMetadataStore } from '@mawsoftwares/platform';
@@ -202,7 +203,15 @@ cache.startAutoRefresh();
 log.info('Cache loaded', { roles: cache.getCache()!.roles.length, permissions: cache.getCache()!.permissions.length });
 
 // ---------------------------------------------------------------------------
-// Step 4: Dynamic auth middleware — uses cache for permission checks
+// Step 4: Tenancy — resolve tenant from request headers
+// ---------------------------------------------------------------------------
+
+const tenantRepository = new PgTenantRepository(data.pool);
+const tenantContextHolder = new AlsTenantContextHolder();
+const tenantResolver = new HeaderTenantResolver(tenantRepository);
+
+// ---------------------------------------------------------------------------
+// Step 5: Dynamic auth middleware — uses cache for permission checks
 // ---------------------------------------------------------------------------
 
 const auth = createDynamicExpressAuth({
@@ -430,6 +439,12 @@ for (const mw of securityMiddleware) app.use(mw);
 app.use(observabilityContextMiddleware());
 app.use(createObsRequestLogger({ logger: log, ignorePaths: ['/health'] }));
 app.use(populateRequestContext());
+app.use(createTenantMiddleware({
+  resolver: tenantResolver,
+  contextHolder: tenantContextHolder,
+  logger: log,
+  rejectOnMissing: false,
+}));
 
 // --- Auth routes ---
 
@@ -774,6 +789,10 @@ import { createRbacRouter } from './rbac-routes';
 const usersRepo = new AuthSchemaUsersRepository(data.pool);
 app.use('/api/v1/users', createUsersRouter(usersRepo, auth.requireAuth));
 app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.pool, cache));
+app.use('/api/v1/tenants', createTenantRoutes({
+  tenantRepository,
+  requireAuth: auth.requireAuth,
+}));
 
 app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
   const master = cache.getCache();

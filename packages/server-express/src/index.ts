@@ -422,3 +422,5 @@ export {
 } from './api-adapter';
 export { createRequestLogger, type RequestLoggerOptions } from './request-logger';
 export { correlationIdMiddleware } from './correlation-id';
+export { createTenantMiddleware, type TenantMiddlewareOptions } from './tenant-middleware';
+export { createTenantRoutes, type TenantRouteDeps } from './tenant-routes';

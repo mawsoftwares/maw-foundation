@@ -113,3 +113,13 @@ export {
 } from './api-adapter';
 export { createRequestLogger, type RequestLoggerOptions } from './request-logger';
 export { correlationIdMiddleware } from './correlation-id';
+export { createHonoAuthRoutes, handleHonoAuthError, type HonoAuthRouteDeps } from './auth-routes';
+export {
+  createHonoFileUploadHandler,
+  createHonoFileRoutes,
+  type HonoFileUploadOptions,
+} from './file-upload';
+export {
+  createHonoDynamicPermission,
+  type HonoDynamicAuthOptions,
+} from './rbac-middleware';

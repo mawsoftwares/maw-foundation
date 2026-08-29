@@ -1,49 +1,64 @@
-# MAW Foundation — Packages
+# MAW Foundation — Package Reference
 
-## Core Packages (Implemented)
+28 packages in 5 layers. Dependency law: `apps → domains + ui → platform → sdk`.
 
-| Package | Name | Description |
-|---------|------|-------------|
-| `packages/sdk` | `@mawsoftwares/sdk` | Kernel primitives (Result, Money, IDs) + contracts (ports) + i18n |
-| `packages/core` | `@mawsoftwares/core` | Canonical import path for framework-independent primitives |
-| `packages/config` | `@mawsoftwares/config` | Multi-level config engine, env utils, health checker, version |
-| `packages/platform` | `@mawsoftwares/platform` | Session manager, crypto, storage engines |
-| `packages/auth-core` | `@mawsoftwares/auth-core` | JWT, refresh tokens, password, MFA, registration |
-| `packages/rbac-core` | `@mawsoftwares/rbac-core` | Permission resolver, module registry, ABAC scoping |
-| `packages/users` | `@mawsoftwares/users` | User entities, CRUD, profile, status management |
-| `packages/tenancy` | `@mawsoftwares/tenancy` | Tenant identity, context, resolution, isolation contracts |
-| `packages/modules` | `@mawsoftwares/modules` | Module registry, lifecycle, dependency graph, event bus |
-| `packages/feature-flags` | `@mawsoftwares/feature-flags` | Tenant-aware feature flag service with scoped evaluation |
+## SDK Layer
 
-## Infrastructure Packages (Implemented)
+| Package | Scope Name | Status | Description |
+|---------|-----------|--------|-------------|
+| `packages/sdk` | `@mawsoftwares/sdk` | Stable | Kernel primitives (Result, Money, IDs), contracts (ports), i18n, file utils |
+| `packages/core` | `@mawsoftwares/core` | Stable | Canonical re-export of framework-independent primitives |
+| `packages/config` | `@mawsoftwares/config` | Stable | Multi-level config engine, env utils, health checker, version |
 
-| Package | Name | Description |
-|---------|------|-------------|
-| `packages/database` | `@mawsoftwares/database` | PostgreSQL pool, repository base, query builder, migrations |
-| `packages/api` | `@mawsoftwares/api` | API route definitions and handlers |
-| `packages/api-client` | `@mawsoftwares/api-client` | Typed HTTP client with auto-refresh |
-| `packages/theme` | `@mawsoftwares/theme` | Platform-agnostic design tokens |
-| `packages/ui-web` | `@mawsoftwares/ui-web` | React web design system + RBAC guards |
-| `packages/ui-native` | `@mawsoftwares/ui-native` | React Native design system |
+## Platform Layer
 
-## Adapters
+| Package | Scope Name | Status | Description |
+|---------|-----------|--------|-------------|
+| `packages/platform` | `@mawsoftwares/platform` | Stable | Session manager, LocalFileStorage, S3FileStorage, PgFileMetadataStore, offline adapters, security utilities |
+| `packages/database` | `@mawsoftwares/database` | Stable | PostgreSQL pool, PgPool interface, query utilities, migration runner |
+| `packages/observability` | `@mawsoftwares/observability` | Stable | Logger, metrics, tracing, error tracking, performance, health, shutdown manager, ALS context |
+| `packages/testing` | `@mawsoftwares/testing` | Stable | Test utilities and helpers |
 
-| Adapter | Name | Wraps |
-|---------|------|-------|
-| `adapters/express` | `@mawsoftwares/express` | `@mawsoftwares/server-express` |
-| `adapters/hono` | `@mawsoftwares/hono` | `@mawsoftwares/server-hono` |
-| `adapters/postgres` | `@mawsoftwares/postgres` | `@mawsoftwares/database` |
+## Domain Layer
 
-## Placeholder Packages (Future Implementation)
+| Package | Scope Name | Status | Description |
+|---------|-----------|--------|-------------|
+| `packages/auth-core` | `@mawsoftwares/auth-core` | Stable | JWT, refresh tokens, password hashing, MFA/OTP, registration, email verification, password reset, social auth (Google + GitHub providers), PgSocialAccountStore |
+| `packages/rbac-core` | `@mawsoftwares/rbac-core` | Stable | Permission resolver, module registry, ABAC scoping, dynamic permission checks, MasterCache |
+| `packages/users` | `@mawsoftwares/users` | Stable | User entities, CRUD, profile, status management, PgUserRepository |
+| `packages/tenancy` | `@mawsoftwares/tenancy` | Stable | Tenant contracts, PgTenantRepository, resolvers (header, subdomain, JWT, composite), ALS context holder |
+| `packages/modules` | `@mawsoftwares/modules` | Stable | Module registry, lifecycle, dependency graph, event bus |
+| `packages/feature-flags` | `@mawsoftwares/feature-flags` | WIP | Tenant-aware feature flag service (has pre-existing type errors) |
+| `packages/communication` | `@mawsoftwares/communication` | Stable | NotificationService, email/SMS/in-app, SMTP provider, PgInAppNotificationStore, PgTemplateStore |
+| `packages/queue` | `@mawsoftwares/queue` | Stable | QueueService, JobRunner, InMemoryProvider, PgQueueProvider |
+| `packages/audit` | `@mawsoftwares/audit` | Stable | Audit trail and structured event logging |
+| `packages/masters` | `@mawsoftwares/masters` | Stable | Master data management with caching |
+| `packages/import-export` | `@mawsoftwares/import-export` | Stable | CSV/JSON import with validation, mapping, dedup; export with background processing |
+| `packages/reporting` | `@mawsoftwares/reporting` | Stable | Report definitions, filter/sort/group/aggregate, execution engine, saved reports |
+| `packages/deployment` | `@mawsoftwares/deployment` | Scaffold | Deployment utilities and configuration |
 
-| Package | Name | Description |
-|---------|------|-------------|
-| `packages/notifications` | `@mawsoftwares/notifications` | Multi-channel notification system |
-| `packages/audit` | `@mawsoftwares/audit` | Audit trail and logging |
-| `packages/files` | `@mawsoftwares/files` | File upload/download with storage providers |
-| `packages/validation` | `@mawsoftwares/validation` | Schema-based validation framework |
-| `packages/i18n` | `@mawsoftwares/i18n` | Internationalization and localization |
-| `packages/workflow` | `@mawsoftwares/workflow` | State machine and approval workflows |
-| `packages/billing` | `@mawsoftwares/billing` | Subscription and invoice management |
-| `packages/queue` | `@mawsoftwares/queue` | Background job processing |
-| `packages/offline` | `@mawsoftwares/offline` | Offline-first sync engine |
+## Server Adapters
+
+| Package | Scope Name | Status | Description |
+|---------|-----------|--------|-------------|
+| `packages/server-express` | `@mawsoftwares/server-express` | Stable | Express auth middleware, RBAC, file upload, CSRF, rate-limit, CORS, security pipeline, tenant middleware, tenant routes, auth routes |
+| `packages/server-hono` | `@mawsoftwares/server-hono` | Stable | Hono auth middleware, RBAC, file upload, auth routes, rate-limit, CORS, security pipeline |
+| `packages/api` | `@mawsoftwares/api` | Stable | API route definitions, typed handlers |
+| `packages/api-client` | `@mawsoftwares/api-client` | Stable | Typed HTTP client with auto-refresh, cancellation, interceptors, offline support |
+
+## UI Layer
+
+| Package | Scope Name | Status | Description |
+|---------|-----------|--------|-------------|
+| `packages/theme` | `@mawsoftwares/theme` | Stable | Platform-agnostic design tokens, brand config bridge |
+| `packages/ui-web` | `@mawsoftwares/ui-web` | Stable | React web design system — 40+ components, DataGrid, DynamicForm, RBAC guards |
+| `packages/ui-native` | `@mawsoftwares/ui-native` | Stable | React Native design system |
+| `packages/ui-auth` | `@mawsoftwares/ui-auth` | Stable | Auth UI components (login, register, password reset forms) |
+| `packages/ui-users` | `@mawsoftwares/ui-users` | Stable | User management UI components |
+
+## Sample Apps
+
+| App | Description |
+|-----|-------------|
+| `apps/sample-server` | Express server wiring all domain packages — auth, RBAC, tenancy, queue, files, communication |
+| `apps/sample-web` | React web app showcasing all UI packages |
