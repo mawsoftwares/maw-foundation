@@ -14,13 +14,17 @@
   },
   "peerDependencies": {
     "expo-secure-store": "*",
-    "@react-native-community/netinfo": "*"
+    "@react-native-community/netinfo": "*",
+    "@mawsoftwares/database": "*"
   },
   "peerDependenciesMeta": {
     "expo-secure-store": {
       "optional": true
     },
     "@react-native-community/netinfo": {
+      "optional": true
+    },
+    "@mawsoftwares/database": {
       "optional": true
     }
   },

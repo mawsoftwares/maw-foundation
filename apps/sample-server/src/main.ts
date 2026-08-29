@@ -51,7 +51,7 @@ import {
 import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, populateRequestContext, type DynamicAuthedRequest, type UploadedRequest } from '@mawsoftwares/server-express';
 import { initializeObservability } from '@mawsoftwares/observability';
 import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
-import { LocalFileStorage } from '@mawsoftwares/platform';
+import { LocalFileStorage, PgFileMetadataStore } from '@mawsoftwares/platform';
 import { AesEncryptionService } from '@mawsoftwares/platform/security/AesEncryptionService';
 import { MemoryRateLimiter } from '@mawsoftwares/platform/security/MemoryRateLimiter';
 import { redact } from '@mawsoftwares/platform/security/LogRedactor';
@@ -86,6 +86,7 @@ import {
   QueueService,
   JobRunner,
   WorkerRegistry,
+  PgQueueProvider,
 } from '@mawsoftwares/queue';
 import {
   ExportService,
@@ -332,10 +333,7 @@ const authService = new AuthenticationService({
 // Queue — background job processing (Postgres)
 // ---------------------------------------------------------------------------
 
-const queueProvider = await (async () => {
-  const { PgQueueProvider } = await import('./queue-pg');
-  return new PgQueueProvider(data.pool);
-})();
+const queueProvider = new PgQueueProvider(data.pool);
 const queueService = new QueueService({ provider: queueProvider, logger: log.child('queue') });
 const workerRegistry = new WorkerRegistry();
 
@@ -689,10 +687,7 @@ const uploadHandler = createFileUploadHandler({
 });
 const fileRoutes = createFileRoutes(fileStorage);
 
-const fileMetadataStore = await (async () => {
-  const { PgFileMetadataStore } = await import('./file-metadata-pg');
-  return new PgFileMetadataStore(data.pool);
-})();
+const fileMetadataStore = new PgFileMetadataStore(data.pool);
 
 app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), uploadHandler, async (req, res) => {
   const uploaded = (req as UploadedRequest).uploadedFiles ?? [];
