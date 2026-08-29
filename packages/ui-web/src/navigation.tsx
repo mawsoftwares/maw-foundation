@@ -68,13 +68,20 @@ export function NavigationProvider({
   defaultCollapsed?: boolean;
   children: ReactNode;
 }): ReactNode {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const isMobile = useIsMobile();
+  // On mobile, `collapsed` means the overlay drawer is closed. Start closed so the
+  // page is visible; desktop still uses collapsed as the icon-rail toggle.
+  const [collapsed, setCollapsed] = useState(defaultCollapsed || isMobile);
   const [dynamicItems, setDynamicItems] = useState<NavItem[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>(config.breadcrumbs ?? []);
 
   useEffect(() => {
     if (config.breadcrumbs !== undefined) setBreadcrumbs(config.breadcrumbs);
   }, [config.breadcrumbs]);
+
+  useEffect(() => {
+    if (isMobile) setCollapsed(true);
+  }, [isMobile]);
 
   const allItems = useMemo(() => {
     const merged = [...config.items, ...dynamicItems];
@@ -133,7 +140,7 @@ export function Sidebar({
   footer?: ReactNode;
   style?: CSSProperties;
 }): ReactNode {
-  const { items, activeKey, collapsed, navigate, toggleSidebar } = useNavigation();
+  const { items, activeKey, collapsed, navigate, toggleSidebar, setCollapsed } = useNavigation();
 
   const grouped = useMemo(() => {
     const groups = new Map<string, NavItem[]>();
@@ -147,6 +154,11 @@ export function Sidebar({
 
   const isMobile = useIsMobile();
   const effectiveWidth = isMobile ? '100%' : (collapsed ? 64 : 260);
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    if (isMobile) setCollapsed(true);
+  };
 
   return (
     <aside
@@ -166,9 +178,21 @@ export function Sidebar({
         ...style,
       }}
     >
-      {header !== undefined && (
-        <div style={{ padding: collapsed && !isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-lg)', borderBottom: '1px solid var(--maw-border)' }}>
-          {header}
+      {(header !== undefined || isMobile) && (
+        <div style={{
+          padding: collapsed && !isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-lg)',
+          borderBottom: '1px solid var(--maw-border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}>
+          <div style={{ minWidth: 0, flex: 1 }}>{header}</div>
+          {isMobile && (
+            <IconButton label="Close menu" onClick={() => setCollapsed(true)}>
+              ✕
+            </IconButton>
+          )}
         </div>
       )}
 
@@ -189,7 +213,7 @@ export function Sidebar({
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} active={activeKey === item.key} collapsed={collapsed && !isMobile} onNavigate={navigate} />
+              <SidebarItem key={item.key} item={item} active={activeKey === item.key} collapsed={collapsed && !isMobile} onNavigate={handleNavigate} />
             ))}
           </div>
         ))}
@@ -336,16 +360,24 @@ export function AppShell({
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-bgSubtle)', ...style }}>
       {!isMobile && sidebar}
       {isMobile && (
-        <Drawer open={!collapsed} onClose={() => setCollapsed(true)} side="left" width={280} style={{ padding: 0 }} contentStyle={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Drawer
+          open={!collapsed}
+          onClose={() => setCollapsed(true)}
+          side="left"
+          width={280}
+          title="Menu"
+          style={{ padding: 0 }}
+          contentStyle={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        >
           {sidebar}
         </Drawer>
       )}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
-        {header !== undefined && (
+        {(header !== undefined || isMobile) && (
           <header
             style={{
               ...base,
-              padding: '12px var(--maw-space-xl)',
+              padding: isMobile ? '10px var(--maw-space-md)' : '12px var(--maw-space-xl)',
               background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
@@ -366,12 +398,20 @@ export function AppShell({
                 ☰
               </IconButton>
             )}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              minWidth: 0,
+              flexWrap: isMobile ? 'wrap' : undefined,
+              gap: isMobile ? 8 : undefined,
+            }}>
               {header}
             </div>
           </header>
         )}
-        <main style={{ flex: 1, padding: 'var(--maw-space-xl)', overflowY: 'auto' }}>{children}</main>
+        <main style={{ flex: 1, padding: isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-xl)', overflowY: 'auto', overflowX: 'hidden' }}>{children}</main>
         <footer style={{
           padding: 'var(--maw-space-lg) var(--maw-space-xl)',
           borderTop: '1px solid var(--maw-border)',

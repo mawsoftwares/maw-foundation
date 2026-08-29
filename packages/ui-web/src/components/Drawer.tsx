@@ -24,6 +24,8 @@ export interface DrawerProps {
   readonly footer?: ReactNode;
   readonly side?: 'left' | 'right';
   readonly width?: number | string;
+  /** When true, the panel stretches to the viewport on small screens. Defaults to true for right-side drawers (forms) and false for left-side drawers (nav) so the page stays visible behind an overlay. */
+  readonly fullWidthOnMobile?: boolean;
   readonly style?: CSSProperties;
   readonly contentStyle?: CSSProperties;
 }
@@ -36,10 +38,16 @@ export function Drawer({
   footer,
   side = 'right',
   width = 400,
+  fullWidthOnMobile,
   style,
   contentStyle,
 }: DrawerProps): ReactNode {
   const isMobile = useIsMobile();
+  const stretchOnMobile = fullWidthOnMobile ?? side === 'right';
+  const panelWidth = isMobile && stretchOnMobile ? '100%' : width;
+  const panelMaxWidth = isMobile && stretchOnMobile
+    ? '100%'
+    : (isMobile ? 'min(20rem, 85vw)' : '90vw');
 
   useEffect(() => {
     if (!open) return;
@@ -73,8 +81,8 @@ export function Drawer({
           top: 0,
           bottom: 0,
           [side]: 0,
-          width: isMobile ? '100%' : width,
-          maxWidth: isMobile ? '100%' : '90vw',
+          width: panelWidth,
+          maxWidth: panelMaxWidth,
           background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
