@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useCrud } from '@mawsoftwares/ui-web';
-import { Drawer } from '@mawsoftwares/ui-web';
-import type { UserResponseDto } from '@mawsoftwares/users';
+import { useCrud, Drawer } from '@mawsoftwares/ui-web';
+import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
 import type { IUserApiService, RoleOption } from './types';
 import { UsersList } from './UsersList';
 import { UserForm } from './UserForm';
@@ -12,11 +11,12 @@ export interface UsersManagerProps {
   formLayout?: 'page' | 'drawer';
 }
 
-type ViewState = 'list' | 'create' | 'edit' | 'details';
+type ViewState = 'list' | 'create' | 'details';
 
 export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   const [view, setView] = useState<ViewState>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailsUser, setDetailsUser] = useState<UserResponseDto | null>(null);
   const [roles, setRoles] = useState<RoleOption[]>([]);
 
   useEffect(() => {
@@ -25,20 +25,23 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
       .then((items) => setRoles([...items]))
       .catch(() => setRoles([]));
   }, [api]);
-  
+
   const crudConfig = useMemo(() => ({
     resourceName: 'Users',
     columns: [],
     keyField: 'id',
     fetchList: (params: any) => api.list(params),
-    create: (data: any) => api.create(data as any),
-    update: (id: string, data: any) => api.update(id, data as any),
+    create: (data: any) => api.create(data as CreateUserDto),
+    update: (id: string, data: any) => api.update(id, data as UpdateUserDto),
     remove: (id: string) => api.delete(id),
   }), [api]);
 
   const crud = useCrud<any>(crudConfig);
 
-  const selectedUser = selectedId ? crud.items.find(u => u.id === selectedId) : null;
+  const selectedFromList: UserResponseDto | null = selectedId
+    ? crud.items.find((u: UserResponseDto) => u.id === selectedId) ?? null
+    : null;
+  const selectedUser = detailsUser?.id === selectedId ? detailsUser : selectedFromList;
 
   const formProps = {
     roles,
@@ -51,26 +54,27 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   };
 
   const handleViewDetails = (id: string) => {
+    const fromList = crud.items.find((u: UserResponseDto) => u.id === id) ?? null;
     setSelectedId(id);
+    setDetailsUser(fromList);
     setView('details');
-  };
-
-  const handleEdit = () => {
-    setView('edit');
   };
 
   const handleBackToList = () => {
     setView('list');
     setSelectedId(null);
+    setDetailsUser(null);
   };
 
-  const handleSave = async (data: any) => {
-    if (view === 'create') {
-      await crud.createItem(data);
-    } else if (view === 'edit' && selectedId) {
-      await crud.updateItem(selectedId, data);
-    }
+  const handleCreate = async (data: CreateUserDto | UpdateUserDto) => {
+    await crud.createItem(data as CreateUserDto);
     handleBackToList();
+  };
+
+  const handleUpdate = async (data: UpdateUserDto) => {
+    if (!selectedId) return;
+    const updated = await crud.updateItem(selectedId, data);
+    if (updated) setDetailsUser(updated);
   };
 
   const handleDelete = async () => {
@@ -84,49 +88,46 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   };
 
   const handleActivate = async () => {
-    if (selectedId) {
-      await api.activate(selectedId);
-      crud.refresh();
-    }
+    if (!selectedId) return;
+    const updated = await api.activate(selectedId);
+    setDetailsUser(updated);
+    crud.refresh();
   };
 
   const handleDeactivate = async () => {
-    if (selectedId) {
-      await api.deactivate(selectedId);
-      crud.refresh();
-    }
+    if (!selectedId) return;
+    const updated = await api.deactivate(selectedId);
+    setDetailsUser(updated);
+    crud.refresh();
   };
 
-  const isFormView = view === 'create' || view === 'edit';
   const isDrawerLayout = formLayout === 'drawer';
+  const detailsNode = selectedUser ? (
+    <UserDetails
+      user={selectedUser}
+      onBack={handleBackToList}
+      onDelete={handleDelete}
+      onActivate={handleActivate}
+      onDeactivate={handleDeactivate}
+      onSave={handleUpdate}
+      {...formProps}
+    />
+  ) : null;
 
-  // If we are using page layout, mutually exclude views
   if (!isDrawerLayout) {
-    if (isFormView) {
+    if (view === 'create') {
       return (
         <UserForm
-          initialData={view === 'edit' ? selectedUser : null}
-          onSave={handleSave}
-          onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+          onSave={handleCreate}
+          onCancel={handleBackToList}
           {...formProps}
         />
       );
     }
-    if (view === 'details' && selectedUser) {
-      return (
-        <UserDetails
-          user={selectedUser}
-          onBack={handleBackToList}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onActivate={handleActivate}
-          onDeactivate={handleDeactivate}
-        />
-      );
+    if (view === 'details' && detailsNode) {
+      return detailsNode;
     }
   }
-
-  const isDetailsView = view === 'details';
 
   return (
     <>
@@ -141,37 +142,25 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
       {isDrawerLayout && (
         <>
           <Drawer
-            open={isFormView}
-            onClose={view === 'edit' ? () => setView('details') : handleBackToList}
+            open={view === 'create'}
+            onClose={handleBackToList}
             width={600}
           >
-            {isFormView && (
+            {view === 'create' && (
               <UserForm
-                initialData={view === 'edit' ? selectedUser : null}
-                onSave={handleSave}
-                onCancel={view === 'edit' ? () => setView('details') : handleBackToList}
+                onSave={handleCreate}
+                onCancel={handleBackToList}
                 {...formProps}
               />
             )}
           </Drawer>
 
           <Drawer
-            open={isDetailsView && selectedUser !== null}
+            open={view === 'details' && selectedUser !== null}
             onClose={handleBackToList}
-            width={700}
+            width={720}
           >
-            {isDetailsView && selectedUser && (
-              <div style={{ margin: 'calc(-1 * var(--maw-space-xl))' }}>
-                <UserDetails
-                  user={selectedUser}
-                  onBack={handleBackToList}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onActivate={handleActivate}
-                  onDeactivate={handleDeactivate}
-                />
-              </div>
-            )}
+            {detailsNode}
           </Drawer>
         </>
       )}

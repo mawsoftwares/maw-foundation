@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
 import {
   ListPage, DataTable, Badge, Button, Modal, TextField, useForm,
-  useToast, ErrorState, PageLoader, Tabs, type ColumnDef
+  useToast, ErrorState, PageLoader, Tabs, IconButton, Divider,
+  type ColumnDef
 } from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
@@ -322,152 +323,184 @@ function RolePermissionsPanel({ role, onClose }: { role: Role; onClose: () => vo
     groups[g].push(p);
   }
 
-  const getAction = (code: string) => code.split('_')[0] ?? code;
+  const getAction = (code: string) => {
+    const action = code.split('_')[0] ?? code;
+    return action.charAt(0).toUpperCase() + action.slice(1).toLowerCase();
+  };
 
   // suppress unused modules warning
   void modules;
 
   return (
     <div style={{
-      border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-lg)',
-      background: 'var(--maw-surface)', overflow: 'hidden',
+      border: '1px solid var(--maw-border)',
+      borderRadius: 'var(--maw-radius-lg)',
+      background: 'var(--maw-surface)',
+      overflow: 'hidden',
       marginBottom: 'var(--maw-space-lg)',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
     }}>
-      {/* Panel header */}
       <div style={{
-        background: 'var(--maw-surface)',
-        borderBottom: '1px solid var(--maw-border)',
         padding: 'var(--maw-space-md) var(--maw-space-lg)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 'var(--maw-space-md)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)', color: 'var(--maw-fg)' }}>{role.name} Permissions</div>
-            <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', fontFamily: 'monospace', marginTop: 2 }}>
-              {role.code} · {assigned.length} permission{assigned.length !== 1 ? 's' : ''} assigned
-            </div>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 'var(--maw-text-md)', color: 'var(--maw-fg)' }}>
+            {role.name} Permissions
+          </div>
+          <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', marginTop: 2 }}>
+            {role.code} · {assigned.length} assigned
           </div>
         </div>
-        <Button variant="ghost" onClick={onClose} style={{ fontSize: 'var(--maw-text-xs)' }}>✕ Close</Button>
+        <IconButton label="Close" onClick={onClose}>✕</IconButton>
       </div>
+
+      <Divider style={{ margin: 0 }} />
 
       {loading ? (
         <div style={{ padding: 'var(--maw-space-xl)' }}><PageLoader message="Loading permissions..." /></div>
       ) : (
         <>
-          {/* Module sections */}
-          <div style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-sm)' }}>
-              {Object.entries(groups).map(([groupName, groupPerms]) => {
-                const isOpen = expandedModules.has(groupName);
-                const checkedCount = groupPerms.filter((p) => isChecked(p.id)).length;
-                const allChecked = checkedCount === groupPerms.length;
-                const someChecked = checkedCount > 0 && !allChecked;
-                return (
-                  <div key={groupName} style={{
-                    border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-md)',
-                    overflow: 'hidden', background: 'var(--maw-bg)',
+          <div style={{ padding: 'var(--maw-space-xs) var(--maw-space-lg) var(--maw-space-md)' }}>
+            {Object.entries(groups).map(([groupName, groupPerms], index) => {
+              const isOpen = expandedModules.has(groupName);
+              const checkedCount = groupPerms.filter((p) => isChecked(p.id)).length;
+              const allChecked = checkedCount === groupPerms.length && groupPerms.length > 0;
+              const someChecked = checkedCount > 0 && !allChecked;
+              return (
+                <div key={groupName}>
+                  {index > 0 && <Divider style={{ margin: 'var(--maw-space-xs) 0' }} />}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--maw-space-sm)',
+                    padding: 'var(--maw-space-sm) 0',
                   }}>
-                    {/* Module header row */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '10px var(--maw-space-md)',
-                      background: isOpen ? 'var(--maw-surface)' : 'var(--maw-bg)',
-                      transition: 'background 0.15s',
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={allChecked}
-                        ref={(el) => { if (el) el.indeterminate = someChecked; }}
-                        onChange={() => handleGroupToggle(groupPerms)}
-                        style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--maw-brand)', flexShrink: 0 }}
-                      />
-                      <button
-                        onClick={() => toggleModuleExpand(groupName)}
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
-                      >
-                        <span style={{ fontWeight: 600, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fg)' }}>
-                          {groupName.replace(/_/g, ' ')}
-                        </span>
-                        <span style={{
-                          marginLeft: 'auto', fontSize: 'var(--maw-text-xs)', padding: '2px 8px',
-                          borderRadius: 'var(--maw-radius-full)',
-                          background: checkedCount > 0 ? 'var(--maw-surface)' : 'var(--maw-bg)',
-                          border: '1px solid var(--maw-border)',
-                          color: checkedCount > 0 ? 'var(--maw-fg)' : 'var(--maw-fgMuted)',
-                          fontWeight: 600, transition: 'background 0.15s, border-color 0.15s',
-                        }}>
-                          {checkedCount}/{groupPerms.length}
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--maw-fgMuted)', transform: `rotate(${isOpen ? 180 : 0}deg)`, transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
-                      </button>
-                    </div>
-
-                    {/* Permission checkboxes */}
-                    {isOpen && (
-                      <div style={{
-                        borderTop: '1px solid var(--maw-border)',
-                        padding: 'var(--maw-space-sm) var(--maw-space-md)',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-                        gap: '6px',
-                        background: 'var(--maw-bg)',
+                    <input
+                      type="checkbox"
+                      checked={allChecked}
+                      ref={(el) => { if (el) el.indeterminate = someChecked; }}
+                      onChange={() => handleGroupToggle(groupPerms)}
+                      aria-label={`Toggle all ${groupName.replace(/_/g, ' ')} permissions`}
+                      style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--maw-brand)', flexShrink: 0, margin: 0 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleModuleExpand(groupName)}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--maw-space-sm)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textAlign: 'left',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <span style={{ fontWeight: 500, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fg)' }}>
+                        {groupName.replace(/_/g, ' ')}
+                      </span>
+                      <span style={{
+                        marginLeft: 'auto',
+                        fontSize: 'var(--maw-text-xs)',
+                        color: 'var(--maw-fgSubtle)',
+                        fontWeight: 500,
+                        fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {groupPerms.map((p) => {
-                          const checked = isChecked(p.id);
-                          const action = getAction(p.code);
-                          return (
-                            <label key={p.id} style={{
-                              display: 'flex', alignItems: 'center', gap: 8,
-                              padding: '6px 10px', borderRadius: 'var(--maw-radius-sm)',
-                              cursor: 'pointer', transition: 'background 0.12s, border-color 0.12s',
-                              background: checked ? 'var(--maw-surface)' : 'transparent',
-                              border: `1px solid ${checked ? 'var(--maw-border)' : 'transparent'}`,
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => handleToggle(p.id)}
-                                style={{ width: 14, height: 14, accentColor: 'var(--maw-brand)', cursor: 'pointer', flexShrink: 0 }}
-                              />
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{
-                                  fontSize: 'var(--maw-text-xs)', fontWeight: 600,
-                                  color: checked ? 'var(--maw-fg)' : 'var(--maw-fgMuted)',
-                                  textTransform: 'uppercase', letterSpacing: '0.04em',
-                                }}>{action}</div>
-                                {p.description && (
-                                  <div style={{ fontSize: 10, color: 'var(--maw-fgMuted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {p.description}
-                                  </div>
-                                )}
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
+                        {checkedCount}/{groupPerms.length}
+                      </span>
+                      <span style={{
+                        fontSize: 10,
+                        color: 'var(--maw-fgSubtle)',
+                        transform: `rotate(${isOpen ? 180 : 0}deg)`,
+                        transition: 'transform 0.15s',
+                        display: 'inline-block',
+                      }}>▾</span>
+                    </button>
                   </div>
-                );
-              })}
-            </div>
+
+                  {isOpen && (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                      gap: '2px var(--maw-space-md)',
+                      padding: '0 0 var(--maw-space-sm) 22px',
+                    }}>
+                      {groupPerms.map((p) => {
+                        const checked = isChecked(p.id);
+                        return (
+                          <label
+                            key={p.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 'var(--maw-space-sm)',
+                              padding: '6px 8px',
+                              borderRadius: 'var(--maw-radius-sm)',
+                              cursor: 'pointer',
+                              background: checked
+                                ? 'color-mix(in srgb, var(--maw-brand) 7%, transparent)'
+                                : 'transparent',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => handleToggle(p.id)}
+                              style={{ width: 13, height: 14, accentColor: 'var(--maw-brand)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }}
+                            />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{
+                                fontSize: 'var(--maw-text-sm)',
+                                fontWeight: 500,
+                                color: checked ? 'var(--maw-fg)' : 'var(--maw-fgMuted)',
+                                lineHeight: 1.3,
+                              }}>
+                                {getAction(p.code)}
+                              </div>
+                              {p.description && (
+                                <div style={{
+                                  fontSize: 'var(--maw-text-xs)',
+                                  color: 'var(--maw-fgSubtle)',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  marginTop: 1,
+                                }}>
+                                  {p.description}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Sticky save bar */}
+          <Divider style={{ margin: 0 }} />
           <div style={{
-            borderTop: '1px solid var(--maw-border)',
             padding: 'var(--maw-space-sm) var(--maw-space-lg)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             background: 'var(--maw-surface)',
           }}>
-            <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
-              {assigned.length} permission{assigned.length !== 1 ? 's' : ''} selected
+            <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)' }}>
+              {assigned.length} selected
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 'var(--maw-space-sm)' }}>
               <Button variant="ghost" onClick={onClose}>Discard</Button>
               <Button onClick={() => void handleSave()} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Permissions'}
+                {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </div>
