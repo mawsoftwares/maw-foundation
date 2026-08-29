@@ -1,19 +1,13 @@
-import type { AlertVariant } from './Alert';
-import type { BannerVariant } from './Banner';
 import {
   useState,
   useRef,
   useEffect,
-  useCallback,
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
-
-// ---------------------------------------------------------------------------
-// Popover
-// ---------------------------------------------------------------------------
 
 export interface PopoverProps {
   readonly open: boolean;
@@ -21,6 +15,7 @@ export interface PopoverProps {
   readonly anchorRef: React.RefObject<HTMLElement | null>;
   readonly children: ReactNode;
   readonly placement?: 'top' | 'bottom' | 'left' | 'right';
+  readonly align?: 'start' | 'center' | 'end';
   readonly style?: CSSProperties;
 }
 
@@ -30,6 +25,7 @@ export function Popover({
   anchorRef,
   children,
   placement = 'bottom',
+  align = 'center',
   style,
 }: PopoverProps): ReactNode {
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -39,13 +35,14 @@ export function Popover({
     if (!open || !anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
     const gap = 8;
+    const along = align === 'start' ? rect.left : align === 'end' ? rect.right : rect.left + rect.width / 2;
 
     switch (placement) {
       case 'top':
-        setPos({ top: rect.top - gap, left: rect.left + rect.width / 2 });
+        setPos({ top: rect.top - gap, left: along });
         break;
       case 'bottom':
-        setPos({ top: rect.bottom + gap, left: rect.left + rect.width / 2 });
+        setPos({ top: rect.bottom + gap, left: along });
         break;
       case 'left':
         setPos({ top: rect.top + rect.height / 2, left: rect.left - gap });
@@ -54,7 +51,7 @@ export function Popover({
         setPos({ top: rect.top + rect.height / 2, left: rect.right + gap });
         break;
     }
-  }, [open, anchorRef, placement]);
+  }, [open, anchorRef, placement, align]);
 
   useEffect(() => {
     if (!open) return;
@@ -84,14 +81,15 @@ export function Popover({
     right: 'center left',
   };
 
+  const translateX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
   const translate: Record<string, string> = {
-    top: 'translate(-50%, -100%)',
-    bottom: 'translate(-50%, 0)',
+    top: `translate(${translateX}, -100%)`,
+    bottom: `translate(${translateX}, 0)`,
     left: 'translate(-100%, -50%)',
     right: 'translate(0, -50%)',
   };
 
-  return (
+  return createPortal(
     <div
       ref={popoverRef}
       role="dialog"
@@ -99,20 +97,22 @@ export function Popover({
         ...base,
         position: 'fixed',
         top: pos.top,
-        left: pos.left,
+        left: Math.min(Math.max(8, pos.left), window.innerWidth - 8),
         transform: translate[placement],
         transformOrigin: transformOrigin[placement],
         background: 'var(--maw-bg)',
         border: '1px solid var(--maw-border)',
-        borderRadius: 'var(--maw-radius-md)',
+        borderRadius: 'var(--maw-radius-lg)',
         boxShadow: 'var(--maw-shadow-lg)',
         padding: 'var(--maw-space-md)',
-        zIndex: 'var(--maw-z-modal)' as unknown as number,
-        minWidth: 200,
+        zIndex: 'var(--maw-z-popover)' as unknown as number,
+        minWidth: 220,
+        maxWidth: 'min(320px, calc(100vw - 16px))',
         ...style,
       }}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 }

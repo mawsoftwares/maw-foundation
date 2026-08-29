@@ -342,19 +342,29 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
 // AppShell — standard app layout with sidebar + header + content
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// AppShell — standard app layout with sidebar + header + content
+// ---------------------------------------------------------------------------
+
 export function AppShell({
   sidebar,
   header,
+  actions,
   children,
   style,
 }: {
   sidebar: ReactNode;
   header?: ReactNode;
+  actions?: ReactNode;
   children: ReactNode;
   style?: CSSProperties;
 }): ReactNode {
   const isMobile = useIsMobile();
-  const { collapsed, toggleSidebar, setCollapsed } = useNavigation();
+  const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs } = useNavigation();
+  const pageTitle =
+    items.find((item) => item.key === activeKey)?.label
+    ?? breadcrumbs[breadcrumbs.length - 1]?.label
+    ?? '';
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-bgSubtle)', ...style }}>
@@ -372,24 +382,23 @@ export function AppShell({
         </Drawer>
       )}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
-        {(header !== undefined || isMobile) && (
+        {(header !== undefined || actions !== undefined || isMobile) && (
           <header
             style={{
               ...base,
-              padding: isMobile ? '10px var(--maw-space-md)' : '12px var(--maw-space-xl)',
-              background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              borderBottom: '1px solid color-mix(in srgb, var(--maw-border) 40%, transparent)',
-              boxShadow: '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
+              minHeight: isMobile ? 48 : undefined,
+              padding: isMobile ? '6px 8px 6px 4px' : '12px var(--maw-space-xl)',
+              background: 'var(--maw-bg)',
+              borderBottom: '1px solid var(--maw-border)',
+              boxShadow: isMobile ? 'none' : '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
+              overflow: 'visible',
               display: 'flex',
               alignItems: 'center',
               position: 'sticky',
               top: 0,
               zIndex: 'var(--maw-z-sticky)' as unknown as number,
               flexShrink: 0,
-              transition: 'all 0.3s ease',
-              gap: 'var(--maw-space-md)',
+              gap: isMobile ? 4 : 'var(--maw-space-md)',
             }}
           >
             {isMobile && (
@@ -397,50 +406,72 @@ export function AppShell({
                 ☰
               </IconButton>
             )}
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              minWidth: 0,
-              flexWrap: isMobile ? 'wrap' : undefined,
-              gap: isMobile ? 8 : undefined,
-            }}>
-              {header}
-            </div>
+            {isMobile ? (
+              <>
+                <h1 style={{
+                  ...base,
+                  flex: 1,
+                  minWidth: 0,
+                  margin: 0,
+                  fontSize: 'var(--maw-text-md)',
+                  fontWeight: 600,
+                  color: 'var(--maw-fg)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {pageTitle}
+                </h1>
+                <div style={{ flexShrink: 0 }}>{actions}</div>
+              </>
+            ) : (
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                minWidth: 0,
+                gap: 'var(--maw-space-md)',
+              }}>
+                <div style={{ minWidth: 0, flex: 1 }}>{header}</div>
+                <div style={{ flexShrink: 0 }}>{actions}</div>
+              </div>
+            )}
           </header>
         )}
         <main style={{ flex: 1, padding: isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-xl)', overflowY: 'auto', overflowX: 'hidden' }}>{children}</main>
-        <footer style={{
-          padding: 'var(--maw-space-lg) var(--maw-space-xl)',
-          borderTop: '1px solid var(--maw-border)',
-          background: 'var(--maw-bg)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          fontSize: 'var(--maw-text-sm)',
-          color: 'var(--maw-fgMuted)',
-          flexShrink: 0,
-        }}>
-          Powered by
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 800, fontFamily: 'sans-serif', letterSpacing: '0.02em' }}>
-            <span style={{ color: '#2b7ec2', fontSize: 16 }}>MINDS</span>
-            <span style={{ 
-              background: '#f16d22', 
-              color: 'white', 
-              fontSize: 9, 
-              width: 20, 
-              height: 20, 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              fontWeight: 700
-            }}>AT</span>
-            <span style={{ color: '#2b7ec2', fontSize: 16 }}>WORK</span>
-          </div>
-        </footer>
+        {isMobile ? null : (
+          <footer style={{
+            padding: 'var(--maw-space-lg) var(--maw-space-xl)',
+            borderTop: '1px solid var(--maw-border)',
+            background: 'var(--maw-bg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            fontSize: 'var(--maw-text-sm)',
+            color: 'var(--maw-fgMuted)',
+            flexShrink: 0,
+          }}>
+            Powered by
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 800, fontFamily: 'sans-serif', letterSpacing: '0.02em' }}>
+              <span style={{ color: '#2b7ec2', fontSize: 16 }}>MINDS</span>
+              <span style={{
+                background: '#f16d22',
+                color: 'white',
+                fontSize: 9,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+              }}>AT</span>
+              <span style={{ color: '#2b7ec2', fontSize: 16 }}>WORK</span>
+            </div>
+          </footer>
+        )}
       </div>
     </div>
   );

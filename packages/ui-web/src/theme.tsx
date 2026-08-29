@@ -170,6 +170,43 @@ const GLOBAL_CSS = `
     animation: maw-slide-in-left var(--maw-transition-smooth) forwards;
   }
 
+  .maw-shell-overflow {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .maw-shell-overflow > div > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+  .maw-shell-overflow select {
+    width: 100%;
+    min-height: 36px;
+    box-sizing: border-box;
+  }
+  .maw-shell-overflow button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .maw-action-label {
+    display: none;
+  }
+  .maw-shell-overflow .maw-action-label {
+    display: block;
+    font-size: var(--maw-text-xs);
+    font-weight: 600;
+    color: var(--maw-fgMuted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .maw-shell-overflow div[style*="width: 1"] {
+    display: none !important;
+  }
+
   .maw-table-row-hover {
     transition: background-color var(--maw-transition-fast);
   }

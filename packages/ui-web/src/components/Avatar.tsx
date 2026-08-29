@@ -27,18 +27,27 @@ export function Avatar({
   size?: number;
   style?: CSSProperties;
 }): ReactNode {
+  const [failed, setFailed] = useState(false);
   const initials = typeof name === 'string' && name.trim().length > 0
     ? name.trim().split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
     : '?';
-  return src ? (
+  const showImage = src !== undefined && src.length > 0 && !failed;
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  return showImage ? (
     <img
       src={src}
       alt={name ?? ''}
+      onError={() => setFailed(true)}
       style={{
         width: size,
         height: size,
         borderRadius: '50%',
         objectFit: 'cover',
+        flexShrink: 0,
         ...style,
       }}
     />

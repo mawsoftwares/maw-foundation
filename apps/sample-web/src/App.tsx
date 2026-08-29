@@ -12,14 +12,9 @@ import {
   Sidebar,
   Breadcrumbs,
   useI18n,
-  useToast,
-  Button,
-  Badge,
   Avatar,
   OfflineProvider,
-  NetworkStatusBadge,
   OfflineBanner,
-  SyncStatusIndicator,
   FeatureFlagProvider,
   useFeatureFlags,
   type NavItem,
@@ -28,7 +23,6 @@ import {
 import { client } from './api';
 import { loadDynamicAccess, restoreSession } from './session';
 import { setupOffline } from './offline-setup';
-import { AVAILABLE_TENANTS } from './brand-setup';
 import { LoginForm, RegisterForm, VerifyEmailForm, ForgotPasswordForm, ResetPasswordForm } from '@mawsoftwares/ui-auth';
 import { DashboardView } from './shell/Dashboard';
 import { OrdersView } from './features/orders';
@@ -46,6 +40,7 @@ import { JobsView } from './features/jobs';
 import { NotificationsView } from './features/notifications';
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
+import { TopBarActions } from './shell/TopBarActions';
 
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
@@ -159,10 +154,9 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   offlineEnabled: boolean;
   setOfflineEnabled: (v: boolean) => void;
 }): ReactNode {
-  const { session, loading, logout } = useAuth();
-  const { t, locale, setLocale, availableLocales } = useI18n();
-  const { isDark, toggleColorMode, brand, switchTenant } = useBrand();
-  const toast = useToast();
+  const { session, loading } = useAuth();
+  const { t } = useI18n();
+  const { brand } = useBrand();
   const [page, setPage] = useState<Page>('dashboard');
   const deepLink = useMemo(() => readAuthDeepLink(), []);
   const [authPage, setAuthPage] = useState<AuthPage>(deepLink.page);
@@ -256,98 +250,8 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
             }
           />
         }
-        header={
-          <>
-            <Breadcrumbs />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <select
-                  value={brand.tenantId}
-                  onChange={(e) => {
-                    void switchTenant(e.target.value);
-                    toast.success(`Brand: ${e.target.value}`);
-                  }}
-                  className="maw-btn-hover"
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 'var(--maw-radius-pill)',
-                    border: '1px solid color-mix(in srgb, var(--maw-brand) 50%, transparent)',
-                    fontSize: 'var(--maw-text-xs)',
-                    background: 'color-mix(in srgb, var(--maw-brand) 10%, transparent)',
-                    color: 'var(--maw-brand)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    paddingRight: 24,
-                  }}
-                >
-                  {AVAILABLE_TENANTS.map((tid) => (
-                    <option key={tid} value={tid}>{tid}</option>
-                  ))}
-                </select>
-                <select
-                  value={locale}
-                  onChange={(e) => {
-                    setLocale(e.target.value);
-                    toast.info(`Language: ${e.target.value.toUpperCase()}`);
-                  }}
-                  className="maw-btn-hover"
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 'var(--maw-radius-pill)',
-                    border: '1px solid var(--maw-border)',
-                    fontSize: 'var(--maw-text-xs)',
-                    background: 'var(--maw-surface)',
-                    color: 'var(--maw-fg)',
-                    cursor: 'pointer',
-                    outline: 'none',
-                  }}
-                >
-                  {availableLocales.map((l) => (
-                    <option key={l} value={l}>{l.toUpperCase()}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ width: 1, height: 24, background: 'var(--maw-border)' }} />
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Button
-                  variant="ghost"
-                  onClick={toggleColorMode}
-                  style={{ padding: '6px', fontSize: 16, borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Toggle Theme"
-                >
-                  {isDark ? '☀️' : '🌙'}
-                </Button>
-                <NetworkStatusBadge />
-                <SyncStatusIndicator />
-              </div>
-
-              <div style={{ width: 1, height: 24, background: 'var(--maw-border)' }} />
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <span style={{ fontSize: 'var(--maw-text-xs)', fontWeight: 600, color: 'var(--maw-fg)' }}>
-                    {session.userId}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'var(--maw-brand)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
-                    {session.role}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => void logout()}
-                  style={{ padding: '6px 12px', fontSize: 'var(--maw-text-xs)', borderRadius: 'var(--maw-radius-pill)', color: 'var(--maw-danger)' }}
-                >
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </>
-        }
+        header={<Breadcrumbs />}
+        actions={<TopBarActions />}
       >
         <OfflineBanner style={{ marginBottom: 'var(--maw-space-md)' }} />
         <PageContent page={page} onFeatureChange={handleFeatureChange} featureOverrides={featureOverrides} />
