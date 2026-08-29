@@ -162,6 +162,14 @@ const GLOBAL_CSS = `
     animation: maw-slide-in-right var(--maw-transition-smooth) forwards;
   }
 
+  @keyframes maw-slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  .maw-slide-in-left {
+    animation: maw-slide-in-left var(--maw-transition-smooth) forwards;
+  }
+
   .maw-table-row-hover {
     transition: background-color var(--maw-transition-fast);
   }

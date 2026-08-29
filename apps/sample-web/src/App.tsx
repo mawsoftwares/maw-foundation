@@ -259,7 +259,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         header={
           <>
             <Breadcrumbs />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <select
                   value={brand.tenantId}

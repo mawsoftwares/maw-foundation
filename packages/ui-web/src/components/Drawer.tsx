@@ -74,7 +74,7 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="maw-slide-in-right"
+        className={side === 'left' ? 'maw-slide-in-left' : 'maw-slide-in-right'}
         style={{
           ...base,
           position: 'absolute',
@@ -86,7 +86,9 @@ export function Drawer({
           background: 'color-mix(in srgb, var(--maw-bg) 85%, transparent)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          boxShadow: '-4px 0 24px color-mix(in srgb, #000 12%, transparent)',
+          boxShadow: side === 'left'
+            ? '4px 0 24px color-mix(in srgb, #000 12%, transparent)'
+            : '-4px 0 24px color-mix(in srgb, #000 12%, transparent)',
           display: 'flex',
           flexDirection: 'column',
           ...style,

@@ -365,7 +365,6 @@ export function AppShell({
           onClose={() => setCollapsed(true)}
           side="left"
           width={280}
-          title="Menu"
           style={{ padding: 0 }}
           contentStyle={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         >
