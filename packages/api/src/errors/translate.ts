@@ -1,12 +1,17 @@
-import { isAppError, ErrorCode, toHttpStatus } from '@mawsoftwares/sdk/kernel/errors';
+import { isAppErrorLike, ErrorCode, toHttpStatus } from '@mawsoftwares/sdk/kernel/errors';
 import type { ControllerResult, Controller } from '../controller/types';
 import { ApiResponse } from '../response/formatter';
 
 export function translateError(err: unknown, requestId?: string): ControllerResult<never> {
-  if (isAppError(err)) {
+  if (isAppErrorLike(err)) {
     return {
       statusCode: err.statusCode,
-      body: ApiResponse.fromAppError(err, requestId),
+      body: ApiResponse.error(
+        err.code,
+        err.message,
+        err.details,
+        requestId,
+      ),
     };
   }
 

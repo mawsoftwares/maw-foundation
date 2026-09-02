@@ -1,5 +1,6 @@
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
 import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
+import { userNotFound } from '../../errors';
 
 export class ActivateUserUseCase {
   constructor(
@@ -11,7 +12,7 @@ export class ActivateUserUseCase {
   async execute(id: string, tenantId: string, actorId?: string): Promise<void> {
     const user = await this.userRepository.findById(id, tenantId);
     if (!user || user.deletedAt) {
-      throw new Error('USER_NOT_FOUND');
+      throw userNotFound(id);
     }
 
     if (user.status === AccountStatus.ACTIVE) {
@@ -49,7 +50,7 @@ export class DeactivateUserUseCase {
   async execute(id: string, tenantId: string, actorId?: string): Promise<void> {
     const user = await this.userRepository.findById(id, tenantId);
     if (!user || user.deletedAt) {
-      throw new Error('USER_NOT_FOUND');
+      throw userNotFound(id);
     }
 
     if (user.status === AccountStatus.DISABLED) {

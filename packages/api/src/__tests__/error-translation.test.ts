@@ -19,6 +19,20 @@ describe('translateError', () => {
     expect(result.statusCode).toBe(500);
     if (result.body && !result.body.success) {
       expect(result.body.error.code).toBe('INTERNAL');
+      expect(result.body.error.message).toBe('Internal server error');
+    }
+  });
+
+  it('maps structural AppError-like values', () => {
+    const result = translateError({
+      code: 'DUPLICATE_EMAIL',
+      statusCode: 409,
+      message: 'An account with this email already exists',
+    });
+    expect(result.statusCode).toBe(409);
+    if (result.body && !result.body.success) {
+      expect(result.body.error.code).toBe('DUPLICATE_EMAIL');
+      expect(result.body.error.message).toBe('An account with this email already exists');
     }
   });
 

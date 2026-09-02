@@ -53,7 +53,10 @@ describe('CreateUserUseCase', () => {
       password: 'password123',
     };
 
-    await expect(useCase.execute(input)).rejects.toThrow('USER_EMAIL_ALREADY_EXISTS');
+    await expect(useCase.execute(input)).rejects.toMatchObject({
+      code: 'DUPLICATE_EMAIL',
+      statusCode: 409,
+    });
   });
 
   it('should throw on duplicate phone', async () => {
@@ -73,6 +76,9 @@ describe('CreateUserUseCase', () => {
       password: 'password123',
     };
 
-    await expect(useCase.execute(input)).rejects.toThrow('USER_PHONE_ALREADY_EXISTS');
+    await expect(useCase.execute(input)).rejects.toMatchObject({
+      code: 'ALREADY_EXISTS',
+      statusCode: 409,
+    });
   });
 });

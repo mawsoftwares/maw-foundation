@@ -6,6 +6,15 @@ import type {
   TokenPair,
 } from '@mawsoftwares/sdk/contracts/IAccountAuth';
 import type { Session } from '@mawsoftwares/sdk/contracts/identity';
+import { ApiError, parseApiErrorPayload } from './errors';
+
+export {
+  ApiError,
+  parseApiErrorPayload,
+  getApiErrorMessage,
+  getApiErrorFields,
+  type ApiErrorField,
+} from './errors';
 
 const KEYS = {
   access: 'maw:auth:accessToken',
@@ -22,18 +31,6 @@ export interface ApiClientOptions {
   readonly mode?: 'token' | 'cookie';
   readonly getCsrfToken?: () => string | undefined;
   readonly timeout?: number;
-}
-
-/** Thrown for non-2xx responses so callers can branch on `status`. */
-export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    override readonly message: string,
-    readonly body?: unknown,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
 }
 
 /** Thrown when a request is cancelled via AbortController. */
@@ -372,12 +369,12 @@ export class ApiClient implements IAccountAuth {
           }
         } else {
           const body = xhr.responseText;
-          let message = xhr.statusText;
+          let parsed: unknown = body;
           try {
-            const parsed = JSON.parse(body) as Record<string, unknown>;
-            if ('error' in parsed) message = String(parsed.error);
-          } catch { /* use statusText */ }
-          reject(new ApiError(xhr.status, message, body));
+            parsed = JSON.parse(body) as unknown;
+          } catch { /* keep raw text */ }
+          const { message, code } = parseApiErrorPayload(parsed, xhr.statusText);
+          reject(new ApiError(xhr.status, message, parsed, code));
         }
       });
 
@@ -455,11 +452,8 @@ export class ApiClient implements IAccountAuth {
       data = text.length > 0 ? text : undefined;
     }
     if (!res.ok) {
-      const message =
-        typeof data === 'object' && data !== null && 'error' in data
-          ? String((data as { error: unknown }).error)
-          : res.statusText;
-      throw new ApiError(res.status, message, data);
+      const { message, code } = parseApiErrorPayload(data, res.statusText);
+      throw new ApiError(res.status, message, data, code);
     }
     return data as T;
   }

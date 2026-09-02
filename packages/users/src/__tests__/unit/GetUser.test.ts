@@ -30,7 +30,10 @@ describe('GetUserUseCase', () => {
       findById: vi.fn().mockResolvedValue(null),
     };
     const useCase = new GetUserUseCase(mockRepo);
-    await expect(useCase.execute('user-1', 'tenant-1')).rejects.toThrow('USER_NOT_FOUND');
+    await expect(useCase.execute('user-1', 'tenant-1')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      statusCode: 404,
+    });
   });
 
   it('should throw if user is soft deleted', async () => {
@@ -43,6 +46,9 @@ describe('GetUserUseCase', () => {
       findById: vi.fn().mockResolvedValue(mockUser),
     };
     const useCase = new GetUserUseCase(mockRepo);
-    await expect(useCase.execute('user-1', 'tenant-1')).rejects.toThrow('USER_NOT_FOUND');
+    await expect(useCase.execute('user-1', 'tenant-1')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      statusCode: 404,
+    });
   });
 });

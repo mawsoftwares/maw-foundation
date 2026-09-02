@@ -1,3 +1,6 @@
+import type { Controller } from '@mawsoftwares/api';
+import { created, ok } from '@mawsoftwares/api';
+import { UnauthorizedError } from '@mawsoftwares/sdk/kernel/errors';
 import {
   CreateUserUseCase,
   GetUserUseCase,
@@ -7,24 +10,24 @@ import {
   ActivateUserUseCase,
   DeactivateUserUseCase,
   ChangePasswordUseCase,
-  ResetPasswordUseCase
+  ResetPasswordUseCase,
 } from '../../application/use-cases';
-import { CreateUserDto, UpdateUserDto, ListUsersQueryDto } from '../../application/dto';
+import type { CreateUserDto, UpdateUserDto, ListUsersQueryDto } from '../../application/dto';
 
-export interface HttpRequest {
-  body: unknown;
-  query: unknown;
-  params: unknown;
-  headers: unknown;
-  context: {
-    tenantId: string;
-    actorId?: string;
-  };
+function requireTenant(tenantId: string | undefined): string {
+  if (tenantId === undefined || tenantId.length === 0) {
+    throw new UnauthorizedError('Tenant context required');
+  }
+  return tenantId;
 }
 
-export interface HttpResponse {
-  status: number;
-  body: unknown;
+function firstQuery(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+function paramId(params: Record<string, string>): string {
+  return params['id'] ?? '';
 }
 
 export class UsersController {
@@ -40,164 +43,87 @@ export class UsersController {
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
   ) {}
 
-  private success(data: unknown, meta?: unknown): HttpResponse {
-    return {
-      status: 200,
-      body: {
-        success: true,
-        data,
-        message: null,
-        meta: meta ?? {},
-      },
-    };
-  }
+  readonly createUser: Controller = async ({ body, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    const result = await this.createUserUseCase.execute(
+      { ...(body as CreateUserDto), tenantId },
+      context.userId,
+    );
+    return created(result);
+  };
 
-  private created(data: unknown): HttpResponse {
-    return {
-      status: 201,
-      body: {
-        success: true,
-        data,
-        message: null,
-        meta: {},
-      },
-    };
-  }
+  readonly getUser: Controller = async ({ params, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    const result = await this.getUserUseCase.execute(paramId(params), tenantId);
+    return ok(result);
+  };
 
-  private error(err: unknown, defaultStatus = 500): HttpResponse {
-    const e = err as any;
-    const message = e.message || 'Internal Server Error';
-    let status = defaultStatus;
-    
-    if (message.includes('Validation') || message.includes('ALREADY_EXISTS')) status = 400;
-    if (message.includes('NOT_FOUND')) status = 404;
+  readonly listUsers: Controller = async ({ query, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    const page = firstQuery(query['page']);
+    const limit = firstQuery(query['limit']);
+    const result = await this.listUsersUseCase.execute(tenantId, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search: firstQuery(query['search']),
+      status: firstQuery(query['status']) as ListUsersQueryDto['status'],
+      role: firstQuery(query['role']),
+      createdFrom: firstQuery(query['createdFrom']),
+      createdTo: firstQuery(query['createdTo']),
+    });
+    return ok(result);
+  };
 
-    return {
-      status,
-      body: {
-        success: false,
-        data: null,
-        message,
-        meta: {},
-      },
-    };
-  }
+  readonly updateUser: Controller = async ({ params, body, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    const result = await this.updateUserUseCase.execute(
+      paramId(params),
+      tenantId,
+      body as UpdateUserDto,
+      context.userId,
+    );
+    return ok(result);
+  };
 
-  async createUser(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const input: CreateUserDto = {
-        ...(req.body as any),
-        tenantId: req.context.tenantId,
-      };
-      const result = await this.createUserUseCase.execute(input, req.context.actorId);
-      return this.created(result);
-    } catch (e) {
-      return this.error(e);
-    }
-  }
+  readonly deleteUser: Controller = async ({ params, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    await this.deleteUserUseCase.execute(paramId(params), tenantId, context.userId);
+    return ok({ deleted: true });
+  };
 
-  async getUser(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const p = req.params as any;
-      const result = await this.getUserUseCase.execute(p.id, req.context.tenantId);
-      return this.success(result);
-    } catch (e) {
-      return this.error(e);
-    }
-  }
+  readonly activateUser: Controller = async ({ params, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    await this.activateUserUseCase.execute(paramId(params), tenantId, context.userId);
+    return ok({ success: true });
+  };
 
-  async listUsers(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const q = req.query as any;
-      const query: ListUsersQueryDto = {
-        page: q.page ? parseInt(q.page, 10) : undefined,
-        limit: q.limit ? parseInt(q.limit, 10) : undefined,
-        search: q.search,
-        status: q.status,
-        role: q.role,
-        createdFrom: q.createdFrom,
-        createdTo: q.createdTo,
-      };
-      const result = await this.listUsersUseCase.execute(req.context.tenantId, query);
-      return this.success(result);
-    } catch (e) {
-      return this.error(e);
-    }
-  }
+  readonly deactivateUser: Controller = async ({ params, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    await this.deactivateUserUseCase.execute(paramId(params), tenantId, context.userId);
+    return ok({ success: true });
+  };
 
-  async updateUser(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const p = req.params as any;
-      const result = await this.updateUserUseCase.execute(
-        p.id,
-        req.context.tenantId,
-        req.body as UpdateUserDto,
-        req.context.actorId
-      );
-      return this.success(result);
-    } catch (e) {
-      return this.error(e);
-    }
-  }
+  readonly changePassword: Controller = async ({ params, body, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    const payload = body as { newPassword?: string };
+    await this.changePasswordUseCase.execute(
+      tenantId,
+      paramId(params),
+      payload.newPassword,
+      context.userId,
+    );
+    return ok({ success: true });
+  };
 
-  async deleteUser(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const p = req.params as any;
-      await this.deleteUserUseCase.execute(p.id, req.context.tenantId, req.context.actorId);
-      return this.success({ success: true });
-    } catch (e) {
-      return this.error(e);
-    }
-  }
-
-  async activateUser(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const p = req.params as any;
-      await this.activateUserUseCase.execute(p.id, req.context.tenantId, req.context.actorId);
-      return this.success({ success: true });
-    } catch (e) {
-      return this.error(e);
-    }
-  }
-
-  async deactivateUser(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const p = req.params as any;
-      await this.deactivateUserUseCase.execute(p.id, req.context.tenantId, req.context.actorId);
-      return this.success({ success: true });
-    } catch (e) {
-      return this.error(e);
-    }
-  }
-
-  async changePassword(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const p = req.params as any;
-      const b = req.body as any;
-      await this.changePasswordUseCase.execute(
-        p.id,
-        b.currentPassword,
-        b.newPassword,
-        req.context.actorId
-      );
-      return this.success({ success: true });
-    } catch (e) {
-      return this.error(e);
-    }
-  }
-
-  async resetPassword(req: HttpRequest): Promise<HttpResponse> {
-    try {
-      const b = req.body as any;
-      await this.resetPasswordUseCase.execute(
-        req.context.tenantId,
-        b.email,
-        b.newPassword,
-        req.context.actorId
-      );
-      return this.success({ success: true });
-    } catch (e) {
-      return this.error(e);
-    }
-  }
+  readonly resetPassword: Controller = async ({ body, context }) => {
+    const tenantId = requireTenant(context.tenantId);
+    const payload = body as { email?: string; newPassword?: string };
+    await this.resetPasswordUseCase.execute(
+      tenantId,
+      payload.email ?? '',
+      payload.newPassword,
+      context.userId,
+    );
+    return ok({ success: true });
+  };
 }

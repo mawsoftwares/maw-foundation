@@ -388,6 +388,22 @@ export function DynamicForm({
         {/* Custom children */}
         {children}
 
+        {engine.submitError !== undefined && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 'var(--maw-space-md)',
+              padding: 'var(--maw-space-sm) var(--maw-space-md)',
+              borderRadius: 'var(--maw-radius-md)',
+              background: 'var(--maw-dangerSubtle, #fef2f2)',
+              color: 'var(--maw-danger)',
+              fontSize: 'var(--maw-text-sm)',
+            }}
+          >
+            {engine.submitError}
+          </div>
+        )}
+
         {/* Actions */}
         {!hideActions && !isReadOnly && layoutType !== 'wizard' && (
           <FormActions

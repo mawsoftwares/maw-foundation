@@ -1,0 +1,51 @@
+---
+description: Centralized AppError pipeline for every module — never throw raw Error codes or invent a local API envelope
+alwaysApply: true
+---
+
+# Error handling — every module
+
+Do not invent a new error type, HTTP envelope, or per-controller `try/catch` that returns `{ success: false, message }`. Reuse the existing pipeline.
+
+**Flow:** use case throws `AppError` → `createApiRouter` / `withErrorTranslation` → `{ success: false, error: { code, message, details? } }` → `ApiClient` (`getApiErrorMessage` / `getApiErrorFields`) → form field or toast.
+
+## Throw AppError (human message + HTTP status)
+
+```ts
+// ❌ FORBIDDEN
+throw new Error('USER_EMAIL_ALREADY_EXISTS');
+
+// ✅ REQUIRED — reuse ErrorCode from @mawsoftwares/sdk/kernel/errors
+throw new AppError(ErrorCode.DUPLICATE_EMAIL, 'An account with this email already exists', 409, { field: 'email' });
+throw new NotFoundError('Order', id);
+throw new ValidationError(fields);
+```
+
+Put domain helpers in `packages/<module>/src/errors/` (copy `packages/users/src/errors` or `packages/masters/src/errors`). Prefer existing `ErrorCode` values (`NOT_FOUND`, `ALREADY_EXISTS`, `DUPLICATE_EMAIL`, `VALIDATION_FAILED`, `CONFLICT`). Add a new `ErrorCode` only if none fit.
+
+## Controllers must not catch
+
+Use `createApiRouter` from `@mawsoftwares/server-express` (or Hono). Return `ok()` / `created()` / `paginated()`. Let `AppError` bubble.
+
+```ts
+// ❌ FORBIDDEN
+} catch (e) {
+  return { status: 400, body: { success: false, data: null, message: e.message, meta: {} } };
+}
+
+// ✅ REQUIRED
+readonly create: Controller = async ({ body, context }) => {
+  const row = await this.createUseCase.execute(body, context.userId);
+  return created(row);
+};
+```
+
+## Client
+
+Never parse errors ad hoc. Use `ApiError`, `getApiErrorMessage`, `getApiErrorFields` from `@mawsoftwares/api-client`. `DynamicForm` already maps `details.field` / `details.fields`. Toasts: `toast.error(getApiErrorMessage(err))`.
+
+## Do not
+
+- Leak generic `Error.message` as the API body (unknown errors stay `500` / `INTERNAL` / `Internal server error`)
+- Add a second global handler or a module-local envelope
+- Catch `AppError` only to rethrow a string

@@ -102,7 +102,7 @@ describe('ApiResponse', () => {
     it('handles generic Error', () => {
       const result = ApiResponse.fromUnknownError(new Error('boom'));
       expect(result.error.code).toBe('INTERNAL');
-      expect(result.error.message).toBe('boom');
+      expect(result.error.message).toBe('Internal server error');
     });
 
     it('handles non-Error values', () => {

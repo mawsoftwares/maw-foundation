@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
 import { CreateUserDto, CreateUserSchema, UserResponseDto } from '../dto';
 import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
+import { userEmailExists, userPhoneExists, userValidationFailed } from '../../errors';
 
 // Basic mapping function
 export function toUserResponseDto(user: unknown): UserResponseDto {
@@ -53,20 +54,20 @@ export class CreateUserUseCase {
   async execute(input: CreateUserDto, actorId?: string): Promise<UserResponseDto> {
     const errors = validateFields(input as unknown as Record<string, unknown>, CreateUserSchema as never);
     if (errors.length > 0) {
-      throw new Error(`Validation failed: ${JSON.stringify(errors)}`);
+      throw userValidationFailed(errors);
     }
 
     const email = input.email.trim().toLowerCase();
 
     const emailExists = await this.userRepository.existsByEmail(input.tenantId, email);
     if (emailExists) {
-      throw new Error('USER_EMAIL_ALREADY_EXISTS');
+      throw userEmailExists();
     }
 
     if (input.phone) {
       const phoneExists = await this.userRepository.existsByPhone(input.tenantId, input.phone);
       if (phoneExists) {
-        throw new Error('USER_PHONE_ALREADY_EXISTS');
+        throw userPhoneExists();
       }
     }
 

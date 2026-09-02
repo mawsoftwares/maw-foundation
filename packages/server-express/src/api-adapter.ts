@@ -52,7 +52,7 @@ export function executeController<
 ): RequestHandler {
   const safe = withErrorTranslation(controller);
 
-  return (req: Request, res: Response, _next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const base = req.requestContext ?? createRequestContext({
       requestId: req.headers['x-request-id'] as string | undefined,
     });
@@ -83,7 +83,7 @@ export function executeController<
       res.status(result.statusCode).json(result.body);
     }).catch((err: unknown) => {
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Internal server error' });
+        next(err);
       }
     });
   };

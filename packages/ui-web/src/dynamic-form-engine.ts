@@ -10,6 +10,7 @@ import type {
   OptionsSource,
   FormMode,
 } from '@mawsoftwares/sdk';
+import { getApiErrorFields, getApiErrorMessage } from '@mawsoftwares/api-client';
 
 // ---------------------------------------------------------------------------
 // Condition evaluator
@@ -198,6 +199,7 @@ export interface UseDynamicFormReturn {
   readonly dirty: boolean;
   readonly valid: boolean;
   readonly submitting: boolean;
+  readonly submitError?: string;
   readonly mode: FormMode;
 
   readonly fieldStates: ReadonlyMap<string, DynamicFieldState>;
@@ -243,6 +245,7 @@ export function useDynamicForm(options: UseDynamicFormOptions): UseDynamicFormRe
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | undefined>();
   const [dynamicOptions, setDynamicOptions] = useState<Record<string, OptionsState>>({});
 
   const hasPermission = useCallback((code: string | undefined) => {
@@ -335,6 +338,7 @@ export function useDynamicForm(options: UseDynamicFormOptions): UseDynamicFormRe
 
   const handleSubmit = useCallback((e?: { preventDefault?: () => void }) => {
     e?.preventDefault?.();
+    setSubmitError(undefined);
     const allTouched: Record<string, boolean> = {};
     for (const f of schema.fields) allTouched[f.name] = true;
     setTouched(allTouched);
@@ -357,7 +361,30 @@ export function useDynamicForm(options: UseDynamicFormOptions): UseDynamicFormRe
 
     const submitValues = schema.transform?.toApi ? schema.transform.toApi(values) : values;
     setSubmitting(true);
-    Promise.resolve(onSubmit(submitValues)).finally(() => setSubmitting(false));
+    setSubmitError(undefined);
+    Promise.resolve(onSubmit(submitValues))
+      .catch((err: unknown) => {
+        const fields = getApiErrorFields(err);
+        if (fields.length > 0) {
+          setErrors((prev) => {
+            const next = { ...prev };
+            for (const field of fields) {
+              next[field.field] = field.message;
+            }
+            return next;
+          });
+          setTouched((prev) => {
+            const next = { ...prev };
+            for (const field of fields) {
+              next[field.field] = true;
+            }
+            return next;
+          });
+          return;
+        }
+        setSubmitError(getApiErrorMessage(err, 'Something went wrong'));
+      })
+      .finally(() => setSubmitting(false));
   }, [schema, values, validate, validateField, onSubmit]);
 
   const reset = useCallback((newValues?: Record<string, unknown>) => {
@@ -367,6 +394,7 @@ export function useDynamicForm(options: UseDynamicFormOptions): UseDynamicFormRe
     setErrors({});
     setTouched({});
     setSubmitting(false);
+    setSubmitError(undefined);
   }, [buildDefaults]);
 
   const resetField = useCallback((name: string) => {
@@ -454,6 +482,7 @@ export function useDynamicForm(options: UseDynamicFormOptions): UseDynamicFormRe
     dirty,
     valid,
     submitting,
+    submitError,
     mode,
     fieldStates,
     visibleFields,

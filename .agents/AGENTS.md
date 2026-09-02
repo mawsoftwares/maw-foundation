@@ -186,6 +186,95 @@ Do not add a permission field to the rbac NAV_ITEM entry.
 
 ---
 
+## Error Handling — Mandatory for Every Module
+
+API errors are **centralized**. Domain code throws `AppError`. Adapters translate once. Clients read the standard envelope. Do not add a second pipeline.
+
+**Flow:** use case throws `AppError` → `createApiRouter` / `withErrorTranslation` → `{ success: false, error: { code, message, details? } }` → `ApiClient` (`getApiErrorMessage` / `getApiErrorFields`) → form field or toast.
+
+---
+
+### Rule 1 — Throw AppError, never raw Error codes
+
+```ts
+// FORBIDDEN
+throw new Error('USER_EMAIL_ALREADY_EXISTS');
+throw new Error('ORDER_NOT_FOUND');
+
+// REQUIRED
+throw new AppError(ErrorCode.DUPLICATE_EMAIL, 'An account with this email already exists', 409, { field: 'email' });
+throw new NotFoundError('Order', id);
+throw new ValidationError(fields);
+```
+
+Reuse `ErrorCode` from `@mawsoftwares/sdk/kernel/errors` (`NOT_FOUND`, `ALREADY_EXISTS`, `DUPLICATE_EMAIL`, `VALIDATION_FAILED`, `CONFLICT`, …). Add a new code only if none fit.
+
+Put helpers in `packages/<module>/src/errors/` — copy `packages/users/src/errors` or `packages/masters/src/errors`. Include `details.field` when the UI should attach the message to a form input.
+
+---
+
+### Rule 2 — Controllers must not catch and reformat
+
+Use `createApiRouter` from `@mawsoftwares/server-express` (or Hono). Return `ok()` / `created()` / `paginated()`. Let `AppError` bubble to `withErrorTranslation`.
+
+```ts
+// FORBIDDEN
+} catch (e) {
+  return { status: 400, body: { success: false, data: null, message: (e as Error).message, meta: {} } };
+}
+
+// REQUIRED
+readonly create: Controller = async ({ body, context }) => {
+  const row = await this.createUseCase.execute(body as CreateDto, context.userId);
+  return created(row);
+};
+```
+
+Guard routes with `auth.requirePermission(...)`. Do not add a module-local error middleware.
+
+---
+
+### Rule 3 — Client uses the standard envelope only
+
+```ts
+// FORBIDDEN
+String(body.error)           // becomes "[object Object]"
+err.message                  // when the server sent a CODE string
+
+// REQUIRED
+import { getApiErrorMessage, getApiErrorFields } from '@mawsoftwares/api-client';
+toast.error(getApiErrorMessage(err));
+```
+
+`DynamicForm` already maps `details.field` and `details.fields` onto inputs. Do not parse `{ success, message }` ad hoc.
+
+Unknown / non-`AppError` failures must remain `500` with `{ error: { code: 'INTERNAL', message: 'Internal server error' } }` — never leak internals.
+
+---
+
+### Rule 4 — Checklist when adding a module
+
+- [ ] Domain failures throw `AppError` (helpers in `src/errors/`)
+- [ ] Routes use `createApiRouter`; controllers do not catch
+- [ ] Duplicate / validation errors include `details.field` or `ValidationError` fields
+- [ ] UI uses `getApiErrorMessage` / `getApiErrorFields` or `DynamicForm` (no custom envelope)
+- [ ] Tests assert `code` + `statusCode`, not a string like `'USER_NOT_FOUND'`
+
+---
+
+## Key files for error handling
+
+| File | Purpose |
+|---|---|
+| `packages/sdk/src/kernel/errors.ts` | `AppError`, `ErrorCode`, `NotFoundError`, `ValidationError`, `isAppErrorLike` |
+| `packages/users/src/errors/index.ts` | Example domain helpers |
+| `packages/masters/src/errors/index.ts` | Example domain helpers |
+| `packages/api/src/errors/translate.ts` | `withErrorTranslation` |
+| `packages/server-express/src/error-handler.ts` | Global Express handler |
+| `packages/api-client/src/errors.ts` | `ApiError`, `getApiErrorMessage`, `getApiErrorFields` |
+
+---
+
 ## Key files for RBAC
 
 | File | Purpose |

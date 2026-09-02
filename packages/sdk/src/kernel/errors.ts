@@ -193,6 +193,25 @@ export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
+/** Structural AppError shape — works across package copies where `instanceof` fails. */
+export interface AppErrorShape {
+  readonly code: string;
+  readonly statusCode: number;
+  readonly message: string;
+  readonly details?: Record<string, unknown>;
+}
+
+export function isAppErrorLike(error: unknown): error is AppErrorShape {
+  if (isAppError(error)) return true;
+  if (typeof error !== 'object' || error === null) return false;
+  const value = error as Record<string, unknown>;
+  return (
+    typeof value['code'] === 'string' &&
+    typeof value['statusCode'] === 'number' &&
+    typeof value['message'] === 'string'
+  );
+}
+
 export function ensureError(value: unknown): Error {
   if (value instanceof Error) return value;
   if (typeof value === 'string') return new Error(value);

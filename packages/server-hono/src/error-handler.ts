@@ -1,5 +1,5 @@
 import type { ErrorHandler } from 'hono';
-import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
+import { ErrorCode, isAppErrorLike } from '@mawsoftwares/sdk/kernel/errors';
 import { ApiResponse } from '@mawsoftwares/api';
 
 export interface GlobalErrorHandlerOptions {
@@ -15,15 +15,14 @@ export function createGlobalErrorHandler(
   return (err, c) => {
     const requestId = c.req.header('x-request-id');
 
-    const errObj = err as any;
-    const isAppError = errObj && typeof errObj === 'object' && 'code' in errObj && 'statusCode' in errObj && 'message' in errObj;
-
-    if (isAppError) {
-      const details = errObj.details !== undefined
-        ? (redact ? redact(errObj.details) : errObj.details) as Record<string, unknown>
+    if (isAppErrorLike(err)) {
+      const details = err.details !== undefined
+        ? (redact ? redact(err.details) : err.details)
         : undefined;
-      const body = ApiResponse.error(errObj.code, errObj.message, details, requestId);
-      return c.json(body, errObj.statusCode as 400);
+      return c.json(
+        ApiResponse.error(err.code, err.message, details, requestId),
+        err.statusCode as 400,
+      );
     }
 
     const message = err instanceof Error ? err.message : 'Unknown error';

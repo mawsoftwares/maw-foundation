@@ -510,6 +510,9 @@ importers:
 
   packages/users:
     dependencies:
+      '@mawsoftwares/api':
+        specifier: workspace:*
+        version: link:../api
       '@mawsoftwares/auth-core':
         specifier: workspace:*
         version: link:../auth-core

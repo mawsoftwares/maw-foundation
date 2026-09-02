@@ -31,6 +31,9 @@ describe('DeleteUserUseCase', () => {
       findById: vi.fn().mockResolvedValue(null),
     };
     const useCase = new DeleteUserUseCase(mockRepo);
-    await expect(useCase.execute('user-1', 'tenant-1')).rejects.toThrow('USER_NOT_FOUND');
+    await expect(useCase.execute('user-1', 'tenant-1')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      statusCode: 404,
+    });
   });
 });

@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
-import { AppError, ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
+import { ErrorCode, isAppErrorLike } from '@mawsoftwares/sdk/kernel/errors';
 import { HttpStatus } from '@mawsoftwares/sdk/config/constants';
 import { ApiResponse } from '@mawsoftwares/api';
 
@@ -17,15 +17,13 @@ export function createGlobalErrorHandler(
   return (err: unknown, req: Request, res: Response, _next: NextFunction) => {
     const requestId = req.headers['x-request-id'] as string | undefined;
 
-    const errObj = err as any;
-    const isAppError = errObj && typeof errObj === 'object' && 'code' in errObj && 'statusCode' in errObj && 'message' in errObj;
-
-    if (isAppError) {
-      const details = errObj.details !== undefined
-        ? (redact ? redact(errObj.details) : errObj.details) as Record<string, unknown>
+    if (isAppErrorLike(err)) {
+      const details = err.details !== undefined
+        ? (redact ? redact(err.details) : err.details)
         : undefined;
-      const body = ApiResponse.error(errObj.code, errObj.message, details, requestId);
-      res.status(errObj.statusCode).json(body);
+      res.status(err.statusCode).json(
+        ApiResponse.error(err.code, err.message, details, requestId),
+      );
       return;
     }
 

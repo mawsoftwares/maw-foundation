@@ -23,6 +23,7 @@ The **codebase is the source of truth**; preserve behavior.
 - Dependency law: `.engineering/dependency-law.md`
 - Constitution: `.engineering/constitution.md`
 - Architecture: `MONOREPO.md`
+- Error handling (every module): `.agents/AGENTS.md` + `.cursor/rules/error-handling.mdc`
 
 ---
 
@@ -167,3 +168,15 @@ Action_ModuleName     →   Read_Orders | Create_Billing | Export_AuditLogs | Ma
 ```
 
 The `DynamicAccessProvider` in `packages/ui-web/src/dynamic-access.tsx` has `defaultIsAdmin = () => false` by design — `can()` is purely data-driven for all roles including `super_admin`. Do not change this.
+
+---
+
+## Error handling — every module
+
+> **Full detail in `.agents/AGENTS.md`**. The summary below is mandatory.
+
+Do not throw `new Error('MODULE_CODE')` or return a local `{ success: false, message }` envelope.
+
+1. **Use cases** throw `AppError` / `NotFoundError` / `ValidationError` from `@mawsoftwares/sdk/kernel/errors` with a human `message` and the correct `ErrorCode` (and `details.field` when the UI should highlight a form field). Domain helpers live in `packages/<module>/src/errors/` (see users + masters).
+2. **Routes** use `createApiRouter`. Controllers return `ok()` / `created()` / `paginated()` and **do not catch** — `withErrorTranslation` maps `AppError` to `{ success: false, error: { code, message, details? } }`.
+3. **Client** uses `getApiErrorMessage` / `getApiErrorFields` from `@mawsoftwares/api-client`. Do not stringify `error` objects. Unknown errors stay `500` / `INTERNAL` / `Internal server error`.

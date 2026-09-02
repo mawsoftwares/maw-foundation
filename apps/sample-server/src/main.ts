@@ -788,7 +788,10 @@ import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
 
 const usersRepo = new AuthSchemaUsersRepository(data.pool);
-app.use('/api/v1/users', createUsersRouter(usersRepo, auth.requireAuth));
+app.use('/api/v1/users', createUsersRouter(usersRepo, {
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+}));
 app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.pool, cache));
 app.use('/api/v1/tenants', createTenantRoutes({
   tenantRepository,

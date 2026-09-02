@@ -2,6 +2,7 @@ import type { IUsersRepository } from '../../infrastructure/repositories/UserRep
 import { UpdateUserDto, UpdateUserSchema, UserResponseDto } from '../dto';
 import { toUserResponseDto } from './CreateUser';
 import { validateFields } from '@mawsoftwares/sdk/kernel/validate';
+import { userEmailExists, userNotFound, userPhoneExists, userOperationFailed, userValidationFailed } from '../../errors';
 
 export class UpdateUserUseCase {
   constructor(
@@ -11,27 +12,27 @@ export class UpdateUserUseCase {
   ) {}
 
   async execute(id: string, tenantId: string, input: UpdateUserDto, actorId?: string): Promise<UserResponseDto> {
-    const errors = validateFields(input as unknown as Record<string, unknown>, UpdateUserSchema as any);
+    const errors = validateFields(input as unknown as Record<string, unknown>, UpdateUserSchema as never);
     if (errors.length > 0) {
-      throw new Error(`Validation failed: ${JSON.stringify(errors)}`);
+      throw userValidationFailed(errors);
     }
 
     const user = await this.userRepository.findById(id, tenantId);
     if (!user || user.deletedAt) {
-      throw new Error('USER_NOT_FOUND');
+      throw userNotFound(id);
     }
 
     if (input.email && input.email !== user.email) {
       const emailExists = await this.userRepository.existsByEmail(tenantId, input.email);
       if (emailExists) {
-        throw new Error('USER_EMAIL_ALREADY_EXISTS');
+        throw userEmailExists();
       }
     }
 
     if (input.phone && input.phone !== user.phone) {
       const phoneExists = await this.userRepository.existsByPhone(tenantId, input.phone);
       if (phoneExists) {
-        throw new Error('USER_PHONE_ALREADY_EXISTS');
+        throw userPhoneExists();
       }
     }
 
@@ -41,7 +42,7 @@ export class UpdateUserUseCase {
     });
 
     if (!updatedUser) {
-      throw new Error('USER_UPDATE_FAILED');
+      throw userOperationFailed('update');
     }
 
     const changes = Object.keys(input);

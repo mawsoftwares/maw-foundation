@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { createApiRouter } from '@mawsoftwares/server-express';
+import type { RequestHandler } from 'express';
 import {
   UsersController,
   CreateUserUseCase,
@@ -13,14 +14,13 @@ import {
 } from '@mawsoftwares/users';
 import type { IUsersRepository } from '@mawsoftwares/users';
 
-export function createUsersRouter(repo: IUsersRepository, requireAuth: any) {
-  const router = Router();
-  router.use(requireAuth);
-  router.get('/test', (req, res) => {
-    res.json({ message: 'users router is mounted!' });
-  });
-
-  // Use Cases
+export function createUsersRouter(
+  repo: IUsersRepository,
+  deps: {
+    requireAuth: RequestHandler;
+    requirePermission: (perm: string) => RequestHandler;
+  },
+) {
   const createUc = new CreateUserUseCase(repo);
   const getUc = new GetUserUseCase(repo);
   const listUc = new ListUsersUseCase(repo);
@@ -28,63 +28,52 @@ export function createUsersRouter(repo: IUsersRepository, requireAuth: any) {
   const deleteUc = new DeleteUserUseCase(repo);
   const activateUc = new ActivateUserUseCase(repo);
   const deactivateUc = new DeactivateUserUseCase(repo);
-  
-  // Dummy password services since we don't have full auth setup mapped here
-  const pwdChangeUc = new ChangePasswordUseCase({} as any);
-  const pwdResetUc = new ResetPasswordUseCase({} as any);
+  const pwdChangeUc = new ChangePasswordUseCase({});
+  const pwdResetUc = new ResetPasswordUseCase({});
 
   const controller = new UsersController(
     createUc, getUc, listUc, updateUc, deleteUc,
-    activateUc, deactivateUc, pwdChangeUc, pwdResetUc
+    activateUc, deactivateUc, pwdChangeUc, pwdResetUc,
   );
 
-  const makeReq = (req: any) => {
-    const maw = req.maw;
-    return {
-      body: req.body,
-      query: req.query,
-      params: req.params,
-      headers: req.headers,
-      context: {
-        tenantId: maw?.claims.tenantId ?? 'tenant-1',
-        actorId: maw?.claims.userId ?? 'system',
-      },
-    };
-  };
-
-  router.post('/', async (req, res) => {
-    const result = await controller.createUser(makeReq(req));
-    res.status(result.status).json(result.body);
+  const { router, get, post, patch, delete: destroy } = createApiRouter({
+    version: 'v1',
+    prefix: '/api/v1/users',
   });
 
-  router.get('/', async (req, res) => {
-    const result = await controller.listUsers(makeReq(req));
-    res.status(result.status).json(result.body);
+  get('/', controller.listUsers, {
+    middleware: [deps.requireAuth, deps.requirePermission('Read_Users')],
+    metadata: { summary: 'List users', tags: ['users'] },
   });
 
-  router.get('/:id', async (req, res) => {
-    const result = await controller.getUser(makeReq(req));
-    res.status(result.status).json(result.body);
+  get('/:id', controller.getUser, {
+    middleware: [deps.requireAuth, deps.requirePermission('Read_Users')],
+    metadata: { summary: 'Get user by ID', tags: ['users'] },
   });
 
-  router.patch('/:id', async (req, res) => {
-    const result = await controller.updateUser(makeReq(req));
-    res.status(result.status).json(result.body);
+  post('/', controller.createUser, {
+    middleware: [deps.requireAuth, deps.requirePermission('Create_Users')],
+    metadata: { summary: 'Create user', tags: ['users'] },
   });
 
-  router.delete('/:id', async (req, res) => {
-    const result = await controller.deleteUser(makeReq(req));
-    res.status(result.status).json(result.body);
+  patch('/:id', controller.updateUser, {
+    middleware: [deps.requireAuth, deps.requirePermission('Update_Users')],
+    metadata: { summary: 'Update user', tags: ['users'] },
   });
 
-  router.post('/:id/activate', async (req, res) => {
-    const result = await controller.activateUser(makeReq(req));
-    res.status(result.status).json(result.body);
+  destroy('/:id', controller.deleteUser, {
+    middleware: [deps.requireAuth, deps.requirePermission('Delete_Users')],
+    metadata: { summary: 'Delete user', tags: ['users'] },
   });
 
-  router.post('/:id/deactivate', async (req, res) => {
-    const result = await controller.deactivateUser(makeReq(req));
-    res.status(result.status).json(result.body);
+  post('/:id/activate', controller.activateUser, {
+    middleware: [deps.requireAuth, deps.requirePermission('Update_Users')],
+    metadata: { summary: 'Activate user', tags: ['users'] },
+  });
+
+  post('/:id/deactivate', controller.deactivateUser, {
+    middleware: [deps.requireAuth, deps.requirePermission('Update_Users')],
+    metadata: { summary: 'Deactivate user', tags: ['users'] },
   });
 
   return router;

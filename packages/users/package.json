@@ -13,6 +13,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
+    "@mawsoftwares/api": "workspace:*",
     "@mawsoftwares/auth-core": "workspace:*",
     "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",

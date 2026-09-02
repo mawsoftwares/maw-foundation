@@ -1,4 +1,4 @@
-import { AppError, isAppError, type ErrorCodeValue } from '@mawsoftwares/sdk/kernel/errors';
+import { AppError, isAppError, isAppErrorLike, type ErrorCodeValue } from '@mawsoftwares/sdk/kernel/errors';
 import type { PaginatedResult } from '@mawsoftwares/sdk/config/constants';
 import type {
   ApiSuccessResponse,
@@ -69,7 +69,9 @@ export const ApiResponse = {
 
   fromUnknownError(err: unknown, requestId?: string): ApiErrorResponse {
     if (isAppError(err)) return ApiResponse.fromAppError(err, requestId);
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    return ApiResponse.error('INTERNAL', message, undefined, requestId);
+    if (isAppErrorLike(err)) {
+      return ApiResponse.error(err.code, err.message, err.details, requestId);
+    }
+    return ApiResponse.error('INTERNAL', 'Internal server error', undefined, requestId);
   },
 } as const;
