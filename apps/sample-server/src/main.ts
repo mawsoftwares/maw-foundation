@@ -125,8 +125,9 @@ interface DataLayer {
 }
 
 async function buildDataLayer(): Promise<DataLayer> {
-  const { createDatabasePool } = await import('@mawsoftwares/database');
+  const { createDatabasePool, createDrizzle } = await import('@mawsoftwares/database');
   const pool = await createDatabasePool({ connectionString: DATABASE_URL });
+  const db = createDrizzle(pool);
   const { PgSyncStore, PgCacheStore } = await import('./pg-stores');
   const { PgRefreshStore } = await import('./repo-pg');
   const {
@@ -141,7 +142,7 @@ async function buildDataLayer(): Promise<DataLayer> {
     cacheStore: new PgCacheStore(pool),
     refreshStore: new PgRefreshStore(pool),
     auditStore: new PgAuditStore(pool),
-    userRepository: new PgUserRepository(pool),
+    userRepository: new PgUserRepository(db),
     sessionStore: new PgSessionStore(pool),
     emailVerificationStore: new PgEmailVerificationStore(pool),
     passwordResetStore: new PgPasswordResetStore(pool),

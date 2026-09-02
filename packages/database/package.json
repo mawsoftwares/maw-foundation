@@ -32,10 +32,13 @@
     "./migration": "./src/migration/runner.ts",
     "./seed": "./src/seed/index.ts",
     "./health": "./src/health/index.ts",
-    "./testing": "./src/testing/index.ts"
+    "./testing": "./src/testing/index.ts",
+    "./drizzle": "./src/drizzle/index.ts",
+    "./schema": "./src/schema/index.ts"
   },
   "dependencies": {
-    "@mawsoftwares/sdk": "workspace:*"
+    "@mawsoftwares/sdk": "workspace:*",
+    "drizzle-orm": "^0.45.2"
   },
   "peerDependencies": {
     "pg": ">=8"

@@ -6,12 +6,12 @@
   "dependencies": {
     "@mawsoftwares/api": "workspace:*",
     "@mawsoftwares/audit": "workspace:*",
-    "@mawsoftwares/communication": "workspace:*",
-    "@mawsoftwares/observability": "workspace:*",
-    "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/auth-core": "workspace:*",
+    "@mawsoftwares/communication": "workspace:*",
+    "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/import-export": "workspace:*",
     "@mawsoftwares/masters": "workspace:*",
+    "@mawsoftwares/observability": "workspace:*",
     "@mawsoftwares/queue": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
     "@mawsoftwares/reporting": "workspace:*",
@@ -19,6 +19,7 @@
     "@mawsoftwares/server-express": "workspace:*",
     "@mawsoftwares/tenancy": "workspace:*",
     "@mawsoftwares/users": "workspace:*",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.0.0",
     "multer": "^2.2.0",
     "pg": "^8.16.0"

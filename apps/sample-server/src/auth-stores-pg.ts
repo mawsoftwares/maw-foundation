@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { PgPool } from '@mawsoftwares/database';
+import type { DrizzleDb } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
+import { eq, and, sql } from 'drizzle-orm';
 import type {
   IEmailVerificationStore,
   ILoginAttemptStore,
@@ -23,130 +26,107 @@ import type { CreateUserInput, IUserRepository, UserRecord } from '@mawsoftwares
  * side at the composition root and nothing downstream knows the difference.
  */
 
-const USER_COLUMNS = `id, tenant_id, email, role, audience, password_hash, scope_id, name,
-  account_status, email_verified, mfa_enabled, last_login_at, phone, phone_verified,
-  created_at, updated_at`;
+type UsersRow = typeof schema.users.$inferSelect;
 
-interface UserDbRow {
-  id: string;
-  tenant_id: string;
-  email: string;
-  role: string;
-  audience: string;
-  password_hash: string;
-  scope_id: string | null;
-  name: string | null;
-  account_status: string;
-  email_verified: boolean;
-  mfa_enabled: boolean;
-  last_login_at: Date | null;
-  phone: string | null;
-  phone_verified: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
-function toUserRecord(row: UserDbRow): UserRecord {
+function toUserRecord(row: UsersRow): UserRecord {
   return {
     id: row.id,
-    tenantId: row.tenant_id,
+    tenantId: row.tenantId,
     email: row.email,
-    passwordHash: row.password_hash,
+    passwordHash: row.passwordHash,
     role: row.role,
     name: row.name ?? undefined,
     audience: row.audience,
-    scopeId: row.scope_id,
-    accountStatus: row.account_status as AccountStatusValue,
-    emailVerified: row.email_verified,
-    mfaEnabled: row.mfa_enabled,
-    lastLoginAt: row.last_login_at?.toISOString(),
+    scopeId: row.scopeId,
+    accountStatus: row.accountStatus as AccountStatusValue,
+    emailVerified: row.emailVerified,
+    mfaEnabled: row.mfaEnabled,
+    lastLoginAt: row.lastLoginAt?.toISOString(),
     phone: row.phone ?? undefined,
-    phoneVerified: row.phone_verified,
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString(),
+    phoneVerified: row.phoneVerified,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
 export class PgUserRepository implements IUserRepository {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async findById(id: string): Promise<UserRecord | null> {
-    const { rows } = await this.pool.query<UserDbRow>(
-      `SELECT ${USER_COLUMNS} FROM users WHERE id = $1 LIMIT 1`,
-      [id],
-    );
+    const rows = await this.db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1);
     return rows[0] !== undefined ? toUserRecord(rows[0]) : null;
   }
 
   async listByTenant(tenantId: string): Promise<UserRecord[]> {
-    const { rows } = await this.pool.query<UserDbRow>(
-      `SELECT ${USER_COLUMNS} FROM users WHERE tenant_id = $1 ORDER BY created_at`,
-      [tenantId],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.tenantId, tenantId))
+      .orderBy(schema.users.createdAt);
     return rows.map(toUserRecord);
   }
 
   async findByEmail(tenantId: string, email: string): Promise<UserRecord | null> {
-    const { rows } = await this.pool.query<UserDbRow>(
-      `SELECT ${USER_COLUMNS} FROM users WHERE tenant_id = $1 AND LOWER(email) = LOWER($2) LIMIT 1`,
-      [tenantId, email],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(and(eq(schema.users.tenantId, tenantId), sql`LOWER(${schema.users.email}) = LOWER(${email})`))
+      .limit(1);
     return rows[0] !== undefined ? toUserRecord(rows[0]) : null;
   }
 
   async create(input: CreateUserInput): Promise<UserRecord> {
-    const { rows } = await this.pool.query<UserDbRow>(
-      `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id, name, account_status, email_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE)
-       RETURNING ${USER_COLUMNS}`,
-      [
-        randomUUID(),
-        input.tenantId,
-        input.email,
-        input.role,
-        input.audience ?? 'admin',
-        input.passwordHash,
-        input.scopeId ?? null,
-        input.name ?? null,
-        input.accountStatus,
-      ],
-    );
+    const rows = await this.db
+      .insert(schema.users)
+      .values({
+        id: randomUUID(),
+        tenantId: input.tenantId,
+        email: input.email,
+        role: input.role,
+        audience: input.audience ?? 'admin',
+        passwordHash: input.passwordHash,
+        scopeId: input.scopeId ?? null,
+        name: input.name ?? null,
+        accountStatus: input.accountStatus,
+        emailVerified: false,
+      })
+      .returning();
     return toUserRecord(rows[0]!);
   }
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
-    await this.pool.query(
-      'UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1',
-      [userId, passwordHash],
-    );
+    await this.db
+      .update(schema.users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(schema.users.id, userId));
   }
 
   async updateStatus(userId: string, status: AccountStatusValue): Promise<void> {
-    await this.pool.query(
-      'UPDATE users SET account_status = $2, updated_at = NOW() WHERE id = $1',
-      [userId, status],
-    );
+    await this.db
+      .update(schema.users)
+      .set({ accountStatus: status, updatedAt: new Date() })
+      .where(eq(schema.users.id, userId));
   }
 
   async updateEmailVerified(userId: string, verified: boolean): Promise<void> {
-    await this.pool.query(
-      'UPDATE users SET email_verified = $2, updated_at = NOW() WHERE id = $1',
-      [userId, verified],
-    );
+    await this.db
+      .update(schema.users)
+      .set({ emailVerified: verified, updatedAt: new Date() })
+      .where(eq(schema.users.id, userId));
   }
 
   async updateLastLogin(userId: string, timestamp: string): Promise<void> {
-    await this.pool.query(
-      'UPDATE users SET last_login_at = $2, updated_at = NOW() WHERE id = $1',
-      [userId, timestamp],
-    );
+    await this.db
+      .update(schema.users)
+      .set({ lastLoginAt: new Date(timestamp), updatedAt: new Date() })
+      .where(eq(schema.users.id, userId));
   }
 
   async updateMfaEnabled(userId: string, enabled: boolean): Promise<void> {
-    await this.pool.query(
-      'UPDATE users SET mfa_enabled = $2, updated_at = NOW() WHERE id = $1',
-      [userId, enabled],
-    );
+    await this.db
+      .update(schema.users)
+      .set({ mfaEnabled: enabled, updatedAt: new Date() })
+      .where(eq(schema.users.id, userId));
   }
 }
 

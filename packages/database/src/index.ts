@@ -51,3 +51,10 @@ export type { HealthCheckResult, PoolStats } from './health/index';
 
 // Testing
 export { withTestTransaction, createTestPool, truncateTables, MockPgPool } from './testing/index';
+
+// Drizzle
+export { createDrizzle } from './drizzle/index';
+export type { DrizzleDb } from './drizzle/index';
+
+// Schema
+export * as schema from './schema/index';
