@@ -6,6 +6,7 @@ import type { PasswordResetService } from '@mawsoftwares/auth-core';
 import type { PasswordChangeService } from '@mawsoftwares/auth-core';
 import type { SessionService } from '@mawsoftwares/auth-core';
 import type { MfaService } from '@mawsoftwares/auth-core';
+import type { AccountPurgeService } from '@mawsoftwares/auth-core';
 import type { AuthClaims } from '@mawsoftwares/auth-core';
 import type { MiddlewareHandler, Context } from 'hono';
 
@@ -16,6 +17,7 @@ export interface HonoAuthRouteDeps {
   readonly passwordChangeService?: PasswordChangeService;
   readonly sessionService?: SessionService;
   readonly mfaService?: MfaService;
+  readonly accountPurgeService?: AccountPurgeService;
   readonly logger?: Logger;
 }
 
@@ -189,6 +191,25 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
         if (!token) return c.json({ error: 'token is required' }, 400);
         await mfa.disable(claims.userId, token);
         return c.json({ disabled: true });
+      } catch (err) {
+        return handleHonoAuthError(c, err);
+      }
+    });
+  }
+
+  if (deps.accountPurgeService) {
+    const purge = deps.accountPurgeService;
+
+    app.delete('/account', deps.requireAuth, async (c) => {
+      try {
+        const claims = getClaims(c);
+        if (!claims) return c.json({ error: 'not authenticated' }, 401);
+        const { password } = await c.req.json<{ password?: string }>();
+        if (!password) {
+          return c.json({ error: 'password is required for account deletion' }, 400);
+        }
+        await purge.purge(claims.userId, password);
+        return c.json({ purged: true });
       } catch (err) {
         return handleHonoAuthError(c, err);
       }

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -41,6 +42,12 @@ import {
   type IOtpSecretStore,
   type ILoginAttemptStore,
   type IMfaChallengeStore,
+  AccountPurgeService,
+  SocialAuthService,
+  type ISocialAccountStore,
+  PgSocialAccountStore,
+  GoogleAuthProvider,
+  GitHubAuthProvider,
 } from '@mawsoftwares/auth-core';
 import {
   MasterCache,
@@ -122,6 +129,7 @@ interface DataLayer {
   otpSecretStore: IOtpSecretStore;
   loginAttemptStore: ILoginAttemptStore;
   mfaChallengeStore: IMfaChallengeStore;
+  socialAccountStore: ISocialAccountStore;
 }
 
 async function buildDataLayer(): Promise<DataLayer> {
@@ -149,6 +157,7 @@ async function buildDataLayer(): Promise<DataLayer> {
     otpSecretStore: new PgOtpSecretStore(db),
     loginAttemptStore: new PgLoginAttemptStore(db),
     mfaChallengeStore: new PgMfaChallengeStore(db),
+    socialAccountStore: new PgSocialAccountStore(db),
   };
 }
 
@@ -331,6 +340,32 @@ const mfaService = new MfaService({
     hash: async (value) => hasher.hash(value),
     verify: async (value, hash) => hasher.verify(value, hash),
   },
+});
+
+const accountPurgeService = new AccountPurgeService({
+  userRepository,
+  hasher,
+  sessionService,
+  otpSecretStore: data.otpSecretStore,
+});
+
+const socialAuthProviders = new Map<string, import('@mawsoftwares/auth-core').ISocialAuthProvider>();
+const googleClientId = getEnv('GOOGLE_CLIENT_ID');
+const googleClientSecret = getEnv('GOOGLE_CLIENT_SECRET');
+if (googleClientId && googleClientSecret) {
+  socialAuthProviders.set('google', new GoogleAuthProvider({ clientId: googleClientId, clientSecret: googleClientSecret }));
+}
+const githubClientId = getEnv('GITHUB_CLIENT_ID');
+const githubClientSecret = getEnv('GITHUB_CLIENT_SECRET');
+if (githubClientId && githubClientSecret) {
+  socialAuthProviders.set('github', new GitHubAuthProvider({ clientId: githubClientId, clientSecret: githubClientSecret }));
+}
+
+const socialAuthService = new SocialAuthService({
+  providers: socialAuthProviders,
+  socialAccountStore: data.socialAccountStore,
+  userRepository,
+  hasher,
 });
 
 const loginProtection = new LoginProtection(DEFAULT_SECURITY_CONFIG.loginProtection);
@@ -584,8 +619,37 @@ app.use('/auth', createAuthRoutes({
   passwordChangeService,
   sessionService,
   mfaService,
+  accountPurgeService,
   logger: log,
 }));
+
+// --- Social auth routes ---
+
+app.get('/auth/social/:provider', (req, res) => {
+  const provider = req.params.provider as string;
+  const p = socialAuthProviders.get(provider) as (GoogleAuthProvider | GitHubAuthProvider) | undefined;
+  if (!p) { res.status(404).json({ error: `Unknown provider: ${provider}` }); return; }
+  const redirectUri = `${req.protocol}://${req.get('host')}/auth/social/${provider}/callback`;
+  const state = randomUUID();
+  const url = p.getAuthorizationUrl(redirectUri, state);
+  res.json({ url, state });
+});
+
+app.get('/auth/social/:provider/callback', async (req, res) => {
+  try {
+    const provider = req.params.provider as string;
+    const code = req.query.code as string | undefined;
+    const tenantId = (req.query.tenantId as string) ?? DEMO_TENANT;
+    if (!code) { res.status(400).json({ error: 'code is required' }); return; }
+    const redirectUri = `${req.protocol}://${req.get('host')}/auth/social/${provider}/callback`;
+    const result = await socialAuthService.authenticate(provider, code, redirectUri, tenantId);
+    const claims: AuthClaims = { userId: result.user.id, tenantId: result.user.tenantId, role: result.user.role, audience: result.user.audience ?? 'admin', scopeId: result.user.scopeId ?? undefined };
+    const accessToken = signAccessToken(claims, JWT_SECRET, { ttlSeconds: DEFAULT_ACCESS_TTL_SECONDS, issueJti: true });
+    res.json({ accessToken, user: { id: result.user.id, email: result.user.email, role: result.user.role }, isNewUser: result.isNewUser, linkedProviders: result.linkedProviders });
+  } catch (err) {
+    handleAuthError(res, err);
+  }
+});
 
 // --- Reporting routes ---
 

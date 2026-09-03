@@ -119,6 +119,10 @@ export {
   MemoryPasswordHistoryStore,
   isPasswordInHistory,
 } from './password-history';
+export {
+  AccountPurgeService,
+  type AccountPurgeOptions,
+} from './account-purge';
 export { PgSocialAccountStore } from './pg-social-account-store';
 export { GoogleAuthProvider, type GoogleAuthProviderOptions } from './providers/google-auth-provider';
 export { GitHubAuthProvider, type GitHubAuthProviderOptions } from './providers/github-auth-provider';

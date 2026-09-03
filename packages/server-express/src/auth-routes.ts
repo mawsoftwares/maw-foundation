@@ -7,6 +7,7 @@ import type { PasswordResetService } from '@mawsoftwares/auth-core';
 import type { PasswordChangeService } from '@mawsoftwares/auth-core';
 import type { SessionService } from '@mawsoftwares/auth-core';
 import type { MfaService } from '@mawsoftwares/auth-core';
+import type { AccountPurgeService } from '@mawsoftwares/auth-core';
 import type { RequestHandler } from 'express';
 
 export interface AuthRouteDeps {
@@ -16,6 +17,7 @@ export interface AuthRouteDeps {
   readonly passwordChangeService?: PasswordChangeService;
   readonly sessionService?: SessionService;
   readonly mfaService?: MfaService;
+  readonly accountPurgeService?: AccountPurgeService;
   readonly logger?: Logger;
 }
 
@@ -223,6 +225,30 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
         }
         await mfa.disable(userId, token);
         res.json({ disabled: true });
+      } catch (err) {
+        handleAuthError(res, err);
+      }
+    });
+  }
+
+  if (deps.accountPurgeService) {
+    const purge = deps.accountPurgeService;
+
+    router.delete('/account', deps.requireAuth, async (req: Request, res: Response) => {
+      try {
+        const authed = req as AuthedRequest;
+        const userId = authed.maw?.claims.userId;
+        if (!userId) {
+          res.status(401).json({ error: 'not authenticated' });
+          return;
+        }
+        const { password } = req.body as { password?: string };
+        if (!password) {
+          res.status(400).json({ error: 'password is required for account deletion' });
+          return;
+        }
+        await purge.purge(userId, password);
+        res.json({ purged: true });
       } catch (err) {
         handleAuthError(res, err);
       }

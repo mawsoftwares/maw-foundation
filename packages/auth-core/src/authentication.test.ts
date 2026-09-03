@@ -78,6 +78,10 @@ class MemoryUserRepository implements IUserRepository {
     this.patch(userId, { mfaEnabled });
   }
 
+  async purgePersonalData(userId: string, anonymizedEmail: string): Promise<void> {
+    this.patch(userId, { email: anonymizedEmail, name: undefined, phone: undefined, accountStatus: 'DISABLED' as const, mfaEnabled: false });
+  }
+
   private patch(userId: string, changes: Partial<UserRecord>): void {
     const u = this.users.get(userId);
     if (u) this.users.set(userId, { ...u, ...changes, updatedAt: new Date().toISOString() });

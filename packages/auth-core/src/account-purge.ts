@@ -35,15 +35,10 @@ export class AccountPurgeService {
     await this.sessionService.revokeAll(user.tenantId, user.id);
 
     if (this.otpSecretStore) {
-      await this.otpSecretStore.delete(userId);
+      await this.otpSecretStore.deleteAll(userId);
     }
 
     const purgedEmail = `deleted-${randomUUID()}@purged.local`;
-    await this.userRepository.update(userId, {
-      email: purgedEmail,
-      name: null,
-      phone: null,
-      accountStatus: 'DISABLED',
-    });
+    await this.userRepository.purgePersonalData(userId, purgedEmail);
   }
 }
