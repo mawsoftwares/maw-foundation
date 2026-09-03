@@ -4,8 +4,11 @@ import type {
   AuthResult,
   Credentials,
   TokenPair,
+  RegistrationInput,
+  SessionInfo,
 } from '@mawsoftwares/sdk/contracts/IAccountAuth';
 import type { Session } from '@mawsoftwares/sdk/contracts/identity';
+import { prehashPassword } from '@mawsoftwares/sdk/security/password-prehash';
 import { ApiError, parseApiErrorPayload } from './errors';
 
 export {
@@ -107,6 +110,7 @@ function makeCancellable<T>(
 // ---------------------------------------------------------------------------
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const PREHASH_HEADERS: Record<string, string> = { 'x-password-prehashed': 'sha256' };
 
 export class ApiClient implements IAccountAuth {
   private readonly baseUrl: string;
@@ -155,7 +159,9 @@ export class ApiClient implements IAccountAuth {
   // -------------------------------------------------------------------------
 
   async signIn(credentials: Credentials): Promise<AuthResult> {
-    const result = await this.postJson<AuthResult>('/auth/login', credentials);
+    const prehashed = await prehashPassword(credentials.password);
+    const body = { ...credentials, password: prehashed };
+    const result = await this.postJson<AuthResult>('/auth/login', body, PREHASH_HEADERS);
     await this.persistTokens(result.tokens);
     return result;
   }
@@ -190,6 +196,38 @@ export class ApiClient implements IAccountAuth {
 
   currentSessionFrom(result: AuthResult): Session {
     return result.session;
+  }
+
+  async register(input: RegistrationInput): Promise<{ userId: string; emailVerificationRequired: boolean }> {
+    const prehashed = await prehashPassword(input.password);
+    return this.postJson('/auth/register', { ...input, password: prehashed }, PREHASH_HEADERS);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const prehashed = await prehashPassword(newPassword);
+    await this.postJson('/auth/reset-password', { token, newPassword: prehashed }, PREHASH_HEADERS);
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const prehashedCurrent = await prehashPassword(currentPassword);
+    const prehashedNew = await prehashPassword(newPassword);
+    await this.postJson('/auth/change-password', {
+      currentPassword: prehashedCurrent,
+      newPassword: prehashedNew,
+    }, PREHASH_HEADERS);
+  }
+
+  async listSessions(): Promise<readonly SessionInfo[]> {
+    return this.request<readonly SessionInfo[]>('/auth/sessions');
+  }
+
+  async revokeSession(sessionId: string): Promise<void> {
+    await this.request<void>(`/auth/sessions/${sessionId}`, { method: 'DELETE' });
+  }
+
+  async revokeAllSessions(exceptCurrent?: string): Promise<void> {
+    const query = exceptCurrent ? `?except=${exceptCurrent}` : '';
+    await this.request<void>(`/auth/sessions${query}`, { method: 'DELETE' });
   }
 
   // -------------------------------------------------------------------------
@@ -424,8 +462,11 @@ export class ApiClient implements IAccountAuth {
     return responseCtx.data as T;
   }
 
-  private async postJson<T>(path: string, body: unknown): Promise<T> {
+  private async postJson<T>(path: string, body: unknown, extraHeaders?: Record<string, string>): Promise<T> {
     const headers = new Headers({ 'Content-Type': 'application/json' });
+    if (extraHeaders) {
+      for (const [k, v] of Object.entries(extraHeaders)) headers.set(k, v);
+    }
     await this.applyAuth(headers, 'POST');
 
     const res = await fetch(`${this.baseUrl}${path}`, {

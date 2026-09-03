@@ -4,6 +4,7 @@ import {
   verifyAccessToken,
   ScryptHasher,
   hashPassword,
+  verifyPassword,
   SessionService,
   MemorySessionStore,
   MemoryTokenBlacklist,
@@ -13,8 +14,12 @@ import {
   AccountPurgeService,
   MemoryPasswordHistoryStore,
   isPasswordInHistory,
+  resolvePassword,
+  PrehashRequiredError,
+  PrehashFormatError,
   type AuthClaims,
 } from '@mawsoftwares/auth-core';
+import { prehashPassword, isPrehashedPassword, extractPrehash } from '@mawsoftwares/sdk/security/password-prehash';
 import { AccountStatus, DEFAULT_SECURITY_CONFIG } from '@mawsoftwares/sdk';
 import type { IUserRepository, UserRecord, CreateUserInput } from '@mawsoftwares/sdk/contracts/IUserRepository';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
@@ -274,6 +279,54 @@ describe('Auth Security Foundation E2E', () => {
 
       const isNew = await isPasswordInHistory('password3', 'u-1', store, ScryptHasher, 5);
       expect(isNew).toBe(false);
+    });
+  });
+
+  describe('Password Prehash', () => {
+    it('prehashPassword produces sha256:<hex> format', async () => {
+      const prehashed = await prehashPassword('mySecret');
+      expect(isPrehashedPassword(prehashed)).toBe(true);
+      expect(prehashed).toMatch(/^sha256:[0-9a-f]{64}$/);
+    });
+
+    it('same password produces same hash', async () => {
+      const a = await prehashPassword('password123');
+      const b = await prehashPassword('password123');
+      expect(a).toBe(b);
+    });
+
+    it('different passwords produce different hashes', async () => {
+      const a = await prehashPassword('password1');
+      const b = await prehashPassword('password2');
+      expect(a).not.toBe(b);
+    });
+
+    it('resolvePassword strips prefix when header is sha256', async () => {
+      const prehashed = await prehashPassword('password123');
+      const resolved = resolvePassword(prehashed, 'sha256', false);
+      expect(resolved).toBe(extractPrehash(prehashed));
+      expect(resolved).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('resolvePassword passes through when no header', () => {
+      const resolved = resolvePassword('rawPassword', undefined, false);
+      expect(resolved).toBe('rawPassword');
+    });
+
+    it('resolvePassword throws PrehashRequiredError when requirePrehash is true and no header', () => {
+      expect(() => resolvePassword('rawPassword', undefined, true)).toThrow(PrehashRequiredError);
+    });
+
+    it('resolvePassword throws PrehashFormatError when header says sha256 but value is not', () => {
+      expect(() => resolvePassword('not-a-hash', 'sha256', false)).toThrow(PrehashFormatError);
+    });
+
+    it('prehashed password works end-to-end with scrypt', async () => {
+      const prehashed = await prehashPassword('password123');
+      const resolved = resolvePassword(prehashed, 'sha256', false);
+      const stored = hashPassword(resolved);
+      expect(verifyPassword(resolved, stored)).toBe(true);
+      expect(verifyPassword('wrongvalue', stored)).toBe(false);
     });
   });
 });

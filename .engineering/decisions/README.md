@@ -9,3 +9,4 @@ This directory contains ADRs documenting key architectural decisions and their r
 - [ADR: Refresh Token Rotation with SHA-256 Storage](ADR-security-refresh-rotation.md)
 - [ADR: CSRF Double-Submit Cookie Pattern](ADR-security-csrf-double-submit.md)
 - [ADR: In-Memory Default Stores with Pg/Redis Swap via Ports](ADR-security-memory-stores.md)
+- [ADR: Client-Side SHA-256 Password Prehashing](ADR-security-password-prehash.md)

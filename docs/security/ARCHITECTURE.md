@@ -62,8 +62,9 @@ Applied via `createSecurityPipeline` (Express) / equivalent Hono middleware:
 
 ## Password Security
 
-- **Hashing**: scrypt with 128-bit salt, N=16384, r=8, p=1 (via `ScryptHasher`).
-- **Validation**: Configurable policy — min length, uppercase, lowercase, digits, special characters.
+- **Client-side prehash**: The client computes `SHA-256(password)` and sends `sha256:<hex>` with header `x-password-prehashed: sha256`. The raw password never leaves the client process — proxies, WAFs, logs, and error trackers only see the digest. In production (`requirePrehash: true`), the server rejects requests without the prehash header. See [ADR: Client-Side SHA-256 Password Prehashing](../../.engineering/decisions/ADR-security-password-prehash.md).
+- **Storage hashing**: scrypt with 128-bit salt, N=16384, r=8, p=1 (via `ScryptHasher`). The stored hash is `scrypt(SHA-256(password))` — SHA-256 compresses, scrypt provides the work factor.
+- **Validation**: Configurable policy — min length, uppercase, lowercase, digits, special characters. Runs on the raw password client-side before prehashing.
 - **History**: `IPasswordHistoryStore` checks the last N password hashes before accepting a change. Old hash recorded after successful change.
 - **Reset**: Token-based flow with SHA-256 hashed tokens, expiry, single-use enforcement.
 

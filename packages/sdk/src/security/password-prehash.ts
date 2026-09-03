@@ -34,10 +34,9 @@ export function extractPrehash(value: string): string {
 
 async function cryptoDigest(data: Uint8Array): Promise<ArrayBuffer> {
   if (typeof globalThis.crypto?.subtle?.digest === 'function') {
-    return globalThis.crypto.subtle.digest('SHA-256', data);
+    return globalThis.crypto.subtle.digest('SHA-256', data as unknown as BufferSource);
   }
 
-  // Node.js fallback (globalThis.crypto.subtle may be undefined in older Node)
   const { createHash } = await import('node:crypto');
   const hash = createHash('sha256').update(data);
   const buf = hash.digest();
