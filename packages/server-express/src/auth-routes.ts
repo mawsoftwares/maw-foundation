@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { AppError, type Logger } from '@mawsoftwares/sdk';
-import { AccountLockedError, PasswordPolicyError } from '@mawsoftwares/auth-core';
+import { AccountLockedError, PasswordPolicyError, resolvePassword, PREHASH_HEADER, PrehashRequiredError, PrehashFormatError } from '@mawsoftwares/auth-core';
 import type { AuthedRequest } from './index';
 import type { RegistrationService } from '@mawsoftwares/auth-core';
 import type { PasswordResetService } from '@mawsoftwares/auth-core';
@@ -18,12 +18,19 @@ export interface AuthRouteDeps {
   readonly sessionService?: SessionService;
   readonly mfaService?: MfaService;
   readonly accountPurgeService?: AccountPurgeService;
+  readonly requirePrehash?: boolean;
   readonly logger?: Logger;
 }
 
 export function createAuthRoutes(deps: AuthRouteDeps): Router {
   const router = Router();
   const log = deps.logger;
+  const requirePrehash = deps.requirePrehash ?? false;
+
+  function resolvePw(req: Request, rawPassword: string): string {
+    const header = req.headers[PREHASH_HEADER] as string | undefined;
+    return resolvePassword(rawPassword, header, requirePrehash);
+  }
 
   if (deps.registrationService) {
     const reg = deps.registrationService;
@@ -35,7 +42,8 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
           res.status(400).json({ error: 'email, password, and tenantId are required' });
           return;
         }
-        const result = await reg.register({ email, password, tenantId, role, name });
+        const resolved = resolvePw(req, password);
+        const result = await reg.register({ email, password: resolved, tenantId, role, name });
         res.status(201).json({ userId: result.user.id, emailVerificationRequired: !!result.verificationToken });
       } catch (err) {
         handleAuthError(res, err);
@@ -85,7 +93,8 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
           res.status(400).json({ error: 'token and newPassword are required' });
           return;
         }
-        await prs.executeReset(token, newPassword);
+        const resolvedNew = resolvePw(req, newPassword);
+        await prs.executeReset(token, resolvedNew);
         res.json({ reset: true });
       } catch (err) {
         handleAuthError(res, err);
@@ -109,7 +118,9 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
           res.status(400).json({ error: 'currentPassword and newPassword are required' });
           return;
         }
-        await pcs.change(userId, currentPassword, newPassword);
+        const resolvedCurrent = resolvePw(req, currentPassword);
+        const resolvedNew = resolvePw(req, newPassword);
+        await pcs.change(userId, resolvedCurrent, resolvedNew);
         res.json({ changed: true });
       } catch (err) {
         handleAuthError(res, err);
@@ -247,7 +258,8 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
           res.status(400).json({ error: 'password is required for account deletion' });
           return;
         }
-        await purge.purge(userId, password);
+        const resolvedPw = resolvePw(req, password);
+        await purge.purge(userId, resolvedPw);
         res.json({ purged: true });
       } catch (err) {
         handleAuthError(res, err);
@@ -259,6 +271,10 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
 }
 
 export function handleAuthError(res: Response, err: unknown): void {
+  if (err instanceof PrehashRequiredError || err instanceof PrehashFormatError) {
+    res.status(400).json({ error: err.message, code: err.code });
+    return;
+  }
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       error: err.message,

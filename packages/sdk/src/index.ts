@@ -34,6 +34,7 @@ export * from './security/SecurityEvents';
 export * from './security/SecurityContext';
 export * from './security/PasswordPolicy';
 export * from './security/AccountStatus';
+export * from './security/password-prehash';
 
 // Offline types
 export * from './offline/types';

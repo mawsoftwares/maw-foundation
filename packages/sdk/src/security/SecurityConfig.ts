@@ -36,6 +36,7 @@ export interface AuthSecurityConfig {
   readonly refreshTtlDays: number;
   readonly issueJti: boolean;
   readonly audiences?: readonly string[];
+  readonly requirePrehash: boolean;
 }
 
 export interface ValidationConfig {
@@ -103,6 +104,7 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     accessTtlSeconds: 900, // 15 minutes
     refreshTtlDays: 7,
     issueJti: true,
+    requirePrehash: true,
   },
   passwordPolicy: DEFAULT_PASSWORD_POLICY,
   loginProtection: {

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { AppError, type Logger } from '@mawsoftwares/sdk';
-import { AccountLockedError, PasswordPolicyError } from '@mawsoftwares/auth-core';
+import { AccountLockedError, PasswordPolicyError, resolvePassword, PREHASH_HEADER, PrehashRequiredError, PrehashFormatError } from '@mawsoftwares/auth-core';
 import type { RegistrationService } from '@mawsoftwares/auth-core';
 import type { PasswordResetService } from '@mawsoftwares/auth-core';
 import type { PasswordChangeService } from '@mawsoftwares/auth-core';
@@ -18,6 +18,7 @@ export interface HonoAuthRouteDeps {
   readonly sessionService?: SessionService;
   readonly mfaService?: MfaService;
   readonly accountPurgeService?: AccountPurgeService;
+  readonly requirePrehash?: boolean;
   readonly logger?: Logger;
 }
 
@@ -28,6 +29,12 @@ function getClaims(c: Context): AuthClaims | undefined {
 export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
   const app = new Hono();
   const log = deps.logger;
+  const requirePrehash = deps.requirePrehash ?? false;
+
+  function resolvePw(c: Context, rawPassword: string): string {
+    const header = c.req.header(PREHASH_HEADER);
+    return resolvePassword(rawPassword, header, requirePrehash);
+  }
 
   if (deps.registrationService) {
     const reg = deps.registrationService;
@@ -38,7 +45,8 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
         if (!email || !password || !tenantId) {
           return c.json({ error: 'email, password, and tenantId are required' }, 400);
         }
-        const result = await reg.register({ email, password, tenantId, role, name });
+        const resolved = resolvePw(c, password);
+        const result = await reg.register({ email, password: resolved, tenantId, role, name });
         return c.json({ userId: result.user.id, emailVerificationRequired: !!result.verificationToken }, 201);
       } catch (err) {
         return handleHonoAuthError(c, err);
@@ -82,7 +90,8 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
         if (!token || !newPassword) {
           return c.json({ error: 'token and newPassword are required' }, 400);
         }
-        await prs.executeReset(token, newPassword);
+        const resolvedNew = resolvePw(c, newPassword);
+        await prs.executeReset(token, resolvedNew);
         return c.json({ reset: true });
       } catch (err) {
         return handleHonoAuthError(c, err);
@@ -101,7 +110,9 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
         if (!currentPassword || !newPassword) {
           return c.json({ error: 'currentPassword and newPassword are required' }, 400);
         }
-        await pcs.change(claims.userId, currentPassword, newPassword);
+        const resolvedCurrent = resolvePw(c, currentPassword);
+        const resolvedNew = resolvePw(c, newPassword);
+        await pcs.change(claims.userId, resolvedCurrent, resolvedNew);
         return c.json({ changed: true });
       } catch (err) {
         return handleHonoAuthError(c, err);
@@ -208,7 +219,8 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
         if (!password) {
           return c.json({ error: 'password is required for account deletion' }, 400);
         }
-        await purge.purge(claims.userId, password);
+        const resolvedPw = resolvePw(c, password);
+        await purge.purge(claims.userId, resolvedPw);
         return c.json({ purged: true });
       } catch (err) {
         return handleHonoAuthError(c, err);
@@ -220,6 +232,9 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
 }
 
 export function handleHonoAuthError(c: Context, err: unknown): Response {
+  if (err instanceof PrehashRequiredError || err instanceof PrehashFormatError) {
+    return c.json({ error: err.message, code: err.code }, 400);
+  }
   if (err instanceof AppError) {
     return c.json(
       {

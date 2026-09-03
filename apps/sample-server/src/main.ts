@@ -63,7 +63,7 @@ import { LocalFileStorage, PgFileMetadataStore, validateSecuritySecrets } from '
 import { AesEncryptionService } from '@mawsoftwares/platform/security/AesEncryptionService';
 import { MemoryRateLimiter } from '@mawsoftwares/platform/security/MemoryRateLimiter';
 import { redact } from '@mawsoftwares/platform/security/LogRedactor';
-import { LoginProtection, MemoryTokenBlacklist } from '@mawsoftwares/auth-core';
+import { LoginProtection, MemoryTokenBlacklist, resolvePassword, PREHASH_HEADER } from '@mawsoftwares/auth-core';
 import { DEFAULT_SECURITY_CONFIG, parseCorsOrigins } from '@mawsoftwares/sdk/security/SecurityConfig';
 import multer from 'multer';
 import * as path from 'node:path';
@@ -543,11 +543,14 @@ app.post('/auth/login', (req, res) => {
         return;
       }
 
+      const prehashHeader = req.headers[PREHASH_HEADER] as string | undefined;
+      const resolvedPassword = resolvePassword(password, prehashHeader, isProduction && DEFAULT_SECURITY_CONFIG.auth.requirePrehash);
+
       console.log('Calling authService.authenticate...');
       const result = await authService.authenticate({
         tenantId: tenantId ?? DEMO_TENANT,
         email,
-        password,
+        password: resolvedPassword,
         rememberMe,
         ...requestContext(req),
       });
@@ -612,6 +615,7 @@ app.post('/auth/logout', (req, res) => {
 
 // --- New auth routes (registration, password, sessions, MFA) ---
 
+const isProduction = process.env.NODE_ENV === 'production';
 app.use('/auth', createAuthRoutes({
   requireAuth: auth.requireAuth,
   registrationService,
@@ -620,6 +624,7 @@ app.use('/auth', createAuthRoutes({
   sessionService,
   mfaService,
   accountPurgeService,
+  requirePrehash: isProduction && DEFAULT_SECURITY_CONFIG.auth.requirePrehash,
   logger: log,
 }));
 

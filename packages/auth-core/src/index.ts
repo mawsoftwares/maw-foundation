@@ -123,6 +123,12 @@ export {
   AccountPurgeService,
   type AccountPurgeOptions,
 } from './account-purge';
+export {
+  resolvePassword,
+  PREHASH_HEADER,
+  PrehashRequiredError,
+  PrehashFormatError,
+} from './password-prehash';
 export { PgSocialAccountStore } from './pg-social-account-store';
 export { GoogleAuthProvider, type GoogleAuthProviderOptions } from './providers/google-auth-provider';
 export { GitHubAuthProvider, type GitHubAuthProviderOptions } from './providers/github-auth-provider';
