@@ -52,7 +52,7 @@ import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, cr
 import { PgTenantRepository, AlsTenantContextHolder, HeaderTenantResolver } from '@mawsoftwares/tenancy';
 import { initializeObservability } from '@mawsoftwares/observability';
 import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
-import { LocalFileStorage, PgFileMetadataStore } from '@mawsoftwares/platform';
+import { LocalFileStorage, PgFileMetadataStore } from '@mawsoftwares/platform/server';
 import { AesEncryptionService } from '@mawsoftwares/platform/security/AesEncryptionService';
 import { MemoryRateLimiter } from '@mawsoftwares/platform/security/MemoryRateLimiter';
 import { redact } from '@mawsoftwares/platform/security/LogRedactor';
