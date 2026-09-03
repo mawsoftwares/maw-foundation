@@ -150,6 +150,13 @@ export class SessionService {
     await this.store.revoke(sessionId, new Date().toISOString());
   }
 
+  async revokeOwned(sessionId: string, tenantId: string, userId: string): Promise<boolean> {
+    const session = await this.store.findById(sessionId);
+    if (!session || session.tenantId !== tenantId || session.userId !== userId) return false;
+    await this.store.revoke(sessionId, new Date().toISOString());
+    return true;
+  }
+
   async revokeAll(tenantId: string, userId: string, exceptSessionId?: string): Promise<void> {
     await this.store.revokeAllForUser(tenantId, userId, exceptSessionId);
   }

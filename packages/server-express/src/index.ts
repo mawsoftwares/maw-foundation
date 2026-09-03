@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import type { IFileStorage, StoredFile, UploadRequest } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import { sanitizeFilename, getMimeType } from '@mawsoftwares/sdk/kernel/file';
-import { verifyAccessToken, csrfTokensMatch, UNSAFE_METHODS, type AuthClaims } from '@mawsoftwares/auth-core';
+import { verifyAccessToken, csrfTokensMatch, UNSAFE_METHODS, type AuthClaims, type ITokenBlacklist } from '@mawsoftwares/auth-core';
 import {
   resolveEffectiveAccess,
   type RbacConfig,
@@ -27,6 +27,7 @@ export interface AuthedRequest extends Request {
 export interface ExpressAuthOptions {
   readonly jwtSecret: string;
   readonly rbac: RbacConfig;
+  readonly blacklist?: ITokenBlacklist;
   /**
    * Loads the full access context (enabled modules, tenant matrix, scope) for a set of
    * token claims. The product implements this over its own DB — the adapter stays
@@ -69,7 +70,7 @@ export function createExpressAuth(options: ExpressAuthOptions): ExpressAuth {
       return;
     }
     try {
-      req.maw = { claims: await verifyAccessToken(token, options.jwtSecret) };
+      req.maw = { claims: await verifyAccessToken(token, options.jwtSecret, { blacklist: options.blacklist }) };
       next();
     } catch {
       res.status(HttpStatus.UNAUTHORIZED).json({ error: 'invalid or expired token' });
@@ -144,6 +145,7 @@ export interface DynamicAuthedRequest extends Request {
 export interface DynamicExpressAuthOptions {
   readonly jwtSecret: string;
   readonly cache: MasterCache;
+  readonly blacklist?: ITokenBlacklist;
   readonly superuserRoles?: readonly string[];
   readonly loadUserContext?: (claims: AuthClaims) => Promise<{ roleId?: number; permissions?: string[] }>;
 }
@@ -323,7 +325,7 @@ export function createDynamicExpressAuth(options: DynamicExpressAuthOptions): Dy
       return;
     }
     try {
-      const claims = await verifyAccessToken(token, options.jwtSecret);
+      const claims = await verifyAccessToken(token, options.jwtSecret, { blacklist: options.blacklist });
       req.maw = { claims };
       next();
     } catch {

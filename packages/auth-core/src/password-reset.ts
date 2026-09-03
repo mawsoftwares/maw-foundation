@@ -5,6 +5,8 @@ import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 import { hashToken } from './refresh';
 import { TokenExpiredError, TokenAlreadyUsedError, PasswordPolicyError } from './auth-errors';
 import type { SessionService } from './session-store';
+import type { IPasswordHistoryStore } from './password-history';
+import { isPasswordInHistory } from './password-history';
 
 export interface ResetRecord {
   readonly userId: string;
@@ -48,6 +50,8 @@ export interface PasswordResetServiceOptions {
   readonly store: IPasswordResetStore;
   readonly sendResetEmail?: SendResetEmail;
   readonly sessionService?: SessionService;
+  readonly passwordHistoryStore?: IPasswordHistoryStore;
+  readonly passwordHistoryCount?: number;
   readonly logger?: Logger;
 }
 
@@ -59,6 +63,8 @@ export class PasswordResetService {
   private readonly store: IPasswordResetStore;
   private readonly sendResetEmail?: SendResetEmail;
   private readonly sessionService?: SessionService;
+  private readonly historyStore?: IPasswordHistoryStore;
+  private readonly historyCount: number;
   private readonly logger?: Logger;
 
   constructor(options: PasswordResetServiceOptions) {
@@ -69,6 +75,8 @@ export class PasswordResetService {
     this.store = options.store;
     this.sendResetEmail = options.sendResetEmail;
     this.sessionService = options.sessionService;
+    this.historyStore = options.passwordHistoryStore;
+    this.historyCount = options.passwordHistoryCount ?? 5;
     this.logger = options.logger;
   }
 
@@ -113,9 +121,21 @@ export class PasswordResetService {
       throw new PasswordPolicyError(policyErrors.map((e) => e.message));
     }
 
+    if (this.historyStore) {
+      const reused = await isPasswordInHistory(newPassword, record.userId, this.historyStore, this.hasher, this.historyCount);
+      if (reused) {
+        throw new PasswordPolicyError([`Password was used recently — choose a different one`]);
+      }
+    }
+
+    const oldUser = await this.userRepository.findById(record.userId);
     const passwordHash = await this.hasher.hash(newPassword);
     await this.userRepository.updatePassword(record.userId, passwordHash);
     await this.store.save({ ...record, usedAt: new Date().toISOString() });
+
+    if (this.historyStore && oldUser) {
+      await this.historyStore.record(record.userId, oldUser.passwordHash);
+    }
 
     const user = await this.userRepository.findById(record.userId);
     if (user && this.sessionService) {

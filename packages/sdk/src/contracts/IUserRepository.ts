@@ -42,4 +42,5 @@ export interface IUserRepository {
   updateEmailVerified(userId: string, verified: boolean): Promise<void>;
   updateLastLogin(userId: string, timestamp: string): Promise<void>;
   updateMfaEnabled(userId: string, enabled: boolean): Promise<void>;
+  purgePersonalData(userId: string, anonymizedEmail: string): Promise<void>;
 }

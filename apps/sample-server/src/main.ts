@@ -52,11 +52,11 @@ import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, cr
 import { PgTenantRepository, AlsTenantContextHolder, HeaderTenantResolver } from '@mawsoftwares/tenancy';
 import { initializeObservability } from '@mawsoftwares/observability';
 import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
-import { LocalFileStorage, PgFileMetadataStore } from '@mawsoftwares/platform/server';
+import { LocalFileStorage, PgFileMetadataStore, validateSecuritySecrets } from '@mawsoftwares/platform/server';
 import { AesEncryptionService } from '@mawsoftwares/platform/security/AesEncryptionService';
 import { MemoryRateLimiter } from '@mawsoftwares/platform/security/MemoryRateLimiter';
 import { redact } from '@mawsoftwares/platform/security/LogRedactor';
-import { LoginProtection } from '@mawsoftwares/auth-core';
+import { LoginProtection, MemoryTokenBlacklist } from '@mawsoftwares/auth-core';
 import { DEFAULT_SECURITY_CONFIG, parseCorsOrigins } from '@mawsoftwares/sdk/security/SecurityConfig';
 import multer from 'multer';
 import * as path from 'node:path';
@@ -215,9 +215,12 @@ const tenantResolver = new HeaderTenantResolver(tenantRepository);
 // Step 5: Dynamic auth middleware — uses cache for permission checks
 // ---------------------------------------------------------------------------
 
+const tokenBlacklist = new MemoryTokenBlacklist();
+
 const auth = createDynamicExpressAuth({
   jwtSecret: JWT_SECRET,
   cache,
+  blacklist: tokenBlacklist,
   loadUserContext: async (claims) => {
     const role = cache.getRoleByCode(claims.role);
     return { roleId: role?.id };
@@ -315,6 +318,9 @@ const passwordChangeService = new PasswordChangeService({
 
 // TOTP secrets are stored encrypted at rest, so MFA needs a real key in production.
 const MFA_ENCRYPTION_KEY = getEnv('MFA_ENCRYPTION_KEY', '0'.repeat(64))!;
+
+validateSecuritySecrets({ jwtSecret: JWT_SECRET, mfaEncryptionKey: MFA_ENCRYPTION_KEY });
+
 const otpService = new OtpService(DEFAULT_SECURITY_CONFIG.otp);
 const mfaService = new MfaService({
   otpService,
@@ -426,7 +432,7 @@ const securityConfig = {
     ...DEFAULT_SECURITY_CONFIG.cors,
     allowedOrigins: corsAllowedOrigins(),
   },
-  csrf: { ...DEFAULT_SECURITY_CONFIG.csrf, enabled: false },
+  csrf: DEFAULT_SECURITY_CONFIG.csrf,
 };
 
 const { middleware: securityMiddleware, errorHandler: securityErrorHandler } = createSecurityPipeline(
@@ -459,7 +465,7 @@ async function buildLoginResponse(user: UserRecord, session: ServerSession) {
     tenantId: user.tenantId, userId: user.id, role: user.role,
     audience: user.audience, scopeId: user.scopeId,
   };
-  const accessToken = signAccessToken(claims, JWT_SECRET, DEFAULT_ACCESS_TTL_SECONDS);
+  const accessToken = signAccessToken(claims, JWT_SECRET, { ttlSeconds: DEFAULT_ACCESS_TTL_SECONDS, issueJti: true });
   const refreshToken = await refreshTokens.issue(user.tenantId, user.id);
   await sessionService.updateRefreshTokenHash(session.id, hashToken(refreshToken));
 
@@ -555,7 +561,7 @@ app.post('/auth/refresh', (req, res) => {
       tenantId: user.tenantId, userId: user.id, role: user.role,
       audience: user.audience, scopeId: user.scopeId,
     };
-    const accessToken = signAccessToken(claims, JWT_SECRET);
+    const accessToken = signAccessToken(claims, JWT_SECRET, { issueJti: true });
     res.json({ tokens: { accessToken, refreshToken: rotated.token } });
   })();
 });

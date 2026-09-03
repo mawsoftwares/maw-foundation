@@ -135,7 +135,17 @@ export function createAuthRoutes(deps: AuthRouteDeps): Router {
 
     router.delete('/sessions/:id', deps.requireAuth, async (req: Request, res: Response) => {
       try {
-        await ss.revoke(req.params.id as string);
+        const authed = req as AuthedRequest;
+        const claims = authed.maw?.claims;
+        if (!claims) {
+          res.status(401).json({ error: 'not authenticated' });
+          return;
+        }
+        const revoked = await ss.revokeOwned(req.params.id as string, claims.tenantId, claims.userId);
+        if (!revoked) {
+          res.status(404).json({ error: 'session not found' });
+          return;
+        }
         res.json({ revoked: true });
       } catch (err) {
         handleAuthError(res, err);

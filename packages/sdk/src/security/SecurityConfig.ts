@@ -154,6 +154,8 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
     noSniff: true,
     frameOptions: 'DENY',
     referrerPolicy: 'strict-origin-when-cross-origin',
+    csp: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'",
+    permissionsPolicy: 'camera=(), microphone=(), geolocation=(), payment=()',
   },
   validation: {
     sanitizeInput: true,

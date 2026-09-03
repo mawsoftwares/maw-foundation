@@ -121,6 +121,20 @@ export class PgUserRepository implements IUserRepository {
       .set({ mfaEnabled: enabled, updatedAt: new Date() })
       .where(eq(schema.users.id, userId));
   }
+
+  async purgePersonalData(userId: string, anonymizedEmail: string): Promise<void> {
+    await this.db
+      .update(schema.users)
+      .set({
+        email: anonymizedEmail,
+        name: null,
+        phone: null,
+        accountStatus: 'DISABLED',
+        mfaEnabled: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.users.id, userId));
+  }
 }
 
 type SessionRow = typeof schema.userSessions.$inferSelect;

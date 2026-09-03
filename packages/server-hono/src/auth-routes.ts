@@ -130,7 +130,10 @@ export function createHonoAuthRoutes(deps: HonoAuthRouteDeps): Hono {
 
     app.delete('/sessions/:id', deps.requireAuth, async (c) => {
       try {
-        await ss.revoke(c.req.param('id'));
+        const claims = getClaims(c);
+        if (!claims) return c.json({ error: 'not authenticated' }, 401);
+        const revoked = await ss.revokeOwned(c.req.param('id'), claims.tenantId, claims.userId);
+        if (!revoked) return c.json({ error: 'session not found' }, 404);
         return c.json({ revoked: true });
       } catch (err) {
         return handleHonoAuthError(c, err);

@@ -142,6 +142,21 @@ export class MemoryUserRepository implements IUserRepository {
     const u = this.users.get(userId);
     if (u) this.users.set(userId, { ...u, mfaEnabled: enabled, updatedAt: new Date().toISOString() });
   }
+
+  async purgePersonalData(userId: string, anonymizedEmail: string): Promise<void> {
+    const u = this.users.get(userId);
+    if (u) {
+      this.users.set(userId, {
+        ...u,
+        email: anonymizedEmail,
+        name: undefined,
+        phone: undefined,
+        accountStatus: 'DISABLED' as const,
+        mfaEnabled: false,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+  }
 }
 
 /** In-memory refresh-token store implementing the auth-core port. */

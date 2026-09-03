@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { verifyAccessToken, type AuthClaims } from '@mawsoftwares/auth-core';
+import { verifyAccessToken, type AuthClaims, type ITokenBlacklist } from '@mawsoftwares/auth-core';
 import {
   resolveEffectiveAccess,
   type RbacConfig,
@@ -11,6 +11,7 @@ import {
 export interface HonoAuthOptions {
   readonly jwtSecret: string;
   readonly rbac: RbacConfig;
+  readonly blacklist?: ITokenBlacklist;
   readonly loadAccessContext: (claims: AuthClaims) => Promise<UserAccessContext>;
 }
 
@@ -40,7 +41,7 @@ export function createHonoAuth(options: HonoAuthOptions): HonoAuth {
     const token = bearer(c);
     if (token === null) return c.json({ error: 'missing bearer token' }, 401);
     try {
-      c.set('mawClaims', await verifyAccessToken(token, options.jwtSecret));
+      c.set('mawClaims', await verifyAccessToken(token, options.jwtSecret, { blacklist: options.blacklist }));
       await next();
       return;
     } catch {
