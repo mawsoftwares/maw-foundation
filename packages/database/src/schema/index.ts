@@ -1,1 +1,11 @@
 export { users } from './users';
+export { userSessions, emailVerificationTokens, passwordResetTokens, mfaChallenges, mfaSecrets, mfaBackupCodes, loginAttempts } from './auth';
+export { tenantRolePermissions, refreshTokens } from './auth-rbac';
+export { masterRoles, masterPermissions, masterModules, modulePermissions, rolePermissions, features, tenantFeatures } from './rbac';
+export { auditLogs } from './audit';
+export { masters, masterFields, masterValues } from './masters';
+export { jobs } from './jobs';
+export { fileMetadata } from './files';
+export { tenants } from './tenants';
+export { socialAccountLinks } from './social';
+export { notifications, notificationTemplates } from './notifications';

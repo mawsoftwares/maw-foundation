@@ -17,8 +17,9 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
+    "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/sdk": "workspace:*",
-    "@mawsoftwares/database": "workspace:*"
+    "drizzle-orm": "^0.45.2"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com",

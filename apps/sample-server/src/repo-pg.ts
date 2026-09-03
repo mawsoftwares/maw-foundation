@@ -1,18 +1,14 @@
-import type { PgPool } from '@mawsoftwares/database';
+import type { DrizzleDb } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
+import { eq, and, isNull } from 'drizzle-orm';
 import type { IRefreshTokenStore, RefreshRecord } from '@mawsoftwares/auth-core';
 import type { TenantRolePolicy } from '@mawsoftwares/rbac-core';
 
-/**
- * Postgres-backed data layer — same interface shapes as the in-memory repo, but reads/
- * writes go to real tables (created by `migrations/001_auth_rbac.sql`). The user store
- * itself lives in `auth-stores-pg.ts` alongside the other auth ports.
- */
-
-export async function loadTenantRolePolicy(pool: PgPool, tenantId: string): Promise<TenantRolePolicy> {
-  const { rows } = await pool.query<{ role: string; permission: string }>(
-    'SELECT role, permission FROM tenant_role_permissions WHERE tenant_id = $1',
-    [tenantId],
-  );
+export async function loadTenantRolePolicy(db: DrizzleDb, tenantId: string): Promise<TenantRolePolicy> {
+  const rows = await db
+    .select({ role: schema.tenantRolePermissions.role, permission: schema.tenantRolePermissions.permission })
+    .from(schema.tenantRolePermissions)
+    .where(eq(schema.tenantRolePermissions.tenantId, tenantId));
   const policy: Record<string, string[]> = {};
   for (const row of rows) {
     (policy[row.role] ??= []).push(row.permission);
@@ -21,40 +17,40 @@ export async function loadTenantRolePolicy(pool: PgPool, tenantId: string): Prom
 }
 
 export class PgRefreshStore implements IRefreshTokenStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async save(record: RefreshRecord): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO refresh_tokens (tenant_id, user_id, token_hash, device_id, expires_at, revoked_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [record.tenantId, record.userId, record.tokenHash, record.deviceId, record.expiresAt, record.revokedAt],
-    );
+    await this.db.insert(schema.refreshTokens).values({
+      tenantId: record.tenantId,
+      userId: record.userId,
+      tokenHash: record.tokenHash,
+      deviceId: record.deviceId,
+      expiresAt: new Date(record.expiresAt),
+      revokedAt: record.revokedAt ? new Date(record.revokedAt) : null,
+    });
   }
 
   async find(tokenHash: string): Promise<RefreshRecord | null> {
-    const { rows } = await this.pool.query<{
-      tenant_id: string; user_id: string; token_hash: string;
-      device_id: string | null; expires_at: Date; revoked_at: Date | null;
-    }>(
-      'SELECT tenant_id, user_id, token_hash, device_id, expires_at, revoked_at FROM refresh_tokens WHERE token_hash = $1',
-      [tokenHash],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.refreshTokens)
+      .where(eq(schema.refreshTokens.tokenHash, tokenHash));
     const r = rows[0];
     if (r === undefined) return null;
     return {
-      tenantId: r.tenant_id,
-      userId: r.user_id,
-      tokenHash: r.token_hash,
-      deviceId: r.device_id,
-      expiresAt: new Date(r.expires_at),
-      revokedAt: r.revoked_at != null ? new Date(r.revoked_at) : null,
+      tenantId: r.tenantId,
+      userId: r.userId,
+      tokenHash: r.tokenHash,
+      deviceId: r.deviceId,
+      expiresAt: r.expiresAt,
+      revokedAt: r.revokedAt,
     };
   }
 
   async revoke(tokenHash: string): Promise<void> {
-    await this.pool.query(
-      'UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1 AND revoked_at IS NULL',
-      [tokenHash],
-    );
+    await this.db
+      .update(schema.refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(schema.refreshTokens.tokenHash, tokenHash), isNull(schema.refreshTokens.revokedAt)));
   }
 }

@@ -4,6 +4,7 @@ import type { PgTransactionPool } from '../types';
 import * as schema from '../schema/index';
 
 export type DrizzleDb = NodePgDatabase<typeof schema>;
+export type DrizzleTxn = Parameters<Parameters<DrizzleDb['transaction']>[0]>[0];
 
 export function createDrizzle(pool: PgTransactionPool): DrizzleDb {
   return drizzle(pool as unknown as NodePgClient, { schema });

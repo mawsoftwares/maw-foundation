@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import type { PgPool } from '@mawsoftwares/database';
 import type { DrizzleDb } from '@mawsoftwares/database';
 import { schema } from '@mawsoftwares/database';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, isNull, lt, ne, desc } from 'drizzle-orm';
 import type {
   IEmailVerificationStore,
   ILoginAttemptStore,
@@ -19,12 +18,6 @@ import type {
 import type { DeviceInfo } from '@mawsoftwares/sdk/contracts/identity';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 import type { CreateUserInput, IUserRepository, UserRecord } from '@mawsoftwares/sdk/contracts/IUserRepository';
-
-/**
- * Postgres implementations of the auth ports, backed by `migrations/004_auth_foundation.sql`.
- * Each one mirrors an in-memory twin from @mawsoftwares/auth-core, so the sample server picks a
- * side at the composition root and nothing downstream knows the difference.
- */
 
 type UsersRow = typeof schema.users.$inferSelect;
 
@@ -130,296 +123,287 @@ export class PgUserRepository implements IUserRepository {
   }
 }
 
-interface SessionDbRow {
-  id: string;
-  tenant_id: string;
-  user_id: string;
-  device_id: string | null;
-  device_info: DeviceInfo | null;
-  refresh_token_hash: string | null;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: Date;
-  last_active_at: Date;
-  expires_at: Date;
-  revoked_at: Date | null;
-}
+type SessionRow = typeof schema.userSessions.$inferSelect;
 
-function toServerSession(row: SessionDbRow): ServerSession {
+function toServerSession(row: SessionRow): ServerSession {
   return {
     id: row.id,
-    tenantId: row.tenant_id,
-    userId: row.user_id,
-    deviceId: row.device_id,
-    deviceInfo: row.device_info,
-    refreshTokenHash: row.refresh_token_hash,
-    ipAddress: row.ip_address,
-    userAgent: row.user_agent,
-    createdAt: row.created_at.toISOString(),
-    lastActiveAt: row.last_active_at.toISOString(),
-    expiresAt: row.expires_at.toISOString(),
-    revokedAt: row.revoked_at?.toISOString() ?? null,
+    tenantId: row.tenantId,
+    userId: row.userId,
+    deviceId: row.deviceId,
+    deviceInfo: row.deviceInfo as DeviceInfo | null,
+    refreshTokenHash: row.refreshTokenHash,
+    ipAddress: row.ipAddress,
+    userAgent: row.userAgent,
+    createdAt: row.createdAt.toISOString(),
+    lastActiveAt: row.lastActiveAt.toISOString(),
+    expiresAt: row.expiresAt.toISOString(),
+    revokedAt: row.revokedAt?.toISOString() ?? null,
   };
 }
 
-const SESSION_COLUMNS = `id, tenant_id, user_id, device_id, device_info, refresh_token_hash,
-  ip_address, user_agent, created_at, last_active_at, expires_at, revoked_at`;
-
 export class PgSessionStore implements ISessionStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async create(session: ServerSession): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO user_sessions (${SESSION_COLUMNS})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-      [
-        session.id,
-        session.tenantId,
-        session.userId,
-        session.deviceId,
-        session.deviceInfo !== null ? JSON.stringify(session.deviceInfo) : null,
-        session.refreshTokenHash,
-        session.ipAddress,
-        session.userAgent,
-        session.createdAt,
-        session.lastActiveAt,
-        session.expiresAt,
-        session.revokedAt,
-      ],
-    );
+    await this.db.insert(schema.userSessions).values({
+      id: session.id,
+      tenantId: session.tenantId,
+      userId: session.userId,
+      deviceId: session.deviceId,
+      deviceInfo: session.deviceInfo !== null ? JSON.parse(JSON.stringify(session.deviceInfo)) : null,
+      refreshTokenHash: session.refreshTokenHash,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+      createdAt: new Date(session.createdAt),
+      lastActiveAt: new Date(session.lastActiveAt),
+      expiresAt: new Date(session.expiresAt),
+      revokedAt: session.revokedAt ? new Date(session.revokedAt) : null,
+    });
   }
 
   async findById(sessionId: string): Promise<ServerSession | null> {
-    const { rows } = await this.pool.query<SessionDbRow>(
-      `SELECT ${SESSION_COLUMNS} FROM user_sessions WHERE id = $1`,
-      [sessionId],
-    );
+    const rows = await this.db.select().from(schema.userSessions).where(eq(schema.userSessions.id, sessionId));
     return rows[0] !== undefined ? toServerSession(rows[0]) : null;
   }
 
   async findByUser(tenantId: string, userId: string): Promise<readonly ServerSession[]> {
-    const { rows } = await this.pool.query<SessionDbRow>(
-      `SELECT ${SESSION_COLUMNS} FROM user_sessions
-       WHERE tenant_id = $1 AND user_id = $2 ORDER BY created_at DESC`,
-      [tenantId, userId],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.userSessions)
+      .where(and(eq(schema.userSessions.tenantId, tenantId), eq(schema.userSessions.userId, userId)))
+      .orderBy(desc(schema.userSessions.createdAt));
     return rows.map(toServerSession);
   }
 
   async updateLastActive(sessionId: string, timestamp: string): Promise<void> {
-    await this.pool.query('UPDATE user_sessions SET last_active_at = $2 WHERE id = $1', [sessionId, timestamp]);
+    await this.db
+      .update(schema.userSessions)
+      .set({ lastActiveAt: new Date(timestamp) })
+      .where(eq(schema.userSessions.id, sessionId));
   }
 
   async updateRefreshTokenHash(sessionId: string, hash: string): Promise<void> {
-    await this.pool.query('UPDATE user_sessions SET refresh_token_hash = $2 WHERE id = $1', [sessionId, hash]);
+    await this.db
+      .update(schema.userSessions)
+      .set({ refreshTokenHash: hash })
+      .where(eq(schema.userSessions.id, sessionId));
   }
 
   async revoke(sessionId: string, timestamp: string): Promise<void> {
-    await this.pool.query(
-      'UPDATE user_sessions SET revoked_at = $2 WHERE id = $1 AND revoked_at IS NULL',
-      [sessionId, timestamp],
-    );
+    await this.db
+      .update(schema.userSessions)
+      .set({ revokedAt: new Date(timestamp) })
+      .where(and(eq(schema.userSessions.id, sessionId), isNull(schema.userSessions.revokedAt)));
   }
 
   async revokeAllForUser(tenantId: string, userId: string, exceptSessionId?: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE user_sessions SET revoked_at = NOW()
-       WHERE tenant_id = $1 AND user_id = $2 AND revoked_at IS NULL AND ($3::text IS NULL OR id <> $3)`,
-      [tenantId, userId, exceptSessionId ?? null],
-    );
+    const conditions = [
+      eq(schema.userSessions.tenantId, tenantId),
+      eq(schema.userSessions.userId, userId),
+      isNull(schema.userSessions.revokedAt),
+    ];
+    if (exceptSessionId) {
+      conditions.push(ne(schema.userSessions.id, exceptSessionId));
+    }
+    await this.db
+      .update(schema.userSessions)
+      .set({ revokedAt: new Date() })
+      .where(and(...conditions));
   }
 
   async deleteExpired(): Promise<number> {
-    const result = await this.pool.query('DELETE FROM user_sessions WHERE expires_at < NOW()');
-    return result.rowCount ?? 0;
+    const deleted = await this.db
+      .delete(schema.userSessions)
+      .where(lt(schema.userSessions.expiresAt, new Date()))
+      .returning({ id: schema.userSessions.id });
+    return deleted.length;
   }
 }
 
-interface OneTimeTokenDbRow {
-  token_hash: string;
-  user_id: string;
-  email: string;
-  expires_at: Date;
-  used_at: Date | null;
-}
+type TokenTable = typeof schema.emailVerificationTokens | typeof schema.passwordResetTokens;
 
-/**
- * Email-verification and password-reset tokens have identical shapes, so both stores
- * share this implementation and differ only in the table they point at.
- */
 class PgOneTimeTokenStore {
   constructor(
-    private readonly pool: PgPool,
-    private readonly table: 'email_verification_tokens' | 'password_reset_tokens',
+    private readonly db: DrizzleDb,
+    private readonly table: TokenTable,
   ) {}
 
   async save(record: VerificationRecord | ResetRecord): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO ${this.table} (token_hash, user_id, email, expires_at, used_at)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (token_hash) DO UPDATE SET used_at = EXCLUDED.used_at`,
-      [record.tokenHash, record.userId, record.email, record.expiresAt, record.usedAt],
-    );
+    await this.db
+      .insert(this.table)
+      .values({
+        tokenHash: record.tokenHash,
+        userId: record.userId,
+        email: record.email,
+        expiresAt: new Date(record.expiresAt),
+        usedAt: record.usedAt ? new Date(record.usedAt) : null,
+      })
+      .onConflictDoUpdate({
+        target: this.table.tokenHash,
+        set: { usedAt: record.usedAt ? new Date(record.usedAt) : null },
+      });
   }
 
   async findByTokenHash(hash: string): Promise<(VerificationRecord & ResetRecord) | null> {
-    const { rows } = await this.pool.query<OneTimeTokenDbRow>(
-      `SELECT token_hash, user_id, email, expires_at, used_at FROM ${this.table} WHERE token_hash = $1`,
-      [hash],
-    );
+    const rows = await this.db
+      .select()
+      .from(this.table)
+      .where(eq(this.table.tokenHash, hash));
     const r = rows[0];
     if (r === undefined) return null;
     return {
-      tokenHash: r.token_hash,
-      userId: r.user_id,
+      tokenHash: r.tokenHash,
+      userId: r.userId,
       email: r.email,
-      expiresAt: r.expires_at.toISOString(),
-      usedAt: r.used_at?.toISOString() ?? null,
+      expiresAt: r.expiresAt.toISOString(),
+      usedAt: r.usedAt?.toISOString() ?? null,
     };
   }
 
   async deleteForUser(userId: string): Promise<void> {
-    await this.pool.query(`DELETE FROM ${this.table} WHERE user_id = $1`, [userId]);
+    await this.db.delete(this.table).where(eq(this.table.userId, userId));
   }
 }
 
 export class PgEmailVerificationStore extends PgOneTimeTokenStore implements IEmailVerificationStore {
-  constructor(pool: PgPool) {
-    super(pool, 'email_verification_tokens');
+  constructor(db: DrizzleDb) {
+    super(db, schema.emailVerificationTokens);
   }
 }
 
 export class PgPasswordResetStore extends PgOneTimeTokenStore implements IPasswordResetStore {
-  constructor(pool: PgPool) {
-    super(pool, 'password_reset_tokens');
+  constructor(db: DrizzleDb) {
+    super(db, schema.passwordResetTokens);
   }
 }
 
 export class PgMfaChallengeStore implements IMfaChallengeStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async save(record: MfaChallengeRecord): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO mfa_challenges (token_hash, user_id, tenant_id, remember_me, expires_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [record.tokenHash, record.userId, record.tenantId, record.rememberMe, record.expiresAt],
-    );
+    await this.db.insert(schema.mfaChallenges).values({
+      tokenHash: record.tokenHash,
+      userId: record.userId,
+      tenantId: record.tenantId,
+      rememberMe: record.rememberMe,
+      expiresAt: new Date(record.expiresAt),
+    });
   }
 
   async findByTokenHash(hash: string): Promise<MfaChallengeRecord | null> {
-    const { rows } = await this.pool.query<{
-      token_hash: string; user_id: string; tenant_id: string; remember_me: boolean; expires_at: Date;
-    }>(
-      'SELECT token_hash, user_id, tenant_id, remember_me, expires_at FROM mfa_challenges WHERE token_hash = $1',
-      [hash],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.mfaChallenges)
+      .where(eq(schema.mfaChallenges.tokenHash, hash));
     const r = rows[0];
     if (r === undefined) return null;
     return {
-      tokenHash: r.token_hash,
-      userId: r.user_id,
-      tenantId: r.tenant_id,
-      rememberMe: r.remember_me,
-      expiresAt: r.expires_at.toISOString(),
+      tokenHash: r.tokenHash,
+      userId: r.userId,
+      tenantId: r.tenantId,
+      rememberMe: r.rememberMe,
+      expiresAt: r.expiresAt.toISOString(),
     };
   }
 
   async delete(hash: string): Promise<void> {
-    await this.pool.query('DELETE FROM mfa_challenges WHERE token_hash = $1', [hash]);
+    await this.db.delete(schema.mfaChallenges).where(eq(schema.mfaChallenges.tokenHash, hash));
   }
 }
 
 export class PgOtpSecretStore implements IOtpSecretStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async saveSecret(userId: string, encryptedSecret: string): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO mfa_secrets (user_id, encrypted_secret) VALUES ($1, $2)
-       ON CONFLICT (user_id) DO UPDATE SET encrypted_secret = EXCLUDED.encrypted_secret`,
-      [userId, encryptedSecret],
-    );
+    await this.db
+      .insert(schema.mfaSecrets)
+      .values({ userId, encryptedSecret })
+      .onConflictDoUpdate({
+        target: schema.mfaSecrets.userId,
+        set: { encryptedSecret },
+      });
   }
 
   async getSecret(userId: string): Promise<string | null> {
-    const { rows } = await this.pool.query<{ encrypted_secret: string }>(
-      'SELECT encrypted_secret FROM mfa_secrets WHERE user_id = $1',
-      [userId],
-    );
-    return rows[0]?.encrypted_secret ?? null;
+    const rows = await this.db
+      .select({ encryptedSecret: schema.mfaSecrets.encryptedSecret })
+      .from(schema.mfaSecrets)
+      .where(eq(schema.mfaSecrets.userId, userId));
+    return rows[0]?.encryptedSecret ?? null;
   }
 
   async saveBackupCodes(userId: string, codeHashes: readonly string[]): Promise<void> {
-    await this.pool.query('DELETE FROM mfa_backup_codes WHERE user_id = $1', [userId]);
-    for (const hash of codeHashes) {
-      await this.pool.query(
-        'INSERT INTO mfa_backup_codes (user_id, code_hash) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [userId, hash],
+    await this.db.delete(schema.mfaBackupCodes).where(eq(schema.mfaBackupCodes.userId, userId));
+    if (codeHashes.length > 0) {
+      await this.db.insert(schema.mfaBackupCodes).values(
+        codeHashes.map((codeHash) => ({ userId, codeHash })),
       );
     }
   }
 
   async getBackupCodes(userId: string): Promise<readonly string[]> {
-    const { rows } = await this.pool.query<{ code_hash: string }>(
-      'SELECT code_hash FROM mfa_backup_codes WHERE user_id = $1 AND used_at IS NULL',
-      [userId],
-    );
-    return rows.map((r) => r.code_hash);
+    const rows = await this.db
+      .select({ codeHash: schema.mfaBackupCodes.codeHash })
+      .from(schema.mfaBackupCodes)
+      .where(and(eq(schema.mfaBackupCodes.userId, userId), isNull(schema.mfaBackupCodes.usedAt)));
+    return rows.map((r) => r.codeHash);
   }
 
   async useBackupCode(userId: string, codeHash: string): Promise<boolean> {
-    const result = await this.pool.query(
-      'UPDATE mfa_backup_codes SET used_at = NOW() WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL',
-      [userId, codeHash],
-    );
-    return (result.rowCount ?? 0) > 0;
+    const updated = await this.db
+      .update(schema.mfaBackupCodes)
+      .set({ usedAt: new Date() })
+      .where(and(
+        eq(schema.mfaBackupCodes.userId, userId),
+        eq(schema.mfaBackupCodes.codeHash, codeHash),
+        isNull(schema.mfaBackupCodes.usedAt),
+      ))
+      .returning({ id: schema.mfaBackupCodes.id });
+    return updated.length > 0;
   }
 
   async deleteAll(userId: string): Promise<void> {
-    await this.pool.query('DELETE FROM mfa_secrets WHERE user_id = $1', [userId]);
-    await this.pool.query('DELETE FROM mfa_backup_codes WHERE user_id = $1', [userId]);
+    await this.db.delete(schema.mfaSecrets).where(eq(schema.mfaSecrets.userId, userId));
+    await this.db.delete(schema.mfaBackupCodes).where(eq(schema.mfaBackupCodes.userId, userId));
   }
 }
 
 export class PgLoginAttemptStore implements ILoginAttemptStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async record(attempt: LoginAttemptRecord): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO login_attempts (attempt_key, attempted_at, success, ip_address, user_agent, failure_reason)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        attempt.key,
-        attempt.timestamp,
-        attempt.success,
-        attempt.ipAddress ?? null,
-        attempt.userAgent ?? null,
-        attempt.failureReason ?? null,
-      ],
-    );
+    await this.db.insert(schema.loginAttempts).values({
+      attemptKey: attempt.key,
+      attemptedAt: new Date(attempt.timestamp),
+      success: attempt.success,
+      ipAddress: attempt.ipAddress ?? null,
+      userAgent: attempt.userAgent ?? null,
+      failureReason: attempt.failureReason ?? null,
+    });
   }
 
   async getRecentFailures(key: string, since: string): Promise<readonly LoginAttemptRecord[]> {
-    const { rows } = await this.pool.query<{
-      attempt_key: string; attempted_at: Date; success: boolean;
-      ip_address: string | null; user_agent: string | null; failure_reason: string | null;
-    }>(
-      `SELECT attempt_key, attempted_at, success, ip_address, user_agent, failure_reason
-       FROM login_attempts
-       WHERE attempt_key = $1 AND success = FALSE AND attempted_at >= $2
-       ORDER BY attempted_at DESC`,
-      [key, since],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.loginAttempts)
+      .where(and(
+        eq(schema.loginAttempts.attemptKey, key),
+        eq(schema.loginAttempts.success, false),
+        sql`${schema.loginAttempts.attemptedAt} >= ${since}`,
+      ))
+      .orderBy(desc(schema.loginAttempts.attemptedAt));
     return rows.map((r) => ({
-      key: r.attempt_key,
-      timestamp: r.attempted_at.toISOString(),
+      key: r.attemptKey,
+      timestamp: r.attemptedAt.toISOString(),
       success: r.success,
-      ipAddress: r.ip_address ?? undefined,
-      userAgent: r.user_agent ?? undefined,
-      failureReason: r.failure_reason ?? undefined,
+      ipAddress: r.ipAddress ?? undefined,
+      userAgent: r.userAgent ?? undefined,
+      failureReason: r.failureReason ?? undefined,
     }));
   }
 
   async clear(key: string): Promise<void> {
-    await this.pool.query('DELETE FROM login_attempts WHERE attempt_key = $1', [key]);
+    await this.db.delete(schema.loginAttempts).where(eq(schema.loginAttempts.attemptKey, key));
   }
 }

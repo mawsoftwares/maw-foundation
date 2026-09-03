@@ -17,17 +17,13 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
+    "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/sdk": "workspace:*",
+    "drizzle-orm": "^0.45.2",
     "nodemailer": "^6.9.13"
   },
-  "peerDependencies": {
-    "@mawsoftwares/database": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@mawsoftwares/database": {
-      "optional": true
-    }
-  },
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
   "devDependencies": {
     "@types/nodemailer": "^6.4.14"
   },

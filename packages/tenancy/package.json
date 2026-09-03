@@ -21,16 +21,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@mawsoftwares/core": "workspace:*"
+    "@mawsoftwares/core": "workspace:*",
+    "@mawsoftwares/database": "workspace:*",
+    "drizzle-orm": "^0.45.2"
   },
-  "peerDependencies": {
-    "@mawsoftwares/database": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@mawsoftwares/database": {
-      "optional": true
-    }
-  },
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

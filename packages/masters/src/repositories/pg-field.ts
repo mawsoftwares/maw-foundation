@@ -1,136 +1,120 @@
-import type { PgPool, PgClient } from '@mawsoftwares/database';
+import type { DrizzleDb, DrizzleTxn } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
 import { withPgErrorTranslation } from '@mawsoftwares/database';
+import { eq, and, isNull, asc } from 'drizzle-orm';
 import type { MasterField } from '../types/entities';
 import type { CreateFieldInput, UpdateFieldInput, OperationContext } from '../types/dto';
 import type { IMasterFieldRepository } from '../types/ports';
 
-interface FieldRow {
-  id: string;
-  master_id: string;
-  code: string;
-  name: string;
-  data_type: string;
-  is_required: boolean;
-  is_unique: boolean;
-  is_searchable: boolean;
-  is_filterable: boolean;
-  display_order: number;
-  default_value: string | null;
-  config: Record<string, unknown> | null;
-  created_at: Date;
-  updated_at: Date;
-  created_by: string | null;
-  updated_by: string | null;
-  deleted_at: Date | null;
-}
+type FieldRow = typeof schema.masterFields.$inferSelect;
 
 function toField(row: FieldRow): MasterField {
   return {
     id: row.id,
-    masterId: row.master_id,
+    masterId: row.masterId,
     code: row.code,
     name: row.name,
-    dataType: row.data_type as MasterField['dataType'],
-    isRequired: row.is_required,
-    isUnique: row.is_unique,
-    isSearchable: row.is_searchable,
-    isFilterable: row.is_filterable,
-    displayOrder: row.display_order,
-    defaultValue: row.default_value,
+    dataType: row.dataType as MasterField['dataType'],
+    isRequired: row.isRequired,
+    isUnique: row.isUnique,
+    isSearchable: row.isSearchable,
+    isFilterable: row.isFilterable,
+    displayOrder: row.displayOrder,
+    defaultValue: row.defaultValue,
     config: row.config as MasterField['config'],
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString(),
-    createdBy: row.created_by,
-    updatedBy: row.updated_by,
-    deletedAt: row.deleted_at?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    createdBy: row.createdBy,
+    updatedBy: row.updatedBy,
+    deletedAt: row.deletedAt?.toISOString() ?? null,
   };
 }
 
-const TABLE = 'master_fields';
-const COLUMNS = `id, master_id, code, name, data_type, is_required, is_unique, is_searchable,
-  is_filterable, display_order, default_value, config, created_at, updated_at, created_by, updated_by, deleted_at`;
+const f = schema.masterFields;
 
 export class PgMasterFieldRepository implements IMasterFieldRepository {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
-  private conn(client?: PgClient): PgPool {
-    return client ?? this.pool;
-  }
-
-  async findById(masterId: string, id: string, client?: PgClient): Promise<MasterField | null> {
-    const { rows } = await this.conn(client).query<FieldRow>(
-      `SELECT ${COLUMNS} FROM ${TABLE} WHERE master_id = $1 AND id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [masterId, id],
-    );
+  async findById(masterId: string, id: string, tx?: DrizzleTxn): Promise<MasterField | null> {
+    const db = tx ?? this.db;
+    const rows = await db
+      .select().from(f)
+      .where(and(eq(f.masterId, masterId), eq(f.id, id), isNull(f.deletedAt)))
+      .limit(1);
     return rows[0] ? toField(rows[0]) : null;
   }
 
-  async findByCode(masterId: string, code: string, client?: PgClient): Promise<MasterField | null> {
-    const { rows } = await this.conn(client).query<FieldRow>(
-      `SELECT ${COLUMNS} FROM ${TABLE} WHERE master_id = $1 AND code = $2 AND deleted_at IS NULL LIMIT 1`,
-      [masterId, code],
-    );
+  async findByCode(masterId: string, code: string, tx?: DrizzleTxn): Promise<MasterField | null> {
+    const db = tx ?? this.db;
+    const rows = await db
+      .select().from(f)
+      .where(and(eq(f.masterId, masterId), eq(f.code, code), isNull(f.deletedAt)))
+      .limit(1);
     return rows[0] ? toField(rows[0]) : null;
   }
 
-  async listByMaster(masterId: string, client?: PgClient): Promise<MasterField[]> {
-    const { rows } = await this.conn(client).query<FieldRow>(
-      `SELECT ${COLUMNS} FROM ${TABLE} WHERE master_id = $1 AND deleted_at IS NULL ORDER BY display_order ASC, name ASC`,
-      [masterId],
-    );
+  async listByMaster(masterId: string, tx?: DrizzleTxn): Promise<MasterField[]> {
+    const db = tx ?? this.db;
+    const rows = await db
+      .select().from(f)
+      .where(and(eq(f.masterId, masterId), isNull(f.deletedAt)))
+      .orderBy(asc(f.displayOrder), asc(f.name));
     return rows.map(toField);
   }
 
-  async create(masterId: string, input: CreateFieldInput, ctx: OperationContext, client?: PgClient): Promise<MasterField> {
-    const id = crypto.randomUUID();
-    const { rows } = await withPgErrorTranslation(() =>
-      this.conn(client).query<FieldRow>(
-        `INSERT INTO ${TABLE} (id, master_id, code, name, data_type, is_required, is_unique, is_searchable,
-         is_filterable, display_order, default_value, config, created_by, updated_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13)
-         RETURNING ${COLUMNS}`,
-        [
-          id, masterId, input.code, input.name, input.dataType,
-          input.isRequired ?? false, input.isUnique ?? false,
-          input.isSearchable ?? false, input.isFilterable ?? false,
-          input.displayOrder ?? 0, input.defaultValue ?? null,
-          input.config ? JSON.stringify(input.config) : null,
-          ctx.userId,
-        ],
-      ),
+  async create(masterId: string, input: CreateFieldInput, ctx: OperationContext, tx?: DrizzleTxn): Promise<MasterField> {
+    const db = tx ?? this.db;
+    const rows = await withPgErrorTranslation(() =>
+      db.insert(f).values({
+        masterId,
+        code: input.code,
+        name: input.name,
+        dataType: input.dataType,
+        isRequired: input.isRequired ?? false,
+        isUnique: input.isUnique ?? false,
+        isSearchable: input.isSearchable ?? false,
+        isFilterable: input.isFilterable ?? false,
+        displayOrder: input.displayOrder ?? 0,
+        defaultValue: input.defaultValue ?? null,
+        config: input.config ? JSON.parse(JSON.stringify(input.config)) : null,
+        createdBy: ctx.userId,
+        updatedBy: ctx.userId,
+      }).returning(),
     );
     return toField(rows[0]!);
   }
 
-  async update(masterId: string, id: string, input: UpdateFieldInput, ctx: OperationContext, client?: PgClient): Promise<MasterField> {
-    const sets: string[] = ['updated_at = NOW()', 'updated_by = $3'];
-    const params: unknown[] = [masterId, id, ctx.userId];
-    let idx = 4;
+  async update(masterId: string, id: string, input: UpdateFieldInput, ctx: OperationContext, tx?: DrizzleTxn): Promise<MasterField> {
+    const db = tx ?? this.db;
+    const setData: Record<string, unknown> = {
+      updatedAt: new Date(),
+      updatedBy: ctx.userId,
+    };
+    if (input.name !== undefined) setData.name = input.name;
+    if (input.dataType !== undefined) setData.dataType = input.dataType;
+    if (input.isRequired !== undefined) setData.isRequired = input.isRequired;
+    if (input.isUnique !== undefined) setData.isUnique = input.isUnique;
+    if (input.isSearchable !== undefined) setData.isSearchable = input.isSearchable;
+    if (input.isFilterable !== undefined) setData.isFilterable = input.isFilterable;
+    if (input.displayOrder !== undefined) setData.displayOrder = input.displayOrder;
+    if (input.defaultValue !== undefined) setData.defaultValue = input.defaultValue;
+    if (input.config !== undefined) setData.config = input.config ? JSON.parse(JSON.stringify(input.config)) : null;
 
-    if (input.name !== undefined) { sets.push(`name = $${idx}`); params.push(input.name); idx++; }
-    if (input.dataType !== undefined) { sets.push(`data_type = $${idx}`); params.push(input.dataType); idx++; }
-    if (input.isRequired !== undefined) { sets.push(`is_required = $${idx}`); params.push(input.isRequired); idx++; }
-    if (input.isUnique !== undefined) { sets.push(`is_unique = $${idx}`); params.push(input.isUnique); idx++; }
-    if (input.isSearchable !== undefined) { sets.push(`is_searchable = $${idx}`); params.push(input.isSearchable); idx++; }
-    if (input.isFilterable !== undefined) { sets.push(`is_filterable = $${idx}`); params.push(input.isFilterable); idx++; }
-    if (input.displayOrder !== undefined) { sets.push(`display_order = $${idx}`); params.push(input.displayOrder); idx++; }
-    if (input.defaultValue !== undefined) { sets.push(`default_value = $${idx}`); params.push(input.defaultValue); idx++; }
-    if (input.config !== undefined) { sets.push(`config = $${idx}`); params.push(input.config ? JSON.stringify(input.config) : null); idx++; }
-
-    const { rows } = await withPgErrorTranslation(() =>
-      this.conn(client).query<FieldRow>(
-        `UPDATE ${TABLE} SET ${sets.join(', ')} WHERE master_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING ${COLUMNS}`,
-        params,
-      ),
+    const rows = await withPgErrorTranslation(() =>
+      db.update(f).set(setData)
+        .where(and(eq(f.masterId, masterId), eq(f.id, id), isNull(f.deletedAt)))
+        .returning(),
     );
     return toField(rows[0]!);
   }
 
-  async softDelete(masterId: string, id: string, client?: PgClient): Promise<boolean> {
-    const { rowCount } = await this.conn(client).query(
-      `UPDATE ${TABLE} SET deleted_at = NOW() WHERE master_id = $1 AND id = $2 AND deleted_at IS NULL`,
-      [masterId, id],
-    );
-    return (rowCount ?? 0) > 0;
+  async softDelete(masterId: string, id: string, tx?: DrizzleTxn): Promise<boolean> {
+    const db = tx ?? this.db;
+    const rows = await db
+      .update(f)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(f.masterId, masterId), eq(f.id, id), isNull(f.deletedAt)))
+      .returning({ id: f.id });
+    return rows.length > 0;
   }
 }

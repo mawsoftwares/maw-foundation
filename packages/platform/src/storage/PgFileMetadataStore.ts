@@ -1,4 +1,6 @@
-import type { PgPool } from '@mawsoftwares/database';
+import type { DrizzleDb } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 
 export interface FileMetadataRecord {
   readonly id: string;
@@ -13,39 +15,25 @@ export interface FileMetadataRecord {
   readonly deletedAt: string | null;
 }
 
-interface FileMetadataDbRow {
-  id: string;
-  tenant_id: string;
-  storage_key: string;
-  original_name: string;
-  mime_type: string;
-  size_bytes: string;
-  uploaded_by: string | null;
-  url: string | null;
-  created_at: Date;
-  deleted_at: Date | null;
-}
+type FileRow = typeof schema.fileMetadata.$inferSelect;
 
-function toRecord(row: FileMetadataDbRow): FileMetadataRecord {
+function toRecord(row: FileRow): FileMetadataRecord {
   return {
     id: row.id,
-    tenantId: row.tenant_id,
-    storageKey: row.storage_key,
-    originalName: row.original_name,
-    mimeType: row.mime_type,
-    sizeBytes: Number(row.size_bytes),
-    uploadedBy: row.uploaded_by,
+    tenantId: row.tenantId,
+    storageKey: row.storageKey,
+    originalName: row.originalName,
+    mimeType: row.mimeType,
+    sizeBytes: row.sizeBytes,
+    uploadedBy: row.uploadedBy,
     url: row.url,
-    createdAt: row.created_at.toISOString(),
-    deletedAt: row.deleted_at?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    deletedAt: row.deletedAt?.toISOString() ?? null,
   };
 }
 
-const COLUMNS = `id, tenant_id, storage_key, original_name, mime_type, size_bytes,
-  uploaded_by, url, created_at, deleted_at`;
-
 export class PgFileMetadataStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async record(input: {
     tenantId: string;
@@ -56,35 +44,43 @@ export class PgFileMetadataStore {
     uploadedBy?: string;
     url?: string;
   }): Promise<FileMetadataRecord> {
-    const { rows } = await this.pool.query<FileMetadataDbRow>(
-      `INSERT INTO file_metadata (tenant_id, storage_key, original_name, mime_type, size_bytes, uploaded_by, url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING ${COLUMNS}`,
-      [input.tenantId, input.storageKey, input.originalName, input.mimeType, input.sizeBytes, input.uploadedBy ?? null, input.url ?? null],
-    );
+    const rows = await this.db
+      .insert(schema.fileMetadata)
+      .values({
+        tenantId: input.tenantId,
+        storageKey: input.storageKey,
+        originalName: input.originalName,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+        uploadedBy: input.uploadedBy ?? null,
+        url: input.url ?? null,
+      })
+      .returning();
     return toRecord(rows[0]!);
   }
 
   async findByKey(storageKey: string): Promise<FileMetadataRecord | null> {
-    const { rows } = await this.pool.query<FileMetadataDbRow>(
-      `SELECT ${COLUMNS} FROM file_metadata WHERE storage_key = $1 AND deleted_at IS NULL`,
-      [storageKey],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.fileMetadata)
+      .where(and(eq(schema.fileMetadata.storageKey, storageKey), isNull(schema.fileMetadata.deletedAt)));
     return rows[0] ? toRecord(rows[0]) : null;
   }
 
   async listByTenant(tenantId: string, limit = 100): Promise<FileMetadataRecord[]> {
-    const { rows } = await this.pool.query<FileMetadataDbRow>(
-      `SELECT ${COLUMNS} FROM file_metadata WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2`,
-      [tenantId, limit],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.fileMetadata)
+      .where(and(eq(schema.fileMetadata.tenantId, tenantId), isNull(schema.fileMetadata.deletedAt)))
+      .orderBy(desc(schema.fileMetadata.createdAt))
+      .limit(limit);
     return rows.map(toRecord);
   }
 
   async softDelete(storageKey: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE file_metadata SET deleted_at = NOW() WHERE storage_key = $1 AND deleted_at IS NULL`,
-      [storageKey],
-    );
+    await this.db
+      .update(schema.fileMetadata)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(schema.fileMetadata.storageKey, storageKey), isNull(schema.fileMetadata.deletedAt)));
   }
 }

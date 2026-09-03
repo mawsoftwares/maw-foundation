@@ -109,7 +109,7 @@ const DATABASE_URL = getRequiredEnv('DATABASE_URL');
 // ---------------------------------------------------------------------------
 
 interface DataLayer {
-  pool: import('@mawsoftwares/database').PgTransactionPool;
+  db: import('@mawsoftwares/database').DrizzleDb;
   syncStore: ISyncStore;
   cacheStore: ICacheStore;
   refreshStore: IRefreshTokenStore;
@@ -137,18 +137,18 @@ async function buildDataLayer(): Promise<DataLayer> {
 
   log.info('Using Postgres data layer');
   return {
-    pool,
-    syncStore: new PgSyncStore(pool),
-    cacheStore: new PgCacheStore(pool),
-    refreshStore: new PgRefreshStore(pool),
-    auditStore: new PgAuditStore(pool),
+    db,
+    syncStore: new PgSyncStore(db),
+    cacheStore: new PgCacheStore(db),
+    refreshStore: new PgRefreshStore(db),
+    auditStore: new PgAuditStore(db),
     userRepository: new PgUserRepository(db),
-    sessionStore: new PgSessionStore(pool),
-    emailVerificationStore: new PgEmailVerificationStore(pool),
-    passwordResetStore: new PgPasswordResetStore(pool),
-    otpSecretStore: new PgOtpSecretStore(pool),
-    loginAttemptStore: new PgLoginAttemptStore(pool),
-    mfaChallengeStore: new PgMfaChallengeStore(pool),
+    sessionStore: new PgSessionStore(db),
+    emailVerificationStore: new PgEmailVerificationStore(db),
+    passwordResetStore: new PgPasswordResetStore(db),
+    otpSecretStore: new PgOtpSecretStore(db),
+    loginAttemptStore: new PgLoginAttemptStore(db),
+    mfaChallengeStore: new PgMfaChallengeStore(db),
   };
 }
 
@@ -207,7 +207,7 @@ log.info('Cache loaded', { roles: cache.getCache()!.roles.length, permissions: c
 // Step 4: Tenancy — resolve tenant from request headers
 // ---------------------------------------------------------------------------
 
-const tenantRepository = new PgTenantRepository(data.pool);
+const tenantRepository = new PgTenantRepository(data.db);
 const tenantContextHolder = new AlsTenantContextHolder();
 const tenantResolver = new HeaderTenantResolver(tenantRepository);
 
@@ -343,7 +343,7 @@ const authService = new AuthenticationService({
 // Queue — background job processing (Postgres)
 // ---------------------------------------------------------------------------
 
-const queueProvider = new PgQueueProvider(data.pool);
+const queueProvider = new PgQueueProvider(data.db);
 const queueService = new QueueService({ provider: queueProvider, logger: log.child('queue') });
 const workerRegistry = new WorkerRegistry();
 
@@ -703,7 +703,7 @@ const uploadHandler = createFileUploadHandler({
 });
 const fileRoutes = createFileRoutes(fileStorage);
 
-const fileMetadataStore = new PgFileMetadataStore(data.pool);
+const fileMetadataStore = new PgFileMetadataStore(data.db);
 
 app.post('/files/upload', auth.requireAuth, multerUpload.array('files', 10), uploadHandler, async (req, res) => {
   const uploaded = (req as UploadedRequest).uploadedFiles ?? [];
@@ -787,12 +787,12 @@ import { createUsersRouter } from './users-routes';
 import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
 
-const usersRepo = new AuthSchemaUsersRepository(data.pool);
+const usersRepo = new AuthSchemaUsersRepository(data.db);
 app.use('/api/v1/users', createUsersRouter(usersRepo, {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
 }));
-app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.pool, cache));
+app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache));
 app.use('/api/v1/tenants', createTenantRoutes({
   tenantRepository,
   requireAuth: auth.requireAuth,
@@ -817,10 +817,10 @@ import {
   PgMasterValueRepository,
 } from '@mawsoftwares/masters';
 
-const masterRepo = new PgMasterRepository(data.pool);
-const masterFieldRepo = new PgMasterFieldRepository(data.pool);
-const masterValueRepo = new PgMasterValueRepository(data.pool);
-const masterService = new MasterService({ pool: data.pool, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
+const masterRepo = new PgMasterRepository(data.db);
+const masterFieldRepo = new PgMasterFieldRepository(data.db);
+const masterValueRepo = new PgMasterValueRepository(data.db);
+const masterService = new MasterService({ db: data.db, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
 
 app.use('/api/v1/masters', createMastersRouter({
   service: masterService,
@@ -935,9 +935,9 @@ const health = createHealthChecker();
 health.register('cache', () => {
   if (cache.getCache() === null) throw new Error('Cache not loaded');
 });
-const { poolHealthCheck } = await import('@mawsoftwares/database');
+const { drizzleHealthCheck } = await import('@mawsoftwares/database');
 health.register('postgres', async () => {
-  const result = await poolHealthCheck(data.pool);
+  const result = await drizzleHealthCheck(data.db);
   if (!result.healthy) throw new Error(result.message);
 });
 

@@ -1,26 +1,12 @@
-import type { PgPool } from '@mawsoftwares/database';
+import type { DrizzleDb } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
+import { eq, and, sql, desc, inArray, isNull, lte } from 'drizzle-orm';
 import type { IQueueProvider, Job, JobDefinition, JobStatusValue } from '@mawsoftwares/sdk';
 import { mergeRetryPolicy } from './retry';
 
-interface JobDbRow {
-  id: string;
-  type: string;
-  data: unknown;
-  context: Record<string, unknown>;
-  status: string;
-  priority: number;
-  attempts: number;
-  max_attempts: number;
-  error: string | null;
-  result: unknown;
-  next_retry_at: Date | null;
-  created_at: Date;
-  started_at: Date | null;
-  completed_at: Date | null;
-  failed_at: Date | null;
-}
+type JobRow = typeof schema.jobs.$inferSelect;
 
-function toJob(row: JobDbRow): Job {
+function toJob(row: JobRow): Job {
   return {
     id: row.id,
     type: row.type,
@@ -29,34 +15,33 @@ function toJob(row: JobDbRow): Job {
     status: row.status as JobStatusValue,
     priority: row.priority,
     attempts: row.attempts,
-    maxAttempts: row.max_attempts,
+    maxAttempts: row.maxAttempts,
     error: row.error ?? undefined,
     result: row.result ?? undefined,
-    nextRetryAt: row.next_retry_at?.toISOString(),
-    createdAt: row.created_at.toISOString(),
-    startedAt: row.started_at?.toISOString(),
-    completedAt: row.completed_at?.toISOString(),
-    failedAt: row.failed_at?.toISOString(),
+    nextRetryAt: row.nextRetryAt?.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    startedAt: row.startedAt?.toISOString(),
+    completedAt: row.completedAt?.toISOString(),
+    failedAt: row.failedAt?.toISOString(),
   };
 }
-
-const JOB_COLUMNS = `id, type, data, context, status, priority, attempts, max_attempts,
-  error, result, next_retry_at, created_at, started_at, completed_at, failed_at`;
 
 export class PgQueueProvider implements IQueueProvider {
   readonly name = 'postgres';
 
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async enqueue<TData>(definition: JobDefinition<TData>): Promise<Job<TData>> {
     if (definition.deduplicationKey) {
-      const { rows: existing } = await this.pool.query<JobDbRow>(
-        `SELECT ${JOB_COLUMNS} FROM jobs
-         WHERE type = $1 AND status IN ('PENDING','QUEUED','PROCESSING')
-           AND context->>'deduplicationKey' = $2
-         LIMIT 1`,
-        [definition.type, definition.deduplicationKey],
-      );
+      const existing = await this.db
+        .select()
+        .from(schema.jobs)
+        .where(and(
+          eq(schema.jobs.type, definition.type),
+          inArray(schema.jobs.status, ['PENDING', 'QUEUED', 'PROCESSING']),
+          sql`${schema.jobs.context}->>'deduplicationKey' = ${definition.deduplicationKey}`,
+        ))
+        .limit(1);
       if (existing[0]) return toJob(existing[0]) as Job<TData>;
     }
 
@@ -67,89 +52,93 @@ export class PgQueueProvider implements IQueueProvider {
       ...(definition.deduplicationKey ? { deduplicationKey: definition.deduplicationKey } : {}),
     };
 
-    const { rows } = await this.pool.query<JobDbRow>(
-      `INSERT INTO jobs (id, type, data, context, status, priority, attempts, max_attempts)
-       VALUES ($1, $2, $3, $4, 'QUEUED', $5, 0, $6)
-       RETURNING ${JOB_COLUMNS}`,
-      [id, definition.type, JSON.stringify(definition.data), JSON.stringify(context), definition.priority ?? 0, retryPolicy.maxAttempts],
-    );
+    const rows = await this.db
+      .insert(schema.jobs)
+      .values({
+        id,
+        type: definition.type,
+        data: JSON.parse(JSON.stringify(definition.data)),
+        context: JSON.parse(JSON.stringify(context)),
+        status: 'QUEUED',
+        priority: definition.priority ?? 0,
+        attempts: 0,
+        maxAttempts: retryPolicy.maxAttempts,
+      })
+      .returning();
 
     return toJob(rows[0]!) as Job<TData>;
   }
 
   async dequeue(type: string): Promise<Job | null> {
-    const { rows } = await this.pool.query<JobDbRow>(
-      `UPDATE jobs SET status = 'PROCESSING', attempts = attempts + 1, started_at = NOW()
-       WHERE id = (
-         SELECT id FROM jobs
-         WHERE type = $1
-           AND (status = 'QUEUED' OR (status = 'RETRYING' AND (next_retry_at IS NULL OR next_retry_at <= NOW())))
-         ORDER BY priority DESC, created_at ASC
-         LIMIT 1
-         FOR UPDATE SKIP LOCKED
-       )
-       RETURNING ${JOB_COLUMNS}`,
-      [type],
-    );
-    return rows[0] ? toJob(rows[0]) : null;
+    const rows = await this.db.execute<JobRow>(sql`
+      UPDATE jobs SET status = 'PROCESSING', attempts = attempts + 1, started_at = NOW()
+      WHERE id = (
+        SELECT id FROM jobs
+        WHERE type = ${type}
+          AND (status = 'QUEUED' OR (status = 'RETRYING' AND (next_retry_at IS NULL OR next_retry_at <= NOW())))
+        ORDER BY priority DESC, created_at ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING id, type, data, context, status, priority, attempts, max_attempts AS "maxAttempts",
+        error, result, next_retry_at AS "nextRetryAt", created_at AS "createdAt",
+        started_at AS "startedAt", completed_at AS "completedAt", failed_at AS "failedAt"
+    `);
+    const row = (rows as unknown as JobRow[])[0];
+    if (!row) return null;
+    return toJob(row);
   }
 
   async complete(jobId: string, result?: unknown): Promise<void> {
-    await this.pool.query(
-      `UPDATE jobs SET status = 'COMPLETED', completed_at = NOW(), result = $2 WHERE id = $1`,
-      [jobId, result !== undefined ? JSON.stringify(result) : null],
-    );
+    await this.db
+      .update(schema.jobs)
+      .set({ status: 'COMPLETED', completedAt: new Date(), result: result !== undefined ? JSON.parse(JSON.stringify(result)) : null })
+      .where(eq(schema.jobs.id, jobId));
   }
 
   async fail(jobId: string, error: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE jobs SET status = 'FAILED', failed_at = NOW(), error = $2 WHERE id = $1`,
-      [jobId, error],
-    );
+    await this.db
+      .update(schema.jobs)
+      .set({ status: 'FAILED', failedAt: new Date(), error })
+      .where(eq(schema.jobs.id, jobId));
   }
 
   async retry(jobId: string, nextRetryAt: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE jobs SET status = 'RETRYING', next_retry_at = $2 WHERE id = $1`,
-      [jobId, nextRetryAt],
-    );
+    await this.db
+      .update(schema.jobs)
+      .set({ status: 'RETRYING', nextRetryAt: new Date(nextRetryAt) })
+      .where(eq(schema.jobs.id, jobId));
   }
 
   async cancel(jobId: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE jobs SET status = 'CANCELLED' WHERE id = $1`,
-      [jobId],
-    );
+    await this.db
+      .update(schema.jobs)
+      .set({ status: 'CANCELLED' })
+      .where(eq(schema.jobs.id, jobId));
   }
 
   async getJob(jobId: string): Promise<Job | null> {
-    const { rows } = await this.pool.query<JobDbRow>(
-      `SELECT ${JOB_COLUMNS} FROM jobs WHERE id = $1`,
-      [jobId],
-    );
+    const rows = await this.db.select().from(schema.jobs).where(eq(schema.jobs.id, jobId));
     return rows[0] ? toJob(rows[0]) : null;
   }
 
   async getStatus(jobId: string): Promise<JobStatusValue | null> {
-    const { rows } = await this.pool.query<{ status: string }>(
-      `SELECT status FROM jobs WHERE id = $1`,
-      [jobId],
-    );
+    const rows = await this.db
+      .select({ status: schema.jobs.status })
+      .from(schema.jobs)
+      .where(eq(schema.jobs.id, jobId));
     return rows[0] ? (rows[0].status as JobStatusValue) : null;
   }
 
   async listJobs(type: string, status?: JobStatusValue, limit = 50): Promise<readonly Job[]> {
-    if (status) {
-      const { rows } = await this.pool.query<JobDbRow>(
-        `SELECT ${JOB_COLUMNS} FROM jobs WHERE type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3`,
-        [type, status, limit],
-      );
-      return rows.map(toJob);
-    }
-    const { rows } = await this.pool.query<JobDbRow>(
-      `SELECT ${JOB_COLUMNS} FROM jobs WHERE type = $1 ORDER BY created_at DESC LIMIT $2`,
-      [type, limit],
-    );
+    const conditions = [eq(schema.jobs.type, type)];
+    if (status) conditions.push(eq(schema.jobs.status, status));
+    const rows = await this.db
+      .select()
+      .from(schema.jobs)
+      .where(and(...conditions))
+      .orderBy(desc(schema.jobs.createdAt))
+      .limit(limit);
     return rows.map(toJob);
   }
 }

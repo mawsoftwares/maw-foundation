@@ -46,7 +46,7 @@ export { runSeed, runSeeds } from './seed/index';
 export type { SeedFn, SeedConfig } from './seed/index';
 
 // Health
-export { pgCheck, poolHealthCheck, migrationHealthCheck } from './health/index';
+export { pgCheck, poolHealthCheck, drizzleHealthCheck, migrationHealthCheck } from './health/index';
 export type { HealthCheckResult, PoolStats } from './health/index';
 
 // Testing
@@ -54,7 +54,7 @@ export { withTestTransaction, createTestPool, truncateTables, MockPgPool } from 
 
 // Drizzle
 export { createDrizzle } from './drizzle/index';
-export type { DrizzleDb } from './drizzle/index';
+export type { DrizzleDb, DrizzleTxn } from './drizzle/index';
 
 // Schema
 export * as schema from './schema/index';

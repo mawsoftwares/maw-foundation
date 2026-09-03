@@ -22,12 +22,13 @@
     "./native": "./src/native/index.ts"
   },
   "dependencies": {
-    "@mawsoftwares/sdk": "workspace:*"
+    "@mawsoftwares/database": "workspace:*",
+    "@mawsoftwares/sdk": "workspace:*",
+    "drizzle-orm": "^0.45.2"
   },
   "peerDependencies": {
     "expo-secure-store": "*",
     "@react-native-community/netinfo": "*",
-    "@mawsoftwares/database": "workspace:*",
     "@aws-sdk/client-s3": "^3",
     "@aws-sdk/s3-request-presigner": "^3"
   },
@@ -36,9 +37,6 @@
       "optional": true
     },
     "@react-native-community/netinfo": {
-      "optional": true
-    },
-    "@mawsoftwares/database": {
       "optional": true
     },
     "@aws-sdk/client-s3": {

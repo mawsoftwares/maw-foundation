@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import { pgCheck } from '@mawsoftwares/sdk/config/health';
 import type { PgPool } from '../types';
+import type { DrizzleDb } from '../drizzle/index';
 import type { MigrationRunner } from '../migration/runner';
 
 export { pgCheck };
@@ -34,6 +36,29 @@ export async function poolHealthCheck(
     return {
       healthy: false,
       message: `Pool health check failed: ${(err as Error).message}`,
+    };
+  }
+}
+
+export async function drizzleHealthCheck(
+  db: DrizzleDb,
+  poolStats?: Partial<PoolStats>,
+): Promise<HealthCheckResult> {
+  try {
+    await db.execute(sql`SELECT 1`);
+    return {
+      healthy: true,
+      message: 'Database is healthy',
+      details: poolStats ? {
+        totalCount: poolStats.totalCount,
+        idleCount: poolStats.idleCount,
+        waitingCount: poolStats.waitingCount,
+      } : undefined,
+    };
+  } catch (err) {
+    return {
+      healthy: false,
+      message: `Database health check failed: ${(err as Error).message}`,
     };
   }
 }

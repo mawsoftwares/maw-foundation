@@ -1,62 +1,39 @@
+import type { DrizzleDb } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
+import { eq, and, count, desc } from 'drizzle-orm';
 import type { IInAppNotificationStore, InAppNotification } from '@mawsoftwares/sdk';
 
-export interface PgPool {
-  query<R extends Record<string, unknown> = Record<string, unknown>>(
-    sql: string,
-    params?: unknown[],
-  ): Promise<{ rows: R[] }>;
-}
-
-interface NotificationRow {
-  [key: string]: unknown;
-  id: string;
-  user_id: string;
-  tenant_id: string;
-  type: string;
-  title: string;
-  message: string;
-  data: Record<string, unknown> | null;
-  action_url: string | null;
-  read: boolean;
-  created_at: string;
-  read_at: string | null;
-}
-
 export class PgInAppNotificationStore implements IInAppNotificationStore {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
   async create(notification: InAppNotification): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO notifications (id, user_id, tenant_id, type, title, message, data, action_url, read, created_at, read_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [
-        notification.id,
-        notification.userId,
-        notification.tenantId,
-        notification.type,
-        notification.title,
-        notification.message,
-        notification.data ? JSON.stringify(notification.data) : null,
-        notification.actionUrl ?? null,
-        notification.read,
-        notification.createdAt,
-        notification.readAt ?? null,
-      ],
-    );
+    await this.db.insert(schema.notifications).values({
+      id: notification.id,
+      userId: notification.userId,
+      tenantId: notification.tenantId,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      data: notification.data ? JSON.parse(JSON.stringify(notification.data)) : null,
+      actionUrl: notification.actionUrl ?? null,
+      read: notification.read,
+      createdAt: new Date(notification.createdAt),
+      readAt: notification.readAt ? new Date(notification.readAt) : null,
+    });
   }
 
   async markAsRead(notificationId: string, userId: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE notifications SET read = TRUE, read_at = NOW() WHERE id = $1 AND user_id = $2`,
-      [notificationId, userId],
-    );
+    await this.db
+      .update(schema.notifications)
+      .set({ read: true, readAt: new Date() })
+      .where(and(eq(schema.notifications.id, notificationId), eq(schema.notifications.userId, userId)));
   }
 
   async markAllAsRead(userId: string, tenantId: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE notifications SET read = TRUE, read_at = NOW() WHERE user_id = $1 AND tenant_id = $2 AND read = FALSE`,
-      [userId, tenantId],
-    );
+    await this.db
+      .update(schema.notifications)
+      .set({ read: true, readAt: new Date() })
+      .where(and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId), eq(schema.notifications.read, false)));
   }
 
   async list(
@@ -66,48 +43,47 @@ export class PgInAppNotificationStore implements IInAppNotificationStore {
   ): Promise<readonly InAppNotification[]> {
     const limit = options?.limit ?? 50;
     const offset = options?.offset ?? 0;
-    const unreadClause = options?.unreadOnly ? ' AND read = FALSE' : '';
+    const conditions = [eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId)];
+    if (options?.unreadOnly) conditions.push(eq(schema.notifications.read, false));
 
-    const { rows } = await this.pool.query<NotificationRow>(
-      `SELECT id, user_id, tenant_id, type, title, message, data, action_url, read, created_at::TEXT, read_at::TEXT
-       FROM notifications
-       WHERE user_id = $1 AND tenant_id = $2${unreadClause}
-       ORDER BY created_at DESC
-       LIMIT $3 OFFSET $4`,
-      [userId, tenantId, limit, offset],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.notifications)
+      .where(and(...conditions))
+      .orderBy(desc(schema.notifications.createdAt))
+      .limit(limit)
+      .offset(offset);
 
     return rows.map(this.toNotification);
   }
 
   async unreadCount(userId: string, tenantId: string): Promise<number> {
-    const { rows } = await this.pool.query<{ count: string }>(
-      `SELECT COUNT(*)::TEXT AS count FROM notifications WHERE user_id = $1 AND tenant_id = $2 AND read = FALSE`,
-      [userId, tenantId],
-    );
-    return parseInt(rows[0]?.count ?? '0', 10);
+    const rows = await this.db
+      .select({ count: count() })
+      .from(schema.notifications)
+      .where(and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId), eq(schema.notifications.read, false)));
+    return rows[0]?.count ?? 0;
   }
 
   async delete(notificationId: string, userId: string): Promise<void> {
-    await this.pool.query(
-      `DELETE FROM notifications WHERE id = $1 AND user_id = $2`,
-      [notificationId, userId],
-    );
+    await this.db
+      .delete(schema.notifications)
+      .where(and(eq(schema.notifications.id, notificationId), eq(schema.notifications.userId, userId)));
   }
 
-  private toNotification(row: NotificationRow): InAppNotification {
+  private toNotification(row: typeof schema.notifications.$inferSelect): InAppNotification {
     return {
       id: row.id,
-      userId: row.user_id,
-      tenantId: row.tenant_id,
+      userId: row.userId,
+      tenantId: row.tenantId,
       type: row.type,
       title: row.title,
       message: row.message,
-      data: row.data ?? undefined,
-      actionUrl: row.action_url ?? undefined,
+      data: (row.data as Record<string, unknown>) ?? undefined,
+      actionUrl: row.actionUrl ?? undefined,
       read: row.read,
-      createdAt: row.created_at,
-      readAt: row.read_at ?? undefined,
+      createdAt: row.createdAt.toISOString(),
+      readAt: row.readAt?.toISOString() ?? undefined,
     };
   }
 }

@@ -1,36 +1,12 @@
-import type { PgPool, PgClient } from '@mawsoftwares/database';
+import type { DrizzleDb } from '@mawsoftwares/database';
+import { schema } from '@mawsoftwares/database';
+import { eq, and, ne, sql } from 'drizzle-orm';
+import type { PgClient } from '@mawsoftwares/database';
 import type { IUsersRepository, User } from '@mawsoftwares/users';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
-/**
- * Users-module port (`IUsersRepository`) over the sample-server auth `users` table.
- * Auth (login/register/reset) and `/api/v1/users` share one Postgres table.
- */
-
-const USER_COLUMNS = `id, tenant_id, email, role, audience, password_hash, scope_id, name, avatar,
-  account_status, email_verified, mfa_enabled, last_login_at, phone, phone_verified,
-  created_at, updated_at`;
-
-interface AuthUserRow {
-  id: string;
-  tenant_id: string;
-  email: string;
-  role: string;
-  audience: string;
-  password_hash: string;
-  scope_id: string | null;
-  name: string | null;
-  avatar: string | null;
-  account_status: string;
-  email_verified: boolean;
-  mfa_enabled: boolean;
-  last_login_at: Date | null;
-  phone: string | null;
-  phone_verified: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
+type UsersRow = typeof schema.users.$inferSelect;
 
 function splitName(name: string | null | undefined): { firstName: string; lastName: string } {
   const trimmed = (name ?? '').trim();
@@ -46,92 +22,79 @@ function joinName(firstName: string, lastName: string): string {
   return `${firstName} ${lastName}`.trim();
 }
 
-function toModuleUser(row: AuthUserRow): User {
+function toModuleUser(row: UsersRow): User {
   const { firstName, lastName } = splitName(row.name);
-  const status = row.account_status as AccountStatusValue;
+  const status = row.accountStatus as AccountStatusValue;
   return {
     id: row.id,
-    tenantId: row.tenant_id,
+    tenantId: row.tenantId,
     firstName,
     lastName,
     email: row.email,
     phone: row.phone ?? undefined,
-    passwordHash: row.password_hash,
+    passwordHash: row.passwordHash,
     avatar: row.avatar ?? undefined,
     role: row.role,
     status,
-    emailVerifiedAt: row.email_verified ? row.created_at.toISOString() : undefined,
-    phoneVerifiedAt: row.phone_verified ? row.created_at.toISOString() : undefined,
-    lastLoginAt: row.last_login_at?.toISOString(),
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString(),
-    deletedAt: status === AccountStatus.DISABLED ? row.updated_at.toISOString() : null,
+    emailVerifiedAt: row.emailVerified ? row.createdAt.toISOString() : undefined,
+    phoneVerifiedAt: row.phoneVerified ? row.createdAt.toISOString() : undefined,
+    lastLoginAt: row.lastLoginAt?.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    deletedAt: status === AccountStatus.DISABLED ? row.updatedAt.toISOString() : null,
   };
 }
 
-function clientOrPool(pool: PgPool, client?: PgClient): PgPool | PgClient {
-  return client ?? pool;
-}
+const notDisabled = ne(schema.users.accountStatus, 'DISABLED');
 
 export class AuthSchemaUsersRepository implements IUsersRepository {
-  constructor(private readonly pool: PgPool) {}
+  constructor(private readonly db: DrizzleDb) {}
 
-  async create(user: Omit<User, 'createdAt' | 'updatedAt'>, client?: PgClient): Promise<User> {
-    const db = clientOrPool(this.pool, client);
-    const { rows } = await db.query<AuthUserRow>(
-      `INSERT INTO users (
-         id, tenant_id, email, role, audience, password_hash, scope_id, name, avatar,
-         account_status, email_verified, phone, phone_verified
-       ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10, $11, $12)
-       RETURNING ${USER_COLUMNS}`,
-      [
-        user.id,
-        user.tenantId,
-        user.email,
-        user.role?.trim() || 'viewer',
-        'admin',
-        user.passwordHash,
-        joinName(user.firstName, user.lastName),
-        user.avatar ?? null,
-        user.status,
-        user.emailVerifiedAt != null,
-        user.phone ?? null,
-        user.phoneVerifiedAt != null,
-      ],
-    );
+  async create(user: Omit<User, 'createdAt' | 'updatedAt'>, _client?: PgClient): Promise<User> {
+    const rows = await this.db
+      .insert(schema.users)
+      .values({
+        id: user.id,
+        tenantId: user.tenantId,
+        email: user.email,
+        role: user.role?.trim() || 'viewer',
+        audience: 'admin',
+        passwordHash: user.passwordHash,
+        name: joinName(user.firstName, user.lastName),
+        avatar: user.avatar ?? null,
+        accountStatus: user.status,
+        emailVerified: user.emailVerifiedAt != null,
+        phone: user.phone ?? null,
+        phoneVerified: user.phoneVerifiedAt != null,
+      })
+      .returning();
     return toModuleUser(rows[0]!);
   }
 
-  async findById(id: string, tenantId: string, client?: PgClient): Promise<User | null> {
-    const db = clientOrPool(this.pool, client);
-    const { rows } = await db.query<AuthUserRow>(
-      `SELECT ${USER_COLUMNS} FROM users
-       WHERE id = $1 AND tenant_id = $2 AND account_status <> 'DISABLED'
-       LIMIT 1`,
-      [id, tenantId],
-    );
+  async findById(id: string, tenantId: string, _client?: PgClient): Promise<User | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(and(eq(schema.users.id, id), eq(schema.users.tenantId, tenantId), notDisabled))
+      .limit(1);
     return rows[0] !== undefined ? toModuleUser(rows[0]) : null;
   }
 
-  async findByEmail(tenantId: string, email: string, client?: PgClient): Promise<User | null> {
-    const db = clientOrPool(this.pool, client);
-    const { rows } = await db.query<AuthUserRow>(
-      `SELECT ${USER_COLUMNS} FROM users
-       WHERE tenant_id = $1 AND LOWER(email) = LOWER($2) AND account_status <> 'DISABLED'
-       LIMIT 1`,
-      [tenantId, email],
-    );
+  async findByEmail(tenantId: string, email: string, _client?: PgClient): Promise<User | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(and(eq(schema.users.tenantId, tenantId), sql`LOWER(${schema.users.email}) = LOWER(${email})`, notDisabled))
+      .limit(1);
     return rows[0] !== undefined ? toModuleUser(rows[0]) : null;
   }
 
-  async findByPhone(tenantId: string, phone: string, client?: PgClient): Promise<User | null> {
-    const db = clientOrPool(this.pool, client);
-    const { rows } = await db.query<AuthUserRow>(
-      `SELECT ${USER_COLUMNS} FROM users
-       WHERE tenant_id = $1 AND phone = $2 AND account_status <> 'DISABLED'
-       LIMIT 1`,
-      [tenantId, phone],
-    );
+  async findByPhone(tenantId: string, phone: string, _client?: PgClient): Promise<User | null> {
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(and(eq(schema.users.tenantId, tenantId), eq(schema.users.phone, phone), notDisabled))
+      .limit(1);
     return rows[0] !== undefined ? toModuleUser(rows[0]) : null;
   }
 
@@ -139,18 +102,18 @@ export class AuthSchemaUsersRepository implements IUsersRepository {
     const opts = (options ?? {}) as { limit?: number; offset?: number };
     const limit = opts.limit ?? 50;
     const offset = opts.offset ?? 0;
-    const { rows } = await this.pool.query<AuthUserRow>(
-      `SELECT ${USER_COLUMNS} FROM users
-       WHERE tenant_id = $1 AND account_status <> 'DISABLED'
-       ORDER BY created_at
-       LIMIT $2 OFFSET $3`,
-      [tenantId, limit, offset],
-    );
+    const rows = await this.db
+      .select()
+      .from(schema.users)
+      .where(and(eq(schema.users.tenantId, tenantId), notDisabled))
+      .orderBy(schema.users.createdAt)
+      .limit(limit)
+      .offset(offset);
     return rows.map(toModuleUser);
   }
 
-  async updateUser(id: string, tenantId: string, updates: Partial<User>, client?: PgClient): Promise<User | null> {
-    const existing = await this.findById(id, tenantId, client);
+  async updateUser(id: string, tenantId: string, updates: Partial<User>, _client?: PgClient): Promise<User | null> {
+    const existing = await this.findById(id, tenantId);
     if (existing === null) return null;
 
     const firstName = updates.firstName ?? existing.firstName;
@@ -169,55 +132,40 @@ export class AuthSchemaUsersRepository implements IUsersRepository {
       : existing.phoneVerifiedAt != null;
     const lastLoginAt = updates.lastLoginAt !== undefined ? updates.lastLoginAt : existing.lastLoginAt;
 
-    const db = clientOrPool(this.pool, client);
-    const { rows } = await db.query<AuthUserRow>(
-      `UPDATE users SET
-         name = $3,
-         email = $4,
-         phone = $5,
-         password_hash = $6,
-         avatar = $7,
-         role = $8,
-         account_status = $9,
-         email_verified = $10,
-         phone_verified = $11,
-         last_login_at = $12,
-         updated_at = NOW()
-       WHERE id = $1 AND tenant_id = $2
-       RETURNING ${USER_COLUMNS}`,
-      [
-        id,
-        tenantId,
-        joinName(firstName, lastName),
+    const rows = await this.db
+      .update(schema.users)
+      .set({
+        name: joinName(firstName, lastName),
         email,
-        phone ?? null,
+        phone: phone ?? null,
         passwordHash,
-        avatar ?? null,
+        avatar: avatar ?? null,
         role,
-        status,
+        accountStatus: status,
         emailVerified,
         phoneVerified,
-        lastLoginAt ? new Date(lastLoginAt) : null,
-      ],
-    );
+        lastLoginAt: lastLoginAt ? new Date(lastLoginAt) : null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(schema.users.id, id), eq(schema.users.tenantId, tenantId)))
+      .returning();
     return rows[0] !== undefined ? toModuleUser(rows[0]) : null;
   }
 
-  async softDelete(id: string, tenantId: string, client?: PgClient): Promise<boolean> {
-    const db = clientOrPool(this.pool, client);
-    const result = await db.query(
-      `UPDATE users SET account_status = 'DISABLED', updated_at = NOW()
-       WHERE id = $1 AND tenant_id = $2 AND account_status <> 'DISABLED'`,
-      [id, tenantId],
-    );
-    return (result.rowCount ?? 0) > 0;
+  async softDelete(id: string, tenantId: string, _client?: PgClient): Promise<boolean> {
+    const rows = await this.db
+      .update(schema.users)
+      .set({ accountStatus: 'DISABLED', updatedAt: new Date() })
+      .where(and(eq(schema.users.id, id), eq(schema.users.tenantId, tenantId), notDisabled))
+      .returning({ id: schema.users.id });
+    return rows.length > 0;
   }
 
-  async existsByEmail(tenantId: string, email: string, client?: PgClient): Promise<boolean> {
-    return (await this.findByEmail(tenantId, email, client)) !== null;
+  async existsByEmail(tenantId: string, email: string, _client?: PgClient): Promise<boolean> {
+    return (await this.findByEmail(tenantId, email)) !== null;
   }
 
-  async existsByPhone(tenantId: string, phone: string, client?: PgClient): Promise<boolean> {
-    return (await this.findByPhone(tenantId, phone, client)) !== null;
+  async existsByPhone(tenantId: string, phone: string, _client?: PgClient): Promise<boolean> {
+    return (await this.findByPhone(tenantId, phone)) !== null;
   }
 }

@@ -18,8 +18,10 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@mawsoftwares/sdk": "workspace:*",
+    "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/platform": "workspace:*",
+    "@mawsoftwares/sdk": "workspace:*",
+    "drizzle-orm": "^0.45.2",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {

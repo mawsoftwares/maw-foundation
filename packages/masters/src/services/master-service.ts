@@ -1,5 +1,4 @@
-import type { PgTransactionPool } from '@mawsoftwares/database';
-import { withTransaction } from '@mawsoftwares/database';
+import type { DrizzleDb } from '@mawsoftwares/database';
 import type { Logger } from '@mawsoftwares/sdk/kernel/logger';
 import { createLogger } from '@mawsoftwares/sdk/kernel/logger';
 import type { PaginatedResult } from '@mawsoftwares/sdk/config/constants';
@@ -25,7 +24,7 @@ import {
 import { validateCreateMaster, validateCreateField, validateCreateValue } from '../validation/index';
 
 export interface MasterServiceOptions {
-  readonly pool: PgTransactionPool;
+  readonly db: DrizzleDb;
   readonly masterRepo: IMasterRepository;
   readonly fieldRepo: IMasterFieldRepository;
   readonly valueRepo: IMasterValueRepository;
@@ -33,14 +32,14 @@ export interface MasterServiceOptions {
 }
 
 export class MasterService {
-  private readonly pool: PgTransactionPool;
+  private readonly db: DrizzleDb;
   private readonly masters: IMasterRepository;
   private readonly fields: IMasterFieldRepository;
   private readonly values: IMasterValueRepository;
   private readonly log: Logger;
 
   constructor(opts: MasterServiceOptions) {
-    this.pool = opts.pool;
+    this.db = opts.db;
     this.masters = opts.masterRepo;
     this.fields = opts.fieldRepo;
     this.values = opts.valueRepo;
@@ -163,12 +162,12 @@ export class MasterService {
     await this.getMaster(tenantId, masterId);
     for (const input of inputs) validateCreateValue(input);
 
-    return withTransaction(this.pool, async (client) => {
+    return this.db.transaction(async (tx) => {
       const results: MasterValue[] = [];
       for (const input of inputs) {
-        const existing = await this.values.findByCode(masterId, input.code, client);
+        const existing = await this.values.findByCode(masterId, input.code, tx);
         if (existing) throw valueCodeExists(input.code, masterId);
-        results.push(await this.values.create(masterId, input, ctx, client));
+        results.push(await this.values.create(masterId, input, ctx, tx));
       }
       return results;
     });
