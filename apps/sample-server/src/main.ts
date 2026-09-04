@@ -461,6 +461,8 @@ function corsAllowedOrigins(): string[] {
   return origins;
 }
 
+const isDev = getEnv('NODE_ENV', 'development') === 'development';
+
 const securityConfig = {
   ...DEFAULT_SECURITY_CONFIG,
   cors: {
@@ -468,6 +470,14 @@ const securityConfig = {
     allowedOrigins: corsAllowedOrigins(),
   },
   csrf: DEFAULT_SECURITY_CONFIG.csrf,
+  // Login is 5/min in production. Local retries (CORS, wrong password, Strict Mode)
+  // burn that budget immediately.
+  rateLimit: {
+    ...DEFAULT_SECURITY_CONFIG.rateLimit,
+    login: isDev
+      ? { windowMs: 60_000, maxRequests: 60 }
+      : DEFAULT_SECURITY_CONFIG.rateLimit.login,
+  },
 };
 
 const { middleware: securityMiddleware, errorHandler: securityErrorHandler } = createSecurityPipeline(

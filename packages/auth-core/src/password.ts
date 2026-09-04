@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { IHasher } from '@mawsoftwares/sdk/contracts/IHasher';
 
 /**
@@ -12,6 +12,19 @@ export function hashPassword(password: string): string {
   const salt = randomBytes(16);
   const key = scryptSync(password, salt, KEYLEN);
   return `scrypt$${salt.toString('hex')}$${key.toString('hex')}`;
+}
+
+/** SHA-256 hex matching `extractPrehash(await prehashPassword(plaintext))`. */
+export function sha256Hex(plaintext: string): string {
+  return createHash('sha256').update(plaintext, 'utf8').digest('hex');
+}
+
+/**
+ * Hash a user-chosen password for storage the same way login verifies
+ * client-prehashed passwords: `scrypt(sha256(utf8(plaintext)))`.
+ */
+export function hashPasswordForStorage(plaintext: string): string {
+  return hashPassword(sha256Hex(plaintext));
 }
 
 export function verifyPassword(password: string, stored: string): boolean {

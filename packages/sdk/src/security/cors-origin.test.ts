@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isOriginAllowed, parseCorsOrigins } from './SecurityConfig';
+import { DEFAULT_SECURITY_CONFIG, isOriginAllowed, parseCorsOrigins } from './SecurityConfig';
+import { PREHASH_HEADER } from './password-prehash';
 
 describe('parseCorsOrigins', () => {
   it('splits, trims, and drops empty entries', () => {
@@ -33,5 +34,11 @@ describe('isOriginAllowed', () => {
     expect(isOriginAllowed('http://localhost.evil.com:5173', allowed)).toBe(false);
     expect(isOriginAllowed('https://localhost:5173', allowed)).toBe(false);
     expect(isOriginAllowed('http://localhost:5173.evil', allowed)).toBe(false);
+  });
+});
+
+describe('DEFAULT_SECURITY_CONFIG.cors.allowedHeaders', () => {
+  it('allows the password-prehash header the login client sends', () => {
+    expect(DEFAULT_SECURITY_CONFIG.cors.allowedHeaders).toContain(PREHASH_HEADER);
   });
 });

@@ -1,5 +1,5 @@
 import { createDatabasePool, closeDatabasePool, runSeed } from '@mawsoftwares/database';
-import { hashPassword } from '@mawsoftwares/auth-core';
+import { hashPasswordForStorage } from '@mawsoftwares/auth-core';
 import { createLogger } from '@mawsoftwares/sdk';
 import { registry } from '../modules/index';
 
@@ -51,7 +51,7 @@ try {
       await client.query(
         `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id, name, account_status, email_verified)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'ACTIVE', TRUE)`,
-        [u.id, TENANT, u.email, u.role, u.audience, hashPassword('password123'), u.scopeId, u.name],
+        [u.id, TENANT, u.email, u.role, u.audience, hashPasswordForStorage('password123'), u.scopeId, u.name],
       );
     }
     log.info('Users upserted', { count: users.length });

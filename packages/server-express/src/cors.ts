@@ -1,11 +1,12 @@
 import type { RequestHandler, Request, Response, NextFunction } from 'express';
 import { isOriginAllowed, type CorsConfig } from '@mawsoftwares/sdk/security/SecurityConfig';
+import { PREHASH_HEADER } from '@mawsoftwares/sdk/security/password-prehash';
 
 export function createCorsMiddleware(config: Partial<CorsConfig> = {}): RequestHandler {
   const {
     allowedOrigins = [],
     allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders = ['Content-Type', 'Authorization', 'x-csrf-token', 'x-request-id'],
+    allowedHeaders = ['Content-Type', 'Authorization', 'x-csrf-token', 'x-request-id', PREHASH_HEADER],
     exposedHeaders = ['x-request-id'],
     credentials = true,
     maxAge = 86400,

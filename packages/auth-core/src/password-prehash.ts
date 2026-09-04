@@ -1,6 +1,6 @@
-import { isPrehashedPassword, extractPrehash } from '@mawsoftwares/sdk/security/password-prehash';
+import { isPrehashedPassword, extractPrehash, PREHASH_HEADER } from '@mawsoftwares/sdk/security/password-prehash';
 
-export const PREHASH_HEADER = 'x-password-prehashed';
+export { PREHASH_HEADER };
 
 /**
  * Resolve the password from a request body. If the client sent a prehashed

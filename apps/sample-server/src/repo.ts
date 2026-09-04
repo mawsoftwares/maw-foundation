@@ -1,4 +1,4 @@
-import { hashPassword } from '@mawsoftwares/auth-core';
+import { hashPasswordForStorage } from '@mawsoftwares/auth-core';
 import type { IRefreshTokenStore, RefreshRecord } from '@mawsoftwares/auth-core';
 import { AccountStatus } from '@mawsoftwares/sdk';
 import type { TenantRolePolicy } from '@mawsoftwares/rbac-core';
@@ -44,12 +44,12 @@ export const TENANT_ROLE_POLICY: TenantRolePolicy = {
 
 /** Seeded users. Password for everyone: "password123". (Dev fallback only — sample-server requires Postgres.) */
 export const USERS: readonly UserRow[] = [
-  { id: 'u-superadmin', tenantId: TENANT, email: 'superadmin@demo.test', role: 'super_admin', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: null },
-  { id: 'u-owner', tenantId: TENANT, email: 'owner@demo.test', role: 'owner', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: null },
-  { id: 'u-owner-maw', tenantId: TENANT, email: 'mindsatworksolutions@gmail.com', role: 'owner', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: null },
-  { id: 'u-owner-poonam', tenantId: TENANT, email: 'poonamdhomane89@gmail.com', role: 'owner', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: null },
-  { id: 'u-manager', tenantId: TENANT, email: 'manager@demo.test', role: 'manager', audience: 'admin', passwordHash: hashPassword('password123'), scopeId: 'plant-1' },
-  { id: 'u-clerk', tenantId: TENANT, email: 'clerk@demo.test', role: 'clerk', audience: 'operator', passwordHash: hashPassword('password123'), scopeId: 'plant-1' },
+  { id: 'u-superadmin', tenantId: TENANT, email: 'superadmin@demo.test', role: 'super_admin', audience: 'admin', passwordHash: hashPasswordForStorage('password123'), scopeId: null },
+  { id: 'u-owner', tenantId: TENANT, email: 'owner@demo.test', role: 'owner', audience: 'admin', passwordHash: hashPasswordForStorage('password123'), scopeId: null },
+  { id: 'u-owner-maw', tenantId: TENANT, email: 'mindsatworksolutions@gmail.com', role: 'owner', audience: 'admin', passwordHash: hashPasswordForStorage('password123'), scopeId: null },
+  { id: 'u-owner-poonam', tenantId: TENANT, email: 'poonamdhomane89@gmail.com', role: 'owner', audience: 'admin', passwordHash: hashPasswordForStorage('password123'), scopeId: null },
+  { id: 'u-manager', tenantId: TENANT, email: 'manager@demo.test', role: 'manager', audience: 'admin', passwordHash: hashPasswordForStorage('password123'), scopeId: 'plant-1' },
+  { id: 'u-clerk', tenantId: TENANT, email: 'clerk@demo.test', role: 'clerk', audience: 'operator', passwordHash: hashPasswordForStorage('password123'), scopeId: 'plant-1' },
 ];
 
 /** In-memory user repository implementing the SDK port. */

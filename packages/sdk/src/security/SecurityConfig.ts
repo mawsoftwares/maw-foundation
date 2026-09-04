@@ -1,5 +1,6 @@
 import type { PasswordPolicyConfig } from './PasswordPolicy';
 import { DEFAULT_PASSWORD_POLICY } from './PasswordPolicy';
+import { PREHASH_HEADER } from './password-prehash';
 
 export interface RateLimitTier {
   readonly windowMs: number;
@@ -140,7 +141,7 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   cors: {
     allowedOrigins: [],
     allowedMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'x-request-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'x-request-id', PREHASH_HEADER],
     exposedHeaders: ['x-request-id'],
     credentials: true,
     maxAge: 86400,

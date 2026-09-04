@@ -1,4 +1,4 @@
-export { hashPassword, verifyPassword, ScryptHasher } from './password';
+export { hashPassword, hashPasswordForStorage, sha256Hex, verifyPassword, ScryptHasher } from './password';
 export {
   validatePassword,
   DEFAULT_PASSWORD_POLICY,

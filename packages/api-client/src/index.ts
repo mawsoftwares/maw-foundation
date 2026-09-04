@@ -8,7 +8,7 @@ import type {
   SessionInfo,
 } from '@mawsoftwares/sdk/contracts/IAccountAuth';
 import type { Session } from '@mawsoftwares/sdk/contracts/identity';
-import { prehashPassword } from '@mawsoftwares/sdk/security/password-prehash';
+import { prehashPassword, PREHASH_HEADER } from '@mawsoftwares/sdk/security/password-prehash';
 import { ApiError, parseApiErrorPayload } from './errors';
 
 export {
@@ -110,7 +110,7 @@ function makeCancellable<T>(
 // ---------------------------------------------------------------------------
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-const PREHASH_HEADERS: Record<string, string> = { 'x-password-prehashed': 'sha256' };
+const PREHASH_HEADERS: Record<string, string> = { [PREHASH_HEADER]: 'sha256' };
 
 export class ApiClient implements IAccountAuth {
   private readonly baseUrl: string;

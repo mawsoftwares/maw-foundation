@@ -18,6 +18,11 @@ export function createRateLimitMiddleware(options: RateLimitMiddlewareOptions): 
   const { limiter, tiers, defaultTier, keyFn } = options;
 
   return async (c, next) => {
+    if (c.req.method === 'OPTIONS') {
+      await next();
+      return;
+    }
+
     const tier = tiers.find((t) => c.req.path.startsWith(t.prefix));
     const config = tier?.config ?? defaultTier;
     if (!config) {

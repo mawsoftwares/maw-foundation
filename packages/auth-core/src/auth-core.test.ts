@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { signAccessToken, verifyAccessToken } from './jwt';
-import { hashPassword, verifyPassword } from './password';
+import { hashPassword, hashPasswordForStorage, verifyPassword } from './password';
 import { RefreshTokens, hashToken, type IRefreshTokenStore, type RefreshRecord } from './refresh';
 
 const SECRET = 'test-secret-please-change';
@@ -37,6 +37,14 @@ describe('password', () => {
     const stored = hashPassword('secret');
     expect(stored.startsWith('scrypt$')).toBe(true);
     expect(stored).not.toContain('secret');
+  });
+
+  it('hashPasswordForStorage matches client SHA-256 prehash + scrypt verify', async () => {
+    const { prehashPassword, extractPrehash } = await import('@mawsoftwares/sdk/security/password-prehash');
+    const stored = hashPasswordForStorage('password123');
+    const resolved = extractPrehash(await prehashPassword('password123'));
+    expect(verifyPassword(resolved, stored)).toBe(true);
+    expect(verifyPassword('password123', stored)).toBe(false);
   });
 });
 

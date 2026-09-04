@@ -10,6 +10,9 @@
 
 const PREHASH_PREFIX = 'sha256:';
 
+/** Sent by the client so CORS and `resolvePassword` know the body is a SHA-256 digest. */
+export const PREHASH_HEADER = 'x-password-prehashed';
+
 /** Returns `"sha256:<hex>"` so the server can identify and validate the format. */
 export async function prehashPassword(password: string): Promise<string> {
   const encoded = new TextEncoder().encode(password);
