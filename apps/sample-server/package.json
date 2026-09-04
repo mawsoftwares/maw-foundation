@@ -21,7 +21,7 @@
     "@mawsoftwares/users": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "express": "^5.0.0",
-    "multer": "^2.2.0",
+    "multer": "^2.3.0",
     "pg": "^8.16.0"
   },
   "devDependencies": {
@@ -29,7 +29,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^24.7.0",
     "@types/pg": "^8.11.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.23.13"
   },
   "scripts": {
     "dev": "node --env-file=.env --import=tsx src/main.ts",
