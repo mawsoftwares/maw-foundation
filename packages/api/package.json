@@ -25,6 +25,8 @@
     "./controller": "./src/controller/index.ts",
     "./errors": "./src/errors/index.ts",
     "./dto": "./src/dto/index.ts",
+    "./dto/*": "./src/dto/*.ts",
+    "./response/*": "./src/response/*.ts",
     "./idempotency": "./src/idempotency/index.ts",
     "./openapi": "./src/openapi/index.ts",
     "./versioning": "./src/versioning/index.ts",

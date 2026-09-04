@@ -34,7 +34,8 @@
     "./health": "./src/health/index.ts",
     "./testing": "./src/testing/index.ts",
     "./drizzle": "./src/drizzle/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./schema/*": "./src/schema/*.ts"
   },
   "dependencies": {
     "@mawsoftwares/sdk": "workspace:*",

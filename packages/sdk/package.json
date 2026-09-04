@@ -21,8 +21,25 @@
     ".": "./src/index.ts",
     "./kernel/*": "./src/kernel/*.ts",
     "./contracts/*": "./src/contracts/*.ts",
+    "./security/*": "./src/security/*.ts",
+    "./config/*": "./src/config/*.ts",
+    "./queue": "./src/queue/index.ts",
+    "./queue/*": "./src/queue/*.ts",
     "./i18n": "./src/i18n/index.ts",
-    "./security/*": "./src/security/*.ts"
+    "./i18n/*": "./src/i18n/*.ts",
+    "./modules": "./src/modules/index.ts",
+    "./modules/*": "./src/modules/*.ts",
+    "./offline/*": "./src/offline/*.ts",
+    "./branding": "./src/branding/index.ts",
+    "./branding/*": "./src/branding/*.ts",
+    "./communication": "./src/communication/index.ts",
+    "./communication/*": "./src/communication/*.ts",
+    "./data-grid": "./src/data-grid/index.ts",
+    "./data-grid/*": "./src/data-grid/*.ts",
+    "./dynamic-form": "./src/dynamic-form/index.ts",
+    "./dynamic-form/*": "./src/dynamic-form/*.ts",
+    "./domains": "./src/domains/index.ts",
+    "./domains/*": "./src/domains/*.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
