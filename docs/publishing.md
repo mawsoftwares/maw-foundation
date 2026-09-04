@@ -112,7 +112,7 @@ The first publish of `0.1.0` does not need a changeset — `pnpm release` publis
 
 ### Local auth for this repo
 
-This repo’s `.npmrc` maps `@mawsoftwares` to GitHub Packages. For **local publish**, put a `write:packages` token in `~/.npmrc`:
+Copy `.npmrc.example` to `.npmrc` (gitignored) so `@mawsoftwares` maps to GitHub Packages. For **local publish**, put a `write:packages` token in `~/.npmrc`:
 
 ```bash
 pnpm config set //npm.pkg.github.com/:_authToken ghp_xxxxxxxxxxxx

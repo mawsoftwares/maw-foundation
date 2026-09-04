@@ -19,6 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Write npmrc
+        run: cp .npmrc.example .npmrc
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 

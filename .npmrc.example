@@ -1,10 +1,9 @@
+# Copy to .npmrc (gitignored). Do not put tokens here.
+# Auth belongs in ~/.npmrc:
+#   pnpm config set //npm.pkg.github.com/:_authToken ghp_xxxxxxxxxxxx
+#
 # GitHub Packages — other product repos install @mawsoftwares/* from here.
 # Inside this monorepo, pnpm links local packages via workspace:*.
-#
-# Auth does NOT belong in this committed file (pnpm will not expand
-# ${NODE_AUTH_TOKEN} here). Put the token in ~/.npmrc instead:
-#   //npm.pkg.github.com/:_authToken=ghp_xxxxxxxxxxxx
-# Or, in CI, use actions/setup-node with registry-url + NODE_AUTH_TOKEN.
 @mawsoftwares:registry=https://npm.pkg.github.com
 
 # pnpm settings
