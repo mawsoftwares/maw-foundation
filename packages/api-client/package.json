@@ -1,6 +1,6 @@
 {
   "name": "@mawsoftwares/api-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
@@ -17,6 +17,12 @@
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
   "dependencies": {
     "@mawsoftwares/sdk": "workspace:*"
   },
