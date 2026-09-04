@@ -26,6 +26,7 @@
     "./queue": "./src/queue/index.ts",
     "./queue/*": "./src/queue/*.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./i18n/index": "./src/i18n/index.ts",
     "./i18n/*": "./src/i18n/*.ts",
     "./modules": "./src/modules/index.ts",
     "./modules/*": "./src/modules/*.ts",

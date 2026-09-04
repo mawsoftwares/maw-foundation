@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrandProvider, I18nProvider, ToastProvider } from '@mawsoftwares/ui-web';
-import * as i18n from '@mawsoftwares/sdk/i18n/index';
+import * as i18n from '@mawsoftwares/sdk/i18n';
 import { AUTH_EN_MESSAGES } from '@mawsoftwares/ui-auth';
 import { App } from './App';
 import { staticBrandProvider, DEFAULT_TENANT } from './brand-setup';

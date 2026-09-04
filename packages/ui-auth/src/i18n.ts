@@ -1,4 +1,4 @@
-import { registerLocale, hasKey } from '@mawsoftwares/sdk/i18n/index';
+import { registerLocale, hasKey } from '@mawsoftwares/sdk/i18n';
 
 /** Default English strings for ui-auth screens. Apps may override via registerLocale. */
 export const AUTH_EN_MESSAGES: Readonly<Record<string, string>> = {
