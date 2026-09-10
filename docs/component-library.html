@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAW Foundation - Developer Guide</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-muted:#f8fafc; --bg-subtle:#f1f5f9;
+  --fg:#0f172a; --fg-muted:#64748b; --fg-subtle:#94a3b8;
+  --border:#e2e8f0; --brand:#6366f1; --brand-dark:#4f46e5;
+  --danger:#dc2626; --success:#16a34a; --warning:#d97706;
+  --code-bg:#0f172a; --code-fg:#e2e8f0; --radius:10px;
+  --sidebar-w:290px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--fg); background:var(--bg); font-size:15px; line-height:1.6;
+}
+a{color:var(--brand-dark); text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  font-size:0.88em; background:var(--bg-muted); padding:1px 5px; border-radius:4px;
+}
+pre.code{
+  background:var(--code-bg); color:var(--code-fg); padding:14px 16px; border-radius:8px;
+  overflow-x:auto; font-size:13px; line-height:1.55; margin:12px 0;
+}
+pre.code code{background:none; padding:0; color:inherit; font-size:1em;}
+.app{display:flex; min-height:100vh;}
+.sidebar{
+  width:var(--sidebar-w); flex:0 0 var(--sidebar-w); border-right:1px solid var(--border);
+  background:var(--bg-muted); height:100vh; position:sticky; top:0; overflow-y:auto;
+  padding:18px 14px 60px;
+}
+.sidebar .brand{font-weight:700; font-size:17px; margin:2px 4px 4px; display:flex; align-items:center; gap:8px;}
+.sidebar .brand small{font-weight:500; color:var(--fg-muted); font-size:11px; display:block; margin-top:2px;}
+.search-box{margin:14px 4px 10px;}
+.search-box input{
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px;
+  font-size:13px; background:var(--bg); color:var(--fg);
+}
+.nav-group{margin-top:16px;}
+.nav-group>.group-label{
+  font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--fg-subtle);
+  font-weight:700; margin:0 8px 6px;
+}
+.nav-group a{
+  display:block; padding:5px 8px; border-radius:6px; color:var(--fg); font-size:13.5px;
+}
+.nav-group a:hover{background:var(--bg-subtle); text-decoration:none;}
+.nav-group a.active{background:var(--brand); color:#fff;}
+.main{flex:1; min-width:0; padding:36px 48px 120px; max-width:980px;}
+.crumbs{font-size:12.5px; color:var(--fg-muted); margin-bottom:6px;}
+h1{font-size:28px; margin:0 0 6px;}
+h2{font-size:21px; margin:40px 0 12px; padding-top:6px; border-top:1px solid var(--border);}
+h2:first-of-type{border-top:none; margin-top:8px;}
+h3{font-size:16px; margin:0 0 6px;}
+.lede{font-size:16px; color:var(--fg-muted); margin:0 0 20px;}
+.card{border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin:0 0 20px; background:var(--bg);}
+.card .desc{color:var(--fg-muted); margin:0 0 10px; font-size:14px;}
+.card .import{margin:0 0 10px;}
+.card .note{background:var(--bg-subtle); border-radius:6px; padding:8px 10px; font-size:13px; margin:0 0 10px;}
+table.props{width:100%; border-collapse:collapse; font-size:13px; margin:10px 0;}
+table.props th{text-align:left; color:var(--fg-muted); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--border); font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em;}
+table.props td{padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:top;}
+table.props tr:last-child td{border-bottom:none;}
+.req{color:var(--danger); font-size:11px; font-weight:600;}
+.opt{color:var(--fg-subtle); font-size:11px;}
+.muted{color:var(--fg-subtle); font-size:13.5px;}
+table.pkg{width:100%; border-collapse:collapse; font-size:13.5px; margin:10px 0 28px;}
+table.pkg th{text-align:left; padding:8px; border-bottom:2px solid var(--border); font-size:11.5px; text-transform:uppercase; color:var(--fg-muted);}
+table.pkg td{padding:8px; border-bottom:1px solid var(--border); vertical-align:top;}
+.diagram{background:var(--bg-muted); border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:12.5px; line-height:1.5; font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre;}
+.pill{display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:600; background:var(--bg-subtle); color:var(--fg-muted); margin-right:6px;}
+.pill.stable{background:#f0fdf4; color:var(--success);}
+.pill.wip{background:#fffbeb; color:var(--warning);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.section{display:none;}
+.section.active{display:block;}
+.tokens{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin:14px 0 24px;}
+.token-swatch{border:1px solid var(--border); border-radius:8px; padding:10px; font-size:12px;}
+.token-swatch .sw{height:28px; border-radius:5px; margin-bottom:6px; border:1px solid var(--border);}
+footer.pagefoot{margin-top:60px; padding-top:16px; border-top:1px solid var(--border); font-size:12.5px; color:var(--fg-subtle);}
+.menu-toggle{display:none;}
+@media (max-width:900px){
+  .app{flex-direction:column;}
+  .sidebar{position:relative; height:auto; width:100%; flex:none; border-right:none; border-bottom:1px solid var(--border);}
+  .main{padding:24px 18px 80px; max-width:100%;}
+  .grid2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <div class="brand">MAW Foundation<small>Developer Guide</small></div>
+    <div class="search-box"><input id="nav-search" type="text" placeholder="Filter..." /></div>
+    <div class="nav-group"><div class="group-label">Introduction</div>
+<a href="#overview" data-target="overview">Overview</a>
+<a href="#getting-started" data-target="getting-started">Getting Started</a>
+</div>
+<div class="nav-group"><div class="group-label">Package Reference</div>
+<a href="#packages" data-target="packages">All Packages</a>
+</div>
+<div class="nav-group"><div class="group-label">ui-web Components</div>
+<a href="#foundations" data-target="foundations">Foundations (Theme Tokens)</a>
+<a href="#primitives" data-target="primitives">Form Primitives</a>
+<a href="#fields" data-target="fields">Ready-Made Field Components</a>
+<a href="#layout" data-target="layout">Layout</a>
+<a href="#actions" data-target="actions">Buttons &amp; Actions</a>
+<a href="#feedback" data-target="feedback">Feedback &amp; Overlays</a>
+<a href="#navigation" data-target="navigation">Navigation</a>
+<a href="#data-display" data-target="data-display">Data Display</a>
+<a href="#forms-engine" data-target="forms-engine">Forms Engine</a>
+<a href="#page-templates" data-target="page-templates">Page Templates</a>
+<a href="#feature-flags-ui" data-target="feature-flags-ui">Feature Flags (UI)</a>
+</div>
+<div class="nav-group"><div class="group-label">Services</div>
+<a href="#api-client" data-target="api-client">api-client</a>
+<a href="#auth-rbac" data-target="auth-rbac">Auth &amp; Permissions</a>
+</div>
+  </nav>
+  <main class="main">
+    
+<div class="section" id="overview">
+  <h1>MAW Foundation — Developer Guide</h1>
+  <p class="lede">A reference for every package in the monorepo and every component in the <code>ui-web</code> design system — what it does, when to use it, and a working code sample.</p>
+
+  <h2>Two-mode module architecture</h2>
+  <p>MAW Foundation splits everything into two kinds of module. Knowing which kind you're touching tells you whether you're allowed to edit it.</p>
+  <div class="diagram">                MAW FOUNDATION
+                      &#9474;
+      &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+      &#9474;                                &#9474;
+FOUNDATION PACKAGES              PROJECT MODULES
+      &#9474;                                &#9474;
+ @mawsoftwares/auth-core           users
+ @mawsoftwares/rbac-core           customers
+ @mawsoftwares/database            orders
+ @mawsoftwares/communication       invoices
+ @mawsoftwares/queue               inventory
+ @mawsoftwares/audit               production
+      &#9474;                                &#9474;
+      &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9518;
+                      &#9474;
+                APPLICATION</div>
+
+  <table class="pkg">
+    <thead><tr><th>Kind</th><th>Location</th><th>Owner</th><th>Editable?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Foundation Package</strong></td><td><code>packages/</code> (<code>@mawsoftwares/*</code>)</td><td>Foundation</td><td>No &mdash; use the public API</td></tr>
+      <tr><td><strong>Source Module</strong></td><td>Copied from <code>templates/</code> into the project</td><td>Project developer</td><td>Yes &mdash; fully owned</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Layered architecture</h2>
+  <p>Foundation packages follow a strict layer hierarchy where dependencies flow downward only &mdash; nothing in a lower layer may import from a higher one. This is enforced by ESLint (<code>pnpm lint</code>) via <code>.engineering/dependency-law.md</code>.</p>
+  <div class="diagram">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9474;
+&#9474;                    APPS                           &#9474;
+&#9474;  sample-server &#9474; sample-web &#9474; (project apps)      &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9474;
+&#9474;              PROJECT SOURCE MODULES               &#9474;
+&#9474;   modules/users &#9474; modules/orders &#9474; modules/...    &#9474;
+&#9474;   (copied from templates/, project-owned code)     &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9474;
+&#9474;              SERVER ADAPTERS                      &#9474;
+&#9474;  @mawsoftwares/server-express &#9474; server-hono       &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9474;
+&#9474;              DOMAIN PACKAGES                      &#9474;
+&#9474;  @mawsoftwares/auth-core &#9474; rbac-core &#9474; tenancy    &#9474;
+&#9474;  communication &#9474; queue &#9474; audit &#9474; feature-flags     &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9474;
+&#9474;              PLATFORM PACKAGES                    &#9474;
+&#9474;  @mawsoftwares/platform &#9474; database &#9474; observability &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9474;
+&#9474;             SDK / KERNEL                          &#9474;
+&#9474;  @mawsoftwares/sdk &#9474; core &#9474; config               &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9518;</div>
+
+  <h2>Key principles</h2>
+  <table class="pkg">
+    <tbody>
+      <tr><td><strong>Contracts over implementations</strong></td><td>Logic depends on ports (interfaces), never on concrete engines, frameworks, or databases.</td></tr>
+      <tr><td><strong>Framework-agnostic core</strong></td><td>No package below <code>apps/</code> may import Express, Hono, Next, Expo, React DOM, or React Native (except <code>ui-web</code> and <code>ui-native</code> themselves).</td></tr>
+      <tr><td><strong>Single authorization resolver</strong></td><td><code>resolveEffectiveAccess()</code> in <code>@mawsoftwares/rbac-core</code> is the only <code>can()</code> used anywhere in the stack.</td></tr>
+      <tr><td><strong>Multi-tenant by default</strong></td><td>Every access decision is scoped by <code>tenantId</code>.</td></tr>
+      <tr><td><strong>No <code>any</code></strong></td><td>No hardcoded secrets; URLs/keys come from env, strings from i18n, colors from theme tokens.</td></tr>
+      <tr><td><strong>Foundation vs. project</strong></td><td>Foundation packages provide capabilities; project source modules implement domain behaviour.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>When does something become a Foundation package?</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Make it a Foundation package when&hellip;</h3>
+      <ul>
+        <li>Generic, reusable identically across multiple projects</li>
+        <li>Stable API &mdash; the interface rarely changes</li>
+        <li>No project-specific database fields or business rules</li>
+        <li>Represents infrastructure (auth, queues, files, notifications, audit)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Keep it a source module (copy from template) when&hellip;</h3>
+      <ul>
+        <li>Database fields or relationships change per project</li>
+        <li>Business rules, validation, or workflow differ between projects</li>
+        <li>API contract or UI requirements differ between projects</li>
+        <li>Represents domain/business logic</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted">Full classification guide: <code>docs/module-architecture.md</code>.</p>
+</div>
+
+
+<div class="section" id="getting-started">
+  <h1>Getting Started</h1>
+  <p class="lede">Everything you need to get the monorepo running and understand the workflow.</p>
+
+  <h2>Prerequisites</h2>
+  <ul>
+    <li>Node.js &ge; 20</li>
+    <li>pnpm (install via <code>corepack enable</code> or <code>npm install -g pnpm</code>)</li>
+  </ul>
+
+  <h2>Install &amp; verify</h2>
+  <pre class="code"><code># Clone the repository (foundation developers only)
+git clone https://github.com/mawsoftwares/maw-foundation.git
+cd maw-foundation
+
+# Install all dependencies
+pnpm install
+
+# Run all verification checks
+pnpm verify</code></pre>
+
+  <h2>Commands</h2>
+  <table class="pkg">
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>pnpm install</code></td><td>Install all workspace dependencies</td></tr>
+      <tr><td><code>pnpm typecheck</code></td><td>Run TypeScript type checking</td></tr>
+      <tr><td><code>pnpm lint</code></td><td>Run ESLint with dependency-law enforcement</td></tr>
+      <tr><td><code>pnpm test</code></td><td>Run all tests with Vitest</td></tr>
+      <tr><td><code>pnpm build</code></td><td>Build all packages</td></tr>
+      <tr><td><code>pnpm verify</code></td><td>typecheck + lint + test, in one shot</td></tr>
+      <tr><td><code>pnpm format</code></td><td>Format all files with Prettier</td></tr>
+      <tr><td><code>pnpm sample:server</code></td><td>Start the Express proof backend</td></tr>
+      <tr><td><code>pnpm sample:web</code></td><td>Start the Vite React proof app</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Creating a new package</h2>
+  <ol>
+    <li>Create <code>packages/&lt;name&gt;/{package.json, tsconfig.json, src/index.ts, tests/, README.md}</code></li>
+    <li>Set <code>"name": "@mawsoftwares/&lt;name&gt;"</code> in <code>package.json</code></li>
+    <li>Add the <code>exports</code> field: <code>{ "exports": { ".": "./src/index.ts" } }</code></li>
+    <li>Add a path mapping in <code>tsconfig.base.json</code></li>
+    <li>Add an alias in <code>vitest.config.ts</code></li>
+    <li>Add dependency rules in <code>eslint.config.js</code> (which layer can it be imported from?)</li>
+    <li>Add it to the root <code>tsconfig.json</code> include list</li>
+  </ol>
+
+  <h2>Testing</h2>
+  <p>Tests use <a href="https://vitest.dev/" target="_blank" rel="noopener">Vitest</a> and live co-located with source files or in <code>tests/</code> directories.</p>
+  <pre class="code"><code># Run all tests
+pnpm test
+
+# Watch mode
+pnpm vitest
+
+# A single package
+pnpm vitest packages/config</code></pre>
+
+  <h2>Dependency rules</h2>
+  <p>Enforced by ESLint &mdash; see <code>.engineering/dependency-law.md</code>. Each tier may only import tiers below it; violations fail <code>pnpm lint</code>.</p>
+  <div class="diagram">sdk (imports nothing of ours)
+  &#8593;
+core / config
+  &#8593;
+platform / tenancy / modules / feature-flags
+  &#8593;
+rbac-core / auth-core
+  &#8593;
+server-express / server-hono (framework-specific)
+  &#8593;
+apps (composition roots)</div>
+</div>
+
+
+<div class="section" id="packages">
+  <h1>Package Reference</h1>
+  <p class="lede">28 packages in 5 layers. Dependency law: <code>apps &rarr; domains + ui &rarr; platform &rarr; sdk</code>. Published packages are installed from GitHub Packages as <code>@mawsoftwares/*</code>.</p>
+
+  <h2 id="pkg-sdk">SDK layer</h2>
+  <table class="pkg"><thead><tr><th>Package</th><th>What it does</th></tr></thead><tbody><tr>
+      <td><code>@mawsoftwares/sdk</code><br><span class="pill stable">Stable</span></td>
+      <td>The kernel: Result/error types, Money, IDs, dates, contracts (ports for storage/auth/etc.), i18n, file utils. Nothing in the monorepo is lower than this &amp;mdash; it imports nothing of ours.<div style="margin-top:8px"><pre class="code"><code>import { Result, Money, newId } from '@mawsoftwares/sdk';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/core</code><br><span class="pill stable">Stable</span></td>
+      <td>Canonical re-export of the framework-independent primitives from sdk (Result, errors, identifiers, money, dates, pagination). New app code should import from here rather than sdk directly.<div style="margin-top:8px"><pre class="code"><code>import { Result, Money } from '@mawsoftwares/core';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/config</code><br><span class="pill stable">Stable</span></td>
+      <td>Multi-level config engine (app/tenant/UI config shapes), env utilities, health checker, version utilities.</td>
+    </tr></tbody></table>
+
+  <h2 id="pkg-platform">Platform layer</h2>
+  <table class="pkg"><thead><tr><th>Package</th><th>What it does</th></tr></thead><tbody><tr>
+      <td><code>@mawsoftwares/platform</code><br><span class="pill stable">Stable</span></td>
+      <td>SessionManager, LocalFileStorage/S3FileStorage, PgFileMetadataStore, offline adapters (IndexedDB, BrowserNetworkManager, conflict resolver), and security utilities.<div style="margin-top:8px"><pre class="code"><code>import { SessionManager, SESSION_KEYS } from '@mawsoftwares/platform';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/database</code><br><span class="pill stable">Stable</span></td>
+      <td>PostgreSQL pool creation/teardown, the PgPool/PgClient interfaces, query utilities, and a migration runner.<div style="margin-top:8px"><pre class="code"><code>import { createDatabasePool, loadDatabaseConfig } from '@mawsoftwares/database';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/observability</code><br><span class="pill stable">Stable</span></td>
+      <td>Structured logger, metrics, tracing, error tracking, performance timers, health checks, graceful-shutdown manager, and AsyncLocalStorage-based request context.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/testing</code><br><span class="pill stable">Stable</span></td>
+      <td>Shared test mocks (logger, cache, event bus) and data factories used across every package's test suite.</td>
+    </tr></tbody></table>
+
+  <h2 id="pkg-domain">Domain layer</h2>
+  <table class="pkg"><thead><tr><th>Package</th><th>What it does</th></tr></thead><tbody><tr>
+      <td><code>@mawsoftwares/auth-core</code><br><span class="pill stable">Stable</span></td>
+      <td>Everything authentication: password hashing (scrypt), JWT sign/verify, refresh-token rotation, CSRF, login-throttling/lockout, MFA/OTP, registration + email verification, password reset, and social auth (Google + GitHub providers).<div style="margin-top:8px"><pre class="code"><code>import { signAccessToken, verifyAccessToken, hashPassword, verifyPassword } from '@mawsoftwares/auth-core';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/rbac-core</code><br><span class="pill stable">Stable</span></td>
+      <td>The single authorization resolver: resolveEffectiveAccess(), a module registry, ABAC-style scoping, dynamic permission checks, and a MasterCache. See the RBAC section below for a full example.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/tenancy</code><br><span class="pill stable">Stable</span></td>
+      <td>Tenant contracts, PgTenantRepository, and tenant resolvers (header, subdomain, JWT, composite) plus an ALS-based tenant context holder &amp;mdash; completely DB- and framework-agnostic.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/modules</code><br><span class="pill stable">Stable</span></td>
+      <td>Module registry, lifecycle hooks, dependency graph resolution, and an in-process event bus that domain packages publish/subscribe on.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/feature-flags</code><br><span class="pill wip">WIP</span></td>
+      <td>Tenant-aware feature-flag service (global/tenant/environment/user override precedence). Has pre-existing type errors in this repo &amp;mdash; check before relying on it in a build.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/communication</code><br><span class="pill stable">Stable</span></td>
+      <td>NotificationService with pluggable providers for email/SMS/in-app/push, an SMTP provider, Mustache-based template rendering, and Postgres-backed stores for in-app notifications and templates.<div style="margin-top:8px"><pre class="code"><code>import { createCommunication } from '@mawsoftwares/communication';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/queue</code><br><span class="pill stable">Stable</span></td>
+      <td>QueueService + JobRunner with retry/backoff policy, an in-memory provider for tests, and a PgQueueProvider for production.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/audit</code><br><span class="pill stable">Stable</span></td>
+      <td>Audit trail and structured event logging, with in-memory and Postgres-backed stores and an Express/Hono middleware.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/masters</code><br><span class="pill stable">Stable</span></td>
+      <td>Master data management (lookup tables like status/category values) with caching, typed fields, and CRUD input validation.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/import-export</code><br><span class="pill stable">Stable</span></td>
+      <td>CSV/JSON import with schema validation, column mapping, and de-duplication; export with background/streaming processing for large datasets.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/reporting</code><br><span class="pill stable">Stable</span></td>
+      <td>Report definitions, filter/sort/group/aggregate pipeline, an execution engine, and saved-report persistence.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/deployment</code><br><span class="pill wip">Scaffold</span></td>
+      <td>Deployment utilities and configuration &amp;mdash; still a scaffold, no stable public API yet.</td>
+    </tr></tbody></table>
+
+  <h2 id="pkg-server">Server adapters</h2>
+  <table class="pkg"><thead><tr><th>Package</th><th>What it does</th></tr></thead><tbody><tr>
+      <td><code>@mawsoftwares/server-express</code><br><span class="pill stable">Stable</span></td>
+      <td>Express middleware: auth (JWT verify + refresh), RBAC guard, file upload, CSRF, rate-limiting, CORS, a composed security pipeline, tenant-resolution middleware, and ready-made tenant/auth route routers.<div style="margin-top:8px"><pre class="code"><code>import { requireAuth, requirePermission } from '@mawsoftwares/server-express';</code></pre></div></td>
+    </tr><tr>
+      <td><code>@mawsoftwares/server-hono</code><br><span class="pill stable">Stable</span></td>
+      <td>The same middleware surface as server-express, adapted for Hono: auth, RBAC, file upload, auth routes, rate-limit, CORS, security pipeline.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/api</code><br><span class="pill stable">Stable</span></td>
+      <td>Framework-agnostic API building blocks: the response envelope (ApiSuccessResponse/ApiErrorResponse), typed route/handler definitions, and request-query parsing.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/api-client</code><br><span class="pill stable">Stable</span></td>
+      <td>The typed HTTP client every frontend uses &amp;mdash; axios-based, with auto token refresh, request cancellation, interceptors, retry/backoff, structured logging, and offline queueing. Full section below.</td>
+    </tr></tbody></table>
+
+  <h2 id="pkg-ui">UI layer</h2>
+  <table class="pkg"><thead><tr><th>Package</th><th>What it does</th></tr></thead><tbody><tr>
+      <td><code>@mawsoftwares/theme</code><br><span class="pill stable">Stable</span></td>
+      <td>Platform-agnostic design tokens (palette, spacing, radius, shadows, typography, breakpoints) shared by ui-web and ui-native, plus a brand-config bridge for white-label theming.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/ui-web</code><br><span class="pill stable">Stable</span></td>
+      <td>The React web design system &amp;mdash; 39 primitives, 28 ready-made *Field form components, DataGrid, DynamicForm, CRUD page templates, dashboard building blocks, and RBAC-aware feature guards. Full component reference below.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/ui-native</code><br><span class="pill stable">Stable</span></td>
+      <td>The React Native counterpart to ui-web &amp;mdash; same design tokens, native-appropriate components.</td>
+    </tr><tr>
+      <td><code>@mawsoftwares/ui-auth</code><br><span class="pill stable">Stable</span></td>
+      <td>Ready-made auth screens/forms: AuthScreen, LoginForm, RegisterForm, VerifyEmailForm, ForgotPasswordForm, ResetPasswordForm &amp;mdash; wire these straight to auth-core/api-client.</td>
+    </tr></tbody></table>
+
+  <h2 id="pkg-templates">Source module templates</h2>
+  <p>Domain modules whose fields, rules, or UI differ between projects must remain <strong>project-owned source code</strong> &mdash; they're scaffolded from <code>templates/</code>, not imported as packages.</p>
+  <table class="pkg"><thead><tr><th>Package</th><th>What it does</th></tr></thead><tbody><tr>
+      <td><code>templates/users-module/</code><br><span class="pill wip">Template</span></td>
+      <td>Full user-management module &amp;mdash; domain entity, use-cases, Postgres repository, API routes, and React UI. Copy into your project as project-owned source code; do not import as a package.</td>
+    </tr><tr>
+      <td><code>templates/crud-module/</code><br><span class="pill wip">Template</span></td>
+      <td>Minimal generic CRUD scaffold for any domain entity &amp;mdash; the starting point for a new source module.</td>
+    </tr></tbody></table>
+
+  <h2 id="pkg-apps">Sample apps</h2>
+  <table class="pkg"><thead><tr><th>App</th><th>Description</th></tr></thead><tbody>
+    <tr><td><code>apps/sample-server</code></td><td>Express server wiring together every domain package &mdash; auth, RBAC, tenancy, queue, files, communication. The best place to see real composition.</td></tr>
+    <tr><td><code>apps/sample-web</code></td><td>React web app showcasing every UI package.</td></tr>
+  </tbody></table>
+</div>
+
+
+<div class="section" id="foundations">
+  <h1>Foundations</h1>
+  <p class="lede">ui-web is a <strong>dependency-free, inline-style</strong> design system &mdash; no Tailwind, no Radix, no shadcn. Every component styles itself with plain <code>style={{}}</code> objects driven entirely by CSS custom-property tokens from <code>@mawsoftwares/theme</code>. Never hardcode a color, spacing value, or radius &mdash; always reference a <code>var(--maw-*)</code> token.</p>
+
+  <h2>Color tokens</h2>
+  <div class="tokens"><div class="token-swatch"><div class="sw" style="background:#6366f1"></div><code>--maw-brand</code></div><div class="token-swatch"><div class="sw" style="background:#4f46e5"></div><code>--maw-brandDark</code></div><div class="token-swatch"><div class="sw" style="background:#ffffff"></div><code>--maw-bg</code></div><div class="token-swatch"><div class="sw" style="background:#f8fafc"></div><code>--maw-bgMuted</code></div><div class="token-swatch"><div class="sw" style="background:#f1f5f9"></div><code>--maw-bgSubtle</code></div><div class="token-swatch"><div class="sw" style="background:#0f172a"></div><code>--maw-fg</code></div><div class="token-swatch"><div class="sw" style="background:#64748b"></div><code>--maw-fgMuted</code></div><div class="token-swatch"><div class="sw" style="background:#94a3b8"></div><code>--maw-fgSubtle</code></div><div class="token-swatch"><div class="sw" style="background:#e2e8f0"></div><code>--maw-border</code></div><div class="token-swatch"><div class="sw" style="background:#16a34a"></div><code>--maw-success</code></div><div class="token-swatch"><div class="sw" style="background:#dc2626"></div><code>--maw-danger</code></div><div class="token-swatch"><div class="sw" style="background:#d97706"></div><code>--maw-warning</code></div><div class="token-swatch"><div class="sw" style="background:#2563eb"></div><code>--maw-info</code></div></div>
+
+  <h2>Spacing / radius / typography scales</h2>
+  <table class="pkg">
+    <thead><tr><th>Scale</th><th>Tokens</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Spacing</strong></td><td><code>--maw-space-xs</code> 4px &middot; <code>sm</code> 8px &middot; <code>md</code> 12px &middot; <code>lg</code> 16px &middot; <code>xl</code> 24px &middot; <code>xxl</code> 32px &middot; <code>xxxl</code> 48px</td></tr>
+      <tr><td><strong>Radius</strong></td><td><code>--maw-radius-none</code> 0 &middot; <code>sm</code> 6px &middot; <code>md</code> 10px &middot; <code>lg</code> 16px &middot; <code>xl</code> 24px &middot; <code>pill</code> 999px</td></tr>
+      <tr><td><strong>Text size</strong></td><td><code>--maw-text-xs</code> 12px &middot; <code>sm</code> 14px &middot; <code>md</code> 16px &middot; <code>lg</code> 20px &middot; <code>xl</code> 28px &middot; <code>xxl</code> 36px</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Per-tenant white-labeling</h2>
+  <p>Call <code>createTheme(tenantOverrides)</code> from <code>@mawsoftwares/theme</code> to produce a merged token set &mdash; no component code changes needed for a new brand, just config.</p>
+  <pre class="code"><code>import { createTheme, applyThemeVars } from '@mawsoftwares/theme';
+
+const theme = createTheme({ brand: '#e11d48', brandLight: '#fb7185' });
+applyThemeVars(document.documentElement, theme); // sets the --maw-* CSS vars</code></pre>
+
+  <h2>Dark mode</h2>
+  <p>A dark palette (<code>paletteDark</code>) ships alongside the light one with the same token names &mdash; swap the applied token set based on <code>prefers-color-scheme</code> or a user setting; no component needs to know which mode is active.</p>
+</div>
+
+<div class="section" id="primitives">
+<h1>Form Primitives</h1>
+<p class="lede">The low-level input building blocks. Most already render their own label/error/hint text; a couple (Checkbox, Toggle) don't and are meant to be wrapped in <code>FormField</code> &mdash; or just reached for via their ready-made <code>*Field</code> wrapper (next section) which does that for you.</p>
+<div class="card" id="prim-textfield">
+<h3>TextField</h3>
+<p class="desc">The base text input. Thin wrapper around a native &lt;input&gt; — accepts every standard InputHTMLAttributes prop (type, placeholder, maxLength, etc.) plus label/error.</p>
+<p class="import"><code>import { TextField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td>Rendered above the input.</td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td>Renders red error text below the input and tints the border.</td></tr><tr><td><code>...props</code></td><td><code>InputHTMLAttributes&lt;HTMLInputElement&gt;</code></td><td><span class="opt">optional</span></td><td>Every native &lt;input&gt; prop — type, value, onChange, placeholder, disabled, required, etc.</td></tr></tbody></table>
+<pre class="code"><code>&lt;TextField
+  label="Full name"
+  value={name}
+  onChange={(e) =&gt; setName(e.target.value)}
+  placeholder="Ada Lovelace"
+  required
+/&gt;</code></pre>
+</div>
+<div class="card" id="prim-textarea">
+<h3>TextArea</h3>
+<p class="desc">Multi-line text input. Same pattern as TextField, wrapping a native &lt;textarea&gt;.</p>
+<p class="import"><code>import { TextArea } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>...props</code></td><td><code>TextareaHTMLAttributes&lt;HTMLTextAreaElement&gt;</code></td><td><span class="opt">optional</span></td><td>rows, maxLength, placeholder, value, onChange, etc.</td></tr></tbody></table>
+<pre class="code"><code>&lt;TextArea label="Notes" rows={4} value={notes} onChange={(e) =&gt; setNotes(e.target.value)} /&gt;</code></pre>
+</div>
+<div class="card" id="prim-select">
+<h3>Select</h3>
+<p class="desc">Native &lt;select&gt; dropdown with label/error and an options list.</p>
+<p class="import"><code>import { Select } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly { value: string; label: string }[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td>Rendered as a disabled first option.</td></tr><tr><td><code>...props</code></td><td><code>SelectHTMLAttributes&lt;HTMLSelectElement&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Select
+  label="Status"
+  options={[{ value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }]}
+  value={status}
+  onChange={(e) =&gt; setStatus(e.target.value)}
+/&gt;</code></pre>
+</div>
+<div class="card" id="prim-multiselect">
+<h3>MultiSelect</h3>
+<p class="desc">Searchable multi-choice dropdown with chip removal and an optional selection cap.</p>
+<p class="import"><code>import { MultiSelect } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>readonly string[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: readonly string[]) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly MultiSelectOption[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>loading</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>searchable</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>maxSelections</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;MultiSelect
+  label="Tags"
+  options={[{ value: 'urgent', label: 'Urgent' }, { value: 'billing', label: 'Billing' }]}
+  value={tags}
+  onChange={setTags}
+  searchable
+/&gt;</code></pre>
+</div>
+<div class="card" id="prim-radiogroup">
+<h3>RadioGroup</h3>
+<p class="desc">A labeled group of radio buttons, row or column layout.</p>
+<p class="import"><code>import { RadioGroup } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly RadioOption[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>direction</code></td><td><code>'row' | 'column'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;RadioGroup
+  name="plan"
+  label="Plan"
+  options={[{ value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' }]}
+  value={plan}
+  onChange={setPlan}
+/&gt;</code></pre>
+</div>
+<div class="card" id="prim-checkbox">
+<h3>Checkbox</h3>
+<p class="desc">Single checkbox. No error/hint slot of its own — use CheckboxField (next section) when you need one.</p>
+<p class="import"><code>import { Checkbox } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>checked</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(checked: boolean) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Checkbox label="Send me updates" checked={subscribed} onChange={setSubscribed} /&gt;</code></pre>
+</div>
+<div class="card" id="prim-toggle">
+<h3>Toggle</h3>
+<p class="desc">On/off switch. Same no-error-slot caveat as Checkbox — use SwitchField for a labeled form field with error text.</p>
+<p class="import"><code>import { Toggle } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>checked</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(checked: boolean) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Toggle label="Enable notifications" checked={enabled} onChange={setEnabled} /&gt;</code></pre>
+</div>
+<div class="card" id="prim-datepicker">
+<h3>DatePicker</h3>
+<p class="desc">Calendar-backed date input, ISO YYYY-MM-DD value.</p>
+<p class="import"><code>import { DatePicker } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>min</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>locale</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DatePicker label="Start date" value={startDate} onChange={setStartDate} min="2026-01-01" /&gt;</code></pre>
+</div>
+<div class="card" id="prim-timepicker">
+<h3>TimePicker</h3>
+<p class="desc">Time input, HH:mm value, with a 12/24-hour display toggle.</p>
+<p class="import"><code>import { TimePicker } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>step</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>use24Hour</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>min</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;TimePicker label="Start time" value={startTime} onChange={setStartTime} use24Hour /&gt;</code></pre>
+</div>
+<div class="card" id="prim-daterangepicker">
+<h3>DateRangePicker</h3>
+<p class="desc">Paired start/end date picker with a single DateRange value.</p>
+<p class="import"><code>import { DateRangePicker } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>DateRange</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: DateRange) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>min</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DateRangePicker label="Booking window" value={range} onChange={setRange} /&gt;</code></pre>
+</div>
+<div class="card" id="prim-searchableselect">
+<h3>SearchableSelect</h3>
+<p class="desc">Single-select combobox with client-side filtering or async loadOptions for server-side search.</p>
+<p class="import"><code>import { SearchableSelect } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly SearchableSelectOption[]</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>loadOptions</code></td><td><code>(query: string) =&gt; Promise&lt;readonly SearchableSelectOption[]&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>loading</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>clearable</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>debounceMs</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;SearchableSelect
+  label="Assignee"
+  value={assigneeId}
+  onChange={setAssigneeId}
+  loadOptions={async (q) =&gt; searchUsers(q)}
+  debounceMs={300}
+/&gt;</code></pre>
+</div>
+<div class="card" id="prim-profileavatarupload">
+<h3>ProfileAvatarUpload</h3>
+<p class="desc">Profile-only image control: a single circular avatar with an edit badge.</p>
+<p class="import"><code>import { ProfileAvatarUpload } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>src</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>size</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>accept</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>maxSize</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>upload</code></td><td><code>(file: File, onProgress: (percent: number) =&gt; void) =&gt; Promise&lt;StoredFile&gt;</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(url: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onError</code></td><td><code>(message: string) =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;ProfileAvatarUpload
+  src={user.avatarUrl}
+  name={user.fullName}
+  upload={(file, onProgress) =&gt; apiClient.upload('/me/avatar', toFormData(file), { onProgress })}
+  onChange={(url) =&gt; setUser({ ...user, avatarUrl: url })}
+/&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="fields">
+<h1>Ready-Made Field Components</h1>
+<p class="lede">28 drop-in *Field components. Every one is a small wrapper around a primitive above (or, for the 8 that had no existing internal logic to extract, a hand-built control) with built-in on-blur format validation. Pass error yourself for a server-side/cross-field error; it always takes precedence over the field's own validation. These are for ordinary hand-built forms. For schema-driven forms, use DynamicForm instead (see the Forms Engine section).</p>
+<div class="card" id="field-emailfield">
+<h3>EmailField</h3>
+<p class="desc">Email input - validates the address shape on blur.</p>
+<p class="import"><code>import { EmailField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>readOnly</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;EmailField label="Email" value={email} onChange={setEmail} required /&gt;</code></pre>
+</div>
+<div class="card" id="field-passwordfield">
+<h3>PasswordField</h3>
+<p class="desc">Password input with an optional show/hide toggle and a minimum-length check.</p>
+<p class="import"><code>import { PasswordField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>minLength</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>toggleVisibility</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td>Show a show/hide toggle button inside the field. Defaults to true.</td></tr><tr><td><code>autoComplete</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;PasswordField label="Password" value={password} onChange={setPassword} minLength={8} required /&gt;</code></pre>
+</div>
+<div class="card" id="field-phonefield">
+<h3>PhoneField</h3>
+<p class="desc">Phone input (type="tel") - validates a loose international shape on blur.</p>
+<p class="import"><code>import { PhoneField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;PhoneField label="Phone" value={phone} onChange={setPhone} /&gt;</code></pre>
+</div>
+<div class="card" id="field-urlfield">
+<h3>UrlField</h3>
+<p class="desc">URL input - validates https?://... shape on blur.</p>
+<p class="import"><code>import { UrlField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;UrlField label="Website" value={site} onChange={setSite} /&gt;</code></pre>
+</div>
+<div class="card" id="field-numberfield">
+<h3>NumberField</h3>
+<p class="desc">Numeric input - validates min/max on blur.</p>
+<p class="import"><code>import { NumberField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>number | ''</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: number | '') =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>min</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>step</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;NumberField label="Quantity" value={qty} onChange={setQty} min={1} max={100} /&gt;</code></pre>
+</div>
+<div class="card" id="field-currencyfield">
+<h3>CurrencyField</h3>
+<p class="desc">Currency amount input - two-decimal step, optional currency-code prefix, non-negative by default.</p>
+<p class="import"><code>import { CurrencyField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>number | ''</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: number | '') =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>min</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>currencyCode</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;CurrencyField label="Price" value={price} onChange={setPrice} currencyCode="INR" /&gt;</code></pre>
+</div>
+<div class="card" id="field-textareafield">
+<h3>TextAreaField</h3>
+<p class="desc">Multi-line text input, with an optional character counter when maxLength is set.</p>
+<p class="import"><code>import { TextAreaField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>rows</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>maxLength</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;TextAreaField label="Description" value={desc} onChange={setDesc} maxLength={500} /&gt;</code></pre>
+</div>
+<div class="card" id="field-selectfield">
+<h3>SelectField</h3>
+<p class="desc">Single-choice dropdown.</p>
+<p class="import"><code>import { SelectField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly { value: string; label: string }[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;SelectField
+  label="Priority"
+  value={priority}
+  onChange={setPriority}
+  options={[{ value: 'low', label: 'Low' }, { value: 'high', label: 'High' }]}
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-multiselectfield">
+<h3>MultiSelectField</h3>
+<p class="desc">Multi-choice dropdown with search and chip removal.</p>
+<p class="import"><code>import { MultiSelectField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>readonly string[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: readonly string[]) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly MultiSelectOption[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>maxSelections</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;MultiSelectField
+  label="Labels"
+  value={labels}
+  onChange={setLabels}
+  options={[{ value: 'bug', label: 'Bug' }, { value: 'feature', label: 'Feature' }]}
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-radiofield">
+<h3>RadioField</h3>
+<p class="desc">Radio-button group.</p>
+<p class="import"><code>import { RadioField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly RadioOption[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>direction</code></td><td><code>'row' | 'column'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;RadioField
+  name="billing"
+  label="Billing cycle"
+  value={cycle}
+  onChange={setCycle}
+  options={[{ value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' }]}
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-checkboxfield">
+<h3>CheckboxField</h3>
+<p class="desc">Single checkbox rendered through FormField, so it gets error/required/hint text (Checkbox itself has no error slot).</p>
+<p class="import"><code>import { CheckboxField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>checked</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(checked: boolean) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>hint</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;CheckboxField label="I agree to the terms" checked={agreed} onChange={setAgreed} required /&gt;</code></pre>
+</div>
+<div class="card" id="field-switchfield">
+<h3>SwitchField</h3>
+<p class="desc">On/off toggle switch, rendered through FormField for error/hint text.</p>
+<p class="import"><code>import { SwitchField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>checked</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(checked: boolean) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>hint</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;SwitchField label="Enable two-factor auth" checked={mfaOn} onChange={setMfaOn} /&gt;</code></pre>
+</div>
+<div class="card" id="field-datefield">
+<h3>DateField</h3>
+<p class="desc">Date picker (ISO YYYY-MM-DD value).</p>
+<p class="import"><code>import { DateField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>min</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DateField label="Due date" value={dueDate} onChange={setDueDate} required /&gt;</code></pre>
+</div>
+<div class="card" id="field-timefield">
+<h3>TimeField</h3>
+<p class="desc">Time picker (HH:mm value).</p>
+<p class="import"><code>import { TimeField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>use24Hour</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;TimeField label="Reminder time" value={time} onChange={setTime} /&gt;</code></pre>
+</div>
+<div class="card" id="field-datetimefield">
+<h3>DateTimeField</h3>
+<p class="desc">Combined date + time picker, stored as a single ISO date-T-time string.</p>
+<p class="import"><code>import { DateTimeField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td>ISO datetime, e.g. `2026-09-10T14:30`.</td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DateTimeField label="Scheduled for" value={scheduledAt} onChange={setScheduledAt} /&gt;</code></pre>
+</div>
+<div class="card" id="field-daterangefield">
+<h3>DateRangeField</h3>
+<p class="desc">Date-range picker ({ start, end } ISO dates).</p>
+<p class="import"><code>import { DateRangeField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>DateRange</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: DateRange) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>min</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DateRangeField label="Reporting period" value={range} onChange={setRange} /&gt;</code></pre>
+</div>
+<div class="card" id="field-autocompletefield">
+<h3>AutocompleteField</h3>
+<p class="desc">Searchable single-select - pass options for a static list or loadOptions for async search.</p>
+<p class="import"><code>import { AutocompleteField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>options</code></td><td><code>readonly SearchableSelectOption[]</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>loadOptions</code></td><td><code>(query: string) =&gt; Promise&lt;readonly SearchableSelectOption[]&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>loading</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;AutocompleteField
+  label="Customer"
+  value={customerId}
+  onChange={setCustomerId}
+  loadOptions={(q) =&gt; searchCustomers(q)}
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-filefield">
+<h3>FileField</h3>
+<p class="desc">File upload field with drag-and-drop, per-file progress, and retry. Requires an upload implementation.</p>
+<p class="import"><code>import { FileField } from '@mawsoftwares/ui-web';</code></p>
+<p class="muted">No props (or a plain wrapper around a native element — see the usage example).</p>
+<pre class="code"><code>&lt;FileField
+  label="Attachments"
+  multiple
+  upload={(file, onProgress) =&gt; apiClient.upload('/files', toFormData(file), { onProgress })}
+  onComplete={(files) =&gt; setAttachments(files)}
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-imagefield">
+<h3>ImageField</h3>
+<p class="desc">FileField preset for images (accepts image/* by default).</p>
+<p class="import"><code>import { ImageField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>accept</code></td><td><code>string[]</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;ImageField label="Cover photo" upload={uploadToStorage} onComplete={([img]) =&gt; setCoverUrl(img.url)} /&gt;</code></pre>
+</div>
+<div class="card" id="field-avatarfield">
+<h3>AvatarField</h3>
+<p class="desc">Circular profile-photo upload field - named alias of ProfileAvatarUpload for API consistency.</p>
+<p class="import"><code>import { AvatarField } from '@mawsoftwares/ui-web';</code></p>
+<p class="muted">No props (or a plain wrapper around a native element — see the usage example).</p>
+<pre class="code"><code>&lt;AvatarField src={user.avatarUrl} name={user.fullName} upload={uploadAvatar} onChange={setAvatarUrl} /&gt;</code></pre>
+</div>
+<div class="card" id="field-maskedfield">
+<h3>MaskedField</h3>
+<p class="desc">Generic mask-formatted text field - auto-formats as you type using a 9/A/* token mask.</p>
+<p class="import"><code>import { MaskedField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>mask</code></td><td><code>string</code></td><td><span class="req">required</span></td><td>Mask template — `9` digit, `A` letter (auto-uppercased), `*` alphanumeric, anything else a literal.</td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>readOnly</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>validate</code></td><td><code>(unmaskedValue: string) =&gt; string | undefined</code></td><td><span class="opt">optional</span></td><td>Extra validation run against the unmasked value once the field has been touched.</td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;MaskedField
+  label="Order code"
+  mask="AA-9999"
+  value={code}
+  onChange={setCode}
+  validate={(digits) =&gt; (digits.length &lt; 4 ? 'Enter the full code' : undefined)}
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-aadhaarfield">
+<h3>AadhaarField</h3>
+<p class="desc">Indian Aadhaar number field - formats as 9999 9999 9999 and validates 12 digits on blur.</p>
+<p class="import"><code>import { AadhaarField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;AadhaarField label="Aadhaar number" value={aadhaar} onChange={setAadhaar} required /&gt;</code></pre>
+</div>
+<div class="card" id="field-panfield">
+<h3>PanField</h3>
+<p class="desc">Indian PAN card field - enforces the AAAAA9999A shape, auto-uppercased.</p>
+<p class="import"><code>import { PanField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;PanField label="PAN number" value={pan} onChange={setPan} required /&gt;</code></pre>
+</div>
+<div class="card" id="field-otpfield">
+<h3>OTPField</h3>
+<p class="desc">One-time-passcode entry: digit boxes with auto-advance, backspace-to-previous, and paste support.</p>
+<p class="import"><code>import { OTPField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>length</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>autoFocus</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;OTPField label="Verification code" value={otp} onChange={setOtp} length={6} autoFocus /&gt;</code></pre>
+</div>
+<div class="card" id="field-taginputfield">
+<h3>TagInputField</h3>
+<p class="desc">Free-text tag/chip entry - Enter or comma adds a tag, Backspace removes the last one.</p>
+<p class="import"><code>import { TagInputField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>readonly string[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(tags: readonly string[]) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>placeholder</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>maxTags</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>validateTag</code></td><td><code>(tag: string, existing: readonly string[]) =&gt; string | undefined</code></td><td><span class="opt">optional</span></td><td>Validates a tag before it's added; return an error message to reject it.</td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;TagInputField
+  label="Keywords"
+  value={keywords}
+  onChange={setKeywords}
+  maxTags={10}
+  placeholder="Type and press Enter"
+/&gt;</code></pre>
+</div>
+<div class="card" id="field-ratingfield">
+<h3>RatingField</h3>
+<p class="desc">Star rating picker - click a star to set the rating; hover previews the value.</p>
+<p class="import"><code>import { RatingField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>number</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: number) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>max</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;RatingField label="Rate this order" value={rating} onChange={setRating} max={5} /&gt;</code></pre>
+</div>
+<div class="card" id="field-sliderfield">
+<h3>SliderField</h3>
+<p class="desc">Range slider with the current value shown next to the label.</p>
+<p class="import"><code>import { SliderField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>number</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: number) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>min</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>max</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>step</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>showValue</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td>Show the current value next to the label. Defaults to true.</td></tr><tr><td><code>formatValue</code></td><td><code>(value: number) =&gt; string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;SliderField label="Discount" value={discount} onChange={setDiscount} min={0} max={50} formatValue={(v) =&gt; v + '%'} /&gt;</code></pre>
+</div>
+<div class="card" id="field-colorfield">
+<h3>ColorField</h3>
+<p class="desc">Color picker with a synced hex text input and optional preset swatches.</p>
+<p class="import"><code>import { ColorField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(value: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>disabled</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>presets</code></td><td><code>readonly string[]</code></td><td><span class="opt">optional</span></td><td>Optional swatches rendered next to the picker for quick selection.</td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;ColorField label="Brand color" value={brandColor} onChange={setBrandColor} presets={['#6366f1', '#dc2626', '#16a34a']} /&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="layout">
+<h1>Layout</h1>
+<p class="lede">Structural building blocks - grids, stacks, cards, and page chrome.</p>
+<div class="card" id="layout-grid">
+<h3>Grid</h3>
+<p class="desc">Responsive CSS grid wrapper.</p>
+<p class="import"><code>import { Grid } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>columns</code></td><td><code>ResponsiveProp&lt;number | string&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>gap</code></td><td><code>ResponsiveProp&lt;string | number&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>minChildWidth</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Grid columns={{ xs: 1, sm: 2, lg: 4 }} gap="var(--maw-space-lg)"&gt;
+  &lt;Card&gt;...&lt;/Card&gt;
+  &lt;Card&gt;...&lt;/Card&gt;
+&lt;/Grid&gt;</code></pre>
+</div>
+<div class="card" id="layout-stack">
+<h3>Stack</h3>
+<p class="desc">Flexbox row/column layout with responsive direction, gap, align, and justify.</p>
+<p class="import"><code>import { Stack } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>direction</code></td><td><code>ResponsiveProp&lt;'row' | 'column'&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>gap</code></td><td><code>ResponsiveProp&lt;string | number&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>align</code></td><td><code>ResponsiveProp&lt;CSSProperties['alignItems']&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>justify</code></td><td><code>ResponsiveProp&lt;CSSProperties['justifyContent']&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Stack direction="row" align="center" justify="space-between" gap="var(--maw-space-md)"&gt;
+  &lt;span&gt;Total&lt;/span&gt;
+  &lt;strong&gt;$1,240&lt;/strong&gt;
+&lt;/Stack&gt;</code></pre>
+</div>
+<div class="card" id="layout-card">
+<h3>Card</h3>
+<p class="desc">The base elevated-surface container most other layout components sit inside.</p>
+<p class="import"><code>import { Card } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>padding</code></td><td><code>ResponsiveProp&lt;string&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Card padding="var(--maw-space-xl)"&gt;Content&lt;/Card&gt;</code></pre>
+</div>
+<div class="card" id="layout-panel">
+<h3>Panel</h3>
+<p class="desc">A titled, optionally collapsible container with a variant style.</p>
+<p class="import"><code>import { Panel } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>actions</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>collapsible</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>defaultCollapsed</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>variant</code></td><td><code>'default' | 'outlined' | 'elevated'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Panel title="Shipping address" collapsible defaultCollapsed={false}&gt;
+  &lt;AddressForm /&gt;
+&lt;/Panel&gt;</code></pre>
+</div>
+<div class="card" id="layout-section">
+<h3>Section</h3>
+<p class="desc">Page section with a title, description, and optional header actions.</p>
+<p class="import"><code>import { Section } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>title</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>description</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>actions</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Section title="Billing" description="Manage your plan and payment method" actions={&lt;Button&gt;Upgrade&lt;/Button&gt;}&gt;
+  ...
+&lt;/Section&gt;</code></pre>
+</div>
+<div class="card" id="layout-divider">
+<h3>Divider</h3>
+<p class="desc">Horizontal rule using theme spacing/border tokens.</p>
+<p class="import"><code>import { Divider } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Divider /&gt;</code></pre>
+</div>
+<div class="card" id="layout-spacer">
+<h3>Spacer</h3>
+<p class="desc">Fixed-size gap, horizontal or vertical.</p>
+<p class="import"><code>import { Spacer } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>size</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>axis</code></td><td><code>'horizontal' | 'vertical'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Spacer size="var(--maw-space-xl)" axis="vertical" /&gt;</code></pre>
+</div>
+<div class="card" id="layout-settingslayout">
+<h3>SettingsLayout</h3>
+<p class="desc">Grouped settings page layout - sidebar-style list of setting groups.</p>
+<p class="import"><code>import { SettingsLayout } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>groups</code></td><td><code>readonly SettingsGroup[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;SettingsLayout groups={[{ title: 'Account', items: [...] }, { title: 'Security', items: [...] }]} /&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="actions">
+<h1>Buttons &amp; Actions</h1>
+<div class="card" id="actions-button">
+<h3>Button</h3>
+<p class="desc">Primary action button with three visual variants.</p>
+<p class="import"><code>import { Button } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>variant</code></td><td><code>'primary' | 'ghost' | 'danger'</code></td><td><span class="opt">optional</span></td><td>Defaults to 'primary'.</td></tr><tr><td><code>...props</code></td><td><code>ButtonHTMLAttributes&lt;HTMLButtonElement&gt;</code></td><td><span class="opt">optional</span></td><td>onClick, disabled, type, etc.</td></tr></tbody></table>
+<pre class="code"><code>&lt;Button variant="primary" onClick={handleSave}&gt;Save changes&lt;/Button&gt;
+&lt;Button variant="ghost" onClick={handleCancel}&gt;Cancel&lt;/Button&gt;
+&lt;Button variant="danger" onClick={handleDelete}&gt;Delete&lt;/Button&gt;</code></pre>
+</div>
+<div class="card" id="actions-iconbutton">
+<h3>IconButton</h3>
+<p class="desc">Icon-only button - always pass a label for accessibility (used as aria-label and title).</p>
+<p class="import"><code>import { IconButton } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="req">required</span></td><td>Used as aria-label/title - required even though nothing is visibly rendered.</td></tr><tr><td><code>...props</code></td><td><code>ButtonHTMLAttributes&lt;HTMLButtonElement&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;IconButton label="Delete row" onClick={handleDelete}&gt;
+  &lt;Icon name="trash" /&gt;
+&lt;/IconButton&gt;</code></pre>
+</div>
+<div class="card" id="actions-dropdownmenu">
+<h3>DropdownMenu</h3>
+<p class="desc">Trigger-anchored menu of actions.</p>
+<p class="import"><code>import { DropdownMenu } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>trigger</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td>The element that opens the menu when clicked.</td></tr><tr><td><code>items</code></td><td><code>readonly { key, label, danger?, onClick }[]</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DropdownMenu
+  trigger={&lt;IconButton label="More actions"&gt;&lt;Icon name="more-vertical" /&gt;&lt;/IconButton&gt;}
+  items={[
+    { key: 'edit', label: 'Edit', onClick: handleEdit },
+    { key: 'delete', label: 'Delete', danger: true, onClick: handleDelete },
+  ]}
+/&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="feedback">
+<h1>Feedback &amp; Overlays</h1>
+<div class="card" id="fb-alert">
+<h3>Alert</h3>
+<p class="desc">Inline status message, optionally dismissible.</p>
+<p class="import"><code>import { Alert } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>variant</code></td><td><code>AlertVariant</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onDismiss</code></td><td><code>() =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>icon</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Alert variant="warning" title="Heads up" onDismiss={() =&gt; setShow(false)}&gt;
+  Your trial ends in 3 days.
+&lt;/Alert&gt;</code></pre>
+</div>
+<div class="card" id="fb-banner">
+<h3>Banner</h3>
+<p class="desc">Full-width status banner with an optional action.</p>
+<p class="import"><code>import { Banner } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>variant</code></td><td><code>BannerVariant</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onDismiss</code></td><td><code>() =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>action</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Banner variant="info" action={&lt;Button variant="ghost"&gt;Learn more&lt;/Button&gt;}&gt;
+  New pricing takes effect next month.
+&lt;/Banner&gt;</code></pre>
+</div>
+<div class="card" id="fb-badge">
+<h3>Badge</h3>
+<p class="desc">Small status/count pill.</p>
+<p class="import"><code>import { Badge } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>variant</code></td><td><code>'default' | 'success' | 'danger' | 'warning' | 'info'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Badge variant="success"&gt;Active&lt;/Badge&gt;</code></pre>
+</div>
+<div class="card" id="fb-progress">
+<h3>Progress</h3>
+<p class="desc">Linear progress bar.</p>
+<p class="import"><code>import { Progress } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>value</code></td><td><code>number</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>max</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td>Defaults to 100.</td></tr><tr><td><code>height</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td>Defaults to 8.</td></tr></tbody></table>
+<pre class="code"><code>&lt;Progress value={uploadPercent} /&gt;</code></pre>
+</div>
+<div class="card" id="fb-spinner">
+<h3>Spinner</h3>
+<p class="desc">Indeterminate loading spinner.</p>
+<p class="import"><code>import { Spinner } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>size</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td>Defaults to 24.</td></tr></tbody></table>
+<pre class="code"><code>&lt;Spinner size={32} /&gt;</code></pre>
+</div>
+<div class="card" id="fb-tooltip">
+<h3>Tooltip</h3>
+<p class="desc">Hover tooltip wrapping any child element.</p>
+<p class="import"><code>import { Tooltip } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>content</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Tooltip content="Copy to clipboard"&gt;
+  &lt;IconButton label="Copy"&gt;&lt;Icon name="copy" /&gt;&lt;/IconButton&gt;
+&lt;/Tooltip&gt;</code></pre>
+</div>
+<div class="card" id="fb-modal">
+<h3>Modal</h3>
+<p class="desc">Centered modal dialog.</p>
+<p class="import"><code>import { Modal } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>open</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>footer</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>width</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td>Defaults to 480.</td></tr></tbody></table>
+<pre class="code"><code>&lt;Modal open={open} onClose={() =&gt; setOpen(false)} title="Invite teammate" footer={&lt;Button onClick={handleInvite}&gt;Send invite&lt;/Button&gt;}&gt;
+  &lt;EmailField label="Email" value={email} onChange={setEmail} /&gt;
+&lt;/Modal&gt;</code></pre>
+</div>
+<div class="card" id="fb-dialog">
+<h3>Dialog</h3>
+<p class="desc">Same shape as Modal - a slightly lighter-weight alternative used for simpler confirmations/forms.</p>
+<p class="import"><code>import { Dialog } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>open</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>footer</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>width</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>closeOnOverlay</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+</div>
+<div class="card" id="fb-confirmationdialog">
+<h3>ConfirmationDialog</h3>
+<p class="desc">Purpose-built yes/no confirmation dialog with a danger variant for destructive actions.</p>
+<p class="import"><code>import { ConfirmationDialog } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>open</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onConfirm</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onCancel</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>message</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>confirmLabel</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>cancelLabel</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>variant</code></td><td><code>'primary' | 'danger'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>loading</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;ConfirmationDialog
+  open={confirmOpen}
+  variant="danger"
+  title="Delete project?"
+  message="This can't be undone."
+  onConfirm={handleDelete}
+  onCancel={() =&gt; setConfirmOpen(false)}
+/&gt;</code></pre>
+</div>
+<div class="card" id="fb-drawer">
+<h3>Drawer</h3>
+<p class="desc">Slide-in side panel, left or right.</p>
+<p class="import"><code>import { Drawer } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>open</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>footer</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>side</code></td><td><code>'left' | 'right'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>width</code></td><td><code>number | string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>fullWidthOnMobile</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td>When true, the panel stretches to the viewport on small screens. Defaults to true for right-side drawers (forms) and false for left-side drawers (nav) so the page stays visible behind an overlay.</td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>contentStyle</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Drawer open={open} onClose={() =&gt; setOpen(false)} side="right" title="Filters"&gt;
+  ...
+&lt;/Drawer&gt;</code></pre>
+</div>
+<div class="card" id="fb-popover">
+<h3>Popover</h3>
+<p class="desc">Anchor-positioned floating panel (used internally by SearchableSelect/DropdownMenu; also usable directly).</p>
+<p class="import"><code>import { Popover } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>open</code></td><td><code>boolean</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>anchorRef</code></td><td><code>React.RefObject&lt;HTMLElement | null&gt;</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>placement</code></td><td><code>'top' | 'bottom' | 'left' | 'right'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>align</code></td><td><code>'start' | 'center' | 'end'</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+</div>
+</div>
+<div class="section" id="navigation">
+<h1>Navigation</h1>
+<div class="card" id="nav-tabs">
+<h3>Tabs</h3>
+<p class="desc">Horizontal tab bar.</p>
+<p class="import"><code>import { Tabs } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>tabs</code></td><td><code>readonly { key: string; label: string }[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>activeTab</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onChange</code></td><td><code>(key: string) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Tabs
+  tabs={[{ key: 'profile', label: 'Profile' }, { key: 'security', label: 'Security' }]}
+  activeTab={tab}
+  onChange={setTab}
+/&gt;</code></pre>
+</div>
+<div class="card" id="nav-wizard">
+<h3>Wizard</h3>
+<p class="desc">Multi-step form flow with a progress header and next/back controls.</p>
+<p class="import"><code>import { Wizard } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>steps</code></td><td><code>readonly WizardStep[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>activeStep</code></td><td><code>number</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onStepChange</code></td><td><code>(step: number) =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onComplete</code></td><td><code>() =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>completeLabel</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>nextLabel</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>backLabel</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Wizard
+  steps={[{ key: 'account', label: 'Account' }, { key: 'billing', label: 'Billing' }]}
+  activeStep={step}
+  onStepChange={setStep}
+  onComplete={handleFinish}
+&gt;
+  {step === 0 ? &lt;AccountStep /&gt; : &lt;BillingStep /&gt;}
+&lt;/Wizard&gt;</code></pre>
+</div>
+<div class="card" id="nav-accordion">
+<h3>Accordion</h3>
+<p class="desc">Expand/collapse item list, single or multiple open at once.</p>
+<p class="import"><code>import { Accordion } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>items</code></td><td><code>readonly AccordionItem[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>multiple</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>defaultExpanded</code></td><td><code>readonly string[]</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;Accordion items={[{ id: 'faq1', title: 'How do refunds work?', content: &lt;p&gt;...&lt;/p&gt; }]} /&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="data-display">
+<h1>Data Display</h1>
+<div class="card" id="data-avatar">
+<h3>Avatar</h3>
+<p class="desc">Circular image/initials avatar.</p>
+<p class="import"><code>import { Avatar } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>src</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td>Used to render initials when src is absent/fails to load.</td></tr><tr><td><code>size</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td>Defaults to 40.</td></tr></tbody></table>
+<pre class="code"><code>&lt;Avatar src={user.avatarUrl} name={user.fullName} size={32} /&gt;</code></pre>
+</div>
+<div class="card" id="data-datagrid">
+<h3>DataGrid</h3>
+<p class="desc">The full-featured data table: client- or server-side pagination/sort/filter, a schema-driven column model, and permission-aware row actions. This is the component to reach for instead of hand-rolling a table + pagination + search bar.</p>
+<p class="import"><code>import { DataGrid } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>schema</code></td><td><code>DataGridSchema&lt;T&gt;</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>dataSource</code></td><td><code>IDataSource&lt;T&gt; | ClientDataSourceConfig&lt;T&gt; | ServerDataSourceConfig&lt;T&gt;</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>initialSearch</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>initialFilters</code></td><td><code>readonly ActiveFilter[]</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>initialSort</code></td><td><code>DataGridSortState</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>initialPage</code></td><td><code>number</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>permissions</code></td><td><code>ReadonlySet&lt;string&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>description</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>headerActions</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>style</code></td><td><code>CSSProperties</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;DataGrid
+  title="Orders"
+  schema={orderSchema}
+  dataSource={{ mode: 'server', fetchPage: (params) =&gt; api.get('/orders', { params }) }}
+  permissions={userPermissions}
+  headerActions={&lt;Button onClick={handleExport}&gt;Export&lt;/Button&gt;}
+/&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="forms-engine">
+<h1>Forms Engine</h1>
+<p class="lede">Below the ready-made *Field components sits the actual form-state machinery: a plain useForm hook for hand-built forms, and a schema-driven DynamicForm for forms whose shape comes from config/data rather than JSX.</p>
+<h2 id="use-form">useForm / FormField / FormProvider</h2>
+<div class="card"><h3>useForm(options)</h3><p class="desc">Generic controlled-form state hook - values, errors, touched, dirty, validation, submit handling.</p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>initialValues</code></td><td><code>T</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>fields</code></td><td><code>Record&lt;string, FieldConfig&gt;</code></td><td><span class="opt">optional</span></td><td>Per-field validators.</td></tr><tr><td><code>onSubmit</code></td><td><code>(values: T) =&gt; void | Promise&lt;void&gt;</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>const form = useForm({
+  initialValues: { email: '', password: '' },
+  fields: {
+    email: { validate: (v) =&gt; (isValidEmail(v) ? undefined : 'Invalid email') },
+  },
+  onSubmit: async (values) =&gt; login(values),
+});
+
+&lt;form onSubmit={form.handleSubmit}&gt;
+  &lt;EmailField
+    label="Email"
+    value={form.values.email}
+    onChange={(v) =&gt; form.setValue('email', v)}
+    error={form.getError('email')}
+  /&gt;
+  &lt;Button type="submit" disabled={form.submitting}&gt;Log in&lt;/Button&gt;
+&lt;/form&gt;</code></pre>
+</div>
+<div class="card" id="forms-formfield">
+<h3>FormField</h3>
+<p class="desc">Label/error/hint wrapper for a control that has no error slot of its own (e.g. Checkbox, Toggle, a custom control).</p>
+<p class="import"><code>import { FormField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>error</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>required</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>hint</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;FormField label="Notifications" hint="You can change this later"&gt;
+  &lt;Toggle checked={enabled} onChange={setEnabled} /&gt;
+&lt;/FormField&gt;</code></pre>
+</div>
+<h2 id="dynamic-form">DynamicForm</h2>
+<div class="card"><h3>DynamicForm</h3><p class="desc">Schema-driven form renderer: pass a FormSchema (from @mawsoftwares/sdk) and DynamicForm renders every field, wires validation rules (required/minLength/maxLength/min/max/pattern/email/url/fileSize/fileType/custom/async), evaluates show/hide conditions between fields, and handles submit. It supports 18 field types out of the box: text, email, password, phone, number, currency, textarea, select, multiselect, checkbox, radio, switch, date, time, datetime, autocomplete, file, image (plus a custom escape hatch).</p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>schema</code></td><td><code>FormSchema</code></td><td><span class="req">required</span></td><td>The field/section/validation/condition definitions.</td></tr><tr><td><code>initialValues</code></td><td><code>Record&lt;string, unknown&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>mode</code></td><td><code>FormMode</code></td><td><span class="opt">optional</span></td><td>'create' | 'edit' | 'view', etc.</td></tr><tr><td><code>onSubmit</code></td><td><code>(values) =&gt; void | Promise&lt;void&gt;</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>permissions</code></td><td><code>ReadonlySet&lt;string&gt;</code></td><td><span class="opt">optional</span></td><td>Fields can be gated by permission.</td></tr><tr><td><code>featureFlags</code></td><td><code>ReadonlySet&lt;string&gt;</code></td><td><span class="opt">optional</span></td><td>Fields can be gated by feature flag.</td></tr><tr><td><code>hideActions</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>submitLabel / cancelLabel</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>onCancel</code></td><td><code>() =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>const schema: FormSchema = {
+  fields: [
+    { name: 'name', type: 'text', label: 'Name', validation: [{ type: 'required' }] },
+    { name: 'email', type: 'email', label: 'Email', validation: [{ type: 'required' }, { type: 'email' }] },
+    {
+      name: 'companySize', type: 'select', label: 'Company size',
+      options: [{ value: 'small', label: '1-10' }, { value: 'large', label: '50+' }],
+    },
+    {
+      name: 'taxId', type: 'text', label: 'Tax ID',
+      condition: { field: 'companySize', operator: 'eq', value: 'large' }, // shown only when large
+    },
+  ],
+};
+
+&lt;DynamicForm schema={schema} onSubmit={(values) =&gt; createAccount(values)} submitLabel="Create account" /&gt;</code></pre>
+</div>
+<div class="card" id="forms-fileupload">
+<h3>FileUpload</h3>
+<p class="desc">Lower-level upload control that FileField/ImageField wrap - drag-and-drop dropzone with per-file progress, retry, and validation (accept/maxSize/maxFiles).</p>
+<p class="import"><code>import { FileUpload } from '@mawsoftwares/ui-web';</code></p>
+<p class="muted">No props (or a plain wrapper around a native element — see the usage example).</p>
+<pre class="code"><code>&lt;FileUpload
+  accept={['image/*', '.pdf']}
+  maxSize={5 * 1024 * 1024}
+  maxFiles={3}
+  upload={(file, onProgress) =&gt; apiClient.upload('/files', toFormData(file), { onProgress })}
+  onComplete={(files) =&gt; setDocs(files)}
+/&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="page-templates">
+<h1>Page Templates</h1>
+<p class="lede">Higher-level building blocks that assemble the primitives above into full page shapes - CRUD list/form/detail pages and dashboard layouts.</p>
+<h2 id="crud">CRUD pages</h2>
+<div class="card"><h3>useCrud(config)</h3><p class="desc">Manages list/create/update/delete state for a resource: pagination, sort, filter, selection, and loading/error state, all driven by the fetch/create/update/remove functions you provide.</p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>resourceName</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>columns</code></td><td><code>readonly ColumnDef&lt;T&gt;[]</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>keyField</code></td><td><code>keyof T</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>fetchList</code></td><td><code>(params: ListParams) =&gt; Promise&lt;ListResult&lt;T&gt;&gt;</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>fetchOne / create / update / remove</code></td><td><code>functions</code></td><td><span class="opt">optional</span></td><td>Wire to your api-client calls.</td></tr></tbody></table>
+<pre class="code"><code>const crud = useCrud&lt;Order&gt;({
+  resourceName: 'orders',
+  columns: orderColumns,
+  keyField: 'id',
+  fetchList: (params) =&gt; apiClient.request(`/orders?page=${params.page}`),
+  create: (data) =&gt; apiClient.request('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  remove: (id) =&gt; apiClient.request(`/orders/${id}`, { method: 'DELETE' }),
+});</code></pre>
+</div>
+<div class="card" id="crud-listpage">
+<h3>ListPage</h3>
+<p class="desc">Standard list page chrome - title, search box, create button, and a filter row - wrapping your table/grid as children.</p>
+<p class="import"><code>import { ListPage } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>title</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>createLabel / onCreate</code></td><td><code>string / () =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>filter / onFilterChange</code></td><td><code>string / (f) =&gt; void</code></td><td><span class="opt">optional</span></td><td>Wires to the built-in search box.</td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td>Usually a DataGrid.</td></tr></tbody></table>
+<pre class="code"><code>&lt;ListPage title="Orders" createLabel="New order" onCreate={() =&gt; navigate('/orders/new')} filter={crud.filter} onFilterChange={crud.setFilter}&gt;
+  &lt;DataGrid schema={orderSchema} dataSource={{ mode: 'client', items: crud.items }} /&gt;
+&lt;/ListPage&gt;</code></pre>
+</div>
+<div class="card" id="crud-formpage">
+<h3>FormPage</h3>
+<p class="desc">Create/edit page chrome with a back button and a submit footer.</p>
+<p class="import"><code>import { FormPage } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>title</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onSubmit</code></td><td><code>() =&gt; void</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>loading / dirty</code></td><td><code>boolean</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td>Usually a DynamicForm or hand-built *Field layout.</td></tr></tbody></table>
+<pre class="code"><code>&lt;FormPage title="New order" onBack={() =&gt; navigate(-1)} onSubmit={form.handleSubmit} loading={form.submitting}&gt;
+  &lt;EmailField label="Customer email" value={form.values.email} onChange={(v) =&gt; form.setValue('email', v)} /&gt;
+&lt;/FormPage&gt;</code></pre>
+</div>
+<div class="card" id="crud-detailpage">
+<h3>DetailPage</h3>
+<p class="desc">Read-only record view chrome with edit/delete actions.</p>
+<p class="import"><code>import { DetailPage } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>title</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>onEdit / onDelete</code></td><td><code>() =&gt; void</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td>Usually a list of DetailField.</td></tr></tbody></table>
+<pre class="code"><code>&lt;DetailPage title={order.reference} onEdit={() =&gt; navigate('edit')} onDelete={handleDelete}&gt;
+  &lt;DetailField label="Customer" value={order.customerName} /&gt;
+  &lt;DetailField label="Total" value={formatMoney(order.total)} /&gt;
+&lt;/DetailPage&gt;</code></pre>
+</div>
+<div class="card" id="crud-detailfield">
+<h3>DetailField</h3>
+<p class="desc">Single label/value row for DetailPage.</p>
+<p class="import"><code>import { DetailField } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>value</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+</div>
+<h2 id="dashboard">Dashboard building blocks</h2>
+<div class="card"><h3>KpiCard / KpiGrid</h3><p class="desc">A metric card with a value, trend arrow, and change percentage, plus a responsive grid to lay several out.</p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>label / value</code></td><td><code>string / string | number</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>previousValue / change / changeLabel</code></td><td><code>-</code></td><td><span class="opt">optional</span></td><td>Renders the trend indicator.</td></tr><tr><td><code>icon / color</code></td><td><code>string</code></td><td><span class="opt">optional</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;KpiGrid
+  columns={{ xs: 1, sm: 2, lg: 4 }}
+  kpis={[
+    { label: 'Revenue', value: '$48.2k', change: 12.4, changeLabel: 'vs last month' },
+    { label: 'Active users', value: 3210, change: -2.1 },
+  ]}
+/&gt;</code></pre>
+</div>
+<div class="card"><h3>Widget / WidgetGrid / DashboardPage</h3><p class="desc">Widget renders a titled card whose body is a function you control (a chart, a table, anything); WidgetGrid lays several out with configurable column span; DashboardPage is the top-level page chrome combining a title with an optional auto-refresh.</p>
+<pre class="code"><code>&lt;DashboardPage title="Operations"&gt;
+  &lt;KpiGrid kpis={kpis} /&gt;
+  &lt;WidgetGrid
+    widgets={[
+      { key: 'sales', title: 'Sales this week', span: 2, render: () =&gt; &lt;MiniBarChart data={salesData} /&gt; },
+      { key: 'activity', title: 'Recent activity', span: 2, render: () =&gt; &lt;ActivityFeed items={activity} /&gt; },
+    ]}
+  /&gt;
+&lt;/DashboardPage&gt;</code></pre>
+</div>
+<div class="card"><h3>MiniBarChart / MiniLineChart / ActivityFeed</h3><p class="desc">Small, dependency-free SVG charts for dashboard widgets (no charting library needed), plus a simple timestamped activity list.</p>
+<pre class="code"><code>&lt;MiniBarChart data={[{ label: 'Mon', value: 12 }, { label: 'Tue', value: 18 }]} /&gt;
+&lt;MiniLineChart data={[{ label: 'Mon', value: 12 }, { label: 'Tue', value: 18 }]} /&gt;
+&lt;ActivityFeed items={[{ id: '1', message: 'Order #4213 shipped', timestamp: '2026-09-10T09:12:00Z' }]} /&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="feature-flags-ui">
+<h1>Feature Flags (UI)</h1>
+<p class="lede">React bindings over @mawsoftwares/feature-flags for gating UI by flag.</p>
+<div class="card" id="ff-provider">
+<h3>FeatureFlagProvider</h3>
+<p class="desc">Fetches and provides the current flag set to the component tree.</p>
+<p class="import"><code>import { FeatureFlagProvider } from '@mawsoftwares/ui-web';</code></p>
+<p class="muted">No props (or a plain wrapper around a native element — see the usage example).</p>
+<pre class="code"><code>&lt;FeatureFlagProvider fetchFlags={() =&gt; apiClient.request('/feature-flags')}&gt;
+  &lt;App /&gt;
+&lt;/FeatureFlagProvider&gt;</code></pre>
+</div>
+<div class="card"><h3>useFeatureFlag(flagKey)</h3><p class="desc">Returns a boolean for a single flag.</p>
+<pre class="code"><code>const showBetaDashboard = useFeatureFlag('beta-dashboard');
+if (showBetaDashboard) return &lt;BetaDashboard /&gt;;</code></pre>
+</div>
+<div class="card" id="ff-guard">
+<h3>FeatureGuard</h3>
+<p class="desc">Conditionally renders children based on a flag, with an optional fallback.</p>
+<p class="import"><code>import { FeatureGuard } from '@mawsoftwares/ui-web';</code></p>
+<table class="props"><thead><tr><th>Prop</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>flag</code></td><td><code>string</code></td><td><span class="req">required</span></td><td></td></tr><tr><td><code>fallback</code></td><td><code>ReactNode</code></td><td><span class="opt">optional</span></td><td></td></tr><tr><td><code>children</code></td><td><code>ReactNode</code></td><td><span class="req">required</span></td><td></td></tr></tbody></table>
+<pre class="code"><code>&lt;FeatureGuard flag="beta-dashboard" fallback={&lt;LegacyDashboard /&gt;}&gt;
+  &lt;BetaDashboard /&gt;
+&lt;/FeatureGuard&gt;</code></pre>
+</div>
+</div>
+<div class="section" id="api-client">
+<h1>@mawsoftwares/api-client</h1>
+<p class="lede">The typed HTTP client every frontend talks to the backend through. Axios-based under the hood, with retry/backoff, proactive JWT refresh, structured logging, request cancellation, and offline queueing built in.</p>
+<h2>Setting it up</h2>
+<pre class="code"><code>import { ApiClient, webSecureStore } from '@mawsoftwares/api-client';
+
+export const apiClient = new ApiClient({
+  baseUrl: import.meta.env.VITE_API_URL,
+  store: webSecureStore(localStorage), // or a custom ISecureStore
+  mode: 'token', // or 'cookie'
+  timeout: 15000,
+  retry: { maxAttempts: 3, backoffMs: 300, maxBackoffMs: 5000 }, // opt-in, off by default
+  logging: true, // or a custom (entry) =&gt; void
+});</code></pre>
+<h2>Making requests</h2>
+<pre class="code"><code>// GET
+const orders = await apiClient.request&lt;Order[]&gt;('/orders');
+
+// POST with a body
+const created = await apiClient.request&lt;Order&gt;('/orders', {
+  method: 'POST',
+  body: JSON.stringify(payload),
+});
+
+// Cancellable - request() and upload() both return a CancellablePromise
+const req = apiClient.request&lt;Order[]&gt;('/orders');
+req.cancel('navigated away'); // aborts the underlying fetch
+
+// File upload with progress
+apiClient.upload&lt;StoredFile&gt;('/files', formData, {
+  onProgress: (e) =&gt; setPercent(e.percent),
+});</code></pre>
+<h2>Auth</h2>
+<pre class="code"><code>await apiClient.signIn({ email, password });      // stores tokens, ready to use
+await apiClient.register({ email, password, fullName });
+await apiClient.resetPassword(token, newPassword);
+await apiClient.changePassword(currentPassword, newPassword);
+const sessions = await apiClient.listSessions();
+await apiClient.revokeSession(sessionId);
+await apiClient.logout();</code></pre>
+<p class="note">Access tokens are refreshed proactively - every request checks isJwtExpired() before sending and refreshes ahead of time, rather than waiting for a 401.</p>
+<h2>React hook</h2>
+<p>useApiRequest lives in a separate <code>@mawsoftwares/api-client/react</code> subpath so the base package has no hard React dependency.</p>
+<pre class="code"><code>import { useApiRequest } from '@mawsoftwares/api-client/react';
+
+function OrdersList() {
+  const { data, error, loading } = useApiRequest(
+    () =&gt; apiClient.request&lt;Order[]&gt;('/orders'),
+    [], // deps - re-fetches when these change; in-flight request is cancelled on unmount
+  );
+
+  if (loading) return &lt;Spinner /&gt;;
+  if (error) return &lt;Alert variant="danger"&gt;{error.message}&lt;/Alert&gt;;
+  return &lt;DataGrid schema={orderSchema} dataSource={{ mode: 'client', items: data ?? [] }} /&gt;;
+}</code></pre>
+<h2>Interceptors</h2>
+<pre class="code"><code>const handle = apiClient.onRequest((ctx) =&gt; {
+  ctx.headers.set('X-Client-Version', APP_VERSION);
+  return ctx;
+});
+
+apiClient.onError(async (error, ctx) =&gt; {
+  if (error.status === 403) toast.error("You don't have permission for that");
+  throw error;
+});
+
+handle.remove(); // detach later</code></pre>
+<h2>Retry, offline, and logging</h2>
+<table class="pkg">
+  <tbody>
+    <tr><td><strong>Retry/backoff</strong></td><td>Opt-in via the <code>retry</code> option (client-wide) or per-call via <code>ApiRequestInit.retry</code>. Only retries network errors, timeouts, and 5xx - never 4xx. Uses exponential backoff with full jitter (<code>computeBackoffMs</code>).</td></tr>
+    <tr><td><strong>Offline queue</strong></td><td><code>OfflineRepository</code> + <code>installOfflineInterceptor</code> queue mutations made while offline and replay them via <code>SyncEngine</code> when connectivity returns. <code>isConnectivityFailure(err)</code> distinguishes a real network failure from a genuine 4xx/5xx so errors aren't silently swallowed as "offline".</td></tr>
+    <tr><td><strong>Logging</strong></td><td><code>logging: true</code> uses a built-in console logger; pass your own <code>(entry: RequestLogEntry) => void</code> to route into your observability pipeline instead.</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="section" id="auth-rbac">
+<h1>Auth &amp; Permissions</h1>
+<p class="lede">auth-core handles authentication (who are you); rbac-core handles authorization (what can you do). Both are framework-agnostic - server-express/server-hono are the adapters that wire them into an HTTP framework.</p>
+<h2>auth-core</h2>
+<pre class="code"><code>import { hashPassword, verifyPassword, signAccessToken, verifyAccessToken, RefreshTokens } from '@mawsoftwares/auth-core';
+
+// Registration
+const passwordHash = await hashPassword(plainPassword);
+
+// Login
+const ok = await verifyPassword(plainPassword, user.passwordHash);
+const accessToken = signAccessToken({ sub: user.id, tenantId: user.tenantId, role: user.role }, { secret });
+
+// Verifying an incoming request
+const claims = verifyAccessToken(token, { secret }); // throws TokenExpiredError etc. on failure
+
+// Refresh token rotation
+const refreshTokens = new RefreshTokens(refreshTokenStore);
+const rotated = await refreshTokens.rotate(oldRefreshToken);</code></pre>
+<p class="note">auth-core also ships MFA/OTP, login-attempt throttling (LoginProtection), email verification, password reset, and Google/GitHub social-auth providers - see the Package Reference above for the full export list.</p>
+<h2>rbac-core</h2>
+<p>resolveEffectiveAccess() is the single authorization resolver used everywhere in the stack - never hand-roll a permission check.</p>
+<pre class="code"><code>import { resolveEffectiveAccess } from '@mawsoftwares/rbac-core';
+
+const access = resolveEffectiveAccess(
+  {
+    baseRole: user.role,
+    grantedCapabilities: user.capabilities,
+    enabledModules: tenant.enabledModules,
+    rolePermissions: tenant.rolePermissionOverrides, // optional, falls back to config default
+  },
+  rbacConfig, // capabilities, defaultRolePolicy, isModuleEnabled - defined once per app
+);
+
+if (!access.permissions.has('orders.delete')) {
+  throw new ForbiddenError();
+}</code></pre>
+<h2>Wiring it into a server</h2>
+<pre class="code"><code>// Express
+import { requireAuth, requirePermission } from '@mawsoftwares/server-express';
+
+router.delete('/orders/:id', requireAuth(), requirePermission('orders.delete'), deleteOrderHandler);
+
+// Hono
+import { requireAuth, requirePermission } from '@mawsoftwares/server-hono';
+
+app.delete('/orders/:id', requireAuth(), requirePermission('orders.delete'), deleteOrderHandler);</code></pre>
+</div>
+    <footer class="pagefoot">Generated reference for the maw-foundation monorepo. Source of truth is always the code in packages/*/src - this page is regenerated from it, not hand-maintained prose.</footer>
+  </main>
+</div>
+<script>
+(function(){
+  var links = document.querySelectorAll('.nav-group a[data-target]');
+  var sections = document.querySelectorAll('.section');
+  function show(id){
+    sections.forEach(function(s){ s.classList.toggle('active', s.id === id); });
+    links.forEach(function(l){ l.classList.toggle('active', l.getAttribute('data-target') === id); });
+    var el = document.getElementById(id);
+    if(el){ window.scrollTo(0,0); }
+  }
+  function fromHash(){
+    var id = (location.hash || '').replace('#','');
+    if(!id && sections.length){ id = sections[0].id; }
+    show(id);
+  }
+  links.forEach(function(l){
+    l.addEventListener('click', function(e){
+      e.preventDefault();
+      location.hash = l.getAttribute('data-target');
+      fromHash();
+    });
+  });
+  window.addEventListener('hashchange', fromHash);
+  fromHash();
+
+  var search = document.getElementById('nav-search');
+  if(search){
+    search.addEventListener('input', function(){
+      var q = search.value.trim().toLowerCase();
+      document.querySelectorAll('.nav-group').forEach(function(g){
+        var any = false;
+        g.querySelectorAll('a[data-target]').forEach(function(a){
+          var match = a.textContent.toLowerCase().indexOf(q) !== -1;
+          a.style.display = match ? '' : 'none';
+          if(match) any = true;
+        });
+        g.style.display = (q === '' || any) ? '' : 'none';
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -63,6 +63,7 @@ export { Button, TextField, Card, Badge, Divider } from './components';
 export {
   Avatar,
   ProfileAvatarUpload,
+  Icon,
   IconButton,
   TextArea,
   Select,
@@ -76,7 +77,7 @@ export {
   Stack,
   DropdownMenu,
 } from './components';
-export type { ProfileAvatarUploadProps } from './components';
+export type { ProfileAvatarUploadProps, IconProps, IconName } from './components';
 
 // Toast / Notifications
 export { ToastProvider, useToast, type Toast, type ToastVariant } from './toast';

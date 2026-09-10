@@ -12,6 +12,7 @@ import {
   Breadcrumbs,
   useI18n,
   Avatar,
+  Icon,
   OfflineProvider,
   OfflineBanner,
   FeatureFlagProvider,
@@ -69,22 +70,22 @@ function clearAuthQuery(): void {
 const SUPERADMIN_ROLES = new Set(['owner', 'super_admin', 'admin']);
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard', group: 'Main', sortOrder: 0 },
-  { key: 'orders', label: 'Orders', icon: '📦', path: '/orders', group: 'Main', sortOrder: 1, permission: 'Read_Orders' },
-  { key: 'reports', label: 'Reports', icon: '📈', path: '/reports', group: 'Main', sortOrder: 2, permission: 'Read_Reports' },
-  { key: 'inventory', label: 'Inventory', icon: '📋', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
-  { key: 'billing', label: 'Billing', icon: '💳', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
-  { key: 'users', label: 'Users', icon: '👤', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
-  { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
-  { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
-  { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
-  { key: 'rbac', label: 'RBAC Admin', icon: '🔑', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
-  { key: 'feature-flags', label: 'Feature Flags', icon: '🚩', path: '/feature-flags', group: 'Admin', sortOrder: 8.6, permission: 'Read_FeatureFlags' },
-  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 9 },
-  { key: 'platform', label: 'Platform', icon: '🧩', path: '/platform', group: 'Dev', sortOrder: 95 },
-  { key: 'jobs', label: 'Jobs', icon: '⏳', path: '/jobs', group: 'Dev', sortOrder: 96 },
-  { key: 'notifications', label: 'Notifications', icon: '🔔', path: '/notifications', group: 'Dev', sortOrder: 97 },
-  { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
+  { key: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', path: '/dashboard', group: 'Main', sortOrder: 0 },
+  { key: 'orders', label: 'Orders', icon: 'shopping-cart', path: '/orders', group: 'Main', sortOrder: 1, permission: 'Read_Orders' },
+  { key: 'reports', label: 'Reports', icon: 'bar-chart', path: '/reports', group: 'Main', sortOrder: 2, permission: 'Read_Reports' },
+  { key: 'inventory', label: 'Inventory', icon: 'clipboard-list', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
+  { key: 'billing', label: 'Billing', icon: 'credit-card', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
+  { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
+  { key: 'audit-logs', label: 'Audit Logs', icon: 'scroll-text', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
+  { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
+  { key: 'masters', label: 'Master Data', icon: 'database', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
+  { key: 'rbac', label: 'RBAC Admin', icon: 'key', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
+  { key: 'feature-flags', label: 'Feature Flags', icon: 'flag', path: '/feature-flags', group: 'Admin', sortOrder: 8.6, permission: 'Read_FeatureFlags' },
+  { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
+  { key: 'platform', label: 'Platform', icon: 'puzzle', path: '/platform', group: 'Dev', sortOrder: 95 },
+  { key: 'jobs', label: 'Jobs', icon: 'clock', path: '/jobs', group: 'Dev', sortOrder: 96 },
+  { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },
+  { key: 'showcase', label: 'UI Showcase', icon: 'palette', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
 /** Maps a page key to the permission required to view it. */
@@ -232,20 +233,18 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       <AppShell
         sidebar={
           <Sidebar
-            header={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 20 }}>⚡</span>
-                <span style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)' }}>MAW Foundation Admin</span>
-              </div>
-            }
-            footer={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            logo={<Icon name="zap" size={22} />}
+            title="MAW Foundation Admin"
+            footer={(collapsed) => (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, justifyContent: collapsed ? 'center' : undefined, width: '100%' }}>
                 <Avatar name={session.userId} size={28} />
-                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
-                  {session.userId}
-                </div>
+                {!collapsed && (
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
+                    {session.userId}
+                  </div>
+                )}
               </div>
-            }
+            )}
           />
         }
         header={<Breadcrumbs />}

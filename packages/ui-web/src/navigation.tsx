@@ -8,8 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { Button, Badge, Drawer } from './components';
-import { IconButton } from './components';
+import { Button, Badge, Drawer, Icon, IconButton } from './components';
 import { useIsMobile } from './responsive';
 
 // ---------------------------------------------------------------------------
@@ -131,13 +130,25 @@ export function useNavigation(): NavigationContextValue {
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
+type SidebarSlot = ReactNode | ((collapsed: boolean) => ReactNode);
+
+function resolveSidebarSlot(slot: SidebarSlot | undefined, collapsed: boolean): ReactNode {
+  if (slot === undefined) return undefined;
+  if (typeof slot === 'function') return slot(collapsed);
+  return slot;
+}
+
 export function Sidebar({
   header,
+  logo,
+  title,
   footer,
   style,
 }: {
-  header?: ReactNode;
-  footer?: ReactNode;
+  header?: SidebarSlot;
+  logo?: ReactNode;
+  title?: ReactNode;
+  footer?: SidebarSlot;
   style?: CSSProperties;
 }): ReactNode {
   const { items, activeKey, collapsed, navigate, toggleSidebar, setCollapsed } = useNavigation();
@@ -153,12 +164,47 @@ export function Sidebar({
   }, [items]);
 
   const isMobile = useIsMobile();
+  const isRail = collapsed && !isMobile;
   const effectiveWidth = isMobile ? '100%' : (collapsed ? 64 : 260);
 
   const handleNavigate = (path: string) => {
     navigate(path);
     if (isMobile) setCollapsed(true);
   };
+
+  const resolvedHeader = resolveSidebarSlot(header, isRail);
+  const brandHeader = logo !== undefined || title !== undefined
+    ? (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          minWidth: 0,
+          width: '100%',
+          justifyContent: isRail ? 'center' : undefined,
+        }}>
+          {logo !== undefined && (
+            <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--maw-brand)' }}>{logo}</span>
+          )}
+          {!isRail && title !== undefined && (
+            <span style={{
+              flex: 1,
+              fontWeight: 700,
+              fontSize: 'var(--maw-text-md)',
+              color: 'var(--maw-fg)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0,
+            }}>
+              {title}
+            </span>
+          )}
+        </div>
+      )
+    : undefined;
+  const headerContent = resolvedHeader ?? brandHeader;
+  const footerContent = resolveSidebarSlot(footer, isRail);
 
   return (
     <aside
@@ -176,19 +222,29 @@ export function Sidebar({
         ...style,
       }}
     >
-      {(header !== undefined || isMobile) && (
+      {(headerContent !== undefined || isMobile) && (
         <div style={{
-          padding: collapsed && !isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-lg)',
+          padding: isRail ? '12px 8px' : 'var(--maw-space-lg)',
           borderBottom: '1px solid var(--maw-border)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: isRail ? 'center' : 'space-between',
           gap: 8,
+          minHeight: 56,
+          flexShrink: 0,
         }}>
-          <div style={{ minWidth: 0, flex: 1 }}>{header}</div>
+          <div style={{
+            minWidth: 0,
+            flex: isRail ? undefined : 1,
+            overflow: 'hidden',
+            display: 'flex',
+            justifyContent: isRail ? 'center' : undefined,
+          }}>
+            {headerContent}
+          </div>
           {isMobile && (
             <IconButton label="Close menu" onClick={() => setCollapsed(true)}>
-              ✕
+              <Icon name="x" size={18} />
             </IconButton>
           )}
         </div>
@@ -197,7 +253,7 @@ export function Sidebar({
       {!isMobile && (
         <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
           <IconButton label={collapsed ? 'Expand' : 'Collapse'} onClick={toggleSidebar}>
-            {collapsed ? '→' : '←'}
+            <Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size={18} />
           </IconButton>
         </div>
       )}
@@ -217,9 +273,15 @@ export function Sidebar({
         ))}
       </nav>
 
-      {footer !== undefined && (
-        <div style={{ padding: collapsed ? 'var(--maw-space-md)' : 'var(--maw-space-lg)', borderTop: '1px solid var(--maw-border)' }}>
-          {footer}
+      {footerContent !== undefined && (
+        <div style={{
+          padding: isRail ? '12px 8px' : 'var(--maw-space-lg)',
+          borderTop: '1px solid var(--maw-border)',
+          display: 'flex',
+          justifyContent: isRail ? 'center' : undefined,
+          overflow: 'hidden',
+        }}>
+          {footerContent}
         </div>
       )}
     </aside>
@@ -275,20 +337,37 @@ function SidebarItem({
           justifyContent: collapsed ? 'center' : undefined,
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           marginBottom: 4,
-          transform: hovered && !active ? 'translateX(4px)' : 'none',
+          transform: hovered && !active && !collapsed ? 'translateX(4px)' : 'none',
           boxShadow: active ? '0 4px 12px color-mix(in srgb, var(--maw-brand) 30%, transparent)' : 'none',
         }}
       >
-        {item.icon !== undefined && <span style={{ fontSize: 18, width: 22, textAlign: 'center', transition: 'transform 0.2s', transform: hovered ? 'scale(1.15)' : 'scale(1)' }}>{item.icon}</span>}
+        {item.icon !== undefined && (
+          <span style={{
+            display: 'inline-flex',
+            width: 22,
+            height: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'transform 0.2s',
+            transform: hovered ? 'scale(1.08)' : 'scale(1)',
+          }}>
+            <Icon name={item.icon} size={18} />
+          </span>
+        )}
         {!collapsed && (
           <>
-            <span style={{ flex: 1 }}>{item.label}</span>
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
             {item.badge !== undefined && (
               <Badge style={{ background: active ? 'rgba(255,255,255,0.25)' : undefined, color: active ? 'var(--maw-brandContrast)' : undefined }}>
                 {item.badge}
               </Badge>
             )}
-            {hasChildren && <span style={{ fontSize: 10, transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>}
+            {hasChildren && (
+              <span style={{ display: 'inline-flex', transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                <Icon name="chevron-right" size={14} />
+              </span>
+            )}
           </>
         )}
       </button>
@@ -401,7 +480,7 @@ export function AppShell({
           >
             {isMobile && (
               <IconButton label="Menu" onClick={toggleSidebar}>
-                ☰
+                <Icon name="menu" size={18} />
               </IconButton>
             )}
             {isMobile ? (
