@@ -2,6 +2,7 @@ import type { IOfflineStorage, OfflineRecord } from '@mawsoftwares/sdk/contracts
 import type { INetworkManager } from '@mawsoftwares/sdk/contracts/INetworkManager';
 import type { ISyncEngine } from '@mawsoftwares/sdk/contracts/ISyncEngine';
 import type { ApiClient, CancellablePromise } from '../index';
+import { isConnectivityFailure } from '../index';
 
 export interface OfflineInterceptorOptions {
   readonly client: ApiClient;
@@ -69,8 +70,9 @@ export function installOfflineInterceptor(options: OfflineInterceptorOptions): O
             const result = await originalRequest<T>(path, init);
             void cacheGetResult(storage, entityType, tenantId, result);
             return result;
-          } catch {
-            // Network error — fall through to cache
+          } catch (err) {
+            if (!isConnectivityFailure(err)) throw err;
+            // Genuine network error — fall through to cache
           }
         }
         return serveFromCache<T>(storage, entityType, tenantId, path);

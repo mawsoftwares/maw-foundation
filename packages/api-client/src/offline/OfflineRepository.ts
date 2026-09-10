@@ -3,6 +3,7 @@ import type { IOfflineStorage, OfflineRecord } from '@mawsoftwares/sdk/contracts
 import type { ISyncEngine } from '@mawsoftwares/sdk/contracts/ISyncEngine';
 import type { INetworkManager } from '@mawsoftwares/sdk/contracts/INetworkManager';
 import type { ApiClient } from '../index';
+import { isConnectivityFailure } from '../index';
 
 export interface OfflineRepositoryOptions {
   readonly client: ApiClient;
@@ -66,8 +67,9 @@ export class OfflineRepository<T> implements IOfflineRepository<T> {
         await this.storage.putMany(records);
 
         return { data: items, meta: records.map(toMeta) };
-      } catch {
-        // Fall through to local storage on network failure
+      } catch (err) {
+        if (!isConnectivityFailure(err)) throw err;
+        // Fall through to local storage on genuine network failure
       }
     }
 
@@ -99,7 +101,8 @@ export class OfflineRepository<T> implements IOfflineRepository<T> {
         return { data: item, meta: toMeta(record) };
       } catch (err) {
         if (err instanceof Error && 'status' in err && (err as { status: number }).status === 404) return null;
-        // Fall through to local on network error
+        if (!isConnectivityFailure(err)) throw err;
+        // Fall through to local on genuine network error
       }
     }
 
@@ -126,7 +129,8 @@ export class OfflineRepository<T> implements IOfflineRepository<T> {
         };
         await this.storage.put(record);
         return { data: item, meta: toMeta(record) };
-      } catch {
+      } catch (err) {
+        if (!isConnectivityFailure(err)) throw err;
         // Fall through to offline create
       }
     }
@@ -176,7 +180,8 @@ export class OfflineRepository<T> implements IOfflineRepository<T> {
         };
         await this.storage.put(record);
         return { data: item, meta: toMeta(record) };
-      } catch {
+      } catch (err) {
+        if (!isConnectivityFailure(err)) throw err;
         // Fall through to offline update
       }
     }
@@ -213,7 +218,8 @@ export class OfflineRepository<T> implements IOfflineRepository<T> {
         await this.client.request<void>(`${this.entityConfig.apiBasePath}/${id}`, { method: 'DELETE' });
         await this.storage.remove(this.entityConfig.entityType, id, this.tenantId);
         return;
-      } catch {
+      } catch (err) {
+        if (!isConnectivityFailure(err)) throw err;
         // Fall through to offline delete
       }
     }
