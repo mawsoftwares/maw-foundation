@@ -21,10 +21,26 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./react": {
+      "types": "./src/react.ts",
+      "default": "./src/react.ts"
     }
   },
   "dependencies": {
-    "@mawsoftwares/sdk": "workspace:*"
+    "@mawsoftwares/sdk": "workspace:*",
+    "axios": "^1.19.0"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
