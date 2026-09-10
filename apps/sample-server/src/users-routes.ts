@@ -9,8 +9,8 @@ import {
   DeleteUserUseCase,
   ActivateUserUseCase,
   DeactivateUserUseCase,
-  ChangePasswordUseCase,
-  ResetPasswordUseCase,
+  AdminResetPasswordUseCase,
+  type HashPasswordFn,
 } from '@mawsoftwares/users';
 import type { IUsersRepository } from '@mawsoftwares/users';
 
@@ -19,6 +19,7 @@ export function createUsersRouter(
   deps: {
     requireAuth: RequestHandler;
     requirePermission: (perm: string) => RequestHandler;
+    hashPassword: HashPasswordFn;
   },
 ) {
   const createUc = new CreateUserUseCase(repo);
@@ -28,12 +29,11 @@ export function createUsersRouter(
   const deleteUc = new DeleteUserUseCase(repo);
   const activateUc = new ActivateUserUseCase(repo);
   const deactivateUc = new DeactivateUserUseCase(repo);
-  const pwdChangeUc = new ChangePasswordUseCase({});
-  const pwdResetUc = new ResetPasswordUseCase({});
+  const resetPasswordUc = new AdminResetPasswordUseCase(repo, deps.hashPassword);
 
   const controller = new UsersController(
     createUc, getUc, listUc, updateUc, deleteUc,
-    activateUc, deactivateUc, pwdChangeUc, pwdResetUc,
+    activateUc, deactivateUc, resetPasswordUc,
   );
 
   const { router, get, post, patch, delete: destroy } = createApiRouter({
@@ -74,6 +74,11 @@ export function createUsersRouter(
   post('/:id/deactivate', controller.deactivateUser, {
     middleware: [deps.requireAuth, deps.requirePermission('Update_Users')],
     metadata: { summary: 'Deactivate user', tags: ['users'] },
+  });
+
+  post('/:id/reset-password', controller.resetPassword, {
+    middleware: [deps.requireAuth, deps.requirePermission('Update_Users')],
+    metadata: { summary: 'Admin-set a user\'s password directly', tags: ['users'] },
   });
 
   return router;

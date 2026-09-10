@@ -48,6 +48,7 @@ import {
   PgSocialAccountStore,
   GoogleAuthProvider,
   GitHubAuthProvider,
+  hashPasswordForStorage,
 } from '@mawsoftwares/auth-core';
 import {
   MasterCache,
@@ -542,7 +543,6 @@ function requestContext(req: express.Request): AuthenticateContext {
 }
 
 app.post('/auth/login', (req, res) => {
-  console.log('--- POST /auth/login START ---', req.body);
   void (async () => {
     try {
       const { email, password, tenantId, rememberMe } = req.body as {
@@ -871,13 +871,21 @@ app.use('/api/v1/orders', createOrdersRouter({
 import { createUsersRouter } from './users-routes';
 import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
+import { createMenuRouter } from './menu-routes';
 
 const usersRepo = new AuthSchemaUsersRepository(data.db);
 app.use('/api/v1/users', createUsersRouter(usersRepo, {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
+  // Admin-set passwords must be hashed the same way login verifies them: scrypt(sha256(plaintext)),
+  // i.e. as if the client had prehashed it - see resolvePassword()/hashPasswordForStorage().
+  hashPassword: (plain) => Promise.resolve(hashPasswordForStorage(plain)),
 }));
-app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache));
+app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm) => auth.requirePermission(perm)));
+app.use('/api/v1/menus', createMenuRouter(data.db, {
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+}));
 app.use('/api/v1/tenants', createTenantRoutes({
   tenantRepository,
   requireAuth: auth.requireAuth,

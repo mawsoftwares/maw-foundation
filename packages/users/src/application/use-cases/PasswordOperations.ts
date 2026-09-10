@@ -1,65 +1,31 @@
-// Password operations use existing authentication/security abstraction
-// and take the corresponding services as dependencies.
-// Actually, as per the prompt: "Password operations must remain separate from CRUD. Implement: ChangePassword, ResetPassword. Use the existing authentication/security abstraction."
-// I will create simple wrapper Use Cases that take PasswordChangeService and use it.
+import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
 
-export class ChangePasswordUseCase {
+export type HashPasswordFn = (plainPassword: string) => Promise<string>;
+
+/**
+ * Admin-initiated password reset: sets a user's password directly, bypassing
+ * current-password verification. This is for an administrator unblocking a
+ * locked-out user, not self-service password change.
+ *
+ * For self-service "change my password" (which verifies the current password)
+ * or the forgot-password email flow, use `@mawsoftwares/auth-core`'s
+ * `PasswordChangeService` / `PasswordResetService` directly via the `/auth`
+ * routes — this use-case only covers the admin path.
+ */
+export class AdminResetPasswordUseCase {
   constructor(
-    private readonly passwordChangeService: unknown, // PasswordChangeService from @mawsoftwares/auth-core
-    private readonly auditService?: any,
-    private readonly eventBus?: any,
+    private readonly repo: IUsersRepository,
+    private readonly hashPassword: HashPasswordFn,
   ) {}
 
-  async execute(tenantId: string, userId: string, newPassword: unknown, actorId?: string): Promise<void> {
-    if (this.passwordChangeService) {
-      await (this.passwordChangeService as any).changePassword({
-        userId,
-        newPassword,
-        tenantId,
-      });
+  async execute(tenantId: string, userId: string, newPassword: string): Promise<void> {
+    if (newPassword.length < 8) {
+      throw new Error('newPassword must be at least 8 characters');
     }
-
-    if (this.eventBus) {
-      this.eventBus.emit('PasswordChanged', {
-        type: 'PASSWORD_CHANGED',
-        userId,
-        actorId,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    if (this.auditService) {
-      this.auditService.log('PASSWORD_CHANGED', { actor: actorId, target: userId });
-    }
-  }
-}
-
-export class ResetPasswordUseCase {
-  constructor(
-    private readonly passwordResetService: unknown, // PasswordResetService from @mawsoftwares/auth-core
-    private readonly auditService?: any,
-    private readonly eventBus?: any,
-  ) {}
-
-  async execute(tenantId: string, email: string, newPassword: unknown, actorId?: string): Promise<void> {
-    if (this.passwordResetService) {
-      await (this.passwordResetService as any).resetPassword({
-        email,
-        newPassword,
-        tenantId,
-      });
-    }
-
-    if (this.eventBus) {
-      this.eventBus.emit('PasswordReset', {
-        type: 'PASSWORD_RESET',
-        actorId,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    if (this.auditService) {
-      this.auditService.log('PASSWORD_RESET', { actor: actorId, target: email });
+    const passwordHash = await this.hashPassword(newPassword);
+    const updated = await this.repo.updateUser(userId, tenantId, { passwordHash });
+    if (!updated) {
+      throw new Error('User not found');
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import type { DrizzleDb } from '@mawsoftwares/database';
 import { schema } from '@mawsoftwares/database';
 import { eq } from 'drizzle-orm';
@@ -14,8 +14,15 @@ function toModuleDto(r: typeof schema.masterModules.$inferSelect) {
   return { id: r.id, code: r.code, name: r.name, description: r.description, parentModuleId: r.parentModuleId, isActive: r.isActive, sortOrder: r.sortOrder };
 }
 
-export function createRbacRouter(db: DrizzleDb, cache: MasterCache): Router {
+export function createRbacRouter(
+  db: DrizzleDb,
+  cache: MasterCache,
+  requirePermission: (perm: string) => RequestHandler,
+): Router {
   const router = Router();
+  // Every RBAC-management route is gated behind one permission - this router manages
+  // roles/permissions/modules/module-permission assignments, all equally sensitive.
+  router.use(requirePermission('Manage_Rbac'));
 
   // --- Roles CRUD ---
   router.get('/roles', async (_req, res) => {

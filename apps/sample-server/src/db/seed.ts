@@ -140,6 +140,43 @@ try {
       }
     }
     log.info('Role-permission assignments upserted', { count: rpCount });
+
+    // --- Menu items (admin-editable nav tree; mirrors the app's default navigation) ---
+    const menuItems: {
+      key: string; label: string; path: string; icon: string;
+      permission?: string; sortOrder: number;
+    }[] = [
+      { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'layout-dashboard', sortOrder: 0 },
+      { key: 'orders', label: 'Orders', path: '/orders', icon: 'shopping-cart', permission: 'Read_Orders', sortOrder: 10 },
+      { key: 'reports', label: 'Reports', path: '/reports', icon: 'bar-chart', permission: 'Read_Reports', sortOrder: 20 },
+      { key: 'inventory', label: 'Inventory', path: '/inventory', icon: 'clipboard-list', permission: 'Read_Inventory', sortOrder: 30 },
+      { key: 'billing', label: 'Billing', path: '/billing', icon: 'credit-card', permission: 'Read_Billing', sortOrder: 40 },
+      { key: 'users', label: 'Users', path: '/users', icon: 'users', permission: 'Read_Users', sortOrder: 50 },
+      { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60 },
+      { key: 'account', label: 'Account', path: '/account', icon: 'lock', sortOrder: 70 },
+      { key: 'masters', label: 'Master Data', path: '/masters', icon: 'database', permission: 'Master_View', sortOrder: 80 },
+      { key: 'rbac', label: 'RBAC Admin', path: '/rbac', icon: 'key', permission: 'Manage_Rbac', sortOrder: 85 },
+      { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86 },
+      { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87 },
+      { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
+      { key: 'platform', label: 'Platform', path: '/platform', icon: 'puzzle', sortOrder: 950 },
+      { key: 'jobs', label: 'Jobs', path: '/jobs', icon: 'clock', sortOrder: 960 },
+      { key: 'notifications', label: 'Notifications', path: '/notifications', icon: 'bell', sortOrder: 970 },
+      { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990 },
+    ];
+    let menuCount = 0;
+    for (const m of menuItems) {
+      await client.query(
+        `INSERT INTO menu_items (key, label, path, icon, permission, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (key) DO UPDATE SET
+           label = EXCLUDED.label, path = EXCLUDED.path, icon = EXCLUDED.icon,
+           permission = EXCLUDED.permission, sort_order = EXCLUDED.sort_order`,
+        [m.key, m.label, m.path, m.icon, m.permission ?? null, m.sortOrder],
+      );
+      menuCount++;
+    }
+    log.info('Menu items upserted', { count: menuCount });
   });
 
   log.info('Seed complete.');

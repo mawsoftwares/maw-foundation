@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, type ReactNode } from 'react';
+import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { createConfigEngine } from '@mawsoftwares/sdk/config/config-engine';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 import {
@@ -40,6 +40,8 @@ import { JobsView } from './features/jobs';
 import { NotificationsView } from './features/notifications';
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
+import { MenusView } from './features/menus';
+import { loadMenuTree, flattenMenuTree, type MenuTreeNode } from './menu-tree';
 import { TopBarActions } from './shell/TopBarActions';
 
 
@@ -48,7 +50,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags' | 'menus';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -79,8 +81,9 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'audit-logs', label: 'Audit Logs', icon: 'scroll-text', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'masters', label: 'Master Data', icon: 'database', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
-  { key: 'rbac', label: 'RBAC Admin', icon: 'key', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
+  { key: 'rbac', label: 'RBAC Admin', icon: 'key', path: '/rbac', group: 'Admin', sortOrder: 8.5, permission: 'Manage_Rbac' },
   { key: 'feature-flags', label: 'Feature Flags', icon: 'flag', path: '/feature-flags', group: 'Admin', sortOrder: 8.6, permission: 'Read_FeatureFlags' },
+  { key: 'menus', label: 'Menu Management', icon: 'menu', path: '/menus', group: 'Admin', sortOrder: 8.7, permission: 'Manage_Menus' },
   { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
   { key: 'platform', label: 'Platform', icon: 'puzzle', path: '/platform', group: 'Dev', sortOrder: 95 },
   { key: 'jobs', label: 'Jobs', icon: 'clock', path: '/jobs', group: 'Dev', sortOrder: 96 },
@@ -98,9 +101,32 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   'audit-logs': 'Read_AuditLogs',
   masters: 'Master_View',
   'feature-flags': 'Read_FeatureFlags',
+  rbac: 'Manage_Rbac',
+  menus: 'Manage_Menus',
 };
 
-const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications', 'rbac']);
+const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications']);
+
+/** Sidebar section for each known nav key, used to group DB-driven menu items the same way the static fallback does. */
+const NAV_GROUPS: Record<string, string> = {
+  dashboard: 'Main', orders: 'Main', reports: 'Main', inventory: 'Main',
+  billing: 'Finance',
+  users: 'Admin', 'audit-logs': 'Admin', account: 'Admin', masters: 'Admin',
+  rbac: 'Admin', 'feature-flags': 'Admin', menus: 'Admin', settings: 'Admin',
+  platform: 'Dev', jobs: 'Dev', notifications: 'Dev', showcase: 'Dev',
+};
+
+function menuNodeToNavItem(node: MenuTreeNode): NavItem {
+  return {
+    key: node.key,
+    label: node.label,
+    icon: node.icon ?? 'circle',
+    path: node.path ?? `/${node.key}`,
+    group: NAV_GROUPS[node.key],
+    sortOrder: node.sortOrder,
+    permission: node.permission ?? undefined,
+  };
+}
 
 function AccessDenied({ permission }: { permission: string }): ReactNode {
   return (
@@ -144,6 +170,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'notifications': return <NotificationsView />;
     case 'rbac': return <RbacView />;
     case 'feature-flags': return <FeatureFlagsView />;
+    case 'menus': return <MenusView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
   }
@@ -184,8 +211,29 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const { can: canDynamic, loading: accessLoading } = useDynamicAccess();
   const { isEnabled } = useFeatureFlags();
 
+  // Menu Management drives the real nav tree from the DB (see /menus admin page);
+  // fall back to the static NAV_ITEMS list (still kept in sync as a reference/offline
+  // fallback) if the fetch hasn't completed yet or fails, so the sidebar is never empty.
+  const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
+  useEffect(() => {
+    if (session === null) return;
+    let cancelled = false;
+    loadMenuTree()
+      .then((tree) => {
+        if (cancelled) return;
+        const flat = flattenMenuTree(tree).map(menuNodeToNavItem);
+        setDynamicNavItems(flat.length > 0 ? flat : null);
+      })
+      .catch(() => {
+        if (!cancelled) setDynamicNavItems(null);
+      });
+    return () => { cancelled = true; };
+  }, [session]);
+
+  const allNavItems = dynamicNavItems ?? NAV_ITEMS;
+
   const navConfig = useMemo<NavigationConfig>(() => {
-    const items = NAV_ITEMS.filter((item) => {
+    const items = allNavItems.filter((item) => {
       // Hide dev/admin-only pages from non-superadmins
       if (SUPERADMIN_ONLY_KEYS.has(item.key) && !isSuperadmin) return false;
       // If the item requires a permission, check it against the live RBAC snapshot
@@ -206,10 +254,10 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       onNavigate: navigate,
       breadcrumbs: [
         { label: 'Home', path: '/dashboard' },
-        { label: NAV_ITEMS.find((n) => n.key === page)?.label ?? page },
+        { label: allNavItems.find((n) => n.key === page)?.label ?? page },
       ],
     };
-  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled]);
+  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled, allNavItems]);
 
   if (loading) return <div className="maw-auth-screen">{t('common.loading')}</div>;
   if (session === null) {
@@ -273,7 +321,9 @@ export function App(): ReactNode {
           'module.users': true,
           'module.audit-logs': true,
           'module.account': true,
-          'module.masters': true
+          'module.masters': true,
+          'module.rbac': true,
+          'module.menus': true
         })}>
           <OfflineProvider
             networkManager={offlineInfra.networkManager}

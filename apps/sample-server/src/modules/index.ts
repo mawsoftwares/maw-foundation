@@ -8,6 +8,7 @@ import { billingModule } from './billing';
 import { auditLogsModule } from './audit-logs';
 import { mastersModule } from './masters';
 import { featureFlagsModule } from './feature-flags';
+import { menusModule } from './menus';
 
 const log = createLogger('registry');
 
@@ -42,4 +43,5 @@ registry.register(
   auditLogsModule,
   mastersModule,
   featureFlagsModule,
+  menusModule,
 );

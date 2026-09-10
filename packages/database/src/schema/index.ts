@@ -10,3 +10,4 @@ export { tenants } from './tenants';
 export { socialAccountLinks } from './social';
 export { notifications, notificationTemplates } from './notifications';
 export { passwordHistory } from './password-history';
+export { menuItems } from './menu';
