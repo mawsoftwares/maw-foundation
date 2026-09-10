@@ -1,4 +1,12 @@
-import { useCallback, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useCallback,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ClipboardEvent as ReactClipboardEvent,
+  type ReactNode,
+} from 'react';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import {
   TextField,
@@ -738,6 +746,588 @@ export type AvatarFieldProps = ProfileAvatarUploadProps;
 /** Circular profile-photo upload field (named alias of `ProfileAvatarUpload` for API consistency with the other `*Field` components). */
 export function AvatarField(props: AvatarFieldProps): ReactNode {
   return <ProfileAvatarUpload {...props} />;
+}
+
+// ---------------------------------------------------------------------------
+// Masked text fields (generic + India presets)
+// ---------------------------------------------------------------------------
+
+const MASK_TOKENS: Record<string, RegExp> = {
+  '9': /[0-9]/,
+  A: /[a-zA-Z]/,
+  '*': /[a-zA-Z0-9]/,
+};
+
+/**
+ * Formats `raw` free-typed input against a `mask` template made of token
+ * characters — `9` (digit), `A` (letter, auto-uppercased), `*`
+ * (alphanumeric) — with every other mask character treated as a literal
+ * that's inserted automatically (and skipped over if the user typed it
+ * too, e.g. pasting an already-formatted value). Non-matching characters
+ * are dropped; the result never exceeds the mask's length.
+ */
+export function applyMask(raw: string, mask: string): string {
+  let out = '';
+  let rawIndex = 0;
+  let maskIndex = 0;
+  while (maskIndex < mask.length && rawIndex < raw.length) {
+    const maskChar = mask[maskIndex];
+    if (maskChar === undefined) break;
+    const tokenPattern = MASK_TOKENS[maskChar];
+    if (!tokenPattern) {
+      out += maskChar;
+      if (raw[rawIndex] === maskChar) rawIndex++;
+      maskIndex++;
+      continue;
+    }
+    const rawChar = raw[rawIndex];
+    rawIndex++;
+    if (rawChar !== undefined && tokenPattern.test(rawChar)) {
+      out += maskChar === 'A' ? rawChar.toUpperCase() : rawChar;
+      maskIndex++;
+    }
+  }
+  return out;
+}
+
+/** Strips a masked string down to just its significant (token) characters, in mask order. */
+export function unmask(masked: string, mask: string): string {
+  let out = '';
+  for (let i = 0; i < masked.length && i < mask.length; i++) {
+    const maskChar = mask[i];
+    const maskedChar = masked[i];
+    if (maskChar !== undefined && MASK_TOKENS[maskChar] && maskedChar !== undefined) out += maskedChar;
+  }
+  return out;
+}
+
+export interface MaskedFieldProps {
+  readonly name?: string;
+  readonly label?: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  /** Mask template — `9` digit, `A` letter (auto-uppercased), `*` alphanumeric, anything else a literal. */
+  readonly mask: string;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly readOnly?: boolean;
+  readonly placeholder?: string;
+  /** Extra validation run against the unmasked value once the field has been touched. */
+  readonly validate?: (unmaskedValue: string) => string | undefined;
+  readonly style?: CSSProperties;
+}
+
+/**
+ * Free-typed text field that auto-formats against a mask template as the
+ * user types (see `applyMask`). `value`/`onChange` carry the masked
+ * (displayed) string — use `unmask` to recover just the significant
+ * characters, e.g. for submitting a raw digit string to an API.
+ */
+export function MaskedField({
+  name, label, value, onChange, mask, error, required, disabled, readOnly, placeholder, validate, style,
+}: MaskedFieldProps): ReactNode {
+  const validateFormatted = useCallback(
+    (v: string) => requiredError(v, required) ?? (v.trim() !== '' ? validate?.(unmask(v, mask)) : undefined),
+    [required, validate, mask],
+  );
+  const { internalError, onBlur } = useTouchedValidation(value, validateFormatted);
+  return (
+    <TextField
+      name={name}
+      label={label}
+      value={value}
+      onChange={(e) => onChange(applyMask(e.target.value, mask))}
+      onBlur={onBlur}
+      error={error ?? internalError}
+      required={required}
+      disabled={disabled}
+      readOnly={readOnly}
+      placeholder={placeholder ?? mask.replace(/[9A*]/g, '_')}
+      style={style}
+    />
+  );
+}
+
+const AADHAAR_MASK = '9999 9999 9999';
+
+export interface AadhaarFieldProps {
+  readonly name?: string;
+  readonly label?: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly style?: CSSProperties;
+}
+
+/** Indian Aadhaar number field — formats as `9999 9999 9999` and validates 12 digits on blur. */
+export function AadhaarField({
+  name, label = 'Aadhaar number', value, onChange, error, required, disabled, style,
+}: AadhaarFieldProps): ReactNode {
+  const validate = useCallback(
+    (digits: string) => (digits.length > 0 && digits.length !== 12 ? 'Aadhaar number must be 12 digits' : undefined),
+    [],
+  );
+  return (
+    <MaskedField
+      name={name}
+      label={label}
+      value={value}
+      onChange={onChange}
+      mask={AADHAAR_MASK}
+      error={error}
+      required={required}
+      disabled={disabled}
+      placeholder="0000 0000 0000"
+      validate={validate}
+      style={style}
+    />
+  );
+}
+
+const PAN_MASK = 'AAAAA9999A';
+const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+
+export interface PanFieldProps {
+  readonly name?: string;
+  readonly label?: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly style?: CSSProperties;
+}
+
+/** Indian PAN card number field — enforces the `AAAAA9999A` shape (5 letters, 4 digits, 1 letter), auto-uppercased. */
+export function PanField({
+  name, label = 'PAN number', value, onChange, error, required, disabled, style,
+}: PanFieldProps): ReactNode {
+  const validate = useCallback(
+    (v: string) => (v.length > 0 && !PAN_RE.test(v) ? 'Invalid PAN format, e.g. ABCDE1234F' : undefined),
+    [],
+  );
+  return (
+    <MaskedField
+      name={name}
+      label={label}
+      value={value}
+      onChange={onChange}
+      mask={PAN_MASK}
+      error={error}
+      required={required}
+      disabled={disabled}
+      placeholder="ABCDE1234F"
+      validate={validate}
+      style={style}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Specialized input fields: OTP, tags, rating, slider, color
+// ---------------------------------------------------------------------------
+
+export interface OTPFieldProps {
+  readonly label?: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly length?: number;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly autoFocus?: boolean;
+  readonly style?: CSSProperties;
+}
+
+/**
+ * One-time-passcode entry: `length` single-digit boxes with auto-advance on
+ * type, backspace-to-previous on an empty box, and paste support (pasting a
+ * full code fills every box and focuses the last one filled).
+ */
+export function OTPField({
+  label, value, onChange, length = 6, error, required, disabled, autoFocus, style,
+}: OTPFieldProps): ReactNode {
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = Array.from({ length }, (_, i) => value[i] ?? '');
+
+  const setDigit = (index: number, digit: string) => {
+    const next = digits.slice();
+    next[index] = digit;
+    onChange(next.join(''));
+  };
+
+  const handleChange = (index: number, raw: string) => {
+    const digit = raw.replace(/\D/g, '').slice(-1);
+    setDigit(index, digit);
+    if (digit !== '' && index < length - 1) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index: number, e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && digits[index] === '' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: ReactClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
+    if (pasted.length <= 1) return;
+    e.preventDefault();
+    onChange(pasted);
+    inputRefs.current[Math.min(pasted.length, length - 1)]?.focus();
+  };
+
+  return (
+    <div style={style}>
+      <FormField label={label} error={error} required={required}>
+        <div style={{ display: 'flex', gap: 'var(--maw-space-sm)' }}>
+          {digits.map((digit, index) => (
+            <input
+              key={index}
+              ref={(el) => { inputRefs.current[index] = el; }}
+              type="text"
+              inputMode="numeric"
+              autoComplete={index === 0 ? 'one-time-code' : 'off'}
+              autoFocus={autoFocus && index === 0}
+              value={digit}
+              disabled={disabled}
+              onChange={(e) => handleChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              onPaste={handlePaste}
+              maxLength={1}
+              aria-label={`Digit ${index + 1} of ${length}`}
+              style={{
+                width: 40,
+                height: 48,
+                textAlign: 'center',
+                fontSize: 'var(--maw-text-lg)',
+                fontWeight: 600,
+                border: `1px solid ${error ? 'var(--maw-danger)' : 'var(--maw-border)'}`,
+                borderRadius: 'var(--maw-radius-md)',
+                background: disabled ? 'var(--maw-bgMuted)' : 'var(--maw-bg)',
+                color: 'var(--maw-fg)',
+                outline: 'none',
+              }}
+            />
+          ))}
+        </div>
+      </FormField>
+    </div>
+  );
+}
+
+export interface TagInputFieldProps {
+  readonly label?: string;
+  readonly value: readonly string[];
+  readonly onChange: (tags: readonly string[]) => void;
+  readonly placeholder?: string;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly maxTags?: number;
+  /** Validates a tag before it's added; return an error message to reject it. */
+  readonly validateTag?: (tag: string, existing: readonly string[]) => string | undefined;
+  readonly style?: CSSProperties;
+}
+
+/**
+ * Free-text tag/chip entry. Type and press Enter or `,` to add a tag;
+ * Backspace on an empty input removes the last tag.
+ */
+export function TagInputField({
+  label, value, onChange, placeholder, error, required, disabled, maxTags, validateTag, style,
+}: TagInputFieldProps): ReactNode {
+  const [draft, setDraft] = useState('');
+  const [internalError, setInternalError] = useState<string | undefined>(undefined);
+
+  const addTag = (raw: string) => {
+    const tag = raw.trim();
+    if (!tag) return;
+    if (value.includes(tag)) {
+      setInternalError('Tag already added');
+      return;
+    }
+    if (maxTags !== undefined && value.length >= maxTags) {
+      setInternalError(`Maximum ${maxTags} tags`);
+      return;
+    }
+    const validationError = validateTag?.(tag, value);
+    if (validationError) {
+      setInternalError(validationError);
+      return;
+    }
+    setInternalError(undefined);
+    onChange([...value, tag]);
+    setDraft('');
+  };
+
+  const removeTag = (index: number) => {
+    onChange(value.filter((_, i) => i !== index));
+  };
+
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(draft);
+    } else if (e.key === 'Backspace' && draft === '' && value.length > 0) {
+      removeTag(value.length - 1);
+    }
+  };
+
+  return (
+    <div style={style}>
+      <FormField label={label} error={error ?? internalError} required={required}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 'var(--maw-space-xs)',
+            alignItems: 'center',
+            padding: 'var(--maw-space-xs)',
+            border: '1px solid var(--maw-border)',
+            borderRadius: 'var(--maw-radius-sm)',
+            background: disabled ? 'var(--maw-bgMuted)' : 'var(--maw-bg)',
+          }}
+        >
+          {value.map((tag, index) => (
+            <span
+              key={tag}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '2px 8px',
+                borderRadius: 'var(--maw-radius-pill)',
+                background: 'var(--maw-bgMuted)',
+                color: 'var(--maw-fg)',
+                fontSize: 'var(--maw-text-xs)',
+              }}
+            >
+              {tag}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => removeTag(index)}
+                  aria-label={`Remove ${tag}`}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    lineHeight: 1,
+                    color: 'var(--maw-fgMuted)',
+                    fontSize: 'var(--maw-text-sm)',
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </span>
+          ))}
+          <input
+            type="text"
+            value={draft}
+            disabled={disabled}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={() => addTag(draft)}
+            placeholder={value.length === 0 ? placeholder : undefined}
+            style={{
+              flex: 1,
+              minWidth: 80,
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontSize: 'var(--maw-text-sm)',
+              color: 'var(--maw-fg)',
+            }}
+          />
+        </div>
+      </FormField>
+    </div>
+  );
+}
+
+export interface RatingFieldProps {
+  readonly label?: string;
+  readonly value: number;
+  readonly onChange: (value: number) => void;
+  readonly max?: number;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly style?: CSSProperties;
+}
+
+/** Star rating picker — click a star to set the rating; hover previews the value. */
+export function RatingField({
+  label, value, onChange, max = 5, error, required, disabled, style,
+}: RatingFieldProps): ReactNode {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const display = hovered ?? value;
+  return (
+    <div style={style}>
+      <FormField label={label} error={error} required={required}>
+        <div role="radiogroup" aria-label={label} style={{ display: 'flex', gap: 'var(--maw-space-xs)' }}>
+          {Array.from({ length: max }, (_, i) => i + 1).map((star) => (
+            <button
+              key={star}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(star)}
+              onMouseEnter={() => setHovered(star)}
+              onMouseLeave={() => setHovered(null)}
+              aria-label={`${star} star${star === 1 ? '' : 's'}`}
+              aria-pressed={value === star}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: disabled ? 'default' : 'pointer',
+                fontSize: 'var(--maw-text-xl)',
+                lineHeight: 1,
+                color: star <= display ? 'var(--maw-brand)' : 'var(--maw-border)',
+                opacity: disabled ? 0.5 : 1,
+              }}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+      </FormField>
+    </div>
+  );
+}
+
+export interface SliderFieldProps {
+  readonly label?: string;
+  readonly value: number;
+  readonly onChange: (value: number) => void;
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  /** Show the current value next to the label. Defaults to true. */
+  readonly showValue?: boolean;
+  readonly formatValue?: (value: number) => string;
+  readonly style?: CSSProperties;
+}
+
+/** Range slider with the current value shown next to the label. */
+export function SliderField({
+  label, value, onChange, min = 0, max = 100, step = 1, error, required, disabled, showValue = true, formatValue, style,
+}: SliderFieldProps): ReactNode {
+  const displayValue = formatValue ? formatValue(value) : String(value);
+  const fieldLabel = label !== undefined ? `${label}${showValue ? ` (${displayValue})` : ''}` : undefined;
+  return (
+    <div style={style}>
+      <FormField label={fieldLabel} error={error} required={required}>
+        <input
+          type="range"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          disabled={disabled}
+          onChange={(e) => onChange(Number(e.target.value))}
+          aria-label={label}
+          aria-valuetext={displayValue}
+          style={{ width: '100%', accentColor: 'var(--maw-brand)' }}
+        />
+      </FormField>
+    </div>
+  );
+}
+
+export interface ColorFieldProps {
+  readonly label?: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly error?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  /** Optional swatches rendered next to the picker for quick selection. */
+  readonly presets?: readonly string[];
+  readonly style?: CSSProperties;
+}
+
+const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+/** Color picker with a synced hex text input and optional preset swatches. */
+export function ColorField({
+  label, value, onChange, error, required, disabled, presets, style,
+}: ColorFieldProps): ReactNode {
+  const validate = useCallback(
+    (v: string) => requiredError(v, required) ?? (v.trim() !== '' && !HEX_COLOR_RE.test(v) ? 'Enter a valid hex color, e.g. #3366ff' : undefined),
+    [required],
+  );
+  const { internalError, onBlur } = useTouchedValidation(value, validate);
+  return (
+    <div style={style}>
+      <FormField label={label} error={error ?? internalError} required={required}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-sm)' }}>
+          <input
+            type="color"
+            value={HEX_COLOR_RE.test(value) ? value : '#000000'}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+            aria-label={label ? `${label} swatch picker` : 'Color swatch picker'}
+            style={{
+              width: 36,
+              height: 36,
+              padding: 0,
+              border: '1px solid var(--maw-border)',
+              borderRadius: 'var(--maw-radius-sm)',
+              cursor: disabled ? 'default' : 'pointer',
+            }}
+          />
+          <input
+            type="text"
+            value={value}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
+            placeholder="#000000"
+            style={{
+              flex: 1,
+              padding: 'var(--maw-space-xs) var(--maw-space-sm)',
+              border: '1px solid var(--maw-border)',
+              borderRadius: 'var(--maw-radius-sm)',
+              fontSize: 'var(--maw-text-sm)',
+              background: 'var(--maw-bg)',
+              color: 'var(--maw-fg)',
+            }}
+          />
+          {presets !== undefined && presets.length > 0 && (
+            <div style={{ display: 'flex', gap: 4 }}>
+              {presets.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onChange(preset)}
+                  aria-label={preset}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    padding: 0,
+                    borderRadius: 'var(--maw-radius-sm)',
+                    border: value === preset ? '2px solid var(--maw-brand)' : '1px solid var(--maw-border)',
+                    background: preset,
+                    cursor: disabled ? 'default' : 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </FormField>
+    </div>
+  );
 }
 
 export type { StoredFile };
