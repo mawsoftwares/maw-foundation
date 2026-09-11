@@ -901,25 +901,7 @@ app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
 });
 
 
-// --- Masters routes (dynamic master data) ---
-import { createMastersRouter } from './modules/masters/routes';
-import {
-  MasterService,
-  PgMasterRepository,
-  PgMasterFieldRepository,
-  PgMasterValueRepository,
-} from '@mawsoftwares/masters';
 
-const masterRepo = new PgMasterRepository(data.db);
-const masterFieldRepo = new PgMasterFieldRepository(data.db);
-const masterValueRepo = new PgMasterValueRepository(data.db);
-const masterService = new MasterService({ db: data.db, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
-
-app.use('/api/v1/masters', createMastersRouter({
-  service: masterService,
-  requireAuth: auth.requireAuth,
-  requirePermission: (perm) => auth.requirePermission(perm),
-}));
 
 // --- Export routes (import-export package) ---
 

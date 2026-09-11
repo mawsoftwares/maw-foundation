@@ -8,7 +8,6 @@
     "@mawsoftwares/api-client": "workspace:*",
     "@mawsoftwares/import-export": "workspace:*",
     "@mawsoftwares/platform": "workspace:*",
-    "@mawsoftwares/masters": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
     "@mawsoftwares/sdk": "workspace:*",
     "@mawsoftwares/theme": "workspace:*",

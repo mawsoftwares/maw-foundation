@@ -10,7 +10,6 @@
     "@mawsoftwares/communication": "workspace:*",
     "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/import-export": "workspace:*",
-    "@mawsoftwares/masters": "workspace:*",
     "@mawsoftwares/observability": "workspace:*",
     "@mawsoftwares/queue": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",

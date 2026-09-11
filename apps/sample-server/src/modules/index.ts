@@ -6,7 +6,7 @@ import { ordersModule } from './orders';
 import { inventoryModule } from './inventory';
 import { billingModule } from './billing';
 import { auditLogsModule } from './audit-logs';
-import { mastersModule } from './masters';
+
 import { featureFlagsModule } from './feature-flags';
 import { menusModule } from './menus';
 
@@ -41,7 +41,7 @@ registry.register(
   inventoryModule,
   billingModule,
   auditLogsModule,
-  mastersModule,
+
   featureFlagsModule,
   menusModule,
 );
