@@ -161,6 +161,9 @@ const PATHS = {
       <polyline points="16 7 22 7 22 13" />
     </>
   ),
+  shield: (
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;
@@ -180,6 +183,7 @@ const ALIASES: Record<string, IconName> = {
   jobs: 'clock',
   notifications: 'bell',
   showcase: 'palette',
+  superadmin: 'shield',
 };
 
 function resolveIconName(name: string): IconName | undefined {

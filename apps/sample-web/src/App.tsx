@@ -41,7 +41,8 @@ import { NotificationsView } from './features/notifications';
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
 import { MenusView } from './features/menus';
-import { loadMenuTree, flattenMenuTree, type MenuTreeNode } from './menu-tree';
+import { SuperAdminView } from './features/superadmin';
+import { loadMenuTree, type MenuTreeNode } from './menu-tree';
 import { TopBarActions } from './shell/TopBarActions';
 
 
@@ -50,7 +51,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags' | 'menus';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags' | 'menus' | 'superadmin';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -81,14 +82,11 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'audit-logs', label: 'Audit Logs', icon: 'scroll-text', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'masters', label: 'Master Data', icon: 'database', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
-  { key: 'rbac', label: 'RBAC Admin', icon: 'key', path: '/rbac', group: 'Admin', sortOrder: 8.5, permission: 'Manage_Rbac' },
-  { key: 'feature-flags', label: 'Feature Flags', icon: 'flag', path: '/feature-flags', group: 'Admin', sortOrder: 8.6, permission: 'Read_FeatureFlags' },
-  { key: 'menus', label: 'Menu Management', icon: 'menu', path: '/menus', group: 'Admin', sortOrder: 8.7, permission: 'Manage_Menus' },
+  { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
   { key: 'platform', label: 'Platform', icon: 'puzzle', path: '/platform', group: 'Dev', sortOrder: 95 },
   { key: 'jobs', label: 'Jobs', icon: 'clock', path: '/jobs', group: 'Dev', sortOrder: 96 },
   { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },
-  { key: 'showcase', label: 'UI Showcase', icon: 'palette', path: '/showcase', group: 'Dev', sortOrder: 99 },
 ];
 
 /** Maps a page key to the permission required to view it. */
@@ -100,20 +98,20 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   users: 'Read_Users',
   'audit-logs': 'Read_AuditLogs',
   masters: 'Master_View',
-  'feature-flags': 'Read_FeatureFlags',
   rbac: 'Manage_Rbac',
+  'feature-flags': 'Read_FeatureFlags',
   menus: 'Manage_Menus',
 };
 
-const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications']);
+const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'platform', 'jobs', 'notifications']);
 
 /** Sidebar section for each known nav key, used to group DB-driven menu items the same way the static fallback does. */
 const NAV_GROUPS: Record<string, string> = {
   dashboard: 'Main', orders: 'Main', reports: 'Main', inventory: 'Main',
   billing: 'Finance',
   users: 'Admin', 'audit-logs': 'Admin', account: 'Admin', masters: 'Admin',
-  rbac: 'Admin', 'feature-flags': 'Admin', menus: 'Admin', settings: 'Admin',
-  platform: 'Dev', jobs: 'Dev', notifications: 'Dev', showcase: 'Dev',
+  superadmin: 'Admin', settings: 'Admin',
+  platform: 'Dev', jobs: 'Dev', notifications: 'Dev',
 };
 
 function menuNodeToNavItem(node: MenuTreeNode): NavItem {
@@ -173,6 +171,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'menus': return <MenusView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
+    case 'superadmin': return <SuperAdminView />;
   }
 }
 
@@ -221,8 +220,11 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     loadMenuTree()
       .then((tree) => {
         if (cancelled) return;
-        const flat = flattenMenuTree(tree).map(menuNodeToNavItem);
-        setDynamicNavItems(flat.length > 0 ? flat : null);
+        // Only root items become sidebar entries — a node with children (e.g. "Super
+        // Admin") is a hub whose sub-pages are reached via cards on its own page,
+        // not a nested sidebar submenu.
+        const roots = tree.map(menuNodeToNavItem);
+        setDynamicNavItems(roots.length > 0 ? roots : null);
       })
       .catch(() => {
         if (!cancelled) setDynamicNavItems(null);

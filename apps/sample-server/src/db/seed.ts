@@ -107,15 +107,39 @@ try {
     log.info('Master permissions upserted', { count: allPerms.length });
 
     // --- Dynamic RBAC: master_modules ---
+    const moduleIdMap: Record<string, number> = {};
     for (const m of registry.getAll()) {
-      await client.query(
+      const { rows } = await client.query<{ id: number }>(
         `INSERT INTO master_modules (code, name)
          VALUES ($1, $2)
-         ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name`,
+         ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
         [m.key, m.name],
       );
+      moduleIdMap[m.key] = rows[0]!.id;
     }
     log.info('Master modules upserted', { count: registry.getAll().length });
+
+    // --- Dynamic RBAC: module_permissions (links each module's own permissions to it,
+    // so the Modules & Permissions admin screen shows them pre-attached rather than
+    // starting from an empty tree) ---
+    let modulePermCount = 0;
+    for (const m of registry.getAll()) {
+      const moduleId = moduleIdMap[m.key];
+      if (moduleId === undefined) continue;
+      for (const p of m.permissions ?? []) {
+        const permId = permIdMap[p.code];
+        if (permId === undefined) continue;
+        await client.query(
+          `INSERT INTO module_permissions (module_id, permission_id)
+           VALUES ($1, $2)
+           ON CONFLICT (module_id, permission_id) DO NOTHING`,
+          [moduleId, permId],
+        );
+        modulePermCount++;
+      }
+    }
+    log.info('Module-permission links upserted', { count: modulePermCount });
 
     // --- Dynamic RBAC: role_permissions ---
     const allPermCodes = allPerms.map((p) => p.code);
@@ -142,9 +166,12 @@ try {
     log.info('Role-permission assignments upserted', { count: rpCount });
 
     // --- Menu items (admin-editable nav tree; mirrors the app's default navigation) ---
+    // 'superadmin' is a parent item that groups the superadmin-only tools (RBAC, Menu
+    // Management, Feature Flags, UI Showcase) behind one sidebar entry; the sample-web
+    // Super Admin hub page renders them as cards instead of listing them at the top level.
     const menuItems: {
       key: string; label: string; path: string; icon: string;
-      permission?: string; sortOrder: number;
+      permission?: string; sortOrder: number; parentKey?: string;
     }[] = [
       { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'layout-dashboard', sortOrder: 0 },
       { key: 'orders', label: 'Orders', path: '/orders', icon: 'shopping-cart', permission: 'Read_Orders', sortOrder: 10 },
@@ -155,25 +182,30 @@ try {
       { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60 },
       { key: 'account', label: 'Account', path: '/account', icon: 'lock', sortOrder: 70 },
       { key: 'masters', label: 'Master Data', path: '/masters', icon: 'database', permission: 'Master_View', sortOrder: 80 },
-      { key: 'rbac', label: 'RBAC Admin', path: '/rbac', icon: 'key', permission: 'Manage_Rbac', sortOrder: 85 },
-      { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86 },
-      { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87 },
+      { key: 'superadmin', label: 'Super Admin', path: '/superadmin', icon: 'shield', sortOrder: 84 },
+      { key: 'rbac', label: 'RBAC Admin', path: '/rbac', icon: 'key', permission: 'Manage_Rbac', sortOrder: 85, parentKey: 'superadmin' },
+      { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86, parentKey: 'superadmin' },
+      { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87, parentKey: 'superadmin' },
       { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
       { key: 'platform', label: 'Platform', path: '/platform', icon: 'puzzle', sortOrder: 950 },
       { key: 'jobs', label: 'Jobs', path: '/jobs', icon: 'clock', sortOrder: 960 },
       { key: 'notifications', label: 'Notifications', path: '/notifications', icon: 'bell', sortOrder: 970 },
-      { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990 },
+      { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990, parentKey: 'superadmin' },
     ];
     let menuCount = 0;
+    const menuIdByKey: Record<string, number> = {};
     for (const m of menuItems) {
-      await client.query(
-        `INSERT INTO menu_items (key, label, path, icon, permission, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6)
+      const parentId = m.parentKey ? menuIdByKey[m.parentKey] ?? null : null;
+      const { rows } = await client.query<{ id: number }>(
+        `INSERT INTO menu_items (key, label, path, icon, permission, sort_order, parent_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (key) DO UPDATE SET
            label = EXCLUDED.label, path = EXCLUDED.path, icon = EXCLUDED.icon,
-           permission = EXCLUDED.permission, sort_order = EXCLUDED.sort_order`,
-        [m.key, m.label, m.path, m.icon, m.permission ?? null, m.sortOrder],
+           permission = EXCLUDED.permission, sort_order = EXCLUDED.sort_order, parent_id = EXCLUDED.parent_id
+         RETURNING id`,
+        [m.key, m.label, m.path, m.icon, m.permission ?? null, m.sortOrder, parentId],
       );
+      menuIdByKey[m.key] = rows[0]!.id;
       menuCount++;
     }
     log.info('Menu items upserted', { count: menuCount });

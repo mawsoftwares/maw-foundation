@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
 import {
-  ListPage, DataTable, Badge, Button, Modal, TextField, useForm,
-  useToast, ErrorState, PageLoader, Tabs, IconButton, Divider,
-  type ColumnDef
+  Badge, Button, Modal, TextField, useForm,
+  useToast, ErrorState, PageLoader, IconButton, Divider,
 } from '@mawsoftwares/ui-web';
 import { client } from '../api';
 
@@ -41,26 +40,7 @@ interface RolePermissionAssignment {
 }
 
 export function RbacView(): ReactNode {
-  const [tab, setTab] = useState<'roles' | 'permissions' | 'modules'>('roles');
-
-  return (
-    <div>
-      <Tabs
-        tabs={[
-          { key: 'roles', label: 'Roles' },
-          { key: 'permissions', label: 'Permissions' },
-          { key: 'modules', label: 'Modules / Actions' },
-        ]}
-        activeTab={tab}
-        onChange={(k) => setTab(k as any)}
-        style={{ marginBottom: 'var(--maw-space-lg)' }}
-      />
-
-      {tab === 'roles' && <RolesTab />}
-      {tab === 'permissions' && <PermissionsTab />}
-      {tab === 'modules' && <ModulesTab />}
-    </div>
-  );
+  return <RolesTab />;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,7 +53,7 @@ function RolesTab(): ReactNode {
   const [error, setError] = useState<string>();
   const [showCreate, setShowCreate] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
+  const [rightPanel, setRightPanel] = useState<{ type: 'role'; roleId: number } | { type: 'modules' } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true); setError(undefined);
@@ -90,7 +70,7 @@ function RolesTab(): ReactNode {
     try {
       await client.request(`/api/v1/rbac/roles/${id}`, { method: 'DELETE' });
       toast.success('Role deleted');
-      if (expandedRoleId === id) setExpandedRoleId(null);
+      if (rightPanel?.type === 'role' && rightPanel.roleId === id) setRightPanel(null);
       load();
     } catch (e) { toast.error((e as Error).message); }
   };
@@ -100,11 +80,14 @@ function RolesTab(): ReactNode {
     fields: { code: { required: true }, name: { required: true } },
     onSubmit: async (values) => {
       try {
-        await client.request('/api/v1/rbac/roles', {
+        const created = await client.request<{ data: Role }>('/api/v1/rbac/roles', {
           method: 'POST',
           body: JSON.stringify({ code: values.code, name: values.name, description: values.description || undefined, sortOrder: Number(values.sortOrder) }),
         });
-        toast.success('Role created'); setShowCreate(false); createForm.reset(); load();
+        toast.success('Role created'); setShowCreate(false); createForm.reset();
+        setRoles((prev) => [...prev, created.data]);
+        setRightPanel({ type: 'role', roleId: created.data.id });
+        load();
       } catch (e) { toast.error((e as Error).message); }
     },
   });
@@ -139,16 +122,24 @@ function RolesTab(): ReactNode {
           <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xxl)', fontWeight: 800, color: 'var(--maw-fg)', letterSpacing: '-0.02em' }}>Role Management</h1>
           <p style={{ margin: '6px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>Select a role card to manage its permissions inline</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>+ Create Role</Button>
+        <div style={{ display: 'flex', gap: 'var(--maw-space-sm)' }}>
+          <Button
+            variant={rightPanel?.type === 'modules' ? undefined : 'ghost'}
+            onClick={() => setRightPanel(rightPanel?.type === 'modules' ? null : { type: 'modules' })}
+          >
+            Manage Modules & Permissions
+          </Button>
+          <Button onClick={() => setShowCreate(true)}>+ Create Role</Button>
+        </div>
       </div>
 
       {/* Two-column layout when expanded */}
       <div style={{ display: 'flex', gap: 'var(--maw-space-lg)', alignItems: 'flex-start', marginBottom: 'var(--maw-space-lg)' }}>
         {/* Left column: Role cards */}
-        <div style={{ flex: expandedRoleId !== null ? '0 0 320px' : '1', transition: 'flex 0.3s' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: expandedRoleId !== null ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--maw-space-md)' }}>
+        <div style={{ flex: rightPanel !== null ? '0 0 320px' : '1', transition: 'flex 0.3s' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: rightPanel !== null ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--maw-space-md)' }}>
             {roles.map((role) => {
-              const isExpanded = expandedRoleId === role.id;
+              const isExpanded = rightPanel?.type === 'role' && rightPanel.roleId === role.id;
               return (
                 <div key={role.id} style={{
                   border: `2px solid ${isExpanded ? 'var(--maw-brand)' : 'var(--maw-border)'}`,
@@ -157,7 +148,7 @@ function RolesTab(): ReactNode {
                   transition: 'border-color 0.2s, background 0.2s', overflow: 'hidden',
                 }}>
                   <button
-                    onClick={() => setExpandedRoleId(isExpanded ? null : role.id)}
+                    onClick={() => setRightPanel(isExpanded ? null : { type: 'role', roleId: role.id })}
                     style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 'var(--maw-space-md)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 12 }}
                   >
                     <span style={{ fontSize: 20, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isExpanded ? 'var(--maw-brand)' : 'var(--maw-border)', color: isExpanded ? '#fff' : 'var(--maw-fgMuted)', flexShrink: 0 }}>🔑</span>
@@ -185,15 +176,20 @@ function RolesTab(): ReactNode {
           </div>
         </div>
 
-        {/* Right column: Inline permissions panel */}
-        {expandedRoleId !== null && (() => {
-          const role = roles.find((r) => r.id === expandedRoleId);
+        {/* Right column: role-permissions panel, or the modules & permissions manager */}
+        {rightPanel?.type === 'role' && (() => {
+          const role = roles.find((r) => r.id === rightPanel.roleId);
           return role ? (
             <div style={{ flex: 1, position: 'sticky', top: 'var(--maw-space-lg)' }}>
-              <RolePermissionsPanel key={expandedRoleId} role={role} onClose={() => setExpandedRoleId(null)} />
+              <RolePermissionsPanel key={rightPanel.roleId} role={role} onClose={() => setRightPanel(null)} />
             </div>
           ) : null;
         })()}
+        {rightPanel?.type === 'modules' && (
+          <div style={{ flex: 1, position: 'sticky', top: 'var(--maw-space-lg)' }}>
+            <ModulesPermissionsPanel onClose={() => setRightPanel(null)} />
+          </div>
+        )}
       </div>
 
       {/* Create Modal */}
@@ -511,425 +507,283 @@ function RolePermissionsPanel({ role, onClose }: { role: Role; onClose: () => vo
 }
 
 // ---------------------------------------------------------------------------
-// 2. Permissions Tab
+// 2. Modules & Permissions Tab — a single screen to build the module tree
+// (parent + nested children) and manage each module's permissions inline,
+// instead of hopping between separate Modules and Permissions tabs.
 // ---------------------------------------------------------------------------
-function PermissionsTab(): ReactNode {
-  const toast = useToast();
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>();
-  const [showCreate, setShowCreate] = useState(false);
-  const [editingPerm, setEditingPerm] = useState<Permission | null>(null);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(undefined);
-    client
-      .request<{ data: Permission[] }>('/api/v1/rbac/permissions')
-      .then((r) => setPermissions(r.data))
-      .catch((e: ApiError) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const deletePerm = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this permission?')) return;
-    try {
-      await client.request(`/api/v1/rbac/permissions/${id}`, { method: 'DELETE' });
-      toast.success('Permission deleted successfully');
-      load();
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  };
-
-  const createForm = useForm({
-    initialValues: { code: '', name: '', description: '', sortOrder: 0 },
-    fields: {
-      code: { required: true },
-      name: { required: true },
-    },
-    onSubmit: async (values) => {
-      try {
-        await client.request('/api/v1/rbac/permissions', {
-          method: 'POST',
-          body: JSON.stringify({
-            code: values.code,
-            name: values.name,
-            description: values.description || undefined,
-            sortOrder: Number(values.sortOrder),
-          }),
-        });
-        toast.success('Permission created successfully');
-        setShowCreate(false);
-        createForm.reset();
-        load();
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
-    },
-  });
-
-  const editForm = useForm({
-    initialValues: { name: '', description: '', sortOrder: 0, isActive: true },
-    fields: {
-      name: { required: true },
-    },
-    onSubmit: async (values) => {
-      if (!editingPerm) return;
-      try {
-        await client.request(`/api/v1/rbac/permissions/${editingPerm.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            name: values.name,
-            description: values.description || undefined,
-            sortOrder: Number(values.sortOrder),
-            isActive: values.isActive,
-          }),
-        });
-        toast.success('Permission updated successfully');
-        setEditingPerm(null);
-        load();
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (editingPerm) {
-      editForm.reset({
-        name: editingPerm.name,
-        description: editingPerm.description || '',
-        sortOrder: editingPerm.sortOrder,
-        isActive: editingPerm.isActive,
-      });
-    }
-  }, [editingPerm]);
-
-  if (error) return <ErrorState title="Failed to load permissions" message={error} retry={load} />;
-  if (loading && permissions.length === 0) return <PageLoader message="Loading permissions..." />;
-
-  const columns: ColumnDef<Permission>[] = [
-    { key: 'code', header: 'Code', sortable: true },
-    { key: 'name', header: 'Name', sortable: true },
-    { key: 'description', header: 'Description' },
-    {
-      key: 'isActive',
-      header: 'Status',
-      render: (row) => <Badge variant={row.isActive ? 'success' : 'danger'}>{row.isActive ? 'Active' : 'Inactive'}</Badge>,
-    },
-    {
-      key: 'actions' as any,
-      header: 'Actions',
-      render: (row) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button variant="ghost" onClick={() => setEditingPerm(row)}>
-            Edit
-          </Button>
-          <Button variant="ghost" onClick={() => deletePerm(row.id)} style={{ color: 'var(--maw-danger)' }}>
-            Delete
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <ListPage title="Permissions Manager" createLabel="Create Permission" onCreate={() => setShowCreate(true)}>
-      <DataTable columns={columns} data={permissions} keyField="id" emptyMessage="No permissions found" />
-
-      {/* Create Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Permission">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <TextField
-            label="Permission Code"
-            required
-            error={createForm.errors.code}
-            value={createForm.values.code}
-            onChange={(e) => createForm.setValue('code', (e.target as HTMLInputElement).value)}
-            placeholder="e.g. Create_Orders"
-          />
-          <TextField
-            label="Name"
-            required
-            error={createForm.errors.name}
-            value={createForm.values.name}
-            onChange={(e) => createForm.setValue('name', (e.target as HTMLInputElement).value)}
-            placeholder="e.g. Create Orders"
-          />
-          <TextField
-            label="Description"
-            value={createForm.values.description}
-            onChange={(e) => createForm.setValue('description', (e.target as HTMLInputElement).value)}
-            placeholder="Optional description"
-          />
-          <TextField
-            label="Sort Order"
-            type="number"
-            value={String(createForm.values.sortOrder)}
-            onChange={(e) => createForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal open={!!editingPerm} onClose={() => setEditingPerm(null)} title={`Edit Permission: ${editingPerm?.code}`}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <TextField
-            label="Name"
-            required
-            error={editForm.errors.name}
-            value={editForm.values.name}
-            onChange={(e) => editForm.setValue('name', (e.target as HTMLInputElement).value)}
-          />
-          <TextField
-            label="Description"
-            value={editForm.values.description}
-            onChange={(e) => editForm.setValue('description', (e.target as HTMLInputElement).value)}
-          />
-          <TextField
-            label="Sort Order"
-            type="number"
-            value={String(editForm.values.sortOrder)}
-            onChange={(e) => editForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
-          />
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--maw-text-sm)' }}>
-            <input type="checkbox" checked={editForm.values.isActive} onChange={(e) => editForm.setValue('isActive', e.target.checked)} />
-            Active
-          </label>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-            <Button variant="ghost" onClick={() => setEditingPerm(null)}>Cancel</Button>
-            <Button onClick={() => editForm.handleSubmit()} disabled={editForm.submitting}>Save Changes</Button>
-          </div>
-        </div>
-      </Modal>
-    </ListPage>
-  );
+interface ModuleNode extends Module {
+  permissions: Permission[];
+  children: ModuleNode[];
 }
 
-// ---------------------------------------------------------------------------
-// 3. Modules Tab
-// ---------------------------------------------------------------------------
-function ModulesTab(): ReactNode {
+function ModulesPermissionsPanel({ onClose }: { onClose: () => void }): ReactNode {
   const toast = useToast();
-  const [modules, setModules] = useState<Module[]>([]);
+  const [tree, setTree] = useState<ModuleNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
-  const [showCreate, setShowCreate] = useState(false);
-  const [editingMod, setEditingMod] = useState<Module | null>(null);
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  // Create/Edit module modal state
+  const [moduleModal, setModuleModal] = useState<{ mode: 'create' | 'edit'; parentModuleId: number | null; module?: Module } | null>(null);
+  // Add-permission modal state
+  const [permModal, setPermModal] = useState<{ moduleId: number; moduleName: string } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(undefined);
     client
-      .request<{ data: Module[] }>('/api/v1/rbac/modules')
-      .then((r) => setModules(r.data))
+      .request<{ data: ModuleNode[] }>('/api/v1/rbac/modules/tree')
+      .then((r) => {
+        setTree(r.data);
+        // Default: expand all top-level modules on first load
+        setExpanded((prev) => (prev.size > 0 ? prev : new Set(r.data.map((m) => m.id))));
+      })
       .catch((e: ApiError) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  const deleteMod = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this module?')) return;
-    try {
-      await client.request(`/api/v1/rbac/modules/${id}`, { method: 'DELETE' });
-      toast.success('Module deleted successfully');
-      load();
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+  const toggleExpand = (id: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
-  const createForm = useForm({
-    initialValues: { code: '', name: '', description: '', sortOrder: 0, parentModuleId: '' },
-    fields: {
-      code: { required: true },
-      name: { required: true },
-    },
-    onSubmit: async (values) => {
-      try {
-        await client.request('/api/v1/rbac/modules', {
-          method: 'POST',
-          body: JSON.stringify({
-            code: values.code,
-            name: values.name,
-            description: values.description || undefined,
-            sortOrder: Number(values.sortOrder),
-            parentModuleId: values.parentModuleId ? Number(values.parentModuleId) : undefined,
-          }),
-        });
-        toast.success('Module created successfully');
-        setShowCreate(false);
-        createForm.reset();
-        load();
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
-    },
-  });
+  const deleteModule = async (mod: ModuleNode) => {
+    if (!window.confirm(`Delete "${mod.name}"? Any child modules will also be removed.`)) return;
+    try {
+      await client.request(`/api/v1/rbac/modules/${mod.id}`, { method: 'DELETE' });
+      toast.success('Module deleted');
+      load();
+    } catch (e) { toast.error((e as Error).message); }
+  };
 
-  const editForm = useForm({
-    initialValues: { name: '', description: '', sortOrder: 0, isActive: true, parentModuleId: '' },
-    fields: {
-      name: { required: true },
-    },
+  const unlinkPermission = async (moduleId: number, permission: Permission) => {
+    if (!window.confirm(`Remove "${permission.name}" from this module? The permission itself won't be deleted.`)) return;
+    try {
+      await client.request(`/api/v1/rbac/modules/${moduleId}/permissions/${permission.id}`, { method: 'DELETE' });
+      toast.success('Permission removed from module');
+      load();
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
+  const moduleForm = useForm({
+    initialValues: { code: '', name: '', description: '', sortOrder: 0, isActive: true },
+    fields: { code: { required: true }, name: { required: true } },
     onSubmit: async (values) => {
-      if (!editingMod) return;
       try {
-        await client.request(`/api/v1/rbac/modules/${editingMod.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            name: values.name,
-            description: values.description || undefined,
-            sortOrder: Number(values.sortOrder),
-            isActive: values.isActive,
-            parentModuleId: values.parentModuleId ? Number(values.parentModuleId) : undefined,
-          }),
-        });
-        toast.success('Module updated successfully');
-        setEditingMod(null);
+        if (moduleModal?.mode === 'edit' && moduleModal.module) {
+          await client.request(`/api/v1/rbac/modules/${moduleModal.module.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              name: values.name, description: values.description || undefined,
+              sortOrder: Number(values.sortOrder), isActive: values.isActive,
+              parentModuleId: moduleModal.module.parentModuleId ?? undefined,
+            }),
+          });
+          toast.success('Module updated');
+        } else {
+          await client.request('/api/v1/rbac/modules', {
+            method: 'POST',
+            body: JSON.stringify({
+              code: values.code, name: values.name, description: values.description || undefined,
+              sortOrder: Number(values.sortOrder), parentModuleId: moduleModal?.parentModuleId ?? undefined,
+            }),
+          });
+          toast.success('Module created');
+        }
+        setModuleModal(null);
+        moduleForm.reset();
         load();
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
+      } catch (e) { toast.error((e as Error).message); }
     },
   });
 
   useEffect(() => {
-    if (editingMod) {
-      editForm.reset({
-        name: editingMod.name,
-        description: editingMod.description || '',
-        sortOrder: editingMod.sortOrder,
-        isActive: editingMod.isActive,
-        parentModuleId: editingMod.parentModuleId ? String(editingMod.parentModuleId) : '',
+    if (moduleModal?.mode === 'edit' && moduleModal.module) {
+      moduleForm.reset({
+        code: moduleModal.module.code, name: moduleModal.module.name,
+        description: moduleModal.module.description || '', sortOrder: moduleModal.module.sortOrder,
+        isActive: moduleModal.module.isActive,
       });
+    } else if (moduleModal?.mode === 'create') {
+      moduleForm.reset({ code: '', name: '', description: '', sortOrder: 0, isActive: true });
     }
-  }, [editingMod]);
+  }, [moduleModal]);
+
+  const permForm = useForm({
+    initialValues: { code: '', name: '', description: '', sortOrder: 0 },
+    fields: { code: { required: true }, name: { required: true } },
+    onSubmit: async (values) => {
+      if (!permModal) return;
+      try {
+        await client.request(`/api/v1/rbac/modules/${permModal.moduleId}/permissions`, {
+          method: 'POST',
+          body: JSON.stringify({
+            code: values.code, name: values.name,
+            description: values.description || undefined, sortOrder: Number(values.sortOrder),
+          }),
+        });
+        toast.success('Permission added');
+        setPermModal(null);
+        permForm.reset();
+        load();
+      } catch (e) { toast.error((e as Error).message); }
+    },
+  });
 
   if (error) return <ErrorState title="Failed to load modules" message={error} retry={load} />;
-  if (loading && modules.length === 0) return <PageLoader message="Loading modules..." />;
+  if (loading && tree.length === 0) return <PageLoader message="Loading modules..." />;
 
-  const columns: ColumnDef<Module>[] = [
-    { key: 'code', header: 'Code', sortable: true },
-    { key: 'name', header: 'Name', sortable: true },
-    { key: 'description', header: 'Description' },
-    {
-      key: 'isActive',
-      header: 'Status',
-      render: (row) => <Badge variant={row.isActive ? 'success' : 'danger'}>{row.isActive ? 'Active' : 'Inactive'}</Badge>,
-    },
-    {
-      key: 'actions' as any,
-      header: 'Actions',
-      render: (row) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button variant="ghost" onClick={() => setEditingMod(row)}>
-            Edit
-          </Button>
-          <Button variant="ghost" onClick={() => deleteMod(row.id)} style={{ color: 'var(--maw-danger)' }}>
-            Delete
-          </Button>
+  const renderNode = (node: ModuleNode, depth: number): ReactNode => {
+    const isOpen = expanded.has(node.id);
+    const hasChildren = node.children.length > 0;
+    return (
+      <div key={node.id} style={{ marginLeft: depth * 24 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 'var(--maw-space-sm)',
+          padding: 'var(--maw-space-sm) var(--maw-space-md)',
+          border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-md)',
+          background: 'var(--maw-surface)', marginBottom: 'var(--maw-space-sm)',
+        }}>
+          <button
+            type="button"
+            onClick={() => toggleExpand(node.id)}
+            disabled={!hasChildren && node.permissions.length === 0}
+            style={{ background: 'none', border: 'none', cursor: hasChildren || node.permissions.length > 0 ? 'pointer' : 'default', fontSize: 10, color: 'var(--maw-fgSubtle)', width: 14 }}
+          >
+            {(hasChildren || node.permissions.length > 0) ? (isOpen ? '▾' : '▸') : ''}
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontWeight: 600, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fg)' }}>{node.name}</span>
+              <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', fontFamily: 'monospace' }}>{node.code}</span>
+              <Badge variant={node.isActive ? 'success' : 'danger'}>{node.isActive ? 'Active' : 'Inactive'}</Badge>
+              <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)' }}>{node.permissions.length} permission{node.permissions.length === 1 ? '' : 's'}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            <Button variant="ghost" onClick={() => setPermModal({ moduleId: node.id, moduleName: node.name })} style={{ fontSize: 'var(--maw-text-xs)', padding: '3px 8px' }}>+ Permission</Button>
+            <Button variant="ghost" onClick={() => setModuleModal({ mode: 'create', parentModuleId: node.id })} style={{ fontSize: 'var(--maw-text-xs)', padding: '3px 8px' }}>+ Child Module</Button>
+            <Button variant="ghost" onClick={() => setModuleModal({ mode: 'edit', parentModuleId: node.parentModuleId, module: node })} style={{ fontSize: 'var(--maw-text-xs)', padding: '3px 8px' }}>Edit</Button>
+            <Button variant="ghost" onClick={() => deleteModule(node)} style={{ fontSize: 'var(--maw-text-xs)', padding: '3px 8px', color: 'var(--maw-danger)' }}>Delete</Button>
+          </div>
         </div>
-      ),
-    },
-  ];
+
+        {isOpen && node.permissions.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginLeft: 24 + 14, marginBottom: 'var(--maw-space-sm)' }}>
+            {node.permissions.map((p) => (
+              <span key={p.id} title={p.description ?? undefined} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '3px 6px 3px 10px', borderRadius: 999,
+                background: 'color-mix(in srgb, var(--maw-brand) 8%, var(--maw-surface))',
+                border: '1px solid var(--maw-border)', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fg)',
+              }}>
+                {p.name}
+                <button
+                  type="button"
+                  onClick={() => unlinkPermission(node.id, p)}
+                  aria-label={`Remove ${p.name}`}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maw-fgSubtle)', fontSize: 11, padding: 0, lineHeight: 1 }}
+                >✕</button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {isOpen && hasChildren && node.children.map((child) => renderNode(child, depth + 1))}
+      </div>
+    );
+  };
 
   return (
-    <ListPage title="Module / Action Registry" createLabel="Create Module" onCreate={() => setShowCreate(true)}>
-      <DataTable columns={columns} data={modules} keyField="id" emptyMessage="No modules found" />
+    <div style={{
+      border: '1px solid var(--maw-border)',
+      borderRadius: 'var(--maw-radius-lg)',
+      background: 'var(--maw-surface)',
+      overflow: 'hidden',
+      marginBottom: 'var(--maw-space-lg)',
+    }}>
+      <div style={{
+        padding: 'var(--maw-space-md) var(--maw-space-lg)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 'var(--maw-space-md)',
+      }}>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 'var(--maw-text-md)', color: 'var(--maw-fg)' }}>Modules & Permissions</div>
+          <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', marginTop: 2 }}>
+            Add a module, nest a child under it, and attach permissions right here
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-sm)', flexShrink: 0 }}>
+          <Button onClick={() => setModuleModal({ mode: 'create', parentModuleId: null })} style={{ fontSize: 'var(--maw-text-xs)', padding: '5px 10px' }}>+ Add Module</Button>
+          <IconButton label="Close" onClick={onClose}>✕</IconButton>
+        </div>
+      </div>
 
-      {/* Create Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Module">
+      <Divider style={{ margin: 0 }} />
+
+      <div style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)', maxHeight: '70vh', overflowY: 'auto' }}>
+        {tree.length === 0 ? (
+          <div style={{ padding: 'var(--maw-space-xl)', textAlign: 'center', color: 'var(--maw-fgMuted)' }}>No modules yet — create one to get started.</div>
+        ) : (
+          tree.map((node) => renderNode(node, 0))
+        )}
+      </div>
+
+      {/* Create/Edit Module Modal */}
+      <Modal
+        open={moduleModal !== null}
+        onClose={() => setModuleModal(null)}
+        title={moduleModal?.mode === 'edit' ? `Edit Module: ${moduleModal.module?.code}` : moduleModal?.parentModuleId ? 'Add Child Module' : 'Add Module'}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <TextField
-            label="Module Code"
-            required
-            error={createForm.errors.code}
-            value={createForm.values.code}
-            onChange={(e) => createForm.setValue('code', (e.target as HTMLInputElement).value)}
-            placeholder="e.g. orders"
-          />
-          <TextField
-            label="Name"
-            required
-            error={createForm.errors.name}
-            value={createForm.values.name}
-            onChange={(e) => createForm.setValue('name', (e.target as HTMLInputElement).value)}
-            placeholder="e.g. Orders"
-          />
-          <TextField
-            label="Description"
-            value={createForm.values.description}
-            onChange={(e) => createForm.setValue('description', (e.target as HTMLInputElement).value)}
-            placeholder="Optional description"
-          />
-          <TextField
-            label="Parent Module ID"
-            value={createForm.values.parentModuleId}
-            onChange={(e) => createForm.setValue('parentModuleId', (e.target as HTMLInputElement).value)}
-            placeholder="Optional parent module ID"
-          />
-          <TextField
-            label="Sort Order"
-            type="number"
-            value={String(createForm.values.sortOrder)}
-            onChange={(e) => createForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
-          />
+          {moduleModal?.mode !== 'edit' && (
+            <TextField label="Module Code" required error={moduleForm.errors.code} value={moduleForm.values.code}
+              onChange={(e) => moduleForm.setValue('code', (e.target as HTMLInputElement).value)} placeholder="e.g. orders" />
+          )}
+          <TextField label="Name" required error={moduleForm.errors.name} value={moduleForm.values.name}
+            onChange={(e) => moduleForm.setValue('name', (e.target as HTMLInputElement).value)} placeholder="e.g. Orders" />
+          <TextField label="Description" value={moduleForm.values.description}
+            onChange={(e) => moduleForm.setValue('description', (e.target as HTMLInputElement).value)} placeholder="Optional" />
+          <TextField label="Sort Order" type="number" value={String(moduleForm.values.sortOrder)}
+            onChange={(e) => moduleForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))} />
+          {moduleModal?.mode === 'edit' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--maw-text-sm)' }}>
+              <input type="checkbox" checked={moduleForm.values.isActive} onChange={(e) => moduleForm.setValue('isActive', e.target.checked)} />Active
+            </label>
+          )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
+            <Button variant="ghost" onClick={() => setModuleModal(null)}>Cancel</Button>
+            <Button onClick={() => moduleForm.handleSubmit()} disabled={moduleForm.submitting}>
+              {moduleModal?.mode === 'edit' ? 'Save Changes' : 'Create'}
+            </Button>
           </div>
         </div>
       </Modal>
 
-      {/* Edit Modal */}
-      <Modal open={!!editingMod} onClose={() => setEditingMod(null)} title={`Edit Module: ${editingMod?.code}`}>
+      {/* Add Permission Modal */}
+      <Modal open={permModal !== null} onClose={() => setPermModal(null)} title={`Add Permission to: ${permModal?.moduleName ?? ''}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-          <TextField
-            label="Name"
-            required
-            error={editForm.errors.name}
-            value={editForm.values.name}
-            onChange={(e) => editForm.setValue('name', (e.target as HTMLInputElement).value)}
-          />
-          <TextField
-            label="Description"
-            value={editForm.values.description}
-            onChange={(e) => editForm.setValue('description', (e.target as HTMLInputElement).value)}
-          />
-          <TextField
-            label="Parent Module ID"
-            value={editForm.values.parentModuleId}
-            onChange={(e) => editForm.setValue('parentModuleId', (e.target as HTMLInputElement).value)}
-          />
-          <TextField
-            label="Sort Order"
-            type="number"
-            value={String(editForm.values.sortOrder)}
-            onChange={(e) => editForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))}
-          />
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--maw-text-sm)' }}>
-            <input type="checkbox" checked={editForm.values.isActive} onChange={(e) => editForm.setValue('isActive', e.target.checked)} />
-            Active
-          </label>
+          <TextField label="Permission Code" required error={permForm.errors.code} value={permForm.values.code}
+            onChange={(e) => permForm.setValue('code', (e.target as HTMLInputElement).value)} placeholder="e.g. Create_Orders" />
+          <TextField label="Name" required error={permForm.errors.name} value={permForm.values.name}
+            onChange={(e) => permForm.setValue('name', (e.target as HTMLInputElement).value)} placeholder="e.g. Create Orders" />
+          <TextField label="Description" value={permForm.values.description}
+            onChange={(e) => permForm.setValue('description', (e.target as HTMLInputElement).value)} placeholder="Optional" />
+          <TextField label="Sort Order" type="number" value={String(permForm.values.sortOrder)}
+            onChange={(e) => permForm.setValue('sortOrder', Number((e.target as HTMLInputElement).value))} />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-            <Button variant="ghost" onClick={() => setEditingMod(null)}>Cancel</Button>
-            <Button onClick={() => editForm.handleSubmit()} disabled={editForm.submitting}>Save Changes</Button>
+            <Button variant="ghost" onClick={() => setPermModal(null)}>Cancel</Button>
+            <Button onClick={() => permForm.handleSubmit()} disabled={permForm.submitting}>Add</Button>
           </div>
         </div>
       </Modal>
-    </ListPage>
+    </div>
   );
 }
