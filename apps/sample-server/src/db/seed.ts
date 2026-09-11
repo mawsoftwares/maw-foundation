@@ -181,7 +181,7 @@ try {
       { key: 'users', label: 'Users', path: '/users', icon: 'users', permission: 'Read_Users', sortOrder: 50 },
       { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60 },
       { key: 'account', label: 'Account', path: '/account', icon: 'lock', sortOrder: 70 },
-      { key: 'masters', label: 'Master Data', path: '/masters', icon: 'database', permission: 'Master_View', sortOrder: 80 },
+
       { key: 'superadmin', label: 'Super Admin', path: '/superadmin', icon: 'shield', sortOrder: 84 },
       { key: 'rbac', label: 'RBAC Admin', path: '/rbac', icon: 'key', permission: 'Manage_Rbac', sortOrder: 85, parentKey: 'superadmin' },
       { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86, parentKey: 'superadmin' },

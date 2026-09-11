@@ -34,7 +34,7 @@ import { UsersView } from './features/users/index';
 import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';
-import { MastersView } from './features/masters';
+
 import { PlatformView } from './features/platform';
 import { JobsView } from './features/jobs';
 import { NotificationsView } from './features/notifications';
@@ -51,7 +51,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags' | 'menus' | 'superadmin';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'platform' | 'jobs' | 'notifications' | 'feature-flags' | 'menus' | 'superadmin';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -81,7 +81,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'audit-logs', label: 'Audit Logs', icon: 'scroll-text', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
-  { key: 'masters', label: 'Master Data', icon: 'database', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
+
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
   { key: 'platform', label: 'Platform', icon: 'puzzle', path: '/platform', group: 'Dev', sortOrder: 95 },
@@ -97,7 +97,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   billing: 'Read_Billing',
   users: 'Read_Users',
   'audit-logs': 'Read_AuditLogs',
-  masters: 'Master_View',
+
   rbac: 'Manage_Rbac',
   'feature-flags': 'Read_FeatureFlags',
   menus: 'Manage_Menus',
@@ -109,7 +109,7 @@ const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'platform', 'job
 const NAV_GROUPS: Record<string, string> = {
   dashboard: 'Main', orders: 'Main', reports: 'Main', inventory: 'Main',
   billing: 'Finance',
-  users: 'Admin', 'audit-logs': 'Admin', account: 'Admin', masters: 'Admin',
+  users: 'Admin', 'audit-logs': 'Admin', account: 'Admin',
   superadmin: 'Admin', settings: 'Admin',
   platform: 'Dev', jobs: 'Dev', notifications: 'Dev',
 };
@@ -162,7 +162,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'users': return <UsersView />;
     case 'audit-logs': return <AuditLogsView />;
     case 'account': return <AccountView />;
-    case 'masters': return <MastersView />;
+
     case 'platform': return <PlatformView />;
     case 'jobs': return <JobsView />;
     case 'notifications': return <NotificationsView />;
@@ -323,7 +323,7 @@ export function App(): ReactNode {
           'module.users': true,
           'module.audit-logs': true,
           'module.account': true,
-          'module.masters': true,
+
           'module.rbac': true,
           'module.menus': true
         })}>

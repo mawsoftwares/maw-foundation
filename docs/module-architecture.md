@@ -77,7 +77,7 @@ Make a module a Foundation npm package when **all** of the following are true:
 | `@mawsoftwares/theme` | Platform-agnostic design tokens |
 | `@mawsoftwares/ui-web` | React web design system (40+ components) |
 | `@mawsoftwares/ui-auth` | Auth UI (login, register, password reset) |
-| `@mawsoftwares/masters` | Dynamic master data engine |
+
 | `@mawsoftwares/testing` | Test utilities |
 
 ---
