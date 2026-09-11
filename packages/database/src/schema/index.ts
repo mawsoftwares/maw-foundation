@@ -18,4 +18,3 @@ export { serviceCatalogue, serviceProviders, providerConfigurations, application
 export { emailTemplates, emailTemplateVersions } from './email-templates';
 export { serviceRequestLogs } from './gateway-logs';
 export { messagingEmailTemplates, messagingTemplates, messagingCredentials, messagingSendLogs } from './messaging';
-export { customers } from './customers';

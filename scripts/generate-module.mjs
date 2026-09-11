@@ -575,7 +575,11 @@ function generateIndexFile(spec, names) {
   });
   const statusColumnLine = `  { key: 'status', header: 'Status', render: (row) => <Badge variant={row.status === 'active' ? 'success' : 'danger'}>{row.status}</Badge> },`;
 
-  const editResetFields = fields.map((f) => `${toCamelCase(f.name)}: editing.${toCamelCase(f.name)}`).join(', ');
+  const editResetFields = fields.map((f) => {
+    const key = toCamelCase(f.name);
+    const fallback = f.required ? '' : ` ?? ${defaultValueLiteral(f)}`;
+    return `${key}: editing.${key}${fallback}`;
+  }).join(', ');
   const editResetValues = hasStatusField ? editResetFields : `${editResetFields}, status: editing.status`;
 
   const detailFieldLines = fields.map((f) => {

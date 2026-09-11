@@ -873,7 +873,6 @@ import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
 import { createMenuRouter } from './menu-routes';
 import { createMessagingRouter } from './messaging-routes';
-import { createCustomersRouter } from './customers-routes';
 
 const usersRepo = new AuthSchemaUsersRepository(data.db);
 app.use('/api/v1/users', createUsersRouter(usersRepo, {
@@ -894,10 +893,6 @@ app.use('/api/v1/messaging', createMessagingRouter(data.db, {
   encryption: new AesEncryptionService(MFA_ENCRYPTION_KEY),
   fallbackEmailService: communication.emailService,
   defaultTenantId: DEMO_TENANT,
-}));
-app.use('/api/v1/customers', createCustomersRouter(data.db, {
-  requireAuth: auth.requireAuth,
-  requirePermission: (perm) => auth.requirePermission(perm),
 }));
 app.use('/api/v1/tenants', createTenantRoutes({
   tenantRepository,
