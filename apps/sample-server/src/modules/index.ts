@@ -9,6 +9,7 @@ import { auditLogsModule } from './audit-logs';
 
 import { featureFlagsModule } from './feature-flags';
 import { menusModule } from './menus';
+import { themeModule } from './theme';
 
 const log = createLogger('registry');
 
@@ -44,4 +45,5 @@ registry.register(
 
   featureFlagsModule,
   menusModule,
+  themeModule,
 );

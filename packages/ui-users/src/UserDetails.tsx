@@ -208,6 +208,15 @@ function UserProfileEditor({
           </span>
         </Stack>
         <Stack direction="row" gap="var(--maw-space-sm)" align="center">
+          {canUpdate && (
+            <Button
+              variant="ghost"
+              disabled={busy || editing}
+              onClick={() => handleAction(isActive ? onDeactivate : onActivate)}
+            >
+              {isActive ? 'Deactivate' : 'Activate'}
+            </Button>
+          )}
           {editing ? (
             <>
               <Button type="button" variant="ghost" disabled={busy} onClick={cancelEdit}>
@@ -218,27 +227,16 @@ function UserProfileEditor({
               </Button>
             </>
           ) : (
-            <>
-              {canUpdate && (
-                <Button
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => handleAction(isActive ? onDeactivate : onActivate)}
-                >
-                  {isActive ? 'Deactivate' : 'Activate'}
-                </Button>
-              )}
-              {canUpdate && (
-                <Button variant="ghost" disabled={busy} onClick={startEdit}>
-                  Edit
-                </Button>
-              )}
-              {canDelete && (
-                <Button variant="danger" disabled={busy} onClick={() => handleAction(onDelete)}>
-                  Delete
-                </Button>
-              )}
-            </>
+            canUpdate && (
+              <Button variant="ghost" disabled={busy} onClick={startEdit}>
+                Edit
+              </Button>
+            )
+          )}
+          {canDelete && !editing && (
+            <Button variant="danger" disabled={busy} onClick={() => handleAction(onDelete)}>
+              Delete
+            </Button>
           )}
         </Stack>
       </Stack>

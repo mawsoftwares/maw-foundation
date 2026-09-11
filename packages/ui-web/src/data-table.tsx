@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode, type CSSProperties } from 'react';
 import { Checkbox, Select, IconButton, Stack, Spinner, Card } from './components';
 import { useIsMobile } from './responsive';
+import { SkeletonRows } from './states';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -127,6 +128,9 @@ export function DataTable<T extends object>({
   const totalPages = pagination ? Math.ceil(pagination.total / pagination.pageSize) : 0;
 
   const renderMobileCards = () => {
+    if (loading && data.length === 0) {
+      return <div style={{ padding: 'var(--maw-space-md)' }}><SkeletonRows rows={4} columns={1} /></div>;
+    }
     if (data.length === 0 && !loading) {
       return <div style={{ padding: 'var(--maw-space-xl)', textAlign: 'center', color: 'var(--maw-fgMuted)' }}>{emptyMessage}</div>;
     }
@@ -235,6 +239,13 @@ export function DataTable<T extends object>({
             </tr>
           </thead>
           <tbody>
+            {loading && data.length === 0 && (
+              <tr>
+                <td colSpan={columns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0)} style={{ padding: 'var(--maw-space-lg)' }}>
+                  <SkeletonRows rows={5} columns={columns.length} />
+                </td>
+              </tr>
+            )}
             {data.length === 0 && !loading && (
               <tr>
                 <td
@@ -331,7 +342,7 @@ export function DataTable<T extends object>({
         </Stack>
       )}
 
-      {loading && (
+      {loading && data.length > 0 && (
         <Stack direction="column" align="center" style={{ padding: 'var(--maw-space-lg)' }}>
           <Spinner size={24} />
         </Stack>

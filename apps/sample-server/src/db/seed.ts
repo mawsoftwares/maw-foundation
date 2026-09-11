@@ -179,16 +179,16 @@ try {
       { key: 'inventory', label: 'Inventory', path: '/inventory', icon: 'clipboard-list', permission: 'Read_Inventory', sortOrder: 30 },
       { key: 'billing', label: 'Billing', path: '/billing', icon: 'credit-card', permission: 'Read_Billing', sortOrder: 40 },
       { key: 'users', label: 'Users', path: '/users', icon: 'users', permission: 'Read_Users', sortOrder: 50 },
-      { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60 },
+      { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60, parentKey: 'superadmin' },
       { key: 'account', label: 'Account', path: '/account', icon: 'lock', sortOrder: 70 },
 
       { key: 'superadmin', label: 'Super Admin', path: '/superadmin', icon: 'shield', sortOrder: 84 },
       { key: 'rbac', label: 'RBAC Admin', path: '/rbac', icon: 'key', permission: 'Manage_Rbac', sortOrder: 85, parentKey: 'superadmin' },
       { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86, parentKey: 'superadmin' },
       { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87, parentKey: 'superadmin' },
+      { key: 'theme', label: 'Theme Designer', path: '/theme', icon: 'palette', permission: 'Manage_Theme', sortOrder: 88, parentKey: 'superadmin' },
       { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
-      { key: 'platform', label: 'Platform', path: '/platform', icon: 'puzzle', sortOrder: 950 },
-      { key: 'jobs', label: 'Jobs', path: '/jobs', icon: 'clock', sortOrder: 960 },
+
       { key: 'notifications', label: 'Notifications', path: '/notifications', icon: 'bell', sortOrder: 970 },
       { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990, parentKey: 'superadmin' },
     ];

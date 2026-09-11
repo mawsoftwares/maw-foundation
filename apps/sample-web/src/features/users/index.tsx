@@ -11,6 +11,7 @@ const userApiAdapter: IUserApiService = {
     if (params.page) q.set('page', params.page.toString());
     if (params.pageSize) q.set('limit', params.pageSize.toString());
     if (params.filter) q.set('search', params.filter);
+    if (params.filters?.status) q.set('status', params.filters.status as string);
 
     const res = await client.request<{ data: { items: UserResponseDto[]; total: number; page: number; pageSize: number } }>(`/api/v1/users?${q.toString()}`);
     const data = res.data;

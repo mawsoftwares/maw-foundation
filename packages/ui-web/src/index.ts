@@ -88,6 +88,8 @@ export {
   ErrorState,
   EmptyState,
   Skeleton,
+  SkeletonText,
+  SkeletonRows,
   LoadingOverlay,
   PageLoader,
 } from './states';

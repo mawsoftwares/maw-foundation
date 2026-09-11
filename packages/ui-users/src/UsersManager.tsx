@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useCrud, Drawer } from '@mawsoftwares/ui-web';
+import { useCrud, Drawer, ConfirmationDialog } from '@mawsoftwares/ui-web';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
 import type { IUserApiService, RoleOption } from './types';
 import { UsersList } from './UsersList';
@@ -18,6 +18,8 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailsUser, setDetailsUser] = useState<UserResponseDto | null>(null);
   const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [actionConfirm, setActionConfirm] = useState<{ type: 'activate' | 'deactivate'; id: string } | null>(null);
 
   useEffect(() => {
     if (!api.listRoles) return;
@@ -30,11 +32,11 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
     resourceName: 'Users',
     columns: [],
     keyField: 'id',
-    fetchList: (params: any) => api.list(params),
+    fetchList: (params: any) => api.list({ ...params, filters: { status: statusFilter === 'ALL' ? undefined : statusFilter } }),
     create: (data: any) => api.create(data as CreateUserDto),
     update: (id: string, data: any) => api.update(id, data as UpdateUserDto),
     remove: (id: string) => api.delete(id),
-  }), [api]);
+  }), [api, statusFilter]);
 
   const crud = useCrud<any>(crudConfig);
 
@@ -87,18 +89,27 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
     }
   };
 
-  const handleActivate = async () => {
-    if (!selectedId) return;
-    const updated = await api.activate(selectedId);
-    setDetailsUser(updated);
-    crud.refresh();
+  const handleActivate = (id: string) => {
+    setActionConfirm({ type: 'activate', id });
   };
 
-  const handleDeactivate = async () => {
-    if (!selectedId) return;
-    const updated = await api.deactivate(selectedId);
-    setDetailsUser(updated);
+  const handleDeactivate = (id: string) => {
+    setActionConfirm({ type: 'deactivate', id });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!actionConfirm) return;
+    if (actionConfirm.type === 'activate') {
+      await api.activate(actionConfirm.id);
+    } else {
+      await api.deactivate(actionConfirm.id);
+    }
     crud.refresh();
+    if (detailsUser && detailsUser.id === actionConfirm.id) {
+      const updated = await api.get(actionConfirm.id);
+      setDetailsUser(updated);
+    }
+    setActionConfirm(null);
   };
 
   const isDrawerLayout = formLayout === 'drawer';
@@ -107,8 +118,8 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
       user={selectedUser}
       onBack={handleBackToList}
       onDelete={handleDelete}
-      onActivate={handleActivate}
-      onDeactivate={handleDeactivate}
+      onActivate={() => handleActivate(selectedUser.id)}
+      onDeactivate={() => handleDeactivate(selectedUser.id)}
       onSave={handleUpdate}
       {...formProps}
     />
@@ -136,6 +147,10 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
           crud={crud}
           onCreate={handleCreateNew}
           onView={handleViewDetails}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          onActivate={handleActivate}
+          onDeactivate={handleDeactivate}
         />
       )}
 
@@ -164,6 +179,16 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
           </Drawer>
         </>
       )}
+
+      <ConfirmationDialog
+        open={actionConfirm !== null}
+        title={actionConfirm?.type === 'activate' ? 'Activate User' : 'Deactivate User'}
+        message={actionConfirm?.type === 'activate' ? 'Are you sure you want to activate this user? They will regain access to the platform.' : 'Are you sure you want to deactivate this user? They will no longer be able to log in.'}
+        confirmLabel={actionConfirm?.type === 'activate' ? 'Activate' : 'Deactivate'}
+        danger={actionConfirm?.type === 'deactivate'}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setActionConfirm(null)}
+      />
     </>
   );
 }

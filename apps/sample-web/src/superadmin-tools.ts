@@ -18,5 +18,6 @@ export const SUPERADMIN_TOOLS: SuperAdminTool[] = [
   { key: 'rbac', label: 'RBAC Admin', description: 'Manage roles, permissions, and modules', icon: 'key', permission: 'Manage_Rbac' },
   { key: 'menus', label: 'Menu Management', description: "Control the app's navigation sidebar", icon: 'menu', permission: 'Manage_Menus' },
   { key: 'feature-flags', label: 'Feature Flags', description: 'Enable or disable features per environment', icon: 'flag', permission: 'Read_FeatureFlags' },
+  { key: 'theme', label: 'Theme Designer', description: 'Apply a live color theme from a design.md file', icon: 'palette', permission: 'Manage_Theme' },
   { key: 'showcase', label: 'UI Showcase', description: 'Browse the design system components', icon: 'palette' },
 ];

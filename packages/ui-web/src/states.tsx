@@ -104,7 +104,9 @@ export function EmptyState({
 }
 
 // ---------------------------------------------------------------------------
-// Skeleton
+// Skeleton — the shared shimmer primitive. Every module gets the same loading
+// placeholder for free by dropping this in instead of hand-rolling one; see
+// also `SkeletonText`/`SkeletonRows` below for the common multi-line/table cases.
 // ---------------------------------------------------------------------------
 
 export function Skeleton({
@@ -124,11 +126,54 @@ export function Skeleton({
         width,
         height,
         borderRadius,
-        background: 'var(--maw-bgMuted)',
-        animation: 'maw-skeleton 1.5s ease-in-out infinite',
+        background: 'linear-gradient(90deg, var(--maw-bgMuted) 25%, var(--maw-border) 37%, var(--maw-bgMuted) 63%)',
+        backgroundSize: '400% 100%',
+        animation: 'maw-shimmer 1.4s ease infinite',
         ...style,
       }}
     />
+  );
+}
+
+export function SkeletonText({
+  lines = 3,
+  lastLineWidth = '60%',
+  gap = 'var(--maw-space-sm)',
+  style,
+}: {
+  lines?: number;
+  lastLineWidth?: string | number;
+  gap?: string | number;
+  style?: CSSProperties;
+}): ReactNode {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap, ...style }}>
+      {Array.from({ length: lines }, (_, i) => (
+        <Skeleton key={i} width={i === lines - 1 ? lastLineWidth : '100%'} />
+      ))}
+    </div>
+  );
+}
+
+export function SkeletonRows({
+  rows = 5,
+  columns = 4,
+  style,
+}: {
+  rows?: number;
+  columns?: number;
+  style?: CSSProperties;
+}): ReactNode {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-md)', ...style }}>
+      {Array.from({ length: rows }, (_, r) => (
+        <div key={r} style={{ display: 'flex', gap: 'var(--maw-space-lg)' }}>
+          {Array.from({ length: columns }, (_, c) => (
+            <Skeleton key={c} height={14} style={{ flex: c === 0 ? '0 0 24px' : 1 }} />
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 

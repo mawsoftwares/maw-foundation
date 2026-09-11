@@ -17,6 +17,7 @@ import {
   OfflineBanner,
   FeatureFlagProvider,
   useFeatureFlags,
+  useTheme,
   type NavItem,
   type NavigationConfig,
 } from '@mawsoftwares/ui-web';
@@ -35,12 +36,12 @@ import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';
 
-import { PlatformView } from './features/platform';
-import { JobsView } from './features/jobs';
+
 import { NotificationsView } from './features/notifications';
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
 import { MenusView } from './features/menus';
+import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-settings';
 import { SuperAdminView } from './features/superadmin';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
 import { TopBarActions } from './shell/TopBarActions';
@@ -51,7 +52,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'platform' | 'jobs' | 'notifications' | 'feature-flags' | 'menus' | 'superadmin';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'notifications' | 'feature-flags' | 'menus' | 'theme' | 'superadmin';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -84,8 +85,7 @@ const NAV_ITEMS: NavItem[] = [
 
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
-  { key: 'platform', label: 'Platform', icon: 'puzzle', path: '/platform', group: 'Dev', sortOrder: 95 },
-  { key: 'jobs', label: 'Jobs', icon: 'clock', path: '/jobs', group: 'Dev', sortOrder: 96 },
+
   { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },
 ];
 
@@ -101,9 +101,10 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   rbac: 'Manage_Rbac',
   'feature-flags': 'Read_FeatureFlags',
   menus: 'Manage_Menus',
+  theme: 'Manage_Theme',
 };
 
-const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'platform', 'jobs', 'notifications']);
+const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'notifications']);
 
 /** Sidebar section for each known nav key, used to group DB-driven menu items the same way the static fallback does. */
 const NAV_GROUPS: Record<string, string> = {
@@ -111,7 +112,7 @@ const NAV_GROUPS: Record<string, string> = {
   billing: 'Finance',
   users: 'Admin', 'audit-logs': 'Admin', account: 'Admin',
   superadmin: 'Admin', settings: 'Admin',
-  platform: 'Dev', jobs: 'Dev', notifications: 'Dev',
+  notifications: 'Dev',
 };
 
 function menuNodeToNavItem(node: MenuTreeNode): NavItem {
@@ -163,12 +164,12 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'audit-logs': return <AuditLogsView />;
     case 'account': return <AccountView />;
 
-    case 'platform': return <PlatformView />;
-    case 'jobs': return <JobsView />;
+
     case 'notifications': return <NotificationsView />;
     case 'rbac': return <RbacView />;
     case 'feature-flags': return <FeatureFlagsView />;
     case 'menus': return <MenusView />;
+    case 'theme': return <ThemeSettingsView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
     case 'superadmin': return <SuperAdminView />;
@@ -182,7 +183,18 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
+  const { applyBranding } = useTheme();
   const [page, setPage] = useState<Page>('dashboard');
+
+  useEffect(() => {
+    const stored = localStorage.getItem(DESIGN_MD_STORAGE_KEY);
+    if (stored === null) return;
+    try {
+      applyBranding(JSON.parse(stored));
+    } catch {
+      localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
+    }
+  }, [applyBranding]);
   const deepLink = useMemo(() => readAuthDeepLink(), []);
   const [authPage, setAuthPage] = useState<AuthPage>(deepLink.page);
   const [authToken, setAuthToken] = useState(deepLink.token);
