@@ -19,5 +19,6 @@ export const SUPERADMIN_TOOLS: SuperAdminTool[] = [
   { key: 'menus', label: 'Menu Management', description: "Control the app's navigation sidebar", icon: 'menu', permission: 'Manage_Menus' },
   { key: 'feature-flags', label: 'Feature Flags', description: 'Enable or disable features per environment', icon: 'flag', permission: 'Read_FeatureFlags' },
   { key: 'theme', label: 'Theme Designer', description: 'Apply a live color theme from a design.md file', icon: 'palette', permission: 'Manage_Theme' },
+  { key: 'messaging', label: 'Messaging', description: 'Manage Email, SMS, and WhatsApp templates, credentials, and send logs', icon: 'mail', permission: 'Read_Messaging' },
   { key: 'showcase', label: 'UI Showcase', description: 'Browse the design system components', icon: 'palette' },
 ];

@@ -17,3 +17,4 @@ export { applicationCredentials } from './credentials';
 export { serviceCatalogue, serviceProviders, providerConfigurations, applicationServices } from './service-catalogue';
 export { emailTemplates, emailTemplateVersions } from './email-templates';
 export { serviceRequestLogs } from './gateway-logs';
+export { messagingEmailTemplates, messagingTemplates, messagingCredentials, messagingSendLogs } from './messaging';

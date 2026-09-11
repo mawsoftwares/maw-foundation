@@ -1,4 +1,4 @@
-import type { IUsersRepository, User } from '@mawsoftwares/users';
+import type { IUsersRepository, User } from './modules/users';
 import { randomUUID } from 'crypto';
 
 export class MemoryUsersRepository implements IUsersRepository {

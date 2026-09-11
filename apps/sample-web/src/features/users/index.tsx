@@ -1,61 +1,52 @@
 import { UsersManager, type IUserApiService } from '@mawsoftwares/ui-users';
 import { client } from '../../api';
+import { store } from '../../store';
+import { usersApi } from './usersApi';
 
 import type { ListParams } from '@mawsoftwares/ui-web';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 
+// Same IUserApiService contract @mawsoftwares/ui-users' <UsersManager> expects,
+// but backed by Redux Toolkit (RTK Query) underneath instead of ad hoc
+// client.request() calls — dispatching each endpoint's `.initiate(...)` and
+// unwrapping it gives RTK Query's caching/dedup/invalidation for free while
+// keeping UsersManager itself untouched.
 const userApiAdapter: IUserApiService = {
   list: async (params: ListParams) => {
-    const q = new URLSearchParams();
-    if (params.page) q.set('page', params.page.toString());
-    if (params.pageSize) q.set('limit', params.pageSize.toString());
-    if (params.filter) q.set('search', params.filter);
-    if (params.filters?.status) q.set('status', params.filters.status as string);
-
-    const res = await client.request<{ data: { items: UserResponseDto[]; total: number; page: number; pageSize: number } }>(`/api/v1/users?${q.toString()}`);
-    const data = res.data;
-
-    return {
-      data: data.items,
-      total: data.total,
-      page: data.page,
-      pageSize: data.pageSize,
-    };
+    const result = await store.dispatch(
+      usersApi.endpoints.listUsers.initiate({
+        page: params.page,
+        pageSize: params.pageSize,
+        search: params.filter,
+        status: params.filters?.status as string | undefined,
+      }),
+    ).unwrap();
+    return { data: result.items, total: result.total, page: result.page, pageSize: result.pageSize };
   },
   get: async (id: string) => {
-    const res = await client.request<{ data: UserResponseDto }>(`/api/v1/users/${id}`);
-    return res.data;
+    return store.dispatch(usersApi.endpoints.getUser.initiate(id)).unwrap();
   },
   create: async (data: CreateUserDto) => {
-    const res = await client.request<{ data: UserResponseDto }>('/api/v1/users', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return res.data;
+    return store.dispatch(usersApi.endpoints.createUser.initiate(data)).unwrap();
   },
   update: async (id: string, data: UpdateUserDto) => {
-    const res = await client.request<{ data: UserResponseDto }>(`/api/v1/users/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-    return res.data;
+    return store.dispatch(usersApi.endpoints.updateUser.initiate({ id, data })).unwrap();
   },
   delete: async (id: string) => {
-    await client.request(`/api/v1/users/${id}`, { method: 'DELETE' });
+    await store.dispatch(usersApi.endpoints.deleteUser.initiate(id)).unwrap();
   },
   activate: async (id: string) => {
-    const res = await client.request<{ data: UserResponseDto }>(`/api/v1/users/${id}/activate`, { method: 'POST' });
-    return res.data;
+    return store.dispatch(usersApi.endpoints.activateUser.initiate(id)).unwrap();
   },
   deactivate: async (id: string) => {
-    const res = await client.request<{ data: UserResponseDto }>(`/api/v1/users/${id}/deactivate`, { method: 'POST' });
-    return res.data;
+    return store.dispatch(usersApi.endpoints.deactivateUser.initiate(id)).unwrap();
   },
   listRoles: async () => {
-    const res = await client.request<{ data: Array<{ code: string; name: string }> }>('/api/v1/roles');
-    return res.data;
+    return store.dispatch(usersApi.endpoints.listRoles.initiate()).unwrap();
   },
+  // File upload has no natural RTK Query shape (multipart + progress events)
+  // and stays on the plain ApiClient, same as before.
   uploadAvatar: async (file, onProgress) => {
     const formData = new FormData();
     formData.append('files', file);

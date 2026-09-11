@@ -187,6 +187,7 @@ try {
       { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86, parentKey: 'superadmin' },
       { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87, parentKey: 'superadmin' },
       { key: 'theme', label: 'Theme Designer', path: '/theme', icon: 'palette', permission: 'Manage_Theme', sortOrder: 88, parentKey: 'superadmin' },
+      { key: 'messaging', label: 'Messaging', path: '/messaging', icon: 'mail', permission: 'Read_Messaging', sortOrder: 89, parentKey: 'superadmin' },
       { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
 
       { key: 'notifications', label: 'Notifications', path: '/notifications', icon: 'bell', sortOrder: 970 },
@@ -209,6 +210,37 @@ try {
       menuCount++;
     }
     log.info('Menu items upserted', { count: menuCount });
+
+    // --- Messaging: demo templates (email/sms/whatsapp), upserted by identifier ---
+    await client.query(
+      `INSERT INTO messaging_email_templates (identifier, name, subject, body, from_address, variables, description)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (identifier) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, body = EXCLUDED.body`,
+      [
+        'welcome-email', 'Welcome Email', 'Welcome to {{appName}}, {{userName}}!',
+        'Hi {{userName}},\n\nWelcome to {{appName}}! Your account is ready to go.\n\nThanks,\nThe {{appName}} Team',
+        'no-reply@example.com',
+        JSON.stringify([{ name: 'appName', required: true }, { name: 'userName', required: true }]),
+        'Sent when a new user signs up.',
+      ],
+    );
+    await client.query(
+      `INSERT INTO messaging_templates (channel, identifier, name, body, variables, description)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (channel, identifier) DO UPDATE SET name = EXCLUDED.name, body = EXCLUDED.body`,
+      ['sms', 'otp-sms', 'OTP Verification', 'Your {{appName}} verification code is {{otp}}. It expires in {{minutes}} minutes.',
+        JSON.stringify([{ name: 'appName', required: true }, { name: 'otp', required: true }, { name: 'minutes', required: true }]),
+        'One-time-password verification SMS.'],
+    );
+    await client.query(
+      `INSERT INTO messaging_templates (channel, identifier, name, body, variables, description)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (channel, identifier) DO UPDATE SET name = EXCLUDED.name, body = EXCLUDED.body`,
+      ['whatsapp', 'order-update-whatsapp', 'Order Update', 'Hi {{userName}}, your order {{orderId}} is now {{status}}.',
+        JSON.stringify([{ name: 'userName', required: true }, { name: 'orderId', required: true }, { name: 'status', required: true }]),
+        'Sent when an order status changes.'],
+    );
+    log.info('Messaging demo templates upserted');
   });
 
   log.info('Seed complete.');

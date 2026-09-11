@@ -11,8 +11,8 @@ import {
   DeactivateUserUseCase,
   AdminResetPasswordUseCase,
   type HashPasswordFn,
-} from '@mawsoftwares/users';
-import type { IUsersRepository } from '@mawsoftwares/users';
+} from './modules/users';
+import type { IUsersRepository } from './modules/users';
 
 export function createUsersRouter(
   repo: IUsersRepository,

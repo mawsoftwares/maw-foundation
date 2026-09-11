@@ -43,6 +43,7 @@ import { FeatureFlagsView } from './features/feature-flags';
 import { MenusView } from './features/menus';
 import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-settings';
 import { SuperAdminView } from './features/superadmin';
+import { MessagingView } from './features/messaging';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
 import { TopBarActions } from './shell/TopBarActions';
 
@@ -52,7 +53,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'notifications' | 'feature-flags' | 'menus' | 'theme' | 'superadmin';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'notifications' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -102,6 +103,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   'feature-flags': 'Read_FeatureFlags',
   menus: 'Manage_Menus',
   theme: 'Manage_Theme',
+  messaging: 'Read_Messaging',
 };
 
 const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'notifications']);
@@ -170,6 +172,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'feature-flags': return <FeatureFlagsView />;
     case 'menus': return <MenusView />;
     case 'theme': return <ThemeSettingsView />;
+    case 'messaging': return <MessagingView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
     case 'superadmin': return <SuperAdminView />;

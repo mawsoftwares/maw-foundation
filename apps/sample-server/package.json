@@ -17,7 +17,6 @@
     "@mawsoftwares/sdk": "workspace:*",
     "@mawsoftwares/server-express": "workspace:*",
     "@mawsoftwares/tenancy": "workspace:*",
-    "@mawsoftwares/users": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "express": "^5.0.0",
     "multer": "^2.3.0",

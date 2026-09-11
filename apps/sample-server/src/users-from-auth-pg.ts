@@ -2,7 +2,7 @@ import type { DrizzleDb } from '@mawsoftwares/database';
 import { schema } from '@mawsoftwares/database';
 import { eq, and, ne, sql } from 'drizzle-orm';
 import type { PgClient } from '@mawsoftwares/database';
-import type { IUsersRepository, User } from '@mawsoftwares/users';
+import type { IUsersRepository, User } from './modules/users';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
