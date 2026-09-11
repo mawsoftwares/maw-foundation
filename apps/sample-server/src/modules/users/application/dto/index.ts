@@ -56,6 +56,8 @@ export interface ListUsersQueryDto {
   role?: string;
   createdFrom?: string;
   createdTo?: string;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 export interface UserResponseDto {

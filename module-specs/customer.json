@@ -1,0 +1,10 @@
+{
+  "name": "Customer",
+  "fields": [
+    { "name": "name", "type": "string", "required": true },
+    { "name": "email", "type": "email", "required": true },
+    { "name": "mobile", "type": "string", "required": true },
+    { "name": "companyName", "type": "string", "required": false },
+    { "name": "status", "type": "enum", "options": ["active", "inactive"], "default": "active" }
+  ]
+}

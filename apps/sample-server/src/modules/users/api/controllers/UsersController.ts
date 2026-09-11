@@ -68,6 +68,8 @@ export class UsersController {
       role: firstQuery(query['role']),
       createdFrom: firstQuery(query['createdFrom']),
       createdTo: firstQuery(query['createdTo']),
+      sortBy: firstQuery(query['sortBy']),
+      sortDir: firstQuery(query['sortDir']) as 'asc' | 'desc' | undefined,
     });
     return ok(result);
   };

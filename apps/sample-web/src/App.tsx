@@ -44,6 +44,7 @@ import { MenusView } from './features/menus';
 import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-settings';
 import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
+import { CustomersView } from './features/customers';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
 import { TopBarActions } from './shell/TopBarActions';
 
@@ -53,7 +54,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'notifications' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'notifications' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'customers';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -87,6 +88,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
 
+  { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
   { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },
 ];
 
@@ -104,6 +106,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   menus: 'Manage_Menus',
   theme: 'Manage_Theme',
   messaging: 'Read_Messaging',
+  customers: 'Read_Customers',
 };
 
 const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'notifications']);
@@ -173,6 +176,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'menus': return <MenusView />;
     case 'theme': return <ThemeSettingsView />;
     case 'messaging': return <MessagingView />;
+    case 'customers': return <CustomersView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
     case 'superadmin': return <SuperAdminView />;

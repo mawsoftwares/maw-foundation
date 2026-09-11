@@ -1,8 +1,8 @@
 import type { DrizzleDb } from '@mawsoftwares/database';
 import { schema } from '@mawsoftwares/database';
-import { eq, and, ne, sql } from 'drizzle-orm';
+import { eq, and, ne, sql, asc, desc } from 'drizzle-orm';
 import type { PgClient } from '@mawsoftwares/database';
-import type { IUsersRepository, User } from './modules/users';
+import type { IUsersRepository, User, ListUsersQueryDto } from './modules/users';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 
@@ -98,18 +98,61 @@ export class AuthSchemaUsersRepository implements IUsersRepository {
     return rows[0] !== undefined ? toModuleUser(rows[0]) : null;
   }
 
-  async searchUsers(tenantId: string, _query?: unknown, options?: unknown): Promise<User[]> {
-    const opts = (options ?? {}) as { limit?: number; offset?: number };
-    const limit = opts.limit ?? 50;
-    const offset = opts.offset ?? 0;
+  async searchUsers(tenantId: string, query: ListUsersQueryDto): Promise<{ items: User[]; total: number }> {
+    const limit = query.limit && query.limit > 0 && query.limit <= 100 ? query.limit : 20;
+    const offset = ((query.page || 1) - 1) * limit;
+
+    const conditions = [eq(schema.users.tenantId, tenantId)];
+
+    if (query.status) {
+      conditions.push(eq(schema.users.accountStatus, query.status));
+    } else {
+      conditions.push(notDisabled);
+    }
+
+    if (query.search) {
+      const term = `%${query.search}%`;
+      conditions.push(
+        sql`(email ILIKE ${term} OR name ILIKE ${term} OR phone ILIKE ${term})`
+      );
+    }
+    
+    if (query.role) {
+      conditions.push(eq(schema.users.role, query.role));
+    }
+
+    if (query.createdFrom) {
+      conditions.push(sql`created_at >= ${new Date(query.createdFrom)}`);
+    }
+
+    if (query.createdTo) {
+      conditions.push(sql`created_at <= ${new Date(query.createdTo)}`);
+    }
+
+    let orderClause: any = schema.users.createdAt;
+    let isDesc = true;
+    if (query.sortDir === 'asc') isDesc = false;
+
+    if (query.sortBy === 'name' || query.sortBy === 'firstName' || query.sortBy === 'lastName') orderClause = schema.users.name;
+    else if (query.sortBy === 'email') orderClause = schema.users.email;
+    else if (query.sortBy === 'status') orderClause = schema.users.accountStatus;
+    else if (query.sortBy === 'role') orderClause = schema.users.role;
+
+    const combinedConditions = and(...conditions);
+
+    const [countRes] = await this.db.select({ count: sql<number>`count(*)` })
+      .from(schema.users)
+      .where(combinedConditions);
+      
     const rows = await this.db
       .select()
       .from(schema.users)
-      .where(and(eq(schema.users.tenantId, tenantId), notDisabled))
-      .orderBy(schema.users.createdAt)
+      .where(combinedConditions)
+      .orderBy(isDesc ? desc(orderClause) : asc(orderClause))
       .limit(limit)
       .offset(offset);
-    return rows.map(toModuleUser);
+
+    return { items: rows.map(toModuleUser), total: Number(countRes?.count || 0) };
   }
 
   async updateUser(id: string, tenantId: string, updates: Partial<User>, _client?: PgClient): Promise<User | null> {

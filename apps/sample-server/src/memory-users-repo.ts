@@ -1,4 +1,4 @@
-import type { IUsersRepository, User } from './modules/users';
+import type { IUsersRepository, User, ListUsersQueryDto } from './modules/users';
 import { randomUUID } from 'crypto';
 
 export class MemoryUsersRepository implements IUsersRepository {
@@ -58,14 +58,30 @@ export class MemoryUsersRepository implements IUsersRepository {
     return found ?? null;
   }
 
-  async searchUsers(tenantId: string, query?: any, options?: any): Promise<User[]> {
-    let result = Array.from(this.users.values()).filter(u => u.tenantId === tenantId && !u.deletedAt);
+  async searchUsers(tenantId: string, query: ListUsersQueryDto): Promise<{ items: User[]; total: number }> {
+    let result = Array.from(this.users.values()).filter(u => u.tenantId === tenantId);
     
-    // pagination mock
-    if (options && options.limit) {
-       result = result.slice(options.offset || 0, (options.offset || 0) + options.limit);
+    if (query.status) {
+      result = result.filter(u => u.status === query.status);
+    } else {
+      result = result.filter(u => u.status !== 'DISABLED');
     }
-    return result;
+    
+    if (query.search) {
+      const term = query.search.toLowerCase();
+      result = result.filter(u => 
+        u.email.toLowerCase().includes(term) || 
+        u.firstName.toLowerCase().includes(term) || 
+        u.lastName.toLowerCase().includes(term)
+      );
+    }
+
+    const total = result.length;
+    const limit = query.limit && query.limit > 0 ? query.limit : 20;
+    const offset = ((query.page || 1) - 1) * limit;
+    
+    result = result.slice(offset, offset + limit);
+    return { items: result, total };
   }
 
   async updateUser(id: string, tenantId: string, updates: Partial<User>): Promise<User | null> {

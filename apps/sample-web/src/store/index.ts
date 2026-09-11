@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { usersApi } from '../features/users/usersApi';
+import { customersApi } from '../features/customers/customersApi';
 
 // The app's single Redux store. Every generated module's RTK Query
 // `createApi` slice gets registered here — add its `reducerPath: reducer`
@@ -8,8 +9,9 @@ import { usersApi } from '../features/users/usersApi';
 export const store = configureStore({
   reducer: {
     [usersApi.reducerPath]: usersApi.reducer,
+    [customersApi.reducerPath]: customersApi.reducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(usersApi.middleware),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(usersApi.middleware, customersApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

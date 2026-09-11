@@ -744,8 +744,8 @@ ${editFormFields}${editStatusFieldJsx}
       <Modal open={!!viewing} onClose={() => setViewing(null)} title="${names.pascal} Details">
         {viewing && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
-${detailFieldLines}
-            <DetailField label="Status" value={viewing.status} />
+${detailFieldLines}${hasStatusField ? '' : `
+            <DetailField label="Status" value={viewing.status} />`}
           </div>
         )}
       </Modal>
@@ -754,3 +754,163 @@ ${detailFieldLines}
 }
 `;
 }
+
+// ---------------------------------------------------------------------------
+// Idempotent registry patches — small anchor-based insertions into existing
+// files, same technique used by hand for the Messaging module this session.
+// Each patch is a no-op (with a console note) if it looks already applied.
+// ---------------------------------------------------------------------------
+
+function patchFile(path, marker, transform, label) {
+  const full = resolve(ROOT, path);
+  let text = readFileSync(full, 'utf8');
+  if (text.includes(marker)) {
+    console.log(`  - already present, skipping: ${label} (${path})`);
+    return;
+  }
+  const next = transform(text);
+  if (next === text) {
+    throw new Error(`Could not find anchor to patch ${path} for: ${label}`);
+  }
+  writeFileSync(full, next);
+  console.log(`  + patched: ${label} (${path})`);
+}
+
+function patchSchemaIndex(names) {
+  const marker = `from './${names.pluralKebab}'`;
+  patchFile('packages/database/src/schema/index.ts', marker, (text) =>
+    text + `export { ${names.pluralCamel} } from './${names.pluralKebab}';\n`,
+  'schema/index.ts export');
+}
+
+function patchModulesIndex(names) {
+  const importMarker = `${names.pluralCamel}Module } from './${names.pluralKebab}'`;
+  patchFile('apps/sample-server/src/modules/index.ts', importMarker, (text) => {
+    const importLine = `import { ${names.pluralCamel}Module } from './${names.pluralKebab}';\n`;
+    const lastImport = text.lastIndexOf("import { ");
+    const lineEnd = text.indexOf('\n', lastImport) + 1;
+    let next = text.slice(0, lineEnd) + importLine + text.slice(lineEnd);
+    next = next.replace(/registry\.register\(\s*\n/, (m) => m + `  ${names.pluralCamel}Module,\n`);
+    return next;
+  }, 'modules/index.ts registration');
+}
+
+function patchMainTs(names) {
+  const marker = `create${names.pluralPascal}Router`;
+  patchFile('apps/sample-server/src/main.ts', marker, (text) => {
+    const importAnchor = "import { createMessagingRouter } from './messaging-routes';";
+    if (!text.includes(importAnchor)) throw new Error('main.ts import anchor not found');
+    const withImport = text.replace(
+      importAnchor,
+      `${importAnchor}\nimport { create${names.pluralPascal}Router } from './${names.pluralKebab}-routes';`,
+    );
+    const mountAnchor = /app\.use\('\/api\/v1\/messaging', createMessagingRouter\(data\.db, \{[\s\S]*?\}\)\);\n/;
+    return withImport.replace(mountAnchor, (m) =>
+      `${m}app.use('/api/v1/${names.pluralKebab}', create${names.pluralPascal}Router(data.db, {\n` +
+      `  requireAuth: auth.requireAuth,\n` +
+      `  requirePermission: (perm) => auth.requirePermission(perm),\n` +
+      `}));\n`,
+    );
+  }, 'main.ts route mount');
+}
+
+function patchStoreIndex(names) {
+  const marker = `${names.pluralCamel}Api`;
+  patchFile('apps/sample-web/src/store/index.ts', marker, (text) => {
+    let next = text.replace(
+      "import { usersApi } from '../features/users/usersApi';",
+      `import { usersApi } from '../features/users/usersApi';\nimport { ${names.pluralCamel}Api } from '../features/${names.pluralKebab}/${names.pluralCamel}Api';`,
+    );
+    next = next.replace(
+      `[usersApi.reducerPath]: usersApi.reducer,`,
+      `[usersApi.reducerPath]: usersApi.reducer,\n    [${names.pluralCamel}Api.reducerPath]: ${names.pluralCamel}Api.reducer,`,
+    );
+    next = next.replace(
+      `getDefaultMiddleware().concat(usersApi.middleware)`,
+      `getDefaultMiddleware().concat(usersApi.middleware, ${names.pluralCamel}Api.middleware)`,
+    );
+    return next;
+  }, 'store/index.ts registration');
+}
+
+function patchAppTsx(names, perms) {
+  const marker = `${names.pluralPascal}View`;
+  patchFile('apps/sample-web/src/App.tsx', marker, (text) => {
+    let next = text.replace(
+      "import { MessagingView } from './features/messaging';",
+      `import { MessagingView } from './features/messaging';\nimport { ${names.pluralPascal}View } from './features/${names.pluralKebab}';`,
+    );
+    next = next.replace(
+      /type Page = ('[a-z-]+' \| )+'messaging';/,
+      (m) => m.replace(`'messaging';`, `'messaging' | '${names.pluralKebab}';`),
+    );
+    next = next.replace(
+      "    case 'messaging': return <MessagingView />;",
+      `    case 'messaging': return <MessagingView />;\n    case '${names.pluralKebab}': return <${names.pluralPascal}View />;`,
+    );
+    next = next.replace(
+      "  messaging: 'Read_Messaging',\n};",
+      `  messaging: 'Read_Messaging',\n  ${names.pluralKebab}: '${perms.view}',\n};`,
+    );
+    next = next.replace(
+      "  { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },",
+      `  { key: '${names.pluralKebab}', label: '${names.pluralPascal}', icon: 'list', path: '/${names.pluralKebab}', group: 'Main', sortOrder: 8, permission: '${perms.view}' },\n  { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },`,
+    );
+    return next;
+  }, 'App.tsx wiring (Page type, route, permission, nav item)');
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+function writeGenerated(path, content) {
+  const full = resolve(ROOT, path);
+  mkdirSync(dirname(full), { recursive: true });
+  if (existsSync(full)) {
+    console.log(`  ! already exists, leaving untouched (edit it directly): ${path}`);
+    return;
+  }
+  writeFileSync(full, content);
+  console.log(`  + created: ${path}`);
+}
+
+function main() {
+  const specPath = process.argv[2];
+  if (!specPath) {
+    console.error('Usage: node scripts/generate-module.mjs <path-to-spec.json>');
+    process.exit(1);
+  }
+  const spec = loadSpec(specPath);
+  const names = deriveNames(spec);
+  const perms = derivePermissions(spec, names);
+
+  console.log(`Generating module "${names.pascal}" (${names.pluralPascal})...\n`);
+
+  console.log('Backend:');
+  writeGenerated(`packages/database/src/schema/${names.pluralKebab}.ts`, generateSchemaFile(spec, names));
+  const migNum = nextMigrationNumber();
+  writeGenerated(`apps/sample-server/migrations/${migNum}_${names.pluralSnake}.up.sql`, generateMigrationUpSql(spec, names));
+  writeGenerated(`apps/sample-server/migrations/${migNum}_${names.pluralSnake}.down.sql`, generateMigrationDownSql(names));
+  writeGenerated(`apps/sample-server/src/modules/${names.pluralKebab}.ts`, generatePermissionModule(spec, names, perms));
+  writeGenerated(`apps/sample-server/src/${names.pluralKebab}-routes.ts`, generateRoutesFile(spec, names, perms));
+
+  console.log('\nFrontend:');
+  writeGenerated(`apps/sample-web/src/features/${names.pluralKebab}/types.ts`, generateTypesFile(spec, names));
+  writeGenerated(`apps/sample-web/src/features/${names.pluralKebab}/${names.pluralCamel}Api.ts`, generateApiSliceFile(spec, names));
+  writeGenerated(`apps/sample-web/src/features/${names.pluralKebab}/index.tsx`, generateIndexFile(spec, names));
+
+  console.log('\nWiring into registries:');
+  patchSchemaIndex(names);
+  patchModulesIndex(names);
+  patchMainTs(names);
+  patchStoreIndex(names);
+  patchAppTsx(names, perms);
+
+  console.log(`\nDone. Next steps:`);
+  console.log(`  1. cd apps/sample-server && pnpm db:migrate && pnpm db:seed`);
+  console.log(`  2. Restart sample-server and sample-web dev servers`);
+  console.log(`  3. Open /${names.pluralKebab} in the app (permission: ${perms.view})`);
+}
+
+main();
