@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseDesignMarkdown, storedDesignToOverrides, createTheme, tokensToCssVars } from '../index';
+import { parseDesignMarkdown, storedDesignToOverrides, createTheme, tokensToCssVars, normalizeDesignMarkdown } from '../index';
 
 describe('parseDesignMarkdown', () => {
   it('parses recognized color/font/radius tokens', () => {
@@ -163,4 +163,196 @@ components:
     expect(result.overrides.shell?.fg).toBe('#ffffff');
     expect(result.branding.fontFamily).toContain('ui-sans-serif');
   });
+
+  it('still maps a legacy TenantBranding blob from localStorage', () => {
+    expect(storedDesignToOverrides({ primaryColor: '#123456' })).toEqual({
+      branding: { primaryColor: '#123456' },
+    });
+    expect(storedDesignToOverrides({ palette: { brand: '#fe6e00' } })?.palette?.brand).toBe('#fe6e00');
+    expect(storedDesignToOverrides('nope')).toBeNull();
+  });
+
+  it('reads unquoted hex colors from YAML', () => {
+    const result = parseDesignMarkdown(`---
+colors:
+  primary: #2563eb
+  background: #f8fafc
+  text: #0f172a
+---
+`);
+    expect(result.overrides.palette?.brand).toBe('#2563eb');
+    expect(result.overrides.palette?.bgSubtle).toBe('#f8fafc');
+    expect(result.overrides.palette?.fg).toBe('#0f172a');
+  });
+
+  it('reads tokens from a markdown fenced YAML block', () => {
+    const result = parseDesignMarkdown(`# Brand
+Some prose about the product.
+
+\`\`\`yaml
+colors:
+  brand: "#7c3aed"
+  canvas: "#faf5ff"
+  surface-elevated: "#ffffff"
+\`\`\`
+`);
+    expect(result.overrides.palette?.brand).toBe('#7c3aed');
+    expect(result.overrides.palette?.bgSubtle).toBe('#faf5ff');
+    expect(result.overrides.palette?.bg).toBe('#ffffff');
+  });
+
+  it('reads CSS custom properties', () => {
+    const result = parseDesignMarkdown(`:root {
+  --color-primary: #ea580c;
+  --background: #fff7ed;
+  --text: #7c2d12;
+}
+`);
+    expect(result.overrides.palette?.brand).toBe('#ea580c');
+    expect(result.overrides.palette?.bgSubtle).toBe('#fff7ed');
+    expect(result.overrides.palette?.fg).toBe('#7c2d12');
+  });
+
+  it('converts a loose markdown list into canonical YAML and reapplies it', () => {
+    const source = `- Primary Color: #4f46e5
+- Font Family: Inter
+- Border Radius: 12px
+- Background: #f1f5f9
+`;
+    const normalized = normalizeDesignMarkdown(source);
+    expect(normalized.converted).toBe(true);
+    expect(normalized.canonical).toContain('colors:');
+    expect(normalized.canonical).toContain('primary:');
+    expect(normalized.overrides.palette?.brand).toBe('#4f46e5');
+    expect(normalized.overrides.palette?.bgSubtle).toBe('#f1f5f9');
+    expect(normalized.branding.fontFamily).toBe('Inter');
+    expect(normalized.branding.borderRadius).toBe(12);
+    const roundTrip = parseDesignMarkdown(normalized.canonical);
+    expect(roundTrip.overrides.palette?.brand).toBe('#4f46e5');
+    expect(roundTrip.overrides.palette?.bgSubtle).toBe('#f1f5f9');
+  });
+
+  it('leaves the original text unchanged when nothing can be extracted', () => {
+    const source = 'This file has no theme tokens at all.';
+    const normalized = normalizeDesignMarkdown(source);
+    expect(normalized.converted).toBe(false);
+    expect(normalized.canonical).toBe(source);
+    expect(normalized.recognized).toHaveLength(0);
+  });
+
+  it('reads nested shadcn-style color scales', () => {
+    const result = parseDesignMarkdown(`---
+colors:
+  primary:
+    DEFAULT: "#0ea5e9"
+    foreground: "#ffffff"
+  background: "#f0f9ff"
+  foreground: "#0c4a6e"
+---
+`);
+    expect(result.overrides.palette?.brand).toBe('#0ea5e9');
+    expect(result.overrides.palette?.brandContrast).toBe('#ffffff');
+    expect(result.overrides.palette?.bgSubtle).toBe('#f0f9ff');
+    expect(result.overrides.palette?.fg).toBe('#0c4a6e');
+  });
+
+  it('reads DTCG $value tokens and hsl()/oklch()', () => {
+    const result = parseDesignMarkdown(`{
+  "primary": { "$type": "color", "$value": "#16a34a" },
+  "background": { "$value": "hsl(140 40% 96%)" },
+  "text": { "$value": "oklch(0.25 0.02 150)" }
+}`);
+    expect(result.overrides.palette?.brand).toBe('#16a34a');
+    expect(result.overrides.palette?.bgSubtle).toBe('hsl(140 40% 96%)');
+    expect(result.overrides.palette?.fg).toBe('oklch(0.25 0.02 150)');
+  });
+
+  it('reads shadcn space-separated HSL CSS variables', () => {
+    const result = parseDesignMarkdown(`:root {
+  --primary: 222.2 47.4% 11.2%;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+}`);
+    expect(result.overrides.palette?.brand).toMatch(/^hsl\(/);
+    expect(result.overrides.palette?.bgSubtle).toMatch(/^hsl\(/);
+    expect(result.overrides.palette?.fg).toMatch(/^hsl\(/);
+  });
+
+  it('infers a palette from unlabeled hex colors in prose', () => {
+    const result = parseDesignMarkdown(`
+# Mood board
+Accent splash #e11d48 on soft paper #fff1f2 with ink #881337.
+Also a mid surface #fecdd3.
+`);
+    expect(result.overrides.palette?.brand).toBeDefined();
+    expect(result.overrides.palette?.bgSubtle).toBeDefined();
+    expect(result.overrides.palette?.fg).toBeDefined();
+    expect(result.recognized.some((r) => r.field.startsWith('inferred.'))).toBe(true);
+  });
+
+  it('reads primary-500 style scale keys', () => {
+    const result = parseDesignMarkdown(`---
+palette:
+  primary-500: "#7c3aed"
+  primary-100: "#ede9fe"
+  gray-900: "#111827"
+---
+`);
+    expect(result.overrides.palette?.brand).toBe('#7c3aed');
+    expect(result.overrides.palette?.fg).toBe('#111827');
+  });
+
+  it('keeps Flip7-style yellows on brand, not on page/card surfaces', () => {
+    const result = normalizeDesignMarkdown(`---
+colors:
+  background: "#FFFFFF"
+  on-surface: "#D45233"
+  surface: "#FFD23F"
+  surface-elevated: "#FFE47A"
+  on-surface-muted: "#1E8C86"
+  outline: "#FFE47A"
+  primary: "#E6B800"
+  primary-warm: "#FFD23F"
+  primary-focus: "#E6B800"
+---
+`);
+    const p = result.overrides.palette!;
+    // Surfaces stay quiet
+    expect(colorSat(p.bgSubtle!)).toBeLessThan(0.25);
+    expect(relativeLum(p.bgSubtle!)).toBeGreaterThan(0.85);
+    expect(p.bg!.toLowerCase()).toBe('#ffffff');
+    expect(colorSat(p.bgMuted!)).toBeLessThan(0.3);
+    expect(colorSat(p.border!)).toBeLessThan(0.25);
+    // Accents stay loud
+    expect(colorSat(p.brand!)).toBeGreaterThan(0.4);
+    expect(p.brandLight?.toLowerCase()).toBe('#ffd23f');
+    // Teal is not muted text
+    expect(p.fgMuted!.toLowerCase()).not.toBe('#1e8c86');
+    expect(p.info?.toLowerCase()).toBe('#1e8c86');
+    expect(result.canonical).toContain('surface-elevated');
+    expect(result.canonical.toLowerCase()).not.toMatch(/surface: "#ffd23f"/);
+  });
 });
+
+function colorSat(c: string): number {
+  const hex = c.replace('#', '');
+  const full = hex.length === 3 ? [...hex].map((ch) => ch + ch).join('') : hex;
+  const r = Number.parseInt(full.slice(0, 2), 16);
+  const g = Number.parseInt(full.slice(2, 4), 16);
+  const b = Number.parseInt(full.slice(4, 6), 16);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  return max === 0 ? 0 : (max - min) / max;
+}
+
+function relativeLum(c: string): number {
+  const hex = c.replace('#', '');
+  const full = hex.length === 3 ? [...hex].map((ch) => ch + ch).join('') : hex;
+  const channel = (n: number) => {
+    const s = n / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(Number.parseInt(full.slice(0, 2), 16))
+    + 0.7152 * channel(Number.parseInt(full.slice(2, 4), 16))
+    + 0.0722 * channel(Number.parseInt(full.slice(4, 6), 16));
+}

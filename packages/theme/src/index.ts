@@ -467,7 +467,14 @@ export function brandConfigToThemeOverrides(brand: BrandConfigLike): ThemeOverri
 // CSS custom properties generation
 // ---------------------------------------------------------------------------
 
-export { parseDesignMarkdown, storedDesignToOverrides, type DesignMdParseResult } from './design-md';
+export {
+  parseDesignMarkdown,
+  normalizeDesignMarkdown,
+  toCanonicalDesignMarkdown,
+  storedDesignToOverrides,
+  type DesignMdParseResult,
+  type DesignMdNormalizeResult,
+} from './design-md';
 
 export function tokensToCssVars(dark = false, theme?: Theme): Record<string, string> {
   const t = theme ?? defaultTheme;

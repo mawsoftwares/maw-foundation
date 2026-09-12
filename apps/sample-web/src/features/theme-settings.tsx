@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Card, Stack, Badge, Banner, Button, TextAreaField, useTheme, useDynamicAccess, ListPage } from '@mawsoftwares/ui-web';
-import { parseDesignMarkdown, type DesignMdParseResult } from '@mawsoftwares/theme';
+import { normalizeDesignMarkdown, type DesignMdNormalizeResult } from '@mawsoftwares/theme';
 
 /** Read by App.tsx's Shell on boot to re-apply the last design.md theme after a reload. */
 export const DESIGN_MD_STORAGE_KEY = 'maw-design-md-branding';
@@ -55,16 +55,22 @@ export function ThemeSettingsView(): ReactNode {
     () => localStorage.getItem(DESIGN_MD_CONTENT_STORAGE_KEY) ?? DEFAULT_TEMPLATE,
   );
   const [applying, setApplying] = useState(false);
-  const [result, setResult] = useState<DesignMdParseResult>();
+  const [result, setResult] = useState<DesignMdNormalizeResult>();
   const [error, setError] = useState<string>();
 
   const applyText = useCallback((text: string) => {
-    const parsed = parseDesignMarkdown(text);
-    applyThemeOverrides(parsed.overrides);
-    localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(parsed.overrides));
-    localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, text);
-    setResult(parsed);
-    return parsed;
+    const normalized = normalizeDesignMarkdown(text);
+    setResult(normalized);
+    if (normalized.recognized.length === 0) {
+      setDesignMdText(text);
+      localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, text);
+      return normalized;
+    }
+    setDesignMdText(normalized.canonical);
+    applyThemeOverrides(normalized.overrides);
+    localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(normalized.overrides));
+    localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, normalized.canonical);
+    return normalized;
   }, [applyThemeOverrides]);
 
   const handleFile = useCallback(async (file: File) => {
@@ -107,14 +113,14 @@ export function ThemeSettingsView(): ReactNode {
   return (
     <ListPage
       title="Theme Designer"
-      description="Import a YAML design.md (colors, shell, type, radius) or a simple Key: value list to apply a live app theme."
+      description="Import any design.md — YAML, markdown lists, or CSS variables. The file is converted to canonical tokens and applied as the live theme."
     >
       <Card>
         <Stack direction="column" gap="var(--maw-space-lg)">
           <div>
             <p style={{ margin: '0 0 8px', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-              Paste a design-system YAML document (frontmatter with a <code>colors:</code> map) or one
-              {' '}<code>Key: value</code> token per line. Recognized keys are case-insensitive.
+              Load or paste any design.md. On Apply we extract colors (hex / rgb / hsl / oklch), nested scales,
+              CSS variables, JSON tokens, and even unlabeled hex in prose — then rewrite into canonical YAML and apply.
             </p>
             <a href="/design.md" target="_blank" rel="noreferrer" style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-brand)' }}>
               View example design.md
@@ -168,6 +174,18 @@ export function ThemeSettingsView(): ReactNode {
 
           {result !== undefined && (
             <Stack direction="column" gap="var(--maw-space-sm)">
+              {result.converted && (
+                <Banner variant="info">Converted the imported file into canonical design.md format.</Banner>
+              )}
+              {result.recognized.length === 0 && (
+                <Banner variant="warning">
+                  Nothing in that file looked like theme tokens. Include hex/rgb/hsl colors (named keys help), CSS variables,
+                  or a colors: YAML map — then Apply again.
+                </Banner>
+              )}
+              {result.warnings.filter((w) => w.startsWith('Mapped unlabeled')).map((w, i) => (
+                <Banner key={`inferred-${i}`} variant="info">{w}</Banner>
+              ))}
               <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
                 {PALETTE_SWATCHES.map(([key, label]) => {
                   const value = theme.light[key];
@@ -187,7 +205,7 @@ export function ThemeSettingsView(): ReactNode {
               {result.recognized.length > 0 && (
                 <Badge variant="success">{result.recognized.length} token(s) applied</Badge>
               )}
-              {result.warnings.map((w, i) => (
+              {result.warnings.filter((w) => !w.startsWith('No recognized') && !w.startsWith('Mapped unlabeled')).map((w, i) => (
                 <Banner key={i} variant="warning">{w}</Banner>
               ))}
             </Stack>
