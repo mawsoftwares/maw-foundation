@@ -266,6 +266,9 @@ export class ApiClient implements IAccountAuth {
   private responseInterceptors: Array<{ id: number; fn: ResponseInterceptor }> = [];
   private errorInterceptors: Array<{ id: number; fn: ErrorInterceptor }> = [];
   private interceptorId = 0;
+  /** Shared in-flight refresh so applyAuth → refresh → applyAuth cannot recurse. */
+  private refreshLock: Promise<AuthResult> | null = null;
+  private inRefresh = false;
 
   constructor(options: ApiClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, '');
@@ -375,9 +378,22 @@ export class ApiClient implements IAccountAuth {
   }
 
   async refresh(refreshToken: string): Promise<AuthResult> {
-    const result = await this.postJson<AuthResult>('/auth/refresh', { refreshToken });
-    await this.persistTokens(result.tokens);
-    return result;
+    if (this.refreshLock !== null) return this.refreshLock;
+
+    // Set before the first await so nested applyAuth (via postJson) cannot
+    // start another refresh while this one is in flight.
+    this.inRefresh = true;
+    const pending = this.postJson<AuthResult>('/auth/refresh', { refreshToken })
+      .then(async (result) => {
+        await this.persistTokens(result.tokens);
+        return result;
+      })
+      .finally(() => {
+        this.inRefresh = false;
+        this.refreshLock = null;
+      });
+    this.refreshLock = pending;
+    return pending;
   }
 
   async signOut(refreshToken: string): Promise<void> {
@@ -614,7 +630,8 @@ export class ApiClient implements IAccountAuth {
   private async applyAuth(headers: Headers, method: string): Promise<void> {
     if (this.mode === 'token') {
       let access = await this.store.get(KEYS.access);
-      if (access !== null && isJwtExpired(access)) {
+      // Skip nested refresh: refresh() itself posts via postJson → applyAuth.
+      if (access !== null && isJwtExpired(access) && !this.inRefresh) {
         // Proactively refresh before attaching an already-expired token.
         const refreshToken = await this.store.get(KEYS.refresh);
         if (refreshToken !== null) {

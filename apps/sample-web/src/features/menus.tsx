@@ -47,11 +47,21 @@ export function MenusView(): ReactNode {
     load();
   }, [load]);
 
-  const deleteItem = async (id: number) => {
-    if (!window.confirm('Delete this menu item? Any child items will also be removed.')) return;
+  const toggleActive = async (item: MenuItem) => {
     try {
-      await client.request(`/api/v1/menus/${id}`, { method: 'DELETE' });
-      toast.success('Menu item deleted');
+      await client.request(`/api/v1/menus/${item.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          label: item.label,
+          path: item.path || undefined,
+          icon: item.icon || undefined,
+          parentId: item.parentId || undefined,
+          permission: item.permission || undefined,
+          sortOrder: item.sortOrder,
+          isActive: !item.isActive,
+        }),
+      });
+      toast.success(`Menu item ${item.isActive ? 'deactivated' : 'activated'}`);
       load();
     } catch (e) {
       toast.error((e as Error).message);
@@ -159,7 +169,9 @@ export function MenusView(): ReactNode {
       render: (row) => (
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="ghost" onClick={() => setEditingItem(row)}>Edit</Button>
-          <Button variant="ghost" onClick={() => deleteItem(row.id)} style={{ color: 'var(--maw-danger)' }}>Delete</Button>
+          <Button variant="ghost" onClick={() => toggleActive(row)}>
+            {row.isActive ? 'Deactivate' : 'Activate'}
+          </Button>
         </div>
       ),
     },

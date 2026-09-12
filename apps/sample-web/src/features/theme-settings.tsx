@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Card, Stack, Badge, Banner, Button, TextAreaField, useTheme, useDynamicAccess, ListPage } from '@mawsoftwares/ui-web';
-import { parseDesignMarkdown, type DesignMdParseResult, type TenantBranding } from '@mawsoftwares/theme';
+import { parseDesignMarkdown, type DesignMdParseResult } from '@mawsoftwares/theme';
 
 /** Read by App.tsx's Shell on boot to re-apply the last design.md theme after a reload. */
 export const DESIGN_MD_STORAGE_KEY = 'maw-design-md-branding';
@@ -8,16 +8,44 @@ export const DESIGN_MD_STORAGE_KEY = 'maw-design-md-branding';
 /** Raw markdown text behind the last-applied theme, so the editor can be reopened where it was left off. */
 const DESIGN_MD_CONTENT_STORAGE_KEY = 'maw-design-md-content';
 
-const DEFAULT_TEMPLATE = `- Primary Color: #4f46e5
-- Secondary Color: #818cf8
-- Accent Color: #4338ca
-- Font Family: Inter
-- Border Radius: 12`;
+const DEFAULT_TEMPLATE = `---
+version: alpha
+name: Custom Theme
+colors:
+  background: "#fcfaf7"
+  on-background: "#423d38"
+  surface: "#f3f4f6"
+  surface-elevated: "#ffffff"
+  on-surface: "#423d38"
+  on-surface-muted: "#797067"
+  outline: "#e3e0dd"
+  primary: "#fe6e00"
+  primary-strong: "#ff6b00"
+  primary-warm: "#ffb74d"
+  primary-focus: "#f97015"
+  on-primary: "#ffffff"
+  shell-base: "#000000"
+  on-shell: "#ffffff"
+  success: "#00c758"
+  warning: "#edb200"
+  danger: "#fb2c36"
+  info: "#3080ff"
+typography:
+  body-md:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+rounded:
+  md: "8px"
+---`;
 
-const SWATCH_FIELDS: readonly (keyof TenantBranding)[] = ['primaryColor', 'secondaryColor', 'accentColor'];
+const PALETTE_SWATCHES = [
+  ['brand', 'Primary'],
+  ['bgSubtle', 'Canvas'],
+  ['bg', 'Surface'],
+  ['fg', 'Text'],
+] as const;
 
 export function ThemeSettingsView(): ReactNode {
-  const { applyBranding } = useTheme();
+  const { applyThemeOverrides, theme } = useTheme();
   const { can } = useDynamicAccess();
   const canManage = can('Manage_Theme');
 
@@ -32,12 +60,12 @@ export function ThemeSettingsView(): ReactNode {
 
   const applyText = useCallback((text: string) => {
     const parsed = parseDesignMarkdown(text);
-    applyBranding(parsed.branding);
-    localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(parsed.branding));
+    applyThemeOverrides(parsed.overrides);
+    localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(parsed.overrides));
     localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, text);
     setResult(parsed);
     return parsed;
-  }, [applyBranding]);
+  }, [applyThemeOverrides]);
 
   const handleFile = useCallback(async (file: File) => {
     setApplying(true);
@@ -79,14 +107,14 @@ export function ThemeSettingsView(): ReactNode {
   return (
     <ListPage
       title="Theme Designer"
-      description="Edit or select a design.md file to apply its colors, font, and radius as the live app theme."
+      description="Import a YAML design.md (colors, shell, type, radius) or a simple Key: value list to apply a live app theme."
     >
       <Card>
         <Stack direction="column" gap="var(--maw-space-lg)">
           <div>
             <p style={{ margin: '0 0 8px', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-              Edit the tokens below directly, or select a <code>.md</code> file to load its contents into the
-              editor. One <code>Key: value</code> token per line — recognized keys are case-insensitive.
+              Paste a design-system YAML document (frontmatter with a <code>colors:</code> map) or one
+              {' '}<code>Key: value</code> token per line. Recognized keys are case-insensitive.
             </p>
             <a href="/design.md" target="_blank" rel="noreferrer" style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-brand)' }}>
               View example design.md
@@ -98,14 +126,14 @@ export function ThemeSettingsView(): ReactNode {
             label="design.md"
             value={designMdText}
             onChange={setDesignMdText}
-            rows={8}
+            rows={18}
             disabled={!canManage}
           />
 
           <input
             ref={fileInputRef}
             type="file"
-            accept=".md,text/markdown,text/plain"
+            accept=".md,text/markdown,text/plain,.yaml,.yml"
             style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -141,17 +169,20 @@ export function ThemeSettingsView(): ReactNode {
           {result !== undefined && (
             <Stack direction="column" gap="var(--maw-space-sm)">
               <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
-                {SWATCH_FIELDS.filter((f) => result.branding[f] !== undefined).map((f) => (
-                  <Stack key={f} direction="row" align="center" gap="var(--maw-space-xs)">
-                    <span style={{
-                      width: 16, height: 16, borderRadius: 'var(--maw-radius-sm)',
-                      background: result.branding[f] as string, border: '1px solid var(--maw-border)',
-                    }} />
-                    <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
-                      {f}: {result.branding[f]}
-                    </span>
-                  </Stack>
-                ))}
+                {PALETTE_SWATCHES.map(([key, label]) => {
+                  const value = theme.light[key];
+                  return (
+                    <Stack key={key} direction="row" align="center" gap="var(--maw-space-xs)">
+                      <span style={{
+                        width: 16, height: 16, borderRadius: 'var(--maw-radius-sm)',
+                        background: value, border: '1px solid var(--maw-border)',
+                      }} />
+                      <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
+                        {label}: {value}
+                      </span>
+                    </Stack>
+                  );
+                })}
               </Stack>
               {result.recognized.length > 0 && (
                 <Badge variant="success">{result.recognized.length} token(s) applied</Badge>

@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { createConfigEngine } from '@mawsoftwares/sdk/config/config-engine';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
+import { storedDesignToOverrides } from '@mawsoftwares/theme';
 import {
   AuthProvider,
   DynamicAccessProvider,
@@ -81,13 +82,9 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'inventory', label: 'Inventory', icon: 'clipboard-list', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
   { key: 'billing', label: 'Billing', icon: 'credit-card', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
   { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
-  { key: 'audit-logs', label: 'Audit Logs', icon: 'scroll-text', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
-
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
-  { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings', group: 'Admin', sortOrder: 9 },
-
-  { key: 'notifications', label: 'Notifications', icon: 'bell', path: '/notifications', group: 'Dev', sortOrder: 97 },
+  { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
 ];
 
 /** Maps a page key to the permission required to view it. */
@@ -186,18 +183,20 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const { applyBranding } = useTheme();
+  const { applyThemeOverrides } = useTheme();
   const [page, setPage] = useState<Page>('dashboard');
 
   useEffect(() => {
     const stored = localStorage.getItem(DESIGN_MD_STORAGE_KEY);
     if (stored === null) return;
     try {
-      applyBranding(JSON.parse(stored));
+      const overrides = storedDesignToOverrides(JSON.parse(stored) as unknown);
+      if (overrides !== null) applyThemeOverrides(overrides);
+      else localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     } catch {
       localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     }
-  }, [applyBranding]);
+  }, [applyThemeOverrides]);
   const deepLink = useMemo(() => readAuthDeepLink(), []);
   const [authPage, setAuthPage] = useState<AuthPage>(deepLink.page);
   const [authToken, setAuthToken] = useState(deepLink.token);
@@ -304,7 +303,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, justifyContent: collapsed ? 'center' : undefined, width: '100%' }}>
                 <Avatar name={session.userId} size={28} />
                 {!collapsed && (
-                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}>
                     {session.userId}
                   </div>
                 )}

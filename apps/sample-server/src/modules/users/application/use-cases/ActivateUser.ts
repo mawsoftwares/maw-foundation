@@ -53,12 +53,12 @@ export class DeactivateUserUseCase {
       throw userNotFound(id);
     }
 
-    if (user.status === AccountStatus.DISABLED) {
+    if (user.status === AccountStatus.SUSPENDED) {
       return; // Idempotent
     }
 
     await this.userRepository.updateUser(id, tenantId, {
-      status: AccountStatus.DISABLED,
+      status: AccountStatus.SUSPENDED,
       updatedBy: actorId,
     });
 

@@ -47,6 +47,14 @@ function statusVariant(status: AccountStatusValue): 'success' | 'warning' | 'dan
   return 'default';
 }
 
+function statusLabel(status: AccountStatusValue): string {
+  if (status === 'SUSPENDED' || status === 'DISABLED') return 'Inactive';
+  if (status === 'PENDING_VERIFICATION') return 'Pending';
+  if (status === 'LOCKED') return 'Locked';
+  if (status === 'ACTIVE') return 'Active';
+  return status;
+}
+
 function displayName(firstName: string, lastName: string, emailAddress: string): string {
   const name = `${firstName} ${lastName}`.trim();
   return name.length > 0 ? name : emailAddress;
@@ -287,7 +295,7 @@ function UserProfileEditor({
             </div>
             <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-sm)' }}>
               <Badge>{roleLabel}</Badge>
-              <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
+              <Badge variant={statusVariant(user.status)}>{statusLabel(user.status)}</Badge>
             </Stack>
             {editing && (
               <div style={{ marginTop: 'var(--maw-space-sm)', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)' }}>
@@ -383,7 +391,7 @@ function UserProfileEditor({
             <Panel title="Account">
               <Grid columns={{ xs: 1, sm: 2 }} gap="var(--maw-space-lg)">
                 <ReadValue label="User ID" value={user.id} />
-                <ReadValue label="Status" value={<Badge variant={statusVariant(user.status)}>{user.status}</Badge>} />
+                <ReadValue label="Status" value={<Badge variant={statusVariant(user.status)}>{statusLabel(user.status)}</Badge>} />
                 <ReadValue label="Created" value={formatTimestamp(user.createdAt)} />
                 <ReadValue label="Last updated" value={formatTimestamp(user.updatedAt)} />
                 <ReadValue label="Last login" value={formatTimestamp(user.lastLoginAt)} />

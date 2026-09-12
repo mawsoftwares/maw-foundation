@@ -7,7 +7,7 @@ export {
   type ColorMode,
   type NativeThemeProviderProps,
 } from './theme';
-export type { Theme, ThemeOverrides, TenantBranding, RNStyles } from './theme';
+export type { Theme, ThemeOverrides, TenantBranding, ShellTokens, RNStyles } from './theme';
 
 // Branding
 export {

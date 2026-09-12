@@ -185,7 +185,7 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
         title={actionConfirm?.type === 'activate' ? 'Activate User' : 'Deactivate User'}
         message={actionConfirm?.type === 'activate' ? 'Are you sure you want to activate this user? They will regain access to the platform.' : 'Are you sure you want to deactivate this user? They will no longer be able to log in.'}
         confirmLabel={actionConfirm?.type === 'activate' ? 'Activate' : 'Deactivate'}
-        danger={actionConfirm?.type === 'deactivate'}
+        variant={actionConfirm?.type === 'deactivate' ? 'danger' : 'primary'}
         onConfirm={handleConfirmAction}
         onCancel={() => setActionConfirm(null)}
       />

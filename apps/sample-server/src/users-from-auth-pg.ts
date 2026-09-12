@@ -1,6 +1,6 @@
 import type { DrizzleDb } from '@mawsoftwares/database';
 import { schema } from '@mawsoftwares/database';
-import { eq, and, ne, sql, asc, desc } from 'drizzle-orm';
+import { eq, and, ne, sql, asc, desc, inArray } from 'drizzle-orm';
 import type { PgClient } from '@mawsoftwares/database';
 import type { IUsersRepository, User, ListUsersQueryDto } from './modules/users';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
@@ -41,7 +41,7 @@ function toModuleUser(row: UsersRow): User {
     lastLoginAt: row.lastLoginAt?.toISOString(),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
-    deletedAt: status === AccountStatus.DISABLED ? row.updatedAt.toISOString() : null,
+    deletedAt: null,
   };
 }
 
@@ -75,7 +75,7 @@ export class AuthSchemaUsersRepository implements IUsersRepository {
     const rows = await this.db
       .select()
       .from(schema.users)
-      .where(and(eq(schema.users.id, id), eq(schema.users.tenantId, tenantId), notDisabled))
+      .where(and(eq(schema.users.id, id), eq(schema.users.tenantId, tenantId)))
       .limit(1);
     return rows[0] !== undefined ? toModuleUser(rows[0]) : null;
   }
@@ -104,10 +104,10 @@ export class AuthSchemaUsersRepository implements IUsersRepository {
 
     const conditions = [eq(schema.users.tenantId, tenantId)];
 
-    if (query.status) {
+    if (query.status === AccountStatus.SUSPENDED) {
+      conditions.push(inArray(schema.users.accountStatus, [AccountStatus.SUSPENDED, AccountStatus.DISABLED]));
+    } else if (query.status) {
       conditions.push(eq(schema.users.accountStatus, query.status));
-    } else {
-      conditions.push(notDisabled);
     }
 
     if (query.search) {

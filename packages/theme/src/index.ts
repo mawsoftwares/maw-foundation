@@ -170,10 +170,26 @@ export interface TenantBranding {
   borderRadius?: number;
 }
 
+/** Frosted application chrome (sidebar + header). Optional — defaults fall back to surface tokens. */
+export interface ShellTokens {
+  bg?: string;
+  fg?: string;
+  fgMuted?: string;
+  border?: string;
+  blur?: string;
+  hover?: string;
+}
+
 export interface ThemeOverrides {
   branding?: TenantBranding;
   palette?: Partial<Palette>;
   paletteDark?: Partial<Palette>;
+  spacing?: Partial<Record<keyof typeof spacing, number>>;
+  radius?: Partial<Record<keyof typeof radius, number>>;
+  shadows?: Partial<Record<keyof typeof shadows, string>>;
+  transitions?: Partial<Record<keyof typeof transitions, string>>;
+  typography?: Partial<{ fontFamily: string; monoFamily: string }>;
+  shell?: ShellTokens;
 }
 
 export interface Theme {
@@ -194,47 +210,85 @@ export interface Theme {
   breakpoints: { [K in keyof typeof breakpoints]: number };
   containerWidths: { [K in keyof typeof containerWidths]: number };
   branding: TenantBranding;
+  shell?: ShellTokens;
+}
+
+export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverrides): ThemeOverrides | undefined {
+  if (base === undefined) return extra;
+  if (extra === undefined) return base;
+  return {
+    branding: { ...base.branding, ...extra.branding },
+    palette: { ...base.palette, ...extra.palette },
+    paletteDark: { ...base.paletteDark, ...extra.paletteDark },
+    spacing: { ...base.spacing, ...extra.spacing },
+    radius: { ...base.radius, ...extra.radius },
+    shadows: { ...base.shadows, ...extra.shadows },
+    transitions: { ...base.transitions, ...extra.transitions },
+    typography: { ...base.typography, ...extra.typography },
+    shell: extra.shell !== undefined || base.shell !== undefined
+      ? { ...base.shell, ...extra.shell }
+      : undefined,
+  };
+}
+
+function resolveFontFamily(family: string | undefined): string {
+  if (family === undefined || family.trim() === '') return typography.fontFamily;
+  const trimmed = family.trim();
+  if (trimmed.includes(',') || trimmed.startsWith("'") || trimmed.startsWith('"')) return trimmed;
+  return `'${trimmed}', ${typography.fontFamily}`;
 }
 
 export function createTheme(overrides?: ThemeOverrides): Theme {
   const branding = overrides?.branding ?? {};
 
-  const lightOverrides: Partial<Palette> = {
-    ...(overrides?.palette ?? {}),
-  };
+  const lightOverrides: Partial<Palette> = {};
   if (branding.primaryColor) {
     lightOverrides.brand = branding.primaryColor;
     lightOverrides.borderFocus = branding.primaryColor;
   }
+  Object.assign(lightOverrides, overrides?.palette ?? {});
 
-  const darkOverrides: Partial<Palette> = {
-    ...(overrides?.paletteDark ?? {}),
-  };
+  const darkOverrides: Partial<Palette> = {};
   if (branding.accentColor) {
     darkOverrides.brand = branding.accentColor;
     darkOverrides.borderFocus = branding.accentColor;
+  } else if (lightOverrides.brand && overrides?.paletteDark?.brand === undefined) {
+    darkOverrides.brand = lightOverrides.brand;
+    darkOverrides.borderFocus = lightOverrides.borderFocus ?? lightOverrides.brand;
+    if (lightOverrides.brandLight) darkOverrides.brandLight = lightOverrides.brandLight;
+    if (lightOverrides.brandDark) darkOverrides.brandDark = lightOverrides.brandDark;
+    if (lightOverrides.brandContrast) darkOverrides.brandContrast = lightOverrides.brandContrast;
   }
+  Object.assign(darkOverrides, overrides?.paletteDark ?? {});
 
-  const mergedTypo = branding.fontFamily
-    ? { ...typography, fontFamily: `'${branding.fontFamily}', ${typography.fontFamily}` }
-    : typography;
+  const fontFamily = overrides?.typography?.fontFamily ?? branding.fontFamily;
+  const mergedTypo = {
+    ...typography,
+    fontFamily: resolveFontFamily(fontFamily),
+    monoFamily: overrides?.typography?.monoFamily ?? typography.monoFamily,
+  };
 
-  const mergedRadius = branding.borderRadius !== undefined
-    ? { ...radius, md: branding.borderRadius, lg: branding.borderRadius + 4 }
-    : radius;
+  const mergedRadius = {
+    ...radius,
+    ...(branding.borderRadius !== undefined
+      ? { md: branding.borderRadius, lg: branding.borderRadius + 4 }
+      : {}),
+    ...(overrides?.radius ?? {}),
+  };
 
   return {
     light: { ...palette, ...lightOverrides },
     dark: { ...paletteDark, ...darkOverrides },
-    spacing,
+    spacing: { ...spacing, ...overrides?.spacing },
     radius: mergedRadius,
-    shadows,
+    shadows: { ...shadows, ...overrides?.shadows },
     zIndex,
-    transitions,
+    transitions: { ...transitions, ...overrides?.transitions },
     typography: mergedTypo,
     breakpoints,
     containerWidths,
     branding,
+    shell: overrides?.shell,
   };
 }
 
@@ -413,7 +467,7 @@ export function brandConfigToThemeOverrides(brand: BrandConfigLike): ThemeOverri
 // CSS custom properties generation
 // ---------------------------------------------------------------------------
 
-export { parseDesignMarkdown, type DesignMdParseResult } from './design-md';
+export { parseDesignMarkdown, storedDesignToOverrides, type DesignMdParseResult } from './design-md';
 
 export function tokensToCssVars(dark = false, theme?: Theme): Record<string, string> {
   const t = theme ?? defaultTheme;
@@ -434,6 +488,13 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   vars['--maw-font-mono'] = t.typography.monoFamily;
   for (const [k, v] of Object.entries(t.typography.size)) vars[`--maw-text-${k}`] = `${v}px`;
   for (const [k, v] of Object.entries(t.typography.weight)) vars[`--maw-weight-${k}`] = `${v}`;
+
+  vars['--maw-shell-bg'] = t.shell?.bg ?? p.bg;
+  vars['--maw-shell-fg'] = t.shell?.fg ?? p.fg;
+  vars['--maw-shell-fg-muted'] = t.shell?.fgMuted ?? p.fgMuted;
+  vars['--maw-shell-border'] = t.shell?.border ?? p.border;
+  vars['--maw-shell-blur'] = t.shell?.blur ?? '0px';
+  vars['--maw-shell-hover'] = t.shell?.hover ?? p.bgSubtle;
 
   return vars;
 }

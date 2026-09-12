@@ -191,7 +191,7 @@ export function Sidebar({
               flex: 1,
               fontWeight: 700,
               fontSize: 'var(--maw-text-md)',
-              color: 'var(--maw-fg)',
+              color: 'var(--maw-shell-fg, var(--maw-fg))',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -208,12 +208,16 @@ export function Sidebar({
 
   return (
     <aside
+      className="maw-shell-chrome"
       style={{
         ...base,
         width: effectiveWidth,
         minHeight: isMobile ? '100%' : '100vh',
-        background: isMobile ? 'transparent' : 'var(--maw-surface)',
-        borderRight: isMobile ? 'none' : '1px solid var(--maw-border)',
+        background: isMobile ? 'transparent' : 'var(--maw-shell-bg, var(--maw-surface))',
+        borderRight: isMobile ? 'none' : '1px solid var(--maw-shell-border, var(--maw-border))',
+        color: 'var(--maw-shell-fg, var(--maw-fg))',
+        backdropFilter: 'blur(var(--maw-shell-blur, 0px))',
+        WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 0.2s ease',
@@ -225,7 +229,7 @@ export function Sidebar({
       {(headerContent !== undefined || isMobile) && (
         <div style={{
           padding: isRail ? '12px 8px' : 'var(--maw-space-lg)',
-          borderBottom: '1px solid var(--maw-border)',
+          borderBottom: '1px solid var(--maw-shell-border, var(--maw-border))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: isRail ? 'center' : 'space-between',
@@ -243,7 +247,11 @@ export function Sidebar({
             {headerContent}
           </div>
           {isMobile && (
-            <IconButton label="Close menu" onClick={() => setCollapsed(true)}>
+            <IconButton
+              label="Close menu"
+              onClick={() => setCollapsed(true)}
+              style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
+            >
               <Icon name="x" size={18} />
             </IconButton>
           )}
@@ -252,7 +260,11 @@ export function Sidebar({
 
       {!isMobile && (
         <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
-          <IconButton label={collapsed ? 'Expand' : 'Collapse'} onClick={toggleSidebar}>
+          <IconButton
+            label={collapsed ? 'Expand' : 'Collapse'}
+            onClick={toggleSidebar}
+            style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
+          >
             <Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size={18} />
           </IconButton>
         </div>
@@ -262,7 +274,7 @@ export function Sidebar({
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && (!collapsed || isMobile) && (
-              <div style={{ padding: '8px 12px 4px', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ padding: '8px 12px 4px', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgSubtle))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {group}
               </div>
             )}
@@ -276,7 +288,8 @@ export function Sidebar({
       {footerContent !== undefined && (
         <div style={{
           padding: isRail ? '12px 8px' : 'var(--maw-space-lg)',
-          borderTop: '1px solid var(--maw-border)',
+          borderTop: '1px solid var(--maw-shell-border, var(--maw-border))',
+          color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))',
           display: 'flex',
           justifyContent: isRail ? 'center' : undefined,
           overflow: 'hidden',
@@ -327,9 +340,9 @@ function SidebarItem({
           background: active 
             ? 'linear-gradient(135deg, var(--maw-brand) 0%, color-mix(in srgb, var(--maw-brand) 80%, black) 100%)' 
             : hovered 
-              ? 'var(--maw-bgSubtle)' 
+              ? 'var(--maw-shell-hover, var(--maw-bgSubtle))' 
               : 'transparent',
-          color: active ? 'var(--maw-brandContrast)' : hovered ? 'var(--maw-brand)' : 'var(--maw-fg)',
+          color: active ? 'var(--maw-brandContrast)' : hovered ? 'var(--maw-brand)' : 'var(--maw-shell-fg, var(--maw-fg))',
           fontSize: 'var(--maw-text-sm)',
           fontWeight: active ? 600 : 500,
           cursor: 'pointer',
@@ -391,14 +404,14 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
   if (breadcrumbs.length === 0) return null;
 
   return (
-    <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)', ...style }}>
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))', ...style }}>
       {breadcrumbs.map((crumb, i) => {
         const isLast = i === breadcrumbs.length - 1;
         return (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {i > 0 && <span style={{ color: 'var(--maw-fgSubtle)' }}>/</span>}
             {isLast || crumb.path === undefined ? (
-              <span style={{ color: isLast ? 'var(--maw-fg)' : undefined, fontWeight: isLast ? 500 : undefined }}>{crumb.label}</span>
+              <span style={{ color: isLast ? 'var(--maw-shell-fg, var(--maw-fg))' : undefined, fontWeight: isLast ? 500 : undefined }}>{crumb.label}</span>
             ) : (
               <Button
                 variant="ghost"
@@ -461,12 +474,16 @@ export function AppShell({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
         {(header !== undefined || actions !== undefined || isMobile) && (
           <header
+            className="maw-shell-chrome"
             style={{
               ...base,
               minHeight: isMobile ? 48 : undefined,
               padding: isMobile ? '6px 8px 6px 4px' : '12px var(--maw-space-xl)',
-              background: 'var(--maw-surface)',
-              borderBottom: '1px solid var(--maw-border)',
+              background: 'var(--maw-shell-bg, var(--maw-surface))',
+              borderBottom: '1px solid var(--maw-shell-border, var(--maw-border))',
+              color: 'var(--maw-shell-fg, var(--maw-fg))',
+              backdropFilter: 'blur(var(--maw-shell-blur, 0px))',
+              WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))',
               boxShadow: isMobile ? 'none' : '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
               overflow: 'visible',
               display: 'flex',
@@ -479,9 +496,13 @@ export function AppShell({
             }}
           >
             {isMobile && (
-              <IconButton label="Menu" onClick={toggleSidebar}>
-                <Icon name="menu" size={18} />
-              </IconButton>
+            <IconButton
+              label="Menu"
+              onClick={toggleSidebar}
+              style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
+            >
+              <Icon name="menu" size={18} />
+            </IconButton>
             )}
             {isMobile ? (
               <>
@@ -492,7 +513,7 @@ export function AppShell({
                   margin: 0,
                   fontSize: 'var(--maw-text-md)',
                   fontWeight: 600,
-                  color: 'var(--maw-fg)',
+                  color: 'var(--maw-shell-fg, var(--maw-fg))',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { Appearance } from 'react-native';
 import {
   createTheme,
+  mergeThemeOverrides,
   tokensToRNStyles,
   type Theme,
   type ThemeOverrides,
@@ -19,6 +20,7 @@ interface ThemeContextValue {
   setColorMode: (mode: ColorMode) => void;
   toggleColorMode: () => void;
   applyBranding: (branding: TenantBranding) => void;
+  applyThemeOverrides: (next: ThemeOverrides) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -36,9 +38,14 @@ export interface NativeThemeProviderProps {
 }
 
 export function NativeThemeProvider({ overrides, defaultColorMode = 'system', children }: NativeThemeProviderProps): ReactNode {
+  const [customOverrides, setCustomOverrides] = useState<ThemeOverrides | null>(null);
   const [theme, setTheme] = useState<Theme>(() => createTheme(overrides));
   const [colorMode, setColorModeState] = useState<ColorMode>(defaultColorMode);
   const [isDark, setIsDark] = useState(() => resolveIsDark(defaultColorMode));
+
+  useEffect(() => {
+    setTheme(createTheme(mergeThemeOverrides(overrides, customOverrides ?? undefined)));
+  }, [overrides, customOverrides]);
 
   useEffect(() => {
     setIsDark(resolveIsDark(colorMode));
@@ -66,13 +73,24 @@ export function NativeThemeProvider({ overrides, defaultColorMode = 'system', ch
     });
   }, []);
 
+  const applyThemeOverrides = useCallback((next: ThemeOverrides) => {
+    setCustomOverrides(next);
+  }, []);
+
   const applyBranding = useCallback((branding: TenantBranding) => {
-    setTheme(createTheme({ ...overrides, branding }));
-  }, [overrides]);
+    const palette: ThemeOverrides['palette'] = {};
+    if (branding.primaryColor) {
+      palette.brand = branding.primaryColor;
+      palette.borderFocus = branding.primaryColor;
+    }
+    if (branding.secondaryColor) palette.brandLight = branding.secondaryColor;
+    if (branding.accentColor) palette.brandDark = branding.accentColor;
+    setCustomOverrides({ branding, palette });
+  }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, styles, colorMode, isDark, setColorMode, toggleColorMode, applyBranding }),
-    [theme, styles, colorMode, isDark, setColorMode, toggleColorMode, applyBranding],
+    () => ({ theme, styles, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides }),
+    [theme, styles, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -92,4 +110,4 @@ export function useSpacing() {
   return useNativeTheme().styles.spacing;
 }
 
-export { type Theme, type ThemeOverrides, type TenantBranding, type RNStyles } from '@mawsoftwares/theme';
+export { type Theme, type ThemeOverrides, type TenantBranding, type ShellTokens, type RNStyles } from '@mawsoftwares/theme';

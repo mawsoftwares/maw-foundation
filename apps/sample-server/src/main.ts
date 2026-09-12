@@ -97,6 +97,9 @@ import {
   WorkerRegistry,
   PgQueueProvider,
 } from '@mawsoftwares/queue';
+import { DynamicAccessProvider } from '@mawsoftwares/ui-web';
+import { schema } from '@mawsoftwares/database';
+import { inArray } from 'drizzle-orm';
 import {
   ExportService,
   InMemoryHistoryStore,
@@ -745,15 +748,47 @@ app.post('/billing', auth.requireAuth, auth.requirePermission('Create_Billing'),
 
 app.get('/audit-logs', auth.requireAuth, auth.audienceGuard('admin'), auth.requirePermission('Read_AuditLogs'), (req, res) => {
   void (async () => {
-    const { userId, resource, limit } = req.query as { userId?: string; resource?: string; limit?: string };
-    const maw = (req as DynamicAuthedRequest).maw!;
-    const logs = await data.auditStore.query({
-      tenantId: maw.claims.tenantId,
-      userId,
-      resource,
-      limit: limit !== undefined ? parseInt(limit, 10) : 50,
-    });
-    res.json({ logs });
+    try {
+      const { userId, resource, limit, page } = req.query as { userId?: string; resource?: string; limit?: string; page?: string };
+      const maw = (req as DynamicAuthedRequest).maw!;
+      
+      const parsedLimit = limit ? parseInt(limit, 10) : 50;
+      const parsedPage = page ? parseInt(page, 10) : 1;
+      const offset = (parsedPage - 1) * parsedLimit;
+      
+      const [logs, total] = await Promise.all([
+        data.auditStore.query({
+          tenantId: maw.claims.tenantId,
+          userId,
+          resource,
+          limit: parsedLimit,
+          offset,
+        }),
+        data.auditStore.count({
+          tenantId: maw.claims.tenantId,
+          userId,
+          resource,
+        })
+      ]);
+
+      const userIds = [...new Set(logs.map(l => l.userId))];
+      let userMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const usersRows = await data.db.select({ id: schema.users.id, name: schema.users.name, email: schema.users.email })
+          .from(schema.users)
+          .where(inArray(schema.users.id, userIds));
+        userMap = new Map(usersRows.map(u => [u.id, u.name || u.email]));
+      }
+
+      const enrichedLogs = logs.map(l => ({
+        ...l,
+        userName: userMap.get(l.userId) || l.userId
+      }));
+
+      res.json({ logs: enrichedLogs, total });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
   })();
 });
 

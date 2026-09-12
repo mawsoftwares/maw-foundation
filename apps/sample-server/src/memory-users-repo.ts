@@ -59,12 +59,12 @@ export class MemoryUsersRepository implements IUsersRepository {
   }
 
   async searchUsers(tenantId: string, query: ListUsersQueryDto): Promise<{ items: User[]; total: number }> {
-    let result = Array.from(this.users.values()).filter(u => u.tenantId === tenantId);
+    let result = Array.from(this.users.values()).filter((u) => u.tenantId === tenantId && !u.deletedAt);
     
-    if (query.status) {
-      result = result.filter(u => u.status === query.status);
-    } else {
-      result = result.filter(u => u.status !== 'DISABLED');
+    if (query.status === 'SUSPENDED') {
+      result = result.filter((u) => u.status === 'SUSPENDED' || u.status === 'DISABLED');
+    } else if (query.status) {
+      result = result.filter((u) => u.status === query.status);
     }
     
     if (query.search) {

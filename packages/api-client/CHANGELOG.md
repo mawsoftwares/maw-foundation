@@ -39,6 +39,10 @@
 
 ### Patch Changes
 
+- Fixed a session-restore deadlock: proactive `applyAuth()` refresh called
+  `refresh()` → `postJson()` → `applyAuth()` again while the access token was
+  still expired, so `GET /me` never left the browser and the web app stayed on
+  "Loading...". Refresh is now single-flight (`inRefresh` + shared lock).
 - Fixed an error-swallowing bug in the offline layer: `OfflineRepository`
   (`findAll`/`findById`/`create`/`update`/`remove`) and the GET-side fallback in
   `installOfflineInterceptor` previously caught *any* error from an online

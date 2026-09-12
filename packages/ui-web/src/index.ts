@@ -54,6 +54,7 @@ export {
   type Theme,
   type ThemeOverrides,
   type TenantBranding,
+  type ShellTokens,
 } from './theme';
 
 // Core components

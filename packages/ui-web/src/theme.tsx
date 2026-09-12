@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   createTheme,
+  mergeThemeOverrides,
   tokensToCssVars,
   type Theme,
   type ThemeOverrides,
@@ -16,6 +17,7 @@ interface ThemeContextValue {
   setColorMode: (mode: ColorMode) => void;
   toggleColorMode: () => void;
   applyBranding: (branding: TenantBranding) => void;
+  applyThemeOverrides: (next: ThemeOverrides) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -200,14 +202,21 @@ export function ThemeProvider({
   children,
 }: ThemeProviderProps): ReactNode {
   const isControlled = colorModeProp !== undefined;
+  // Theme applied at runtime (e.g. from a design.md upload), layered on top of
+  // whatever `overrides` the parent (BrandProvider) currently provides. Tracking it
+  // separately, and re-deriving `theme` from BOTH whenever either changes, means a
+  // custom theme survives `overrides` changing identity later (for example when
+  // the tenant brand config finishes its async load right as a stored design.md is
+  // being re-applied on boot) instead of being silently reset back to `overrides` alone.
+  const [customOverrides, setCustomOverrides] = useState<ThemeOverrides | null>(null);
   const [theme, setTheme] = useState<Theme>(() => createTheme(overrides));
   const [internalMode, setInternalMode] = useState<ColorMode>(() => defaultColorMode ?? readStoredMode());
   const colorMode = isControlled ? colorModeProp : internalMode;
   const [isDark, setIsDark] = useState(() => resolveIsDark(colorMode));
 
   useEffect(() => {
-    setTheme(createTheme(overrides));
-  }, [overrides]);
+    setTheme(createTheme(mergeThemeOverrides(overrides, customOverrides ?? undefined)));
+  }, [overrides, customOverrides]);
 
   useEffect(() => {
     setIsDark(resolveIsDark(colorMode));
@@ -248,13 +257,24 @@ export function ThemeProvider({
     setColorMode(next);
   }, [colorMode, setColorMode]);
 
+  const applyThemeOverrides = useCallback((next: ThemeOverrides) => {
+    setCustomOverrides(next);
+  }, []);
+
   const applyBranding = useCallback((branding: TenantBranding) => {
-    setTheme(createTheme({ ...overrides, branding }));
-  }, [overrides]);
+    const palette: ThemeOverrides['palette'] = {};
+    if (branding.primaryColor) {
+      palette.brand = branding.primaryColor;
+      palette.borderFocus = branding.primaryColor;
+    }
+    if (branding.secondaryColor) palette.brandLight = branding.secondaryColor;
+    if (branding.accentColor) palette.brandDark = branding.accentColor;
+    setCustomOverrides({ branding, palette });
+  }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding }),
-    [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding],
+    () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides }),
+    [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides],
   );
 
   return (
@@ -276,4 +296,4 @@ export function useColorMode(): Pick<ThemeContextValue, 'colorMode' | 'isDark' |
   return { colorMode, isDark, setColorMode, toggleColorMode };
 }
 
-export { type Theme, type ThemeOverrides, type TenantBranding } from '@mawsoftwares/theme';
+export { type Theme, type ThemeOverrides, type TenantBranding, type ShellTokens } from '@mawsoftwares/theme';

@@ -31,6 +31,14 @@ function statusVariant(status: AccountStatusValue): 'success' | 'warning' | 'dan
   return 'default';
 }
 
+function statusLabel(status: AccountStatusValue): string {
+  if (status === 'SUSPENDED' || status === 'DISABLED') return 'Inactive';
+  if (status === 'PENDING_VERIFICATION') return 'Pending';
+  if (status === 'LOCKED') return 'Locked';
+  if (status === 'ACTIVE') return 'Active';
+  return status;
+}
+
 function displayName(user: UserResponseDto): string {
   const name = `${user.firstName} ${user.lastName}`.trim();
   return name.length > 0 ? name : user.email;
@@ -73,7 +81,7 @@ export function UsersList({ crud, onCreate, onView, statusFilter, onStatusFilter
       sortable: true,
       width: 160,
       render: (user) => (
-        <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
+        <Badge variant={statusVariant(user.status)}>{statusLabel(user.status)}</Badge>
       ),
     },
   ], []);
@@ -99,7 +107,7 @@ export function UsersList({ crud, onCreate, onView, statusFilter, onStatusFilter
           options={[
             { label: 'All Statuses', value: 'ALL' },
             { label: 'Active', value: 'ACTIVE' },
-            { label: 'Inactive / Suspended', value: 'SUSPENDED' },
+            { label: 'Inactive', value: 'SUSPENDED' },
             { label: 'Pending', value: 'PENDING_VERIFICATION' }
           ]}
           style={{ minWidth: 160 }}

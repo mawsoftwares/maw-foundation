@@ -173,14 +173,5 @@ export function createMenuRouter(
     }
   });
 
-  router.delete('/:id', deps.requireAuth, requireManage, async (req, res) => {
-    try {
-      await db.delete(schema.menuItems).where(eq(schema.menuItems.id, Number(req.params.id)));
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: (err as Error).message });
-    }
-  });
-
   return router;
 }
