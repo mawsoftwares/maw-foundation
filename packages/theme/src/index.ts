@@ -180,6 +180,16 @@ export interface ShellTokens {
   hover?: string;
 }
 
+export interface TypographyOverrides {
+  fontFamily?: string;
+  monoFamily?: string;
+  scale?: Record<string, { size?: string; weight?: string; lineHeight?: string; family?: string }>;
+}
+
+export interface ComponentOverrides {
+  [componentName: string]: Record<string, string>;
+}
+
 export interface ThemeOverrides {
   branding?: TenantBranding;
   palette?: Partial<Palette>;
@@ -188,8 +198,9 @@ export interface ThemeOverrides {
   radius?: Partial<Record<keyof typeof radius, number>>;
   shadows?: Partial<Record<keyof typeof shadows, string>>;
   transitions?: Partial<Record<keyof typeof transitions, string>>;
-  typography?: Partial<{ fontFamily: string; monoFamily: string }>;
+  typography?: TypographyOverrides;
   shell?: ShellTokens;
+  components?: ComponentOverrides;
 }
 
 export interface Theme {
@@ -206,11 +217,13 @@ export interface Theme {
     size: { [K in keyof typeof typography.size]: number };
     weight: { [K in keyof typeof typography.weight]: number };
     lineHeight: { [K in keyof typeof typography.lineHeight]: number };
+    scale?: TypographyOverrides['scale'];
   };
   breakpoints: { [K in keyof typeof breakpoints]: number };
   containerWidths: { [K in keyof typeof containerWidths]: number };
   branding: TenantBranding;
   shell?: ShellTokens;
+  components?: ComponentOverrides;
 }
 
 export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverrides): ThemeOverrides | undefined {
@@ -266,6 +279,7 @@ export function createTheme(overrides?: ThemeOverrides): Theme {
     ...typography,
     fontFamily: resolveFontFamily(fontFamily),
     monoFamily: overrides?.typography?.monoFamily ?? typography.monoFamily,
+    scale: overrides?.typography?.scale,
   };
 
   const mergedRadius = {
@@ -289,6 +303,7 @@ export function createTheme(overrides?: ThemeOverrides): Theme {
     containerWidths,
     branding,
     shell: overrides?.shell,
+    components: overrides?.components,
   };
 }
 
@@ -472,6 +487,7 @@ export {
   normalizeDesignMarkdown,
   toCanonicalDesignMarkdown,
   storedDesignToOverrides,
+  injectWebFonts,
   type DesignMdParseResult,
   type DesignMdNormalizeResult,
 } from './design-md';
@@ -495,6 +511,23 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   vars['--maw-font-mono'] = t.typography.monoFamily;
   for (const [k, v] of Object.entries(t.typography.size)) vars[`--maw-text-${k}`] = `${v}px`;
   for (const [k, v] of Object.entries(t.typography.weight)) vars[`--maw-weight-${k}`] = `${v}`;
+
+  if (t.typography.scale) {
+    for (const [k, v] of Object.entries(t.typography.scale)) {
+      if (v.size) vars[`--maw-text-${k}-size`] = v.size;
+      if (v.weight) vars[`--maw-text-${k}-weight`] = v.weight;
+      if (v.lineHeight) vars[`--maw-text-${k}-lh`] = v.lineHeight;
+      if (v.family) vars[`--maw-text-${k}-family`] = v.family;
+    }
+  }
+
+  if (t.components) {
+    for (const [comp, props] of Object.entries(t.components)) {
+      for (const [prop, val] of Object.entries(props)) {
+        vars[`--maw-comp-${comp}-${prop}`] = val;
+      }
+    }
+  }
 
   // Shell chrome: light design.md shells must not stick when color mode is dark.
   // Keep an explicit dark/frosted shell (e.g. Evreghen); otherwise follow the active palette.

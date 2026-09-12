@@ -275,26 +275,49 @@ function isCssColor(value: string): boolean {
   return false;
 }
 
-/** Normalize any color-ish string into a CSS color the browser can use. */
 function extractCssColor(value: string): string | undefined {
   const trimmed = unquote(value).trim();
   if (trimmed === '') return undefined;
-  if (HEX_COLOR.test(trimmed)) return trimmed;
-  if (BARE_HEX.test(trimmed)) return `#${trimmed}`;
-  if (NAMED_CSS_COLORS[trimmed.toLowerCase()] !== undefined) {
-    return NAMED_CSS_COLORS[trimmed.toLowerCase()];
+
+  // Handle "at 65%" or "@ 65%" opacity modifiers on hex colors (e.g. #FFFFFF at 65%)
+  const opacityMatch = trimmed.match(/^(.+?)\s*(?:at|@)\s*(\d+)%?$/i);
+  let baseColorStr = trimmed;
+  let alphaOverride: number | undefined;
+  
+  if (opacityMatch) {
+    baseColorStr = opacityMatch[1].trim();
+    alphaOverride = parseInt(opacityMatch[2], 10) / 100;
   }
-  if (CSS_FUNC_COLOR.test(trimmed)) return trimmed;
-  const spaceHsl = trimmed.match(SPACE_HSL);
-  if (spaceHsl !== null) {
-    const alpha = spaceHsl[4];
-    return alpha !== undefined
-      ? `hsl(${spaceHsl[1]} ${spaceHsl[2]}% ${spaceHsl[3]}% / ${alpha})`
-      : `hsl(${spaceHsl[1]} ${spaceHsl[2]}% ${spaceHsl[3]}%)`;
+  
+  let extracted: string | undefined;
+  
+  if (HEX_COLOR.test(baseColorStr)) extracted = baseColorStr;
+  else if (BARE_HEX.test(baseColorStr)) extracted = `#${baseColorStr}`;
+  else if (NAMED_CSS_COLORS[baseColorStr.toLowerCase()] !== undefined) {
+    extracted = NAMED_CSS_COLORS[baseColorStr.toLowerCase()];
   }
-  const match = trimmed.match(COLOR_IN_TEXT);
-  if (match?.[0] !== undefined) return match[0];
-  return undefined;
+  else if (CSS_FUNC_COLOR.test(baseColorStr)) extracted = baseColorStr;
+  else {
+    const spaceHsl = baseColorStr.match(SPACE_HSL);
+    if (spaceHsl !== null) {
+      const alpha = spaceHsl[4];
+      extracted = alpha !== undefined
+        ? `hsl(${spaceHsl[1]} ${spaceHsl[2]}% ${spaceHsl[3]}% / ${alpha})`
+        : `hsl(${spaceHsl[1]} ${spaceHsl[2]}% ${spaceHsl[3]}%)`;
+    } else {
+      const match = baseColorStr.match(COLOR_IN_TEXT);
+      if (match?.[0] !== undefined) extracted = match[0];
+    }
+  }
+
+  if (extracted !== undefined && alphaOverride !== undefined) {
+    const rgb = parseHexRgb(extracted);
+    if (rgb) {
+      return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alphaOverride})`;
+    }
+  }
+  
+  return extracted;
 }
 
 function collectAllColors(text: string): string[] {
@@ -335,6 +358,54 @@ function parseHexRgb(color: string): { r: number; g: number; b: number } | null 
     return { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]) };
   }
   return null;
+}
+
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  const rgb = parseHexRgb(hex);
+  if (!rgb) return { h: 0, s: 0, l: 0 };
+  const r = rgb.r / 255;
+  const g = rgb.g / 255;
+  const b = rgb.b / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: h * 360, s, l };
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  let r, g, b;
+  h /= 360;
+  if (s === 0) {
+    r = g = b = l; 
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  const toHex = (x: number) => {
+    const hex = Math.round(x * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function relativeLuminance(color: string): number {
@@ -565,12 +636,14 @@ function adaptPaletteToSystem(
   if (brand !== undefined) {
     palette.brandContrast = contrastOn(brand);
     if (palette.borderFocus === undefined) palette.borderFocus = brand;
-    const brandSat = colorSaturation(brand);
-    if (palette.brandLight === undefined && brandSat > 0.08) {
-      palette.brandLight = mixHex(brand, '#ffffff', 0.35) ?? brand;
+    const hsl = hexToHsl(brand);
+    if (palette.brandLight === undefined) {
+      // Algorithmic color generation: Lighten by 15%, preserve saturation instead of mixing with white
+      palette.brandLight = hslToHex(hsl.h, hsl.s, Math.min(0.95, hsl.l + 0.15));
     }
-    if (palette.brandDark === undefined && brandSat > 0.08) {
-      palette.brandDark = mixHex(brand, '#000000', 0.28) ?? brand;
+    if (palette.brandDark === undefined) {
+      // Algorithmic color generation: Darken by 15%, preserve saturation instead of mixing with black
+      palette.brandDark = hslToHex(hsl.h, hsl.s, Math.max(0.05, hsl.l - 0.15));
     }
   }
 
@@ -1406,9 +1479,58 @@ function harvestLooseLines(
   recognized: { field: string; value: string }[],
 ): void {
   const withoutFences = content.replace(/```[\s\S]*?```/g, '');
+  let currentComponent: string | null = null;
+  let tableHeaders: string[] = [];
+
   for (const rawLine of withoutFences.split(/\r?\n/)) {
     const line = rawLine.trim();
-    if (line === '' || line.startsWith('#')) continue;
+    if (line === '') continue;
+
+    // Track active component section (e.g. `### Buttons` or `## Cards`)
+    const headingMatch = line.match(/^#{2,4}\s+(.+)$/);
+    if (headingMatch) {
+      const heading = headingMatch[1].trim();
+      if (/Colors|Typography|Spacing|Radius|Elevation|Shadows|Overview/i.test(heading)) {
+        currentComponent = null;
+      } else {
+        currentComponent = normalizeTokenKey(heading);
+      }
+      tableHeaders = []; // Reset table headers on new section
+      continue;
+    }
+
+    // Markdown Table parsing for component styles
+    if (line.startsWith('|')) {
+      const cells = line.split('|').map(c => c.trim()).filter(c => c !== '');
+      if (line.includes('---')) continue; // Skip separator line
+      
+      if (tableHeaders.length === 0) {
+        tableHeaders = cells.map(normalizeTokenKey);
+        continue;
+      }
+
+      if (currentComponent && tableHeaders.length > 0) {
+        const rowName = normalizeTokenKey(cells[0] || '');
+        if (rowName) {
+          const components = overrides.components ?? (overrides.components = {});
+          const comp = components[currentComponent] ?? (components[currentComponent] = {});
+          
+          cells.slice(1).forEach((cell, idx) => {
+            const header = tableHeaders[idx + 1];
+            if (header && cell && cell !== '--' && cell !== 'none') {
+              const color = extractCssColor(cell);
+              const px = parsePx(cell);
+              const val = color ?? (px !== undefined ? `${px}px` : cell);
+              comp[`${rowName}-${header}`] = val;
+              record(recognized, `components.${currentComponent}.${rowName}-${header}`, val);
+            }
+          });
+        }
+      }
+    } else {
+      tableHeaders = []; // Not a table line, reset
+    }
+
     const table = line.match(/^\|\s*(.+?)\s*\|\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/);
     const pair = table
       ? { key: table[1] ?? '', value: table[2] ?? '' }
@@ -1419,14 +1541,47 @@ function harvestLooseLines(
         return { key: cleaned.slice(0, idx), value: cleaned.slice(idx + 1) };
       })();
     if (pair === null) continue;
+    
     const key = stripMarkdownEmphasis(pair.key);
     const value = stripMarkdownEmphasis(pair.value);
+    
+    // Component property loose line (e.g., "Hover: Scale 1.02")
+    if (currentComponent && !table) {
+       const components = overrides.components ?? (overrides.components = {});
+       const comp = components[currentComponent] ?? (components[currentComponent] = {});
+       comp[normalizeTokenKey(key)] = value;
+       record(recognized, `components.${currentComponent}.${normalizeTokenKey(key)}`, value);
+       continue;
+    }
+
     const color = extractCssColor(value);
     if (color !== undefined) {
       assignColorToken(overrides, [], key, color, recognized, false);
       continue;
     }
     const norm = normalizeTokenKey(key);
+    
+    // Typography Scale parsing (e.g., text-hero, text-h1)
+    if (norm.startsWith('text-')) {
+      const scaleKey = norm.replace('text-', '');
+      const sizeMatch = value.match(/(\d+)px/);
+      const lhMatch = value.match(/([\d.]+)\s*line[-\s]height/i);
+      const weightMatch = value.match(/bold|semibold|medium|regular|light|100|200|300|400|500|600|700|800|900/i);
+      const family = value.replace(/(\d+)px|([\d.]+)\s*line[-\s]height|bold|semibold|medium|regular|light|\b\d{3}\b|,/gi, '').trim();
+
+      const typography = overrides.typography ?? (overrides.typography = {});
+      const scale = typography.scale ?? (typography.scale = {});
+      const entry = scale[scaleKey] ?? (scale[scaleKey] = {});
+      
+      if (sizeMatch) entry.size = sizeMatch[1];
+      if (lhMatch) entry.lineHeight = lhMatch[1];
+      if (weightMatch) entry.weight = weightMatch[0].toLowerCase();
+      if (family) entry.family = family;
+      
+      record(recognized, `typography.scale.${scaleKey}`, value);
+      continue;
+    }
+
     if (norm === 'font-family' || norm === 'font' || norm === 'sans') {
       if (overrides.typography?.fontFamily === undefined && value !== '') {
         const typography = overrides.typography ?? (overrides.typography = {});
@@ -1711,3 +1866,48 @@ export function storedDesignToOverrides(stored: unknown): ThemeOverrides | null 
   }
   return null;
 }
+
+const GOOGLE_FONTS = new Set([
+  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Source Sans Pro',
+  'Oswald', 'Raleway', 'PT Sans', 'Merriweather', 'Nunito', 'Ubuntu',
+  'Playfair Display', 'Rubik', 'Work Sans', 'Poppins', 'Outfit',
+  'Space Grotesk', 'Fira Code', 'JetBrains Mono', 'Geist', 'Geist Mono',
+  'Plus Jakarta Sans', 'DM Sans', 'Manrope'
+]);
+
+/**
+ * Parses the font family from overrides and dynamically injects the Google Font if found.
+ */
+export function injectWebFonts(overrides: ThemeOverrides): void {
+  if (typeof document === 'undefined') return; // Only run in browser
+  const family = overrides.typography?.fontFamily ?? overrides.branding?.fontFamily;
+  if (!family) return;
+  
+  const match = family.match(/^['"]?([^,'"]+)['"]?/);
+  const firstFont = match ? match[1] : undefined;
+  
+  if (firstFont && GOOGLE_FONTS.has(firstFont)) {
+    const fontUrl = `https://fonts.googleapis.com/css2?family=${firstFont.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
+    
+    if (document.querySelector(`link[href="${fontUrl}"]`)) return;
+    
+    if (!document.querySelector('link[href="https://fonts.googleapis.com"]')) {
+      const preconnect1 = document.createElement('link');
+      preconnect1.rel = 'preconnect';
+      preconnect1.href = 'https://fonts.googleapis.com';
+      document.head.appendChild(preconnect1);
+      
+      const preconnect2 = document.createElement('link');
+      preconnect2.rel = 'preconnect';
+      preconnect2.href = 'https://fonts.gstatic.com';
+      preconnect2.crossOrigin = 'anonymous';
+      document.head.appendChild(preconnect2);
+    }
+    
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = fontUrl;
+    document.head.appendChild(link);
+  }
+}
+

@@ -3,6 +3,7 @@ import {
   createTheme,
   mergeThemeOverrides,
   tokensToCssVars,
+  injectWebFonts,
   type Theme,
   type ThemeOverrides,
   type TenantBranding,
@@ -70,6 +71,49 @@ const GLOBAL_CSS = `
     min-height: 100vh;
     background: var(--maw-canvas, var(--maw-bgSubtle));
     color: var(--maw-fg);
+  }
+
+  .text-hero {
+    font-size: var(--maw-text-hero-size, 72px);
+    font-weight: var(--maw-text-hero-weight, 800);
+    line-height: var(--maw-text-hero-lh, 1.05);
+    font-family: var(--maw-text-hero-family, var(--maw-font-family));
+  }
+  .text-h1 {
+    font-size: var(--maw-text-h1-size, 48px);
+    font-weight: var(--maw-text-h1-weight, 700);
+    line-height: var(--maw-text-h1-lh, 1.1);
+    font-family: var(--maw-text-h1-family, var(--maw-font-family));
+  }
+  .text-h2 {
+    font-size: var(--maw-text-h2-size, 32px);
+    font-weight: var(--maw-text-h2-weight, 600);
+    line-height: var(--maw-text-h2-lh, 1.2);
+    font-family: var(--maw-text-h2-family, var(--maw-font-family));
+  }
+  .text-h3 {
+    font-size: var(--maw-text-h3-size, 24px);
+    font-weight: var(--maw-text-h3-weight, 600);
+    line-height: var(--maw-text-h3-lh, 1.3);
+    font-family: var(--maw-text-h3-family, var(--maw-font-family));
+  }
+  .text-body-lg {
+    font-size: var(--maw-text-body-lg-size, 18px);
+    font-weight: var(--maw-text-body-lg-weight, 400);
+    line-height: var(--maw-text-body-lg-lh, 1.6);
+    font-family: var(--maw-text-body-lg-family, var(--maw-font-family));
+  }
+  .text-body {
+    font-size: var(--maw-text-body-size, 16px);
+    font-weight: var(--maw-text-body-weight, 400);
+    line-height: var(--maw-text-body-lh, 1.6);
+    font-family: var(--maw-text-body-family, var(--maw-font-family));
+  }
+  .text-caption {
+    font-size: var(--maw-text-caption-size, 13px);
+    font-weight: var(--maw-text-caption-weight, 500);
+    line-height: var(--maw-text-caption-lh, 1.5);
+    font-family: var(--maw-text-caption-family, var(--maw-font-family));
   }
 
   .maw-btn-hover:hover {
@@ -216,6 +260,10 @@ export function ThemeProvider({
 
   useEffect(() => {
     setTheme(createTheme(mergeThemeOverrides(overrides, customOverrides ?? undefined)));
+    
+    // Dynamically inject any Google Fonts found in the new overrides
+    if (customOverrides) injectWebFonts(customOverrides);
+    else if (overrides) injectWebFonts(overrides);
   }, [overrides, customOverrides]);
 
   useEffect(() => {

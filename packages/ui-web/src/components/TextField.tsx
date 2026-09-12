@@ -34,7 +34,7 @@ export function TextField({
           width: '100%',
           padding: 'var(--maw-space-sm) var(--maw-space-md)',
           borderRadius: 'var(--maw-radius-md)',
-          border: `1px solid ${error ? 'var(--maw-danger)' : 'var(--maw-border)'}`,
+          border: error ? "1px solid var(--maw-danger)" : "none",
           fontSize: 'var(--maw-text-md)',
           color: 'var(--maw-fg)',
           background: 'var(--maw-bg)',

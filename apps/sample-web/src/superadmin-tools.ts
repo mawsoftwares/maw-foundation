@@ -22,6 +22,5 @@ export const SUPERADMIN_TOOLS: SuperAdminTool[] = [
   { key: 'messaging', label: 'Messaging', description: 'Manage Email, SMS, and WhatsApp templates, credentials, and send logs', icon: 'mail', permission: 'Read_Messaging' },
   { key: 'audit-logs', label: 'Audit Logs', description: 'View system activity and security events', icon: 'scroll-text', permission: 'Read_AuditLogs' },
   { key: 'settings', label: 'Settings', description: 'System-wide settings', icon: 'settings' },
-  { key: 'notifications', label: 'Notifications', description: 'System notifications', icon: 'bell' },
   { key: 'showcase', label: 'UI Showcase', description: 'Browse the design system components', icon: 'palette' },
 ];

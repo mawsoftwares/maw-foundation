@@ -122,7 +122,7 @@ export function Wizard({
             ...base,
             padding: 'var(--maw-space-sm) var(--maw-space-lg)',
             borderRadius: 'var(--maw-radius-md)',
-            border: '1px solid var(--maw-border)',
+            border: "none",
             background: 'transparent',
             color: isFirst ? 'var(--maw-fgMuted)' : 'var(--maw-fg)',
             cursor: isFirst ? 'not-allowed' : 'pointer',

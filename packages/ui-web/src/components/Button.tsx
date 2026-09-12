@@ -28,19 +28,19 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' | 'danger'; loading?: boolean }): ReactNode {
   const styles: Record<string, CSSProperties> = {
     primary: {
-      background: 'var(--maw-brand)',
-      color: 'var(--maw-brandContrast)',
-      border: 'none',
+      background: 'var(--maw-comp-buttons-primary-background, var(--maw-brand))',
+      color: 'var(--maw-comp-buttons-primary-text-color, var(--maw-brandContrast))',
+      border: 'var(--maw-comp-buttons-primary-border, none)',
     },
     ghost: {
-      background: 'transparent',
-      color: 'var(--maw-fg)',
-      border: '1px solid var(--maw-border)',
+      background: 'var(--maw-comp-buttons-ghost-background, transparent)',
+      color: 'var(--maw-comp-buttons-ghost-text-color, var(--maw-fg))',
+      border: 'var(--maw-comp-buttons-ghost-border, 1px solid var(--maw-border))',
     },
     danger: {
-      background: 'var(--maw-danger)',
-      color: '#ffffff',
-      border: 'none',
+      background: 'var(--maw-comp-buttons-destructive-background, var(--maw-comp-buttons-danger-background, var(--maw-danger)))',
+      color: 'var(--maw-comp-buttons-destructive-text-color, var(--maw-comp-buttons-danger-text-color, #ffffff))',
+      border: 'var(--maw-comp-buttons-destructive-border, var(--maw-comp-buttons-danger-border, none))',
     },
   };
   const isDisabled = disabled === true || loading;
@@ -56,9 +56,10 @@ export function Button({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 'var(--maw-space-xs)',
-        padding: 'var(--maw-space-sm) var(--maw-space-lg)',
-        borderRadius: 'var(--maw-radius-md)',
-        fontSize: 'var(--maw-text-md)',
+        height: 'var(--maw-comp-buttons-medium-height, auto)',
+        padding: 'var(--maw-comp-buttons-medium-padding-h, var(--maw-space-sm) var(--maw-space-lg))',
+        borderRadius: 'var(--maw-comp-buttons-border-radius, var(--maw-radius-md))',
+        fontSize: 'var(--maw-comp-buttons-medium-font-size, var(--maw-text-md))',
         fontWeight: 600,
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         opacity: isDisabled && !loading ? 0.6 : 1,

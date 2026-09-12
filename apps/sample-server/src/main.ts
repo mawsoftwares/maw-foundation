@@ -1002,23 +1002,6 @@ app.get('/api/v1/jobs/:id', auth.requireAuth, (req, res) => {
   })();
 });
 
-// --- Notification routes ---
-
-app.post('/api/v1/notifications/send', auth.requireAuth, (req, res) => {
-  void (async () => {
-    const maw = (req as DynamicAuthedRequest).maw!;
-    const { channel, email, subject, body } = req.body as {
-      channel?: string; email: string; subject: string; body: string;
-    };
-    await communication.emailService.send({
-      tenantId: maw.claims.tenantId,
-      email: { to: email, subject, body },
-      metadata: { source: 'manual' },
-    });
-    res.json({ data: { sent: true, channel: channel ?? 'EMAIL', to: email } });
-  })();
-});
-
 app.get('/api/v1/notifications/in-app', auth.requireAuth, (req, res) => {
   void (async () => {
     const maw = (req as DynamicAuthedRequest).maw!;
@@ -1034,17 +1017,6 @@ app.get('/api/v1/notifications/in-app', auth.requireAuth, (req, res) => {
     );
     res.json({ data: { notifications, unreadCount } });
   })();
-});
-
-app.get('/api/v1/notifications/channels', auth.requireAuth, (_req, res) => {
-  res.json({
-    data: [
-      { id: 'EMAIL', name: 'Email', enabled: true, description: 'Email notifications via EmailService' },
-      { id: 'SMS', name: 'SMS', enabled: true, description: 'SMS notifications via SmsService' },
-      { id: 'PUSH', name: 'Push', enabled: false, description: 'Push notifications (not configured)' },
-      { id: 'IN_APP', name: 'In-App', enabled: true, description: 'In-app notification center via InAppNotificationService' },
-    ],
-  });
 });
 
 // --- Health check (composable) ---

@@ -37,8 +37,6 @@ import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';
 
-
-import { NotificationsView } from './features/notifications';
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
 import { MenusView } from './features/menus';
@@ -55,7 +53,7 @@ const config = createConfigEngine();
 config.loadLayer('app', { offline: { enabled: true } });
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'notifications' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -104,7 +102,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   messaging: 'Read_Messaging',
 };
 
-const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings', 'notifications']);
+const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings']);
 
 /** Sidebar section for each known nav key, used to group DB-driven menu items the same way the static fallback does. */
 const NAV_GROUPS: Record<string, string> = {
@@ -112,7 +110,6 @@ const NAV_GROUPS: Record<string, string> = {
   billing: 'Finance',
   users: 'Admin', 'audit-logs': 'Admin', account: 'Admin',
   superadmin: 'Admin', settings: 'Admin',
-  notifications: 'Dev',
 };
 
 function menuNodeToNavItem(node: MenuTreeNode): NavItem {
@@ -163,9 +160,6 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'users': return <UsersView />;
     case 'audit-logs': return <AuditLogsView />;
     case 'account': return <AccountView />;
-
-
-    case 'notifications': return <NotificationsView />;
     case 'rbac': return <RbacView />;
     case 'feature-flags': return <FeatureFlagsView />;
     case 'menus': return <MenusView />;

@@ -46,7 +46,7 @@ export function Accordion({
   };
 
   return (
-    <div style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-md)', overflow: 'hidden', ...style }}>
+    <div style={{ ...base, border: "none", borderRadius: 'var(--maw-radius-md)', overflow: 'hidden', ...style }}>
       {items.map((item, i) => {
         const isOpen = expanded.has(item.key);
         return (

@@ -5,7 +5,6 @@ import { OrdersView } from './orders';
 import { InventoryView } from './inventory';
 import { BillingView } from './billing';
 import { AuditLogsView } from './audit-logs';
-import { NotificationsView } from './notifications';
 import { RbacView } from './rbac';
 
 export const registry = new FeatureRegistry();
@@ -18,5 +17,4 @@ registry.register(
   { key: 'inventory', name: 'Inventory', permissions: ['Read_Inventory'], Panel: InventoryView },
   { key: 'billing', name: 'Billing', permissions: ['Read_Billing', 'Create_Billing'], Panel: BillingView },
   { key: 'audit-logs', name: 'Audit Logs', permissions: ['Read_AuditLogs', 'Export_AuditLogs'], Panel: AuditLogsView },
-  { key: 'notifications', name: 'Notifications', permissions: [], Panel: NotificationsView },
 );

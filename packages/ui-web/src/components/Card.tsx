@@ -24,11 +24,12 @@ export function Card({ children, padding, style }: CardProps): ReactNode {
       className="maw-card-hover"
       style={{
         ...base,
-        background: 'var(--maw-surface)',
-        border: '1px solid var(--maw-border)',
-        borderRadius: 'var(--maw-radius-lg)',
-        padding: resolvedPadding,
-        boxShadow: 'var(--maw-shadow-sm)',
+        background: 'var(--maw-comp-cards-background, var(--maw-surface))',
+        border: 'var(--maw-comp-cards-border, 1px solid var(--maw-border))',
+        borderRadius: 'var(--maw-comp-cards-border-radius, var(--maw-radius-lg))',
+        padding: `var(--maw-comp-cards-padding, ${resolvedPadding})`,
+        boxShadow: 'var(--maw-comp-cards-shadow, var(--maw-shadow-sm))',
+        backdropFilter: 'var(--maw-comp-cards-backdrop-filter, none)',
         ...style,
       }}
     >

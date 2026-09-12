@@ -160,7 +160,7 @@ export function DateRangePicker({
             left: 0,
             marginTop: 4,
             background: 'var(--maw-bg)',
-            border: '1px solid var(--maw-border)',
+            border: "none",
             borderRadius: 'var(--maw-radius-md)',
             boxShadow: 'var(--maw-shadow-lg)',
             zIndex: 'var(--maw-z-dropdown)' as unknown as number,

@@ -190,7 +190,6 @@ try {
       { key: 'messaging', label: 'Messaging', path: '/messaging', icon: 'mail', permission: 'Read_Messaging', sortOrder: 89, parentKey: 'superadmin' },
       { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
 
-      { key: 'notifications', label: 'Notifications', path: '/notifications', icon: 'bell', sortOrder: 970 },
       { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990, parentKey: 'superadmin' },
     ];
     let menuCount = 0;
@@ -210,6 +209,8 @@ try {
       menuCount++;
     }
     log.info('Menu items upserted', { count: menuCount });
+
+    await client.query(`DELETE FROM menu_items WHERE key = 'notifications'`);
 
     // --- Messaging: demo templates (email/sms/whatsapp), upserted by identifier ---
     await client.query(
