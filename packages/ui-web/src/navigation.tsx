@@ -279,7 +279,7 @@ export function Sidebar({
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} active={activeKey === item.key} collapsed={collapsed && !isMobile} onNavigate={handleNavigate} />
+              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={collapsed && !isMobile} onNavigate={handleNavigate} />
             ))}
           </div>
         ))}
@@ -301,22 +301,33 @@ export function Sidebar({
   );
 }
 
+function itemContainsKey(item: NavItem, key: string): boolean {
+  if (item.key === key) return true;
+  return item.children?.some((child) => itemContainsKey(child, key)) ?? false;
+}
+
 function SidebarItem({
   item,
-  active,
+  activeKey,
   collapsed,
   onNavigate,
   depth = 0,
 }: {
   item: NavItem;
-  active: boolean;
+  activeKey: string;
   collapsed: boolean;
   onNavigate: (path: string) => void;
   depth?: number;
 }): ReactNode {
-  const [expanded, setExpanded] = useState(false);
+  const active = item.key === activeKey;
+  const childActive = !active && itemContainsKey(item, activeKey);
+  const [expanded, setExpanded] = useState(childActive);
   const [hovered, setHovered] = useState(false);
   const hasChildren = item.children !== undefined && item.children.length > 0;
+
+  useEffect(() => {
+    if (childActive) setExpanded(true);
+  }, [childActive]);
 
   return (
     <>
@@ -397,7 +408,7 @@ function SidebarItem({
       {hasChildren && expanded && !collapsed && (
         <div style={{ paddingTop: 4, paddingBottom: 4 }}>
           {item.children!.map((child) => (
-            <SidebarItem key={child.key} item={child} active={false} collapsed={false} onNavigate={onNavigate} depth={depth + 1} />
+            <SidebarItem key={child.key} item={child} activeKey={activeKey} collapsed={false} onNavigate={onNavigate} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -462,8 +473,8 @@ export function AppShell({
   const isMobile = useIsMobile();
   const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs } = useNavigation();
   const pageTitle =
-    items.find((item) => item.key === activeKey)?.label
-    ?? breadcrumbs[breadcrumbs.length - 1]?.label
+    breadcrumbs[breadcrumbs.length - 1]?.label
+    ?? items.find((item) => item.key === activeKey)?.label
     ?? '';
 
   return (

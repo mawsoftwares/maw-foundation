@@ -1,5 +1,3 @@
-import { client } from './api';
-
 export interface MenuTreeNode {
   id: number;
   key: string;
@@ -16,6 +14,7 @@ export interface MenuTreeNode {
 
 /** Fetches the active menu tree from the DB-backed Menu Management module. */
 export async function loadMenuTree(): Promise<MenuTreeNode[]> {
+  const { client } = await import('./api');
   const res = await client.request<{ data: MenuTreeNode[] }>('/api/v1/menus/tree');
   return res.data;
 }
@@ -31,4 +30,15 @@ export function flattenMenuTree(nodes: MenuTreeNode[]): MenuTreeNode[] {
   };
   visit(nodes);
   return out;
+}
+
+/** Ancestor chain from a root down to `key`, or null if the key is not in the tree. */
+export function findMenuPath(nodes: MenuTreeNode[], key: string): MenuTreeNode[] | null {
+  for (const node of nodes) {
+    if (node.key === key) return [node];
+    if (node.children.length === 0) continue;
+    const nested = findMenuPath(node.children, key);
+    if (nested !== null) return [node, ...nested];
+  }
+  return null;
 }

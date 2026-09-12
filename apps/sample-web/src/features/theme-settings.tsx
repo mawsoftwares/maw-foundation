@@ -44,6 +44,126 @@ const PALETTE_SWATCHES = [
   ['fg', 'Text'],
 ] as const;
 
+const PRESET_THEMES = [
+  {
+    id: 'glassmorphism',
+    name: 'Glassmorphism',
+    image: '/themes/glassmorphism.jpg',
+    template: `---
+version: alpha
+name: Glassmorphism
+colors:
+  background: "#0f172a"
+  on-background: "#f8fafc"
+  surface: "rgba(30, 41, 59, 0.7)"
+  surface-elevated: "rgba(51, 65, 85, 0.8)"
+  on-surface: "#f1f5f9"
+  on-surface-muted: "#94a3b8"
+  outline: "rgba(255, 255, 255, 0.1)"
+  primary: "#a855f7"
+  primary-strong: "#9333ea"
+  primary-warm: "#c084fc"
+  primary-focus: "#7e22ce"
+  on-primary: "#ffffff"
+  shell-base: "#020617"
+  on-shell: "#f8fafc"
+typography:
+  body-md:
+    fontFamily: "Inter, system-ui, sans-serif"
+rounded:
+  md: "16px"
+---`
+  },
+  {
+    id: 'neobrutalism',
+    name: 'Neobrutalism',
+    image: '/themes/neobrutalism.jpg',
+    template: `---
+version: alpha
+name: Neobrutalism
+colors:
+  background: "#fdfbf7"
+  on-background: "#000000"
+  surface: "#ffffff"
+  surface-elevated: "#ffffff"
+  on-surface: "#000000"
+  on-surface-muted: "#000000"
+  outline: "#000000"
+  primary: "#fbbf24"
+  primary-strong: "#f59e0b"
+  primary-warm: "#fcd34d"
+  primary-focus: "#d97706"
+  on-primary: "#000000"
+  shell-base: "#fdfbf7"
+  on-shell: "#000000"
+typography:
+  body-md:
+    fontFamily: "'Space Grotesk', system-ui, sans-serif"
+    fontWeight: "600"
+rounded:
+  md: "0px"
+---`
+  },
+  {
+    id: 'minimalist',
+    name: 'Minimalist',
+    image: '/themes/minimalist.jpg',
+    template: `---
+version: alpha
+name: Minimalist
+colors:
+  background: "#ffffff"
+  on-background: "#111827"
+  surface: "#f9fafb"
+  surface-elevated: "#ffffff"
+  on-surface: "#111827"
+  on-surface-muted: "#6b7280"
+  outline: "#e5e7eb"
+  primary: "#111827"
+  primary-strong: "#000000"
+  primary-warm: "#374151"
+  primary-focus: "#000000"
+  on-primary: "#ffffff"
+  shell-base: "#f3f4f6"
+  on-shell: "#111827"
+typography:
+  body-md:
+    fontFamily: "Inter, system-ui, sans-serif"
+rounded:
+  md: "4px"
+---`
+  },
+  {
+    id: 'bento',
+    name: 'Bento Box',
+    image: '/themes/bento.jpg',
+    template: `---
+version: alpha
+name: Bento Box
+colors:
+  background: "#f0fdf4"
+  on-background: "#064e3b"
+  surface: "#ffffff"
+  surface-elevated: "#ffffff"
+  on-surface: "#064e3b"
+  on-surface-muted: "#047857"
+  outline: "#d1fae5"
+  primary: "#10b981"
+  primary-strong: "#059669"
+  primary-warm: "#34d399"
+  primary-focus: "#047857"
+  on-primary: "#ffffff"
+  shell-base: "#ecfdf5"
+  on-shell: "#064e3b"
+typography:
+  body-md:
+    fontFamily: "Outfit, system-ui, sans-serif"
+rounded:
+  md: "24px"
+---`
+  }
+];
+
 export function ThemeSettingsView(): ReactNode {
   const { applyThemeOverrides, theme } = useTheme();
   const { can } = useDynamicAccess();
@@ -126,6 +246,44 @@ export function ThemeSettingsView(): ReactNode {
             <a href="/design.md" target="_blank" rel="noreferrer" style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-brand)' }}>
               View example design.md
             </a>
+          </div>
+
+          <div style={{ marginTop: 'var(--maw-space-md)' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 'var(--maw-text-md)', fontWeight: 600 }}>Preset Themes</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--maw-space-md)' }}>
+              {PRESET_THEMES.map(preset => (
+                <div
+                  key={preset.id}
+                  style={{
+                    border: '1px solid var(--maw-border)',
+                    borderRadius: 'var(--maw-radius-md)',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                  onClick={() => {
+                    if (!canManage) return;
+                    setDesignMdText(preset.template);
+                    applyText(preset.template);
+                    setFileName(`${preset.id}.md`);
+                  }}
+                >
+                  <img src={preset.image} alt={preset.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ padding: '8px 12px', fontSize: 'var(--maw-text-sm)', fontWeight: 500, background: 'var(--maw-bg)', borderTop: '1px solid var(--maw-border)' }}>
+                    {preset.name}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <TextAreaField

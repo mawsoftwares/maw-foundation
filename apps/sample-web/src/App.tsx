@@ -46,6 +46,7 @@ import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-setti
 import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
+import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
 import { TopBarActions } from './shell/TopBarActions';
 
 
@@ -228,12 +229,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   // fall back to the static NAV_ITEMS list (still kept in sync as a reference/offline
   // fallback) if the fetch hasn't completed yet or fails, so the sidebar is never empty.
   const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
+  const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
   useEffect(() => {
     if (session === null) return;
     let cancelled = false;
     loadMenuTree()
       .then((tree) => {
         if (cancelled) return;
+        setMenuTree(tree);
         // Only root items become sidebar entries — a node with children (e.g. "Super
         // Admin") is a hub whose sub-pages are reached via cards on its own page,
         // not a nested sidebar submenu.
@@ -241,7 +244,10 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         setDynamicNavItems(roots.length > 0 ? roots : null);
       })
       .catch(() => {
-        if (!cancelled) setDynamicNavItems(null);
+        if (!cancelled) {
+          setMenuTree(null);
+          setDynamicNavItems(null);
+        }
       });
     return () => { cancelled = true; };
   }, [session]);
@@ -266,14 +272,11 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     });
     return {
       items,
-      activeKey: page,
+      activeKey: sidebarActiveKey(page, items),
       onNavigate: navigate,
-      breadcrumbs: [
-        { label: 'Home', path: '/dashboard' },
-        { label: allNavItems.find((n) => n.key === page)?.label ?? page },
-      ],
+      breadcrumbs: buildPageBreadcrumbs(page, allNavItems, menuTree),
     };
-  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled, allNavItems]);
+  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled, allNavItems, menuTree]);
 
   if (loading) return <div className="maw-auth-screen">{t('common.loading')}</div>;
   if (session === null) {
