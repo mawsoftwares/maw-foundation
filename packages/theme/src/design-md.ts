@@ -1,10 +1,22 @@
 import type { Palette, ShellTokens, TenantBranding, ThemeOverrides } from './index';
 
 /**
- * Parses a human-writable design file into theme overrides, then can rewrite it
- * as canonical YAML (`normalizeDesignMarkdown`) so any imported `design.md` —
- * YAML, markdown lists, fenced code, CSS variables — becomes the same format
- * Theme Designer applies.
+ * design.md → MAW theme adapter.
+ *
+ * Goal: any design file (YAML frontmatter, bare YAML, markdown lists, CSS vars,
+ * JSON/DTCG, unlabeled hex in prose) becomes a live app theme that fits our
+ * token system — not a 1:1 dump of every color onto every surface.
+ *
+ * Pipeline:
+ * 1. Parse whatever format the file uses.
+ * 2. Map named roles → MAW tokens (primary→brand, background→canvas, surface→card, …).
+ * 3. Adapt for feasibility: saturated accents stay on buttons/links; page chrome
+ *    stays quiet and readable; missing neutrals are derived from brand; contrast
+ *    is fixed when text would disappear.
+ *
+ * Well-labeled files (e.g. Evreghen) pass through with high fidelity.
+ * Game-art / mood-board files (e.g. yellow “surface”) are remapped so the shell
+ * stays usable while brand colors still drive the look.
  */
 
 const HEX_COLOR = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
@@ -455,25 +467,26 @@ function inferPaletteFromColors(
 }
 
 /**
- * Design pass: fix swapped roles, guarantee contrast, derive missing neutrals.
- * Saturated yellows/golds belong on buttons — never on page canvas or cards.
+ * Adapt harvested colors into MAW roles so any design.md is feasible in-app.
+ * Preserves quiet author neutrals; relocates loud mislabeled surfaces to accents.
  */
-function harmonizePalette(
+function adaptPaletteToSystem(
   overrides: ThemeOverrides,
   recognized: { field: string; value: string }[],
-): void {
+): boolean {
   const palette = overrides.palette ?? (overrides.palette = {});
+  const cleared = new Set<string>();
 
   const rescueAccent = (value: string, prefer: 'brand' | 'brandLight' | 'brandDark' | 'info'): void => {
     if (prefer === 'brand' && palette.brand === undefined) {
       palette.brand = value;
       palette.borderFocus = value;
-      record(recognized, 'harmonized.primary', value);
+      record(recognized, 'adapted.primary', value);
       return;
     }
     if (prefer === 'brandLight' && (palette.brandLight === undefined || colorSaturation(palette.brandLight) < 0.15)) {
       palette.brandLight = value;
-      record(recognized, 'harmonized.primary-warm', value);
+      record(recognized, 'adapted.primary-warm', value);
       return;
     }
     if (prefer === 'brandDark' && palette.brandDark === undefined) {
@@ -482,50 +495,51 @@ function harmonizePalette(
     }
     if (prefer === 'info' && palette.info === undefined) {
       palette.info = value;
-      record(recognized, 'harmonized.info', value);
+      record(recognized, 'adapted.info', value);
     }
+  };
+
+  const isLoudSurface = (value: string): boolean => {
+    // Only reclassify hex/rgb we can measure — leave hsl/oklch author values alone
+    if (parseHexRgb(value) === null) return false;
+    const scored = scoreColor(value);
+    if (scored.nearWhite && scored.sat < 0.15) return false;
+    return scored.sat >= 0.28;
   };
 
   // Strip loud colors off surface / border / muted-text roles
   for (const role of ['bgSubtle', 'bg', 'bgMuted', 'border'] as const) {
     const value = palette[role];
-    if (value === undefined) continue;
-    const scored = scoreColor(value);
-    // Bright saturated fills (Flip7 yellow etc.) must not paint the chrome
-    if (scored.sat < 0.28 && !scored.nearWhite) continue;
-    if (scored.nearWhite && scored.sat < 0.12) continue;
+    if (value === undefined || !isLoudSurface(value)) continue;
 
+    const scored = scoreColor(value);
     if (scored.lum > 0.55) rescueAccent(value, palette.brand === undefined ? 'brand' : 'brandLight');
     else if (scored.lum > 0.25) rescueAccent(value, palette.brand === undefined ? 'brand' : 'brandDark');
     else rescueAccent(value, 'brandDark');
 
     delete palette[role];
-    record(recognized, `harmonized.cleared-${role}`, value);
+    cleared.add(role);
+    record(recognized, `adapted.cleared-${role}`, value);
   }
 
-  // Teal/cyan/etc. as "muted text" is a brand accent, not secondary copy
-  if (palette.fgMuted !== undefined) {
-    const muted = scoreColor(palette.fgMuted);
-    if (muted.sat > 0.25) {
-      rescueAccent(palette.fgMuted, 'info');
-      delete palette.fgMuted;
-      record(recognized, 'harmonized.cleared-fgMuted', muted.c);
-    }
+  if (palette.fgMuted !== undefined && scoreColor(palette.fgMuted).sat > 0.25) {
+    rescueAccent(palette.fgMuted, 'info');
+    delete palette.fgMuted;
+    cleared.add('fgMuted');
+    record(recognized, 'adapted.cleared-fgMuted', palette.info ?? '');
   }
 
-  // Coral/red "body text" is fine for brand voice only if contrast is strong; else darken
-  if (palette.fg !== undefined) {
+  if (palette.fg !== undefined && parseHexRgb(palette.fg) !== null) {
     const ink = scoreColor(palette.fg);
     if (ink.sat > 0.45 && ink.lum > 0.35) {
       const deepened = mixHex(palette.fg, '#0f172a', 0.45) ?? palette.fg;
       if (palette.brandDark === undefined) palette.brandDark = palette.fg;
       palette.fg = deepened;
-      record(recognized, 'harmonized.text', deepened);
+      record(recognized, 'adapted.text', deepened);
     }
   }
 
   let brand = palette.brand;
-  // Prefer a punchy mid gold over an ultra-light yellow as the CTA fill
   if (brand !== undefined && palette.brandLight !== undefined) {
     const b = scoreColor(brand);
     const light = scoreColor(palette.brandLight);
@@ -550,17 +564,17 @@ function harmonizePalette(
 
   if (brand !== undefined) {
     palette.brandContrast = contrastOn(brand);
-    palette.borderFocus = brand;
-    if (palette.brandLight === undefined) {
+    if (palette.borderFocus === undefined) palette.borderFocus = brand;
+    const brandSat = colorSaturation(brand);
+    if (palette.brandLight === undefined && brandSat > 0.08) {
       palette.brandLight = mixHex(brand, '#ffffff', 0.35) ?? brand;
     }
-    if (palette.brandDark === undefined) {
+    if (palette.brandDark === undefined && brandSat > 0.08) {
       palette.brandDark = mixHex(brand, '#000000', 0.28) ?? brand;
     }
   }
 
   if (lightIntent) {
-    // Soft brand-tinted paper canvas + white cards (never full yellow fills)
     const paper = brand !== undefined
       ? (mixHex(brand, '#ffffff', 0.93) ?? '#faf8f5')
       : '#f8fafc';
@@ -568,22 +582,51 @@ function harmonizePalette(
       ? (mixHex(brand, '#ffffff', 0.88) ?? '#f1f5f9')
       : '#f1f5f9';
 
-    palette.bgSubtle = paper;
-    palette.bg = '#ffffff';
-    palette.bgMuted = well;
-    palette.border = mixHex(paper, palette.fg ?? '#0f172a', 0.12) ?? '#e8e4dc';
-
+    // Only replace surfaces we cleared or that were missing — keep author neutrals
+    // Pure white page + rescued brand yellows → soft paper canvas so white cards can lift
+    if (
+      brand !== undefined
+      && cleared.size > 0
+      && palette.bgSubtle !== undefined
+      && scoreColor(palette.bgSubtle).nearWhite
+      && scoreColor(palette.bgSubtle).sat < 0.05
+    ) {
+      palette.bgSubtle = paper;
+    }
+    if (palette.bgSubtle === undefined || cleared.has('bgSubtle')) {
+      palette.bgSubtle = paper;
+    }
+    if (palette.bg === undefined || cleared.has('bg')) {
+      palette.bg = '#ffffff';
+    }
+    if (palette.bgMuted === undefined || cleared.has('bgMuted')) {
+      palette.bgMuted = well;
+    }
+    if (palette.border === undefined || cleared.has('border')) {
+      palette.border = mixHex(palette.bgSubtle, palette.fg ?? '#0f172a', 0.12) ?? '#e8e4dc';
+    }
     if (palette.fg === undefined) {
-      palette.fg = brand !== undefined
+      palette.fg = brand !== undefined && colorSaturation(brand) > 0.08
         ? (mixHex(brand, '#0f172a', 0.78) ?? '#0f172a')
         : '#0f172a';
     }
-    if (contrastRatio(palette.fg, palette.bgSubtle) < 4.5) {
+    if (
+      parseHexRgb(palette.fg) !== null
+      && parseHexRgb(palette.bgSubtle) !== null
+      && contrastRatio(palette.fg, palette.bgSubtle) < 4.5
+    ) {
       palette.fg = '#0f172a';
     }
-    palette.fgMuted = mixHex(palette.fg, paper, 0.4) ?? '#6b7280';
-    palette.fgSubtle = mixHex(palette.fgMuted, paper, 0.35) ?? '#9ca3af';
-    record(recognized, 'harmonized.surfaces', `${paper} / #ffffff`);
+    if (palette.fgMuted === undefined || cleared.has('fgMuted')) {
+      palette.fgMuted = (parseHexRgb(palette.fg) !== null
+        ? mixHex(palette.fg, palette.bgSubtle, 0.4)
+        : undefined) ?? '#6b7280';
+    }
+    if (palette.fgSubtle === undefined) {
+      palette.fgSubtle = (parseHexRgb(palette.fgMuted) !== null
+        ? mixHex(palette.fgMuted, palette.bgSubtle, 0.35)
+        : undefined) ?? '#9ca3af';
+    }
   } else {
     if (palette.bgSubtle === undefined) palette.bgSubtle = '#09090b';
     if (palette.bg === undefined) palette.bg = '#18181b';
@@ -607,35 +650,52 @@ function harmonizePalette(
     palette.infoBg = mixHex(palette.info, lightIntent ? '#ffffff' : '#000000', lightIntent ? 0.9 : 0.85) ?? palette.info;
   }
 
-  const shell = overrides.shell;
-  if (shell?.bg !== undefined) {
-    const shellLum = relativeLuminance(shell.bg.startsWith('rgba') && shell.bg.includes('0, 0, 0') ? '#000000' : shell.bg);
-    const opaqueShell = !shell.bg.includes('rgba') && !shell.bg.includes('rgb');
-    if (brand !== undefined && shell.bg.toLowerCase() === brand.toLowerCase()) {
-      delete shell.bg;
-      delete shell.fg;
-      delete shell.fgMuted;
-      delete shell.border;
-      delete shell.blur;
-      delete shell.hover;
-    } else if (shellLum < 0.35 || shell.bg.includes('rgba(0')) {
-      shell.fg = shell.fg ?? '#ffffff';
-      shell.fgMuted = shell.fgMuted ?? 'rgba(255, 255, 255, 0.70)';
-      shell.border = shell.border ?? 'rgba(255, 255, 255, 0.10)';
-      shell.hover = shell.hover ?? 'rgba(255, 255, 255, 0.10)';
-      shell.blur = shell.blur ?? '12px';
-      if (opaqueShell && shell.bg.startsWith('#') && shell.bg.length <= 7) {
-        shell.bg = hexToRgba(shell.bg, 0.72);
-      }
+  let shell = overrides.shell;
+  const shellBg = shell?.bg;
+  const shellLooksDark = shellBg !== undefined && (
+    shellBg.toLowerCase().includes('rgba(0, 0, 0')
+    || shellBg.toLowerCase().includes('rgba(0,0,0')
+    || (parseHexRgb(shellBg) !== null && relativeLuminance(shellBg) < 0.35)
+  );
+
+  if (shell !== undefined && shellBg !== undefined && brand !== undefined && shellBg.toLowerCase() === brand.toLowerCase()) {
+    delete shell.bg;
+    delete shell.fg;
+    delete shell.fgMuted;
+    delete shell.border;
+    delete shell.blur;
+    delete shell.hover;
+  } else if (shell !== undefined && shellLooksDark) {
+    shell.fg = shell.fg ?? '#ffffff';
+    shell.fgMuted = shell.fgMuted ?? 'rgba(255, 255, 255, 0.70)';
+    shell.border = shell.border ?? 'rgba(255, 255, 255, 0.10)';
+    shell.hover = shell.hover ?? 'rgba(255, 255, 255, 0.10)';
+    shell.blur = shell.blur ?? '12px';
+    const opaqueShell = !shellBg.includes('rgba') && !shellBg.includes('rgb');
+    if (opaqueShell && shellBg.startsWith('#') && shellBg.length <= 7) {
+      shell.bg = hexToRgba(shellBg, 0.72);
     }
+  } else if (lightIntent) {
+    // Light design systems (Vivid Curator, etc.): quiet sidebar, no frosted black chrome
+    shell = overrides.shell ?? (overrides.shell = {});
+    if (shell.bg === undefined) {
+      // Prefer canvas/muted over elevated white so cards still lift off the shell
+      shell.bg = palette.bgSubtle ?? palette.bgMuted ?? palette.bg ?? '#f8fafc';
+    }
+    if (shell.fg === undefined) shell.fg = palette.fg ?? '#0f172a';
+    if (shell.fgMuted === undefined) shell.fgMuted = palette.fgMuted ?? '#64748b';
+    if (shell.border === undefined) {
+      shell.border = palette.border ?? '#e2e8f0';
+    }
+    if (shell.hover === undefined) {
+      shell.hover = brand !== undefined
+        ? (mixHex(brand, '#ffffff', 0.9) ?? palette.bgMuted ?? '#f1f5f9')
+        : (palette.bgMuted ?? '#f1f5f9');
+    }
+    if (shell.blur === undefined) shell.blur = '0px';
   }
 
-  if (overrides.radius?.md === undefined && overrides.branding?.borderRadius === undefined) {
-    const radius = overrides.radius ?? (overrides.radius = {});
-    radius.md = 8;
-    radius.sm = 6;
-    radius.lg = 12;
-  }
+  return cleared.size > 0;
 }
 
 function nestedColorValue(node: YamlMap): string | undefined {
@@ -1233,8 +1293,6 @@ function yamlToOverrides(
     : undefined;
   if (navFg !== undefined && navFg !== '') {
     shell.fgMuted = navFg;
-  } else if (shell.fg !== undefined && shell.fgMuted === undefined) {
-    shell.fgMuted = 'rgba(255, 255, 255, 0.70)';
   }
 
   const blur = asString(elevation?.['shell-blur']);
@@ -1248,12 +1306,19 @@ function yamlToOverrides(
     shell.border = hexToRgba(borderColor, borderOpacity);
   } else if (borderColor !== undefined && isCssColor(resolveTokenRefs(borderColor, root))) {
     shell.border = resolveTokenRefs(borderColor, root);
-  } else if (shell.bg !== undefined && shell.border === undefined) {
-    shell.border = 'rgba(255, 255, 255, 0.10)';
   }
 
-  if (shell.bg !== undefined && shell.hover === undefined) {
-    shell.hover = 'rgba(255, 255, 255, 0.10)';
+  // Dark-shell frosted defaults only when the author set a dark chrome color
+  if (shell.bg !== undefined) {
+    const darkChrome = shell.bg.toLowerCase().includes('rgba(0')
+      || (HEX_COLOR.test(shell.bg) && relativeLuminance(shell.bg) < 0.35);
+    if (darkChrome) {
+      if (shell.fgMuted === undefined && shell.fg !== undefined) {
+        shell.fgMuted = 'rgba(255, 255, 255, 0.70)';
+      }
+      if (shell.border === undefined) shell.border = 'rgba(255, 255, 255, 0.10)';
+      if (shell.hover === undefined) shell.hover = 'rgba(255, 255, 255, 0.10)';
+    }
   }
 
   return compactOverrides(overrides, branding, palette, paletteDark, radius, spacing, shadows, transitions, typographyOverride, shell);
@@ -1508,8 +1573,8 @@ export function toCanonicalDesignMarkdown(parsed: DesignMdParseResult): string {
 
   lines.push('---');
   lines.push('');
-  lines.push('# Canonical design tokens');
-  lines.push('# Auto-converted on import. Edit and click Apply changes to update the live theme.');
+  lines.push('# Canonical MAW design tokens (adapted from any design.md format).');
+  lines.push('# Edit and click Apply changes to update the live theme.');
   return `${lines.join('\n')}\n`;
 }
 
@@ -1560,23 +1625,27 @@ export function parseDesignMarkdown(content: string): DesignMdParseResult {
     if (unlabeled.length > 0) {
       inferPaletteFromColors(unlabeled, overrides, recognized);
       if (recognized.some((r) => r.field.startsWith('inferred.'))) {
-        warnings.push('Mapped unlabeled colors into a starter palette, then harmonized for UI readability.');
+        warnings.push('Mapped unlabeled colors into MAW theme roles (brand, canvas, text).');
       }
     }
   }
 
-  if (Object.keys(overrides.palette ?? {}).length > 0 || overrides.shell !== undefined) {
-    harmonizePalette(overrides, recognized);
-    if (recognized.some((r) => r.field.startsWith('harmonized.'))) {
-      warnings.push('Adjusted color roles for a usable UI: accents on actions, quiet neutrals on surfaces.');
+  if (Object.keys(overrides.palette ?? {}).length > 0 || Object.keys(overrides.shell ?? {}).length > 0) {
+    if (adaptPaletteToSystem(overrides, recognized)) {
+      warnings.push('Adapted into MAW roles: accents on actions, quiet neutrals on page chrome.');
     }
   }
 
   if (overrides.palette?.brand !== undefined) {
     branding.primaryColor = overrides.palette.brand;
   }
-  if (overrides.palette?.brandLight !== undefined) branding.secondaryColor = overrides.palette.brandLight;
-  if (overrides.palette?.brandDark !== undefined) branding.accentColor = overrides.palette.brandDark;
+  // Keep secondary/accent only when the source file provided them (not derived mixes)
+  if (branding.secondaryColor !== undefined && overrides.palette?.brandLight !== undefined) {
+    branding.secondaryColor = overrides.palette.brandLight;
+  }
+  if (branding.accentColor !== undefined && overrides.palette?.brandDark !== undefined) {
+    branding.accentColor = overrides.palette.brandDark;
+  }
   if (overrides.typography?.fontFamily !== undefined) branding.fontFamily = overrides.typography.fontFamily;
   if (overrides.radius?.md !== undefined) branding.borderRadius = overrides.radius.md;
   overrides.branding = branding;

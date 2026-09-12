@@ -147,6 +147,8 @@ components:
     expect(vars['--maw-canvas']).toBe('#fcfaf7');
     expect(vars['--maw-shell-bg']).toBe('rgba(0, 0, 0, 0.70)');
     expect(vars['--maw-shell-fg']).toBe('#ffffff');
+    expect(vars['--maw-shell-nav-active-fg']).toBe(theme.light.brandContrast);
+    expect(vars['--maw-shell-nav-active-bg']).toContain('linear-gradient');
     expect(vars['--maw-font-family']).toBe('ui-sans-serif, system-ui, sans-serif');
   });
 
@@ -332,7 +334,50 @@ colors:
     expect(result.canonical).toContain('surface-elevated');
     expect(result.canonical.toLowerCase()).not.toMatch(/surface: "#ffd23f"/);
   });
+
+  it('adapts a light Vivid-style design.md to a light shell (not frosted black)', () => {
+    const result = normalizeDesignMarkdown(`---
+name: Vivid Curator
+colors:
+  background: "#f3f4f6"
+  surface-elevated: "#ffffff"
+  on-surface: "#111827"
+  on-surface-muted: "#6b7280"
+  outline: "#e5e7eb"
+  primary: "#e11d48"
+  on-primary: "#ffffff"
+  success: "#16a34a"
+  info: "#2563eb"
+rounded:
+  md: "16px"
+---
+`);
+    const shell = result.overrides.shell!;
+    expect(shell.bg?.toLowerCase()).not.toMatch(/rgba\(0/);
+    expect(shell.bg?.toLowerCase()).toBe('#f3f4f6');
+    expect(shell.blur === undefined || shell.blur === '0px').toBe(true);
+    expect(result.overrides.palette?.brand?.toLowerCase()).toBe('#e11d48');
+    expect(result.overrides.radius?.md).toBe(16);
+
+    const theme = createTheme(result.overrides);
+    const vars = tokensToCssVars(false, theme);
+    expect(vars['--maw-shell-nav-active-fg']).toBe(theme.light.brand);
+    expect(vars['--maw-shell-nav-active-bg']).toContain('color-mix');
+    expect(vars['--maw-shell-nav-active-indicator']).toContain('inset');
+
+    const darkVars = tokensToCssVars(true, theme);
+    expect(isDarkish(darkVars['--maw-shell-bg']!)).toBe(true);
+    expect(darkVars['--maw-shell-fg']).toBe(theme.dark.fg);
+    expect(darkVars['--maw-shell-nav-active-fg']).toBe(theme.dark.brandContrast);
+  });
 });
+
+function isDarkish(c: string): boolean {
+  if (c.toLowerCase().includes('rgba(0')) return true;
+  const hex = c.replace('#', '');
+  if (!/^[0-9a-fA-F]{3,8}$/.test(hex)) return false;
+  return relativeLum(c.startsWith('#') ? c : `#${hex}`) < 0.35;
+}
 
 function colorSat(c: string): number {
   const hex = c.replace('#', '');

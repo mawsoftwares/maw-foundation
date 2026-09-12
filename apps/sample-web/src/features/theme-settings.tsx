@@ -113,14 +113,15 @@ export function ThemeSettingsView(): ReactNode {
   return (
     <ListPage
       title="Theme Designer"
-      description="Import any design.md — YAML, markdown lists, or CSS variables. The file is converted to canonical tokens and applied as the live theme."
+      description="Any design.md becomes a live MAW theme — parsed, mapped to our tokens, and adapted so the app stays readable."
     >
       <Card>
         <Stack direction="column" gap="var(--maw-space-lg)">
           <div>
             <p style={{ margin: '0 0 8px', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
-              Load or paste any design.md. On Apply we extract colors (hex / rgb / hsl / oklch), nested scales,
-              CSS variables, JSON tokens, and even unlabeled hex in prose — then rewrite into canonical YAML and apply.
+              Import any format (YAML, lists, CSS variables, unlabeled hex). We map it into MAW roles —
+              primary → buttons, background → page canvas, surface → cards — and keep accents off chrome
+              so the shell stays usable. Canonical YAML is written back so you can edit and re-Apply.
             </p>
             <a href="/design.md" target="_blank" rel="noreferrer" style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-brand)' }}>
               View example design.md
@@ -183,7 +184,7 @@ export function ThemeSettingsView(): ReactNode {
                   or a colors: YAML map — then Apply again.
                 </Banner>
               )}
-              {result.warnings.filter((w) => w.startsWith('Mapped unlabeled')).map((w, i) => (
+              {result.warnings.filter((w) => w.startsWith('Mapped unlabeled') || w.startsWith('Adapted into')).map((w, i) => (
                 <Banner key={`inferred-${i}`} variant="info">{w}</Banner>
               ))}
               <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
@@ -205,7 +206,7 @@ export function ThemeSettingsView(): ReactNode {
               {result.recognized.length > 0 && (
                 <Badge variant="success">{result.recognized.length} token(s) applied</Badge>
               )}
-              {result.warnings.filter((w) => !w.startsWith('No recognized') && !w.startsWith('Mapped unlabeled')).map((w, i) => (
+              {result.warnings.filter((w) => !w.startsWith('No recognized') && !w.startsWith('Mapped unlabeled') && !w.startsWith('Adapted into')).map((w, i) => (
                 <Banner key={i} variant="warning">{w}</Banner>
               ))}
             </Stack>

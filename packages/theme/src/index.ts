@@ -496,12 +496,74 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   for (const [k, v] of Object.entries(t.typography.size)) vars[`--maw-text-${k}`] = `${v}px`;
   for (const [k, v] of Object.entries(t.typography.weight)) vars[`--maw-weight-${k}`] = `${v}`;
 
-  vars['--maw-shell-bg'] = t.shell?.bg ?? p.bg;
-  vars['--maw-shell-fg'] = t.shell?.fg ?? p.fg;
-  vars['--maw-shell-fg-muted'] = t.shell?.fgMuted ?? p.fgMuted;
-  vars['--maw-shell-border'] = t.shell?.border ?? p.border;
-  vars['--maw-shell-blur'] = t.shell?.blur ?? '0px';
-  vars['--maw-shell-hover'] = t.shell?.hover ?? p.bgSubtle;
+  // Shell chrome: light design.md shells must not stick when color mode is dark.
+  // Keep an explicit dark/frosted shell (e.g. Evreghen); otherwise follow the active palette.
+  const explicitShell = t.shell;
+  const keepExplicitShell = explicitShell?.bg !== undefined && (
+    !dark || isDarkShellBackground(explicitShell.bg)
+  );
+  if (keepExplicitShell && explicitShell !== undefined) {
+    vars['--maw-shell-bg'] = explicitShell.bg ?? p.bg;
+    vars['--maw-shell-fg'] = explicitShell.fg ?? p.fg;
+    vars['--maw-shell-fg-muted'] = explicitShell.fgMuted ?? p.fgMuted;
+    vars['--maw-shell-border'] = explicitShell.border ?? p.border;
+    vars['--maw-shell-blur'] = explicitShell.blur ?? '0px';
+    vars['--maw-shell-hover'] = explicitShell.hover ?? p.bgSubtle;
+  } else if (dark) {
+    vars['--maw-shell-bg'] = p.bgSubtle;
+    vars['--maw-shell-fg'] = p.fg;
+    vars['--maw-shell-fg-muted'] = p.fgMuted;
+    vars['--maw-shell-border'] = p.border;
+    vars['--maw-shell-blur'] = '0px';
+    vars['--maw-shell-hover'] = p.bgMuted;
+  } else {
+    vars['--maw-shell-bg'] = explicitShell?.bg ?? p.bg;
+    vars['--maw-shell-fg'] = explicitShell?.fg ?? p.fg;
+    vars['--maw-shell-fg-muted'] = explicitShell?.fgMuted ?? p.fgMuted;
+    vars['--maw-shell-border'] = explicitShell?.border ?? p.border;
+    vars['--maw-shell-blur'] = explicitShell?.blur ?? '0px';
+    vars['--maw-shell-hover'] = explicitShell?.hover ?? p.bgSubtle;
+  }
+
+  // Nav active style follows shell luminance: light chrome → soft brand tint;
+  // dark frosted chrome → solid brand fill (Evreghen-style).
+  const shellBg = vars['--maw-shell-bg'];
+  const darkShell = isDarkShellBackground(shellBg);
+  if (darkShell) {
+    vars['--maw-shell-nav-active-bg'] = `linear-gradient(135deg, ${p.brand} 0%, color-mix(in srgb, ${p.brand} 80%, black) 100%)`;
+    vars['--maw-shell-nav-active-fg'] = p.brandContrast;
+    vars['--maw-shell-nav-active-shadow'] = `0 4px 12px color-mix(in srgb, ${p.brand} 30%, transparent)`;
+    vars['--maw-shell-nav-active-indicator'] = 'none';
+  } else {
+    vars['--maw-shell-nav-active-bg'] = `color-mix(in srgb, ${p.brand} 12%, transparent)`;
+    vars['--maw-shell-nav-active-fg'] = p.brand;
+    vars['--maw-shell-nav-active-shadow'] = 'none';
+    vars['--maw-shell-nav-active-indicator'] = `inset 3px 0 0 0 ${p.brand}`;
+  }
 
   return vars;
+}
+
+/** True when sidebar/header chrome should use dark-on-light inverted nav treatments. */
+function isDarkShellBackground(bg: string): boolean {
+  const value = bg.trim().toLowerCase();
+  if (value.includes('rgba(0, 0, 0') || value.includes('rgba(0,0,0')) return true;
+  if (value.includes('rgba(255') || value.includes('rgb(255')) return false;
+  const hex = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex === null) {
+    const rgb = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/);
+    if (rgb === null) return false;
+    const r = Number(rgb[1]) / 255;
+    const g = Number(rgb[2]) / 255;
+    const b = Number(rgb[3]) / 255;
+    const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) < 0.35;
+  }
+  let h = hex[1]!;
+  if (h.length === 3) h = `${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`;
+  const r = Number.parseInt(h.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(h.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(h.slice(4, 6), 16) / 255;
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) < 0.35;
 }

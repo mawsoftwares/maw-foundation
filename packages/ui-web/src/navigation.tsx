@@ -337,12 +337,16 @@ function SidebarItem({
           padding: collapsed ? '10px' : `10px 16px 10px ${16 + depth * 16}px`,
           border: 'none',
           borderRadius: 'var(--maw-radius-md)',
-          background: active 
-            ? 'linear-gradient(135deg, var(--maw-brand) 0%, color-mix(in srgb, var(--maw-brand) 80%, black) 100%)' 
-            : hovered 
-              ? 'var(--maw-shell-hover, var(--maw-bgSubtle))' 
+          background: active
+            ? 'var(--maw-shell-nav-active-bg, var(--maw-brand))'
+            : hovered
+              ? 'var(--maw-shell-hover, var(--maw-bgSubtle))'
               : 'transparent',
-          color: active ? 'var(--maw-brandContrast)' : hovered ? 'var(--maw-brand)' : 'var(--maw-shell-fg, var(--maw-fg))',
+          color: active
+            ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))'
+            : hovered
+              ? 'var(--maw-brand)'
+              : 'var(--maw-shell-fg, var(--maw-fg))',
           fontSize: 'var(--maw-text-sm)',
           fontWeight: active ? 600 : 500,
           cursor: 'pointer',
@@ -351,7 +355,9 @@ function SidebarItem({
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           marginBottom: 4,
           transform: hovered && !active && !collapsed ? 'translateX(4px)' : 'none',
-          boxShadow: active ? '0 4px 12px color-mix(in srgb, var(--maw-brand) 30%, transparent)' : 'none',
+          boxShadow: active
+            ? 'var(--maw-shell-nav-active-shadow, none), var(--maw-shell-nav-active-indicator, none)'
+            : 'none',
         }}
       >
         {item.icon !== undefined && (
@@ -364,6 +370,7 @@ function SidebarItem({
             flexShrink: 0,
             transition: 'transform 0.2s',
             transform: hovered ? 'scale(1.08)' : 'scale(1)',
+            color: active ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))' : undefined,
           }}>
             <Icon name={item.icon} size={18} />
           </span>
@@ -372,7 +379,10 @@ function SidebarItem({
           <>
             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
             {item.badge !== undefined && (
-              <Badge style={{ background: active ? 'rgba(255,255,255,0.25)' : undefined, color: active ? 'var(--maw-brandContrast)' : undefined }}>
+              <Badge style={{
+                background: active ? 'color-mix(in srgb, var(--maw-shell-nav-active-fg, var(--maw-brandContrast)) 20%, transparent)' : undefined,
+                color: active ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))' : undefined,
+              }}>
                 {item.badge}
               </Badge>
             )}

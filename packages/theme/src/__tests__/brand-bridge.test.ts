@@ -88,6 +88,7 @@ describe('tokensToCssVars', () => {
     const dark = tokensToCssVars(true, theme);
     expect(dark['--maw-canvas']).toBe(theme.dark.bgSubtle);
     expect(dark['--maw-surface']).toBe(theme.dark.bg);
+    expect(dark['--maw-shell-bg']).toBe(theme.dark.bgSubtle);
+    expect(dark['--maw-shell-fg']).toBe(theme.dark.fg);
   });
 });
-
