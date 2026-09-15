@@ -1,6 +1,7 @@
 import { createDatabasePool, closeDatabasePool, runSeed } from '@mawsoftwares/database';
 import { hashPasswordForStorage } from '@mawsoftwares/auth-core';
 import { createLogger } from '@mawsoftwares/sdk';
+import { splitPermissionCode } from '@mawsoftwares/rbac-core';
 import { registry } from '../modules/index';
 
 const log = createLogger('seed');
@@ -94,7 +95,7 @@ try {
     const allPerms = registry.getAllPermissions();
     const permIdMap: Record<string, number> = {};
     for (const p of allPerms) {
-      const name = p.code.split('_')[0] ?? p.code;
+      const name = splitPermissionCode(p.code)?.action ?? p.code;
       const { rows } = await client.query<{ id: number }>(
         `INSERT INTO master_permissions (code, name, description)
          VALUES ($1, $2, $3)

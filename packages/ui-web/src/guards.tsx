@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { splitPermissionCode } from '@mawsoftwares/rbac-core';
 
 /**
  * Dynamic RBAC route guards for the frontend — ported from Sushmapet's guards.tsx.
@@ -24,14 +25,21 @@ export function matchesPermission(userPermissions: readonly string[], required: 
   const normalized = normalizePermissionCode(required);
   if (userPermissions.some((p) => normalizePermissionCode(p) === normalized)) return true;
 
-  const parts = normalized.split('_');
-  if (parts.length >= 2) {
-    const action = parts[0]!;
-    const fallback = PERMISSION_ALIASES[action];
-    if (fallback !== undefined) {
-      const alt = [fallback, ...parts.slice(1)].join('_');
-      return userPermissions.some((p) => normalizePermissionCode(p) === alt);
-    }
+  const requiredParts = splitPermissionCode(required);
+  if (requiredParts === null) return false;
+
+  const sameParts = (code: string, action: string, moduleName: string): boolean => {
+    const parts = splitPermissionCode(code);
+    return parts !== null
+      && parts.action.toLowerCase() === action.toLowerCase()
+      && parts.module.toLowerCase() === moduleName.toLowerCase();
+  };
+
+  if (userPermissions.some((p) => sameParts(p, requiredParts.action, requiredParts.module))) return true;
+
+  const fallback = PERMISSION_ALIASES[requiredParts.action.toLowerCase()];
+  if (fallback !== undefined) {
+    return userPermissions.some((p) => sameParts(p, fallback, requiredParts.module));
   }
   return false;
 }

@@ -1,4 +1,5 @@
 import type { ISyncStore, ICacheStore, RbacRole, RbacPermission, RbacModule, ModulePermission, FeatureSyncDefinition } from '@mawsoftwares/rbac-core';
+import { splitPermissionCode } from '@mawsoftwares/rbac-core';
 
 /**
  * In-memory ISyncStore — for running the sample without Postgres.
@@ -78,7 +79,7 @@ export class MemoryCacheStore implements ICacheStore {
     return perms.map((p, i) => ({
       id: p.id,
       code: p.code,
-      name: p.code.split('_')[0] ?? p.code,
+      name: splitPermissionCode(p.code)?.action ?? p.code,
       isActive: true,
       sortOrder: i,
     }));
@@ -88,8 +89,8 @@ export class MemoryCacheStore implements ICacheStore {
     const moduleSet = new Set<string>();
     const perms = await this.syncStore.listAllPermissionCodes();
     for (const p of perms) {
-      const parts = p.code.split('_');
-      if (parts.length >= 2) moduleSet.add(parts.slice(1).join('_'));
+      const parts = splitPermissionCode(p.code);
+      if (parts !== null) moduleSet.add(parts.module);
     }
     let id = 1;
     return [...moduleSet].map((name, i) => ({

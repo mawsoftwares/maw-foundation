@@ -917,7 +917,11 @@ app.use('/api/v1/users', createUsersRouter(usersRepo, {
   // i.e. as if the client had prehashed it - see resolvePassword()/hashPasswordForStorage().
   hashPassword: (plain) => Promise.resolve(hashPasswordForStorage(plain)),
 }));
-app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm) => auth.requirePermission(perm)));
+app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm) => auth.requirePermission(perm), {
+  systemModuleCodes: registry.getAll().map((m) => m.key),
+  systemPermissionCodes: registry.getAllPermissions().map((p) => p.code),
+  auditStore: data.auditStore,
+}));
 app.use('/api/v1/menus', createMenuRouter(data.db, {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),

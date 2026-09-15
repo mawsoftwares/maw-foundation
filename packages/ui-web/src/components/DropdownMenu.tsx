@@ -16,12 +16,21 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // DropdownMenu
 // ---------------------------------------------------------------------------
 
+export interface DropdownMenuItem {
+  readonly key: string;
+  readonly label: string;
+  readonly danger?: boolean;
+  readonly disabled?: boolean;
+  readonly disabledReason?: string;
+  readonly onClick: () => void;
+}
+
 export function DropdownMenu({
   trigger,
   items,
 }: {
   trigger: ReactNode;
-  items: readonly { key: string; label: string; danger?: boolean; onClick: () => void }[];
+  items: readonly DropdownMenuItem[];
 }): ReactNode {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -40,6 +49,7 @@ export function DropdownMenu({
       <div onClick={() => setOpen(!open)}>{trigger}</div>
       {open && (
         <div
+          role="menu"
           style={{
             ...base,
             position: 'absolute',
@@ -58,7 +68,15 @@ export function DropdownMenu({
           {items.map((item) => (
             <button
               key={item.key}
-              onClick={() => { item.onClick(); setOpen(false); }}
+              type="button"
+              role="menuitem"
+              disabled={item.disabled}
+              title={item.disabled ? item.disabledReason : undefined}
+              onClick={() => {
+                if (item.disabled) return;
+                item.onClick();
+                setOpen(false);
+              }}
               style={{
                 ...base,
                 display: 'block',
@@ -68,8 +86,11 @@ export function DropdownMenu({
                 background: 'none',
                 textAlign: 'left',
                 fontSize: 'var(--maw-text-sm)',
-                color: item.danger ? 'var(--maw-danger)' : 'var(--maw-fg)',
-                cursor: 'pointer',
+                color: item.disabled
+                  ? 'var(--maw-fgSubtle)'
+                  : item.danger ? 'var(--maw-danger)' : 'var(--maw-fg)',
+                cursor: item.disabled ? 'not-allowed' : 'pointer',
+                opacity: item.disabled ? 0.6 : 1,
               }}
             >
               {item.label}
