@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { DynamicForm, ProfileAvatarUpload, Stack } from '@mawsoftwares/ui-web';
 import type { FormSchema } from '@mawsoftwares/sdk';
+import { getPhoneProfile } from '@mawsoftwares/sdk/kernel/validate';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
 import type { RoleOption } from './types';
@@ -28,6 +29,8 @@ export function UserForm({
     () => roles.map((r) => ({ value: r.code, label: r.name })),
     [roles],
   );
+
+  const phoneProfile = getPhoneProfile();
 
   const schema = useMemo<FormSchema>(() => ({
     id: 'user-form',
@@ -64,6 +67,12 @@ export function UserForm({
         type: 'phone',
         label: 'Phone Number',
         colSpan: roleOptions.length > 0 ? 1 : 2,
+        maxLength: phoneProfile.inputMaxLength,
+        validation: [
+          { type: 'maxLength' as const, value: phoneProfile.inputMaxLength },
+          { type: 'phone' as const },
+        ],
+        placeholder: phoneProfile.placeholder,
       },
       ...(roleOptions.length > 0
         ? [{
@@ -87,7 +96,7 @@ export function UserForm({
             hint: 'At least 8 characters',
           }]),
     ],
-  }), [isEditing, roleOptions]);
+  }), [isEditing, roleOptions, phoneProfile]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (isEditing) {

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
-  Badge, Button, ErrorState, Modal, PageLoader, TextField, useForm, useIsMobile, useToast,
+  Badge, Button, ErrorState, Overlay, PageLoader, TextField, useForm, useIsMobile, useToast,
 } from '@mawsoftwares/ui-web';
+import { useAppConfig } from '../../config-context';
 import { RoleWorkspace } from './RoleWorkspace';
 import { createRole, deleteRole, fetchRoles, rbacErrorMessage, updateRole } from './api';
 import type { Role } from './types';
@@ -13,6 +14,7 @@ export function RbacView(): ReactNode {
 function RolesWorkspacePage(): ReactNode {
   const toast = useToast();
   const isMobile = useIsMobile();
+  const { formLayout } = useAppConfig();
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -211,7 +213,7 @@ function RolesWorkspacePage(): ReactNode {
         )}
       </div>
 
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Role">
+      <Overlay layout={formLayout} open={showCreate} onClose={() => setShowCreate(false)} title="Create New Role">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
           <TextField label="Role Code" required error={createForm.errors.code} value={createForm.values.code}
             onChange={(e) => createForm.setValue('code', (e.target as HTMLInputElement).value)} placeholder="e.g. clerk" />
@@ -224,9 +226,9 @@ function RolesWorkspacePage(): ReactNode {
             <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
           </div>
         </div>
-      </Modal>
+      </Overlay>
 
-      <Modal open={!!editingRole} onClose={() => setEditingRole(null)} title={`Edit Role: ${editingRole?.code ?? ''}`}>
+      <Overlay layout={formLayout} open={!!editingRole} onClose={() => setEditingRole(null)} title={`Edit Role: ${editingRole?.code ?? ''}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
           <TextField label="Name" required error={editForm.errors.name} value={editForm.values.name}
             onChange={(e) => editForm.setValue('name', (e.target as HTMLInputElement).value)} />
@@ -240,7 +242,7 @@ function RolesWorkspacePage(): ReactNode {
             <Button onClick={() => editForm.handleSubmit()} disabled={editForm.submitting}>Save Changes</Button>
           </div>
         </div>
-      </Modal>
+      </Overlay>
     </div>
   );
 }

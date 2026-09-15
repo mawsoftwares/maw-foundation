@@ -282,6 +282,7 @@ export {
   Alert,
   Banner,
   ConfirmationDialog,
+  Overlay,
   type DrawerProps,
   type DialogProps,
   type PopoverProps,
@@ -290,6 +291,7 @@ export {
   type BannerVariant,
   type BannerProps,
   type ConfirmationDialogProps,
+  type OverlayProps,
 } from './components';
 
 // Layout Components (Phase 3)

@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { setDefaultPhoneRegion } from '@mawsoftwares/sdk/kernel/validate';
 import { isValidEmail, isValidUrl, isValidPhone, applyMask, unmask } from './fields';
 
 describe('isValidEmail', () => {
@@ -30,7 +31,35 @@ describe('isValidUrl', () => {
   });
 });
 
-describe('isValidPhone', () => {
+describe('isValidPhone (IN default)', () => {
+  beforeEach(() => setDefaultPhoneRegion('IN'));
+  afterEach(() => setDefaultPhoneRegion('IN'));
+
+  it('accepts a 10-digit Indian mobile', () => {
+    expect(isValidPhone('9876543210')).toBe(true);
+  });
+
+  it('accepts +91 prefix', () => {
+    expect(isValidPhone('+91 98765 43210')).toBe(true);
+  });
+
+  it('rejects a too-short number', () => {
+    expect(isValidPhone('98765')).toBe(false);
+  });
+
+  it('rejects landline-like numbers', () => {
+    expect(isValidPhone('2123456789')).toBe(false);
+  });
+
+  it('rejects letters', () => {
+    expect(isValidPhone('call-me-maybe')).toBe(false);
+  });
+});
+
+describe('isValidPhone (INTL)', () => {
+  beforeEach(() => setDefaultPhoneRegion('INTL'));
+  afterEach(() => setDefaultPhoneRegion('IN'));
+
   it('accepts a plain international number', () => {
     expect(isValidPhone('+1 234 567 8900')).toBe(true);
   });
@@ -43,8 +72,8 @@ describe('isValidPhone', () => {
     expect(isValidPhone('12345')).toBe(false);
   });
 
-  it('rejects letters', () => {
-    expect(isValidPhone('call-me-maybe')).toBe(false);
+  it('rejects a too-long number', () => {
+    expect(isValidPhone('1234567890123456')).toBe(false);
   });
 });
 

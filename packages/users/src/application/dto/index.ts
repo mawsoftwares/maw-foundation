@@ -4,6 +4,7 @@ import {
   phone,
   minLength,
   maxLength,
+  getPhoneProfile,
 } from '@mawsoftwares/sdk/kernel/validate';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 
@@ -22,12 +23,19 @@ export interface CreateUserDto {
   avatar?: string;
 }
 
+function phoneValidators(val: string | undefined): { valid: boolean; error?: string } {
+  if (!val) return { valid: true };
+  const format = phone(val);
+  if (!format.valid) return format;
+  return maxLength(getPhoneProfile().inputMaxLength)(val);
+}
+
 export const CreateUserSchema = {
   tenantId: [required],
   firstName: [required, minLength(1), maxLength(100)],
   lastName: [required, minLength(1), maxLength(100)],
   email: [required, email],
-  phone: [(val: string | undefined) => (val ? phone(val) : { valid: true })],
+  phone: [phoneValidators],
   password: [required, minLength(8)],
 };
 
@@ -45,7 +53,7 @@ export const UpdateUserSchema = {
   firstName: [(val: string | undefined) => (val === undefined ? { valid: true } : minLength(1)(val))],
   lastName: [(val: string | undefined) => (val === undefined ? { valid: true } : minLength(1)(val))],
   email: [(val: string | undefined) => (val === undefined ? { valid: true } : email(val))],
-  phone: [(val: string | undefined) => (val === undefined ? { valid: true } : phone(val))],
+  phone: [(val: string | undefined) => (val === undefined ? { valid: true } : phoneValidators(val))],
 };
 
 export interface ListUsersQueryDto {

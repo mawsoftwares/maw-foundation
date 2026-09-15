@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { createConfigEngine } from '@mawsoftwares/sdk/config/config-engine';
+import { createConfigEngine, APP_CONFIG_DEFAULTS } from '@mawsoftwares/sdk/config/config-engine';
+import { setDefaultPhoneRegion } from '@mawsoftwares/sdk/kernel/validate';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 import { storedDesignToOverrides } from '@mawsoftwares/theme';
 import {
@@ -46,11 +47,17 @@ import { MessagingView } from './features/messaging';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
 import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
 import { TopBarActions } from './shell/TopBarActions';
+import { AppConfigProvider } from './config-context';
 
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
 const config = createConfigEngine();
-config.loadLayer('app', { offline: { enabled: true } });
+config.loadLayer('app', {
+  ...(APP_CONFIG_DEFAULTS as unknown as Record<string, unknown>),
+  offline: { enabled: true },
+  phoneRegion: 'IN',
+});
+setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
 type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
@@ -322,7 +329,8 @@ export function App(): ReactNode {
   const rbac = useMemo(() => EXAMPLE_RBAC, []);
   const [offlineEnabled, setOfflineEnabled] = useState(false);
   return (
-    <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
+    <AppConfigProvider>
+      <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
       <DynamicAccessProvider load={loadDynamicAccess}>
         <FeatureFlagProvider fetchFlags={async () => ({ 
           'advanced_reports': true,
@@ -347,6 +355,7 @@ export function App(): ReactNode {
           </OfflineProvider>
         </FeatureFlagProvider>
       </DynamicAccessProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </AppConfigProvider>
   );
 }

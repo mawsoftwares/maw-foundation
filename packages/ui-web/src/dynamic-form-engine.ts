@@ -9,7 +9,9 @@ import type {
   FieldOption,
   OptionsSource,
   FormMode,
+  PhoneFieldDef,
 } from '@mawsoftwares/sdk';
+import { phone as validatePhone, getPhoneProfile } from '@mawsoftwares/sdk/kernel/validate';
 import { getApiErrorFields, getApiErrorMessage } from '@mawsoftwares/api-client';
 
 // ---------------------------------------------------------------------------
@@ -110,6 +112,14 @@ function runValidationRule(
       return undefined;
     }
 
+    case 'phone': {
+      if (str.length > 0) {
+        const result = validatePhone(str);
+        if (!result.valid) return rule.message ?? result.error ?? 'Invalid phone number';
+      }
+      return undefined;
+    }
+
     case 'url': {
       if (str.length > 0 && !/^https?:\/\/.+/.test(str)) {
         return rule.message ?? 'Invalid URL';
@@ -143,6 +153,21 @@ function validateFieldValue(
   if (field.required || isConditionallyRequired) {
     const isEmpty = value == null || (typeof value === 'string' && value.trim() === '') || (Array.isArray(value) && value.length === 0);
     if (isEmpty) return 'This field is required';
+  }
+
+  // Typed fields get format checks even when `validation` is omitted.
+  if (field.type === 'email') {
+    const error = runValidationRule({ type: 'email' }, value, values);
+    if (error) return error;
+  }
+  if (field.type === 'phone') {
+    const phoneField = field as PhoneFieldDef;
+    const profile = getPhoneProfile();
+    const maxLen = phoneField.maxLength ?? profile.inputMaxLength;
+    const lengthError = runValidationRule({ type: 'maxLength', value: maxLen }, value, values);
+    if (lengthError) return lengthError;
+    const error = runValidationRule({ type: 'phone' }, value, values);
+    if (error) return error;
   }
 
   if (field.validation) {

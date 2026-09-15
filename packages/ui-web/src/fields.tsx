@@ -9,6 +9,10 @@ import {
 } from 'react';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import {
+  phone as validatePhone,
+  getPhoneProfile,
+} from '@mawsoftwares/sdk/kernel/validate';
+import {
   TextField,
   TextArea,
   Select,
@@ -55,8 +59,6 @@ import { FileUpload, type FileUploadProps } from './file-upload';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const URL_RE = /^https?:\/\/.+/;
-// Permissive: 7-15 digits, optional leading +, spaces/hyphens/parens allowed as separators.
-const PHONE_RE = /^\+?[0-9\s\-()]{7,20}$/;
 
 export function isValidEmail(value: string): boolean {
   return EMAIL_RE.test(value);
@@ -66,8 +68,9 @@ export function isValidUrl(value: string): boolean {
   return URL_RE.test(value);
 }
 
+/** Uses the active phone region from `setDefaultPhoneRegion` / AppConfig.phoneRegion. */
 export function isValidPhone(value: string): boolean {
-  return PHONE_RE.test(value.trim()) && value.replace(/\D/g, '').length >= 7;
+  return validatePhone(value).valid;
 }
 
 /**
@@ -208,16 +211,26 @@ export interface PhoneFieldProps {
   readonly required?: boolean;
   readonly disabled?: boolean;
   readonly placeholder?: string;
+  readonly maxLength?: number;
   readonly style?: CSSProperties;
 }
 
-/** Phone input (`type="tel"`) — validates a loose international shape on blur. */
+/** Phone input (`type="tel"`) — validates against the active phone region on blur. */
 export function PhoneField({
-  name, label = 'Phone', value, onChange, error, required, disabled, placeholder, style,
+  name, label = 'Phone', value, onChange, error, required, disabled, placeholder, maxLength, style,
 }: PhoneFieldProps): ReactNode {
+  const profile = getPhoneProfile();
+  const effectiveMaxLength = maxLength ?? profile.inputMaxLength;
   const validate = useCallback(
-    (v: string) => requiredError(v, required) ?? (v.trim() !== '' && !isValidPhone(v) ? 'Invalid phone number' : undefined),
-    [required],
+    (v: string) => {
+      const requiredMsg = requiredError(v, required);
+      if (requiredMsg) return requiredMsg;
+      if (v.trim() === '') return undefined;
+      if (v.length > effectiveMaxLength) return `Must be at most ${effectiveMaxLength} characters`;
+      const result = validatePhone(v);
+      return result.valid ? undefined : result.error;
+    },
+    [required, effectiveMaxLength],
   );
   const { internalError, onBlur } = useTouchedValidation(value, validate);
   return (
@@ -231,7 +244,10 @@ export function PhoneField({
       error={error ?? internalError}
       required={required}
       disabled={disabled}
-      placeholder={placeholder ?? '+1 234 567 8900'}
+      placeholder={placeholder ?? profile.placeholder}
+      maxLength={effectiveMaxLength}
+      inputMode="tel"
+      autoComplete="tel"
       style={style}
     />
   );

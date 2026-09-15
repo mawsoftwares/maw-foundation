@@ -9,8 +9,11 @@ import {
   Tabs,
   useToast,
   useFeatureFlags,
-  useDynamicAccess
+  useDynamicAccess,
+  RadioGroup,
+  Select
 } from '@mawsoftwares/ui-web';
+import { useAppConfig, type FormLayout } from '../config-context';
 
 interface FeatureToggle {
   readonly key: string;
@@ -42,6 +45,7 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
   const { flags: ffFlags, _demoToggleFlag } = useFeatureFlags();
   const { can } = useDynamicAccess();
   const canUpdateFeatureFlags = can('Update_FeatureFlags');
+  const { formLayout, setFormLayout, indiaOnly, setIndiaOnly, currency, setCurrency } = useAppConfig();
 
   const [flags, setFlags] = useState<Record<string, boolean>>(() => {
     const defaults: Record<string, boolean> = {};
@@ -50,7 +54,7 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
   });
 
   const categories = [...new Set(FEATURES.map((f) => f.category))];
-  const allTabs = [...categories, 'Feature Flags'];
+  const allTabs = [...categories];
   const [activeTab, setActiveTab] = useState(allTabs[0] || 'Core');
 
   const toggle = (key: string) => {
@@ -74,6 +78,47 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
         <Badge variant="warning">Superadmin Only</Badge>
       </Stack>
 
+      <Card style={{ padding: 'var(--maw-space-lg)', marginBottom: 'var(--maw-space-xl)' }}>
+        <h2 style={{ margin: 0, marginBottom: 'var(--maw-space-lg)', fontSize: 'var(--maw-text-lg)', fontWeight: 600, color: 'var(--maw-fg)' }}>
+          Global Configuration
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-xl)' }}>
+          <RadioGroup
+            name="formLayout"
+            label="Form Overlay Layout"
+            value={formLayout}
+            onChange={(v) => setFormLayout(v as FormLayout)}
+            direction="row"
+            options={[
+              { value: 'drawer', label: 'Sidebar (Drawer)' },
+              { value: 'modal', label: 'Modal' },
+            ]}
+          />
+
+          <Stack direction="row" align="center" gap="var(--maw-space-lg)" style={{ justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>India Only Mode</div>
+              <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>Restrict application features and defaults to India region</div>
+            </div>
+            <Toggle checked={indiaOnly} onChange={() => setIndiaOnly(!indiaOnly)} />
+          </Stack>
+
+          <div style={{ maxWidth: 300 }}>
+            <Select
+              label="Global Currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              options={[
+                { value: 'INR', label: 'Indian Rupee (₹)' },
+                { value: 'USD', label: 'US Dollar ($)' },
+                { value: 'EUR', label: 'Euro (€)' },
+                { value: 'GBP', label: 'British Pound (£)' },
+              ]}
+            />
+          </div>
+        </div>
+      </Card>
+
       <Tabs
         tabs={allTabs.map(c => ({ key: c, label: c }))}
         activeTab={activeTab}
@@ -81,69 +126,35 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
         style={{ marginBottom: 'var(--maw-space-lg)' }}
       />
 
-      {activeTab === 'Feature Flags' ? (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          {Object.keys(ffFlags).length === 0 ? (
-            <div style={{ padding: 'var(--maw-space-md)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>
-              No feature flags loaded.
-            </div>
-          ) : (
-            Object.entries(ffFlags).map(([key, isEnabled], i, arr) => (
-              <div key={key}>
-                <Stack
-                  direction="row"
-                  align="center"
-                  gap="var(--maw-space-lg)"
-                  style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
-                      {key}
-                    </div>
-                  </div>
-                  <Toggle
-                    checked={isEnabled}
-                    onChange={(checked) => _demoToggleFlag?.(key, checked)}
-                    label={isEnabled ? 'Enabled' : 'Disabled'}
-                  />
-                </Stack>
-                {i < arr.length - 1 && <Divider />}
-              </div>
-            ))
-          )}
-        </Card>
-      ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          {FEATURES.filter((f) => f.category === activeTab).map((feature, i, arr) => (
-            <div key={feature.key}>
-              <Stack
-                direction="row"
-                align="center"
-                gap="var(--maw-space-lg)"
-                style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
-                    {feature.label}
-                  </div>
-                  <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
-                    {feature.description}
-                  </div>
+      <Card style={{ padding: 0, overflow: 'hidden' }}>
+        {FEATURES.filter((f) => f.category === activeTab).map((feature, i, arr) => (
+          <div key={feature.key}>
+            <Stack
+              direction="row"
+              align="center"
+              gap="var(--maw-space-lg)"
+              style={{ padding: 'var(--maw-space-md) var(--maw-space-lg)' }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 500, color: 'var(--maw-fg)' }}>
+                  {feature.label}
                 </div>
-                <Toggle
-                  checked={flags[feature.key] ?? false}
-                  onChange={() => toggle(feature.key)}
-                  label={feature.label}
-                />
-              </Stack>
-              {i < arr.length - 1 && <Divider />}
-            </div>
-          ))}
-        </Card>
-      )}
+                <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)', marginTop: 2 }}>
+                  {feature.description}
+                </div>
+              </div>
+              <Toggle
+                checked={flags[feature.key] ?? false}
+                onChange={() => toggle(feature.key)}
+                label={feature.label}
+              />
+            </Stack>
+            {i < arr.length - 1 && <Divider />}
+          </div>
+        ))}
+      </Card>
 
-      {activeTab !== 'Feature Flags' && (
-        <Card style={{ padding: 'var(--maw-space-lg)', marginTop: 'var(--maw-space-lg)' }}>
+      <Card style={{ padding: 'var(--maw-space-lg)', marginTop: 'var(--maw-space-lg)' }}>
           <Stack direction="row" align="center" gap="var(--maw-space-md)">
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 'var(--maw-text-sm)', fontWeight: 600, color: 'var(--maw-fg)' }}>
@@ -160,14 +171,12 @@ export function SettingsView({ featureOverrides, onFeatureChange }: SettingsView
             </Stack>
           </Stack>
         </Card>
-      )}
 
-      {activeTab !== 'Feature Flags' && (
-        <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-xl)', justifyContent: 'flex-end' }}>
+
+      <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-xl)', justifyContent: 'flex-end' }}>
           <Button variant="ghost" onClick={() => toast.info('Changes discarded')}>Reset</Button>
           <Button onClick={() => toast.success('Settings saved')}>Save Changes</Button>
-        </Stack>
-      )}
+      </Stack>
     </div>
   );
 }

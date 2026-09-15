@@ -38,3 +38,4 @@ export * from './TextField';
 export * from './Card';
 export * from './Badge';
 export * from './Divider';
+export * from './Overlay';

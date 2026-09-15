@@ -78,6 +78,7 @@ import {
   createHealthChecker,
   createConfigEngine,
   APP_CONFIG_DEFAULTS,
+  setDefaultPhoneRegion,
   type ConfigEngine,
 } from '@mawsoftwares/sdk';
 import { DEMO_TENANT } from './repo';
@@ -186,10 +187,13 @@ config.loadLayer('app', {
   appVersion: '0.1.0',
 });
 
+setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
+
 log.info('Config engine ready', {
   layers: ['environment', 'app'],
   appName: config.getString('appName'),
   currency: config.getString('defaultCurrency'),
+  phoneRegion: config.getString('phoneRegion'),
 });
 
 // ---------------------------------------------------------------------------

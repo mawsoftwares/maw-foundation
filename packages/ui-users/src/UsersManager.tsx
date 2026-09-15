@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useCrud, Drawer, ConfirmationDialog } from '@mawsoftwares/ui-web';
+import { useCrud, Overlay, ConfirmationDialog } from '@mawsoftwares/ui-web';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
 import type { IUserApiService, RoleOption } from './types';
 import { UsersList } from './UsersList';
@@ -8,7 +8,7 @@ import { UserDetails } from './UserDetails';
 
 export interface UsersManagerProps {
   api: IUserApiService;
-  formLayout?: 'page' | 'drawer';
+  formLayout?: 'page' | 'drawer' | 'modal';
 }
 
 type ViewState = 'list' | 'create' | 'details';
@@ -112,7 +112,8 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
     setActionConfirm(null);
   };
 
-  const isDrawerLayout = formLayout === 'drawer';
+  const isOverlayLayout = formLayout === 'drawer' || formLayout === 'modal';
+
   const detailsNode = selectedUser ? (
     <UserDetails
       user={selectedUser}
@@ -125,7 +126,7 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
     />
   ) : null;
 
-  if (!isDrawerLayout) {
+  if (!isOverlayLayout) {
     if (view === 'create') {
       return (
         <UserForm
@@ -142,7 +143,7 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
 
   return (
     <>
-      {(!isDrawerLayout && view !== 'list') ? null : (
+      {(!isOverlayLayout && view !== 'list') ? null : (
         <UsersList
           crud={crud}
           onCreate={handleCreateNew}
@@ -154,12 +155,14 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
         />
       )}
 
-      {isDrawerLayout && (
+      {isOverlayLayout && (
         <>
-          <Drawer
+          <Overlay
+            layout={formLayout as 'drawer' | 'modal'}
             open={view === 'create'}
             onClose={handleBackToList}
             width={600}
+            title={formLayout === 'modal' ? 'Create User' : undefined}
           >
             {view === 'create' && (
               <UserForm
@@ -168,15 +171,17 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
                 {...formProps}
               />
             )}
-          </Drawer>
+          </Overlay>
 
-          <Drawer
+          <Overlay
+            layout={formLayout as 'drawer' | 'modal'}
             open={view === 'details' && selectedUser !== null}
             onClose={handleBackToList}
             width={720}
+            title={formLayout === 'modal' && selectedUser ? `Details: ${selectedUser.email}` : undefined}
           >
             {detailsNode}
-          </Drawer>
+          </Overlay>
         </>
       )}
 

@@ -14,7 +14,7 @@ import {
   useDynamicAccess,
   useForm,
 } from '@mawsoftwares/ui-web';
-import { email, phone } from '@mawsoftwares/sdk/kernel/validate';
+import { email, phone, getPhoneProfile } from '@mawsoftwares/sdk/kernel/validate';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import type { UpdateUserDto, UserResponseDto } from '@mawsoftwares/users';
@@ -141,6 +141,8 @@ function UserProfileEditor({
       validate: (value: unknown) => {
         const str = String(value ?? '').trim();
         if (str.length === 0) return undefined;
+        const maxLen = getPhoneProfile().inputMaxLength;
+        if (str.length > maxLen) return `Must be at most ${maxLen} characters`;
         const result = phone(str);
         return result.valid ? undefined : result.error;
       },
@@ -360,7 +362,9 @@ function UserProfileEditor({
                     onBlur={phoneField.onBlur}
                     error={phoneField.error}
                     autoComplete="tel"
-                    placeholder="Optional"
+                    inputMode="tel"
+                    maxLength={getPhoneProfile().inputMaxLength}
+                    placeholder={getPhoneProfile().placeholder}
                   />
                   {roleOptions.length > 0 ? (
                     <Select

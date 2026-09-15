@@ -2,6 +2,7 @@ import { UsersManager, type IUserApiService } from '@mawsoftwares/ui-users';
 import { client } from '../../api';
 import { store } from '../../store';
 import { usersApi } from './usersApi';
+import { useAppConfig } from '../../config-context';
 
 import type { ListParams } from '@mawsoftwares/ui-web';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
@@ -61,5 +62,6 @@ const userApiAdapter: IUserApiService = {
 };
 
 export function UsersView() {
-  return <UsersManager api={userApiAdapter} formLayout="drawer" />;
+  const { formLayout } = useAppConfig();
+  return <UsersManager api={userApiAdapter} formLayout={formLayout} />;
 }
