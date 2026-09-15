@@ -75,13 +75,13 @@ export type Palette = { [K in PaletteKey]: string };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
 
-export const radius = { none: 0, sm: 6, md: 10, lg: 16, xl: 24, pill: 999 } as const;
+export const radius = { none: 0, sm: 4, md: 4, lg: 8, xl: 12, pill: 999 } as const;
 
 export const shadows = {
-  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+  sm: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
+  md: '0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12)',
+  lg: '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)',
+  xl: '0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12)',
   inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
   none: 'none',
 } as const;
@@ -110,7 +110,7 @@ export const transitions = {
 // ---------------------------------------------------------------------------
 
 export const typography = {
-  fontFamily: "'Geist Variable', system-ui, -apple-system, sans-serif",
+  fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
   monoFamily: "'Geist Mono', 'Fira Code', 'Cascadia Code', monospace",
   size: { xs: 12, sm: 14, md: 16, lg: 20, xl: 28, xxl: 36 },
   weight: { regular: 400, medium: 500, semibold: 600, bold: 700 },

@@ -31,16 +31,19 @@ export function Button({
       background: 'var(--maw-comp-buttons-primary-background, var(--maw-brand))',
       color: 'var(--maw-comp-buttons-primary-text-color, var(--maw-brandContrast))',
       border: 'var(--maw-comp-buttons-primary-border, none)',
+      boxShadow: 'var(--maw-shadow-sm)',
     },
     ghost: {
       background: 'var(--maw-comp-buttons-ghost-background, transparent)',
       color: 'var(--maw-comp-buttons-ghost-text-color, var(--maw-fg))',
       border: 'var(--maw-comp-buttons-ghost-border, 1px solid var(--maw-border))',
+      boxShadow: 'none',
     },
     danger: {
       background: 'var(--maw-comp-buttons-destructive-background, var(--maw-comp-buttons-danger-background, var(--maw-danger)))',
       color: 'var(--maw-comp-buttons-destructive-text-color, var(--maw-comp-buttons-danger-text-color, #ffffff))',
       border: 'var(--maw-comp-buttons-destructive-border, var(--maw-comp-buttons-danger-border, none))',
+      boxShadow: 'var(--maw-shadow-sm)',
     },
   };
   const isDisabled = disabled === true || loading;
@@ -59,8 +62,10 @@ export function Button({
         height: 'var(--maw-comp-buttons-medium-height, auto)',
         padding: 'var(--maw-comp-buttons-medium-padding-h, var(--maw-space-sm) var(--maw-space-lg))',
         borderRadius: 'var(--maw-comp-buttons-border-radius, var(--maw-radius-md))',
-        fontSize: 'var(--maw-comp-buttons-medium-font-size, var(--maw-text-md))',
-        fontWeight: 600,
+        fontSize: 'var(--maw-comp-buttons-medium-font-size, var(--maw-text-sm))',
+        fontWeight: 500,
+        textTransform: 'uppercase',
+        letterSpacing: '0.02857em',
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         opacity: isDisabled && !loading ? 0.6 : 1,
         transition: 'all var(--maw-transition-smooth)',

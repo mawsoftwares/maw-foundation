@@ -117,14 +117,13 @@ const GLOBAL_CSS = `
   }
 
   .maw-btn-hover:hover {
-    filter: brightness(1.05);
-    transform: translateY(-1px);
-    box-shadow: var(--maw-shadow-sm);
+    filter: brightness(0.96);
+    box-shadow: var(--maw-shadow-md);
   }
   .maw-btn-hover:active {
-    filter: brightness(0.95);
+    filter: brightness(0.9);
     transform: scale(0.98);
-    box-shadow: none;
+    box-shadow: var(--maw-shadow-sm);
   }
   
   .maw-card-hover {
@@ -140,7 +139,7 @@ const GLOBAL_CSS = `
     transition: box-shadow var(--maw-transition-fast), border-color var(--maw-transition-fast), background var(--maw-transition-fast);
   }
   .maw-focus-ring:focus, .maw-focus-ring:focus-within {
-    box-shadow: 0 0 0 3px var(--maw-brandLight);
+    box-shadow: inset 0 0 0 1px var(--maw-brand);
     border-color: var(--maw-brand);
     outline: none;
   }

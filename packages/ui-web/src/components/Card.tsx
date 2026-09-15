@@ -25,7 +25,7 @@ export function Card({ children, padding, style }: CardProps): ReactNode {
       style={{
         ...base,
         background: 'var(--maw-comp-cards-background, var(--maw-surface))',
-        border: 'var(--maw-comp-cards-border, 1px solid var(--maw-border))',
+        border: 'var(--maw-comp-cards-border, none)',
         borderRadius: 'var(--maw-comp-cards-border-radius, var(--maw-radius-lg))',
         padding: `var(--maw-comp-cards-padding, ${resolvedPadding})`,
         boxShadow: 'var(--maw-comp-cards-shadow, var(--maw-shadow-sm))',
