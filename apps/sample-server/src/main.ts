@@ -271,7 +271,9 @@ const smtpPort = getEnvInt('SMTP_PORT', 587);
 const smtpUser = getEnv('SMTP_USER');
 const smtpPass = getEnv('SMTP_PASS');
 const smtpFrom = getEnv('SMTP_FROM') || getEnv('SMTP_USER') || 'no-reply@example.com';
-const hasSmtp = Boolean(smtpHost && smtpUser && smtpPass);
+// Mailpit (local sandbox) has no auth — host alone is enough to leave console fallback.
+const hasSmtp = Boolean(smtpHost);
+const smtpAuth = smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined;
 
 const communication = createCommunication({
   logger: log.child('communication'),
@@ -279,20 +281,17 @@ const communication = createCommunication({
   useConsoleProviders: !hasSmtp,
 });
 
-if (hasSmtp && smtpHost && smtpUser && smtpPass) {
-  log.info('Registering real SMTP email provider', { host: smtpHost, port: smtpPort });
+if (hasSmtp && smtpHost) {
+  log.info('Registering real SMTP email provider', { host: smtpHost, port: smtpPort, auth: Boolean(smtpAuth) });
   communication.registry.register(
     new SmtpNotificationProvider({
       host: smtpHost,
       port: smtpPort,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
+      ...(smtpAuth !== undefined ? { auth: smtpAuth } : {}),
     })
   );
 } else {
-  log.warn('SMTP environment variables missing; falling back to Console log provider');
+  log.warn('SMTP_HOST not set; falling back to Console log provider. For a local inbox run `pnpm mailpit` and set SMTP_HOST=127.0.0.1 SMTP_PORT=1025');
 }
 
 const authEmails = createAuthEmailSender({
@@ -908,6 +907,7 @@ import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
 import { createMenuRouter } from './menu-routes';
 import { createMessagingRouter } from './messaging-routes';
+import { createDevSandboxRouter } from './dev-sandbox';
 
 const usersRepo = new AuthSchemaUsersRepository(data.db);
 app.use('/api/v1/users', createUsersRouter(usersRepo, {
@@ -927,8 +927,13 @@ app.use('/api/v1/messaging', createMessagingRouter(data.db, {
   requirePermission: (perm) => auth.requirePermission(perm),
   encryption: new AesEncryptionService(MFA_ENCRYPTION_KEY),
   fallbackEmailService: communication.emailService,
+  defaultFromEmail: smtpFrom,
   defaultTenantId: DEMO_TENANT,
 }));
+if (isDev) {
+  app.use('/api/v1/dev/sms-sandbox', createDevSandboxRouter());
+  log.info('SMS sandbox enabled', { url: `http://127.0.0.1:${PORT}/api/v1/dev/sms-sandbox` });
+}
 app.use('/api/v1/tenants', createTenantRoutes({
   tenantRepository,
   requireAuth: auth.requireAuth,
@@ -1045,6 +1050,10 @@ const server = app.listen(PORT, () => {
   log.info(`http://localhost:${PORT} (Postgres)`);
   log.info('Users: superadmin@ / owner Gmail accounts / manager@ / clerk@demo.test (pw: password123)');
   log.info('Try: GET /modules to see all registered modules + permissions');
+  if (isDev) {
+    log.info('Email sandbox: pnpm mailpit  →  http://localhost:8025');
+    log.info(`SMS sandbox: GET/POST http://127.0.0.1:${PORT}/api/v1/dev/sms-sandbox`);
+  }
 });
 
 process.on('SIGTERM', () => {

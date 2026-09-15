@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
 import {
   ListPage, DataTable, Badge, Button, Modal, TextField, TextArea, Select, Toggle,
-  useForm, useToast, ErrorState, PageLoader, Tabs, Card,
+  useForm, useToast, useDynamicAccess, ErrorState, PageLoader, Tabs, Card,
   type ColumnDef,
 } from '@mawsoftwares/ui-web';
 import { client } from '../api';
@@ -33,7 +33,8 @@ export function MessagingView(): ReactNode {
       <h1 style={{ margin: '0 0 4px', fontSize: 'var(--maw-text-xl)', color: 'var(--maw-fg)' }}>Messaging</h1>
       <p style={{ margin: '0 0 var(--maw-space-lg)', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
         Manage Email, SMS, and WhatsApp templates, their provider credentials ("Masters"), and view the send log —
-        all in one place.
+        all in one place. Local sandbox: run <code>pnpm mailpit</code> for email (inbox at http://localhost:8025);
+        SMS is captured by the sample-server with no extra process.
       </p>
       <Tabs
         tabs={TABS as unknown as { key: string; label: string }[]}
@@ -73,8 +74,10 @@ function EmailTemplatesTab(): ReactNode {
   const [items, setItems] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const { can } = useDynamicAccess();
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<EmailTemplate | null>(null);
+  const [sending, setSending] = useState<EmailTemplate | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -155,6 +158,7 @@ function EmailTemplatesTab(): ReactNode {
       header: 'Actions',
       render: (row) => (
         <div style={{ display: 'flex', gap: 8 }}>
+          {can('Send_Messaging') && <Button variant="ghost" onClick={() => setSending(row)}>Send test</Button>}
           <Button variant="ghost" onClick={() => setEditing(row)}>Edit</Button>
           <Button variant="ghost" onClick={() => remove(row.id)} style={{ color: 'var(--maw-danger)' }}>Delete</Button>
         </div>
@@ -172,6 +176,14 @@ function EmailTemplatesTab(): ReactNode {
       <Modal open={!!editing} onClose={() => setEditing(null)} title={`Edit: ${editing?.identifier}`}>
         <EmailTemplateForm form={editForm} onCancel={() => setEditing(null)} submitLabel="Save Changes" />
       </Modal>
+      {sending && (
+        <SendTestModal
+          channel="email"
+          identifier={sending.identifier}
+          defaultTo={sending.toAddress ?? ''}
+          onClose={() => setSending(null)}
+        />
+      )}
     </ListPage>
   );
 }
@@ -228,11 +240,13 @@ interface MessageTemplate {
 
 function MessageTemplatesTab({ channel }: { channel: 'sms' | 'whatsapp' }): ReactNode {
   const toast = useToast();
+  const { can } = useDynamicAccess();
   const [items, setItems] = useState<MessageTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<MessageTemplate | null>(null);
+  const [sending, setSending] = useState<MessageTemplate | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -309,6 +323,7 @@ function MessageTemplatesTab({ channel }: { channel: 'sms' | 'whatsapp' }): Reac
       header: 'Actions',
       render: (row) => (
         <div style={{ display: 'flex', gap: 8 }}>
+          {can('Send_Messaging') && <Button variant="ghost" onClick={() => setSending(row)}>Send test</Button>}
           <Button variant="ghost" onClick={() => setEditing(row)}>Edit</Button>
           <Button variant="ghost" onClick={() => remove(row.id)} style={{ color: 'var(--maw-danger)' }}>Delete</Button>
         </div>
@@ -328,6 +343,13 @@ function MessageTemplatesTab({ channel }: { channel: 'sms' | 'whatsapp' }): Reac
       <Modal open={!!editing} onClose={() => setEditing(null)} title={`Edit: ${editing?.identifier}`}>
         <MessageTemplateForm form={editForm} onCancel={() => setEditing(null)} submitLabel="Save Changes" />
       </Modal>
+      {sending && (
+        <SendTestModal
+          channel={channel}
+          identifier={sending.identifier}
+          onClose={() => setSending(null)}
+        />
+      )}
     </ListPage>
   );
 }
@@ -402,6 +424,10 @@ function MastersTab(): ReactNode {
 
   return (
     <div>
+      <p style={{ margin: '0 0 16px', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
+        Seeded local defaults (only if the channel had no row yet): Email Master → Mailpit at 127.0.0.1:1025
+        (start with <code>pnpm mailpit</code>), SMS Master → http://localhost:4000/api/v1/dev/sms-sandbox.
+      </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--maw-space-lg)' }}>
         {CHANNELS.map(({ key, label }) => {
           const cred = byChannel[key];
@@ -448,13 +474,13 @@ function CredentialModal({ channel, credential, onClose, onSaved }: {
       provider: credential?.provider ?? defaults.defaultProvider,
       name: credential?.name ?? defaults.label,
       isActive: credential?.isActive ?? true,
-      host: (cfg.host as string) ?? '',
-      port: (cfg.port as string) ?? (channel === 'email' ? '587' : ''),
+      host: (cfg.host as string) ?? (channel === 'email' ? '127.0.0.1' : ''),
+      port: (cfg.port as string) ?? (channel === 'email' ? '1025' : ''),
       secure: Boolean(cfg.secure),
       user: (cfg.user as string) ?? '',
       pass: (cfg.pass as string) ?? '',
-      fromAddress: (cfg.fromAddress as string) ?? '',
-      baseUrl: (cfg.baseUrl as string) ?? '',
+      fromAddress: (cfg.fromAddress as string) || (channel === 'email' ? 'no-reply@example.com' : ''),
+      baseUrl: (cfg.baseUrl as string) ?? (channel === 'sms' ? 'http://127.0.0.1:4000/api/v1/dev/sms-sandbox' : ''),
       method: (cfg.method as string) ?? 'POST',
       apiKey: (cfg.apiKey as string) ?? '',
       authHeader: (cfg.authHeader as string) ?? '',
@@ -463,7 +489,11 @@ function CredentialModal({ channel, credential, onClose, onSaved }: {
       messageField: (cfg.messageField as string) ?? 'message',
       mode: (cfg.mode as string) ?? 'link',
     },
-    fields: { provider: { required: true }, name: { required: true } },
+    fields: {
+      provider: { required: true },
+      name: { required: true },
+      ...(channel === 'email' ? { fromAddress: { required: true } } : {}),
+    },
     onSubmit: async (values) => {
       try {
         let config: Record<string, unknown>;
@@ -493,19 +523,20 @@ function CredentialModal({ channel, credential, onClose, onSaved }: {
 
         {channel === 'email' && (
           <>
-            <TextField label="SMTP Host" value={form.values.host} onChange={(e) => form.setValue('host', (e.target as HTMLInputElement).value)} />
-            <TextField label="SMTP Port" type="number" value={String(form.values.port)} onChange={(e) => form.setValue('port', (e.target as HTMLInputElement).value)} />
+            <TextField label="SMTP Host" value={form.values.host} onChange={(e) => form.setValue('host', (e.target as HTMLInputElement).value)} placeholder="127.0.0.1 for Mailpit" />
+            <TextField label="SMTP Port" type="number" value={String(form.values.port)} onChange={(e) => form.setValue('port', (e.target as HTMLInputElement).value)} placeholder="1025 for Mailpit" />
             <Toggle label="Use TLS (secure)" checked={form.values.secure} onChange={(v) => form.setValue('secure', v)} />
             <TextField label="Username" value={form.values.user} onChange={(e) => form.setValue('user', (e.target as HTMLInputElement).value)} />
             <TextField label="Password" type="password" value={form.values.pass} placeholder={credential ? 'Leave as ******** to keep current' : ''}
               onChange={(e) => form.setValue('pass', (e.target as HTMLInputElement).value)} />
-            <TextField label="From Address" value={form.values.fromAddress} onChange={(e) => form.setValue('fromAddress', (e.target as HTMLInputElement).value)} />
+            <TextField label="From Address" required error={form.errors.fromAddress} value={form.values.fromAddress} placeholder="no-reply@example.com"
+              onChange={(e) => form.setValue('fromAddress', (e.target as HTMLInputElement).value)} />
           </>
         )}
 
         {channel === 'sms' && (
           <>
-            <TextField label="Gateway Base URL" value={form.values.baseUrl} onChange={(e) => form.setValue('baseUrl', (e.target as HTMLInputElement).value)} placeholder="https://api.example.com/sms/send" />
+            <TextField label="Gateway Base URL" value={form.values.baseUrl} onChange={(e) => form.setValue('baseUrl', (e.target as HTMLInputElement).value)} placeholder="http://127.0.0.1:4000/api/v1/dev/sms-sandbox" />
             <Select label="HTTP Method" value={form.values.method} options={[{ value: 'POST', label: 'POST' }, { value: 'GET', label: 'GET' }]}
               onChange={(e) => form.setValue('method', (e.target as HTMLSelectElement).value)} />
             <TextField label="API Key" type="password" value={form.values.apiKey} placeholder={credential ? 'Leave as ******** to keep current' : ''}
@@ -606,3 +637,86 @@ function LogsTab(): ReactNode {
     </div>
   );
 }
+
+function defaultSendVariables(identifier: string): string {
+  if (identifier === 'welcome-email') return JSON.stringify({ appName: 'MAW', userName: 'Tester' }, null, 2);
+  if (identifier === 'otp-sms') return JSON.stringify({ appName: 'MAW', otp: '123456', minutes: '5' }, null, 2);
+  if (identifier === 'order-update-whatsapp') {
+    return JSON.stringify({ userName: 'Tester', orderId: 'ORD-1', status: 'ready' }, null, 2);
+  }
+  return '{}';
+}
+
+function SendTestModal({ channel, identifier, defaultTo, onClose }: {
+  channel: 'email' | 'sms' | 'whatsapp';
+  identifier: string;
+  defaultTo?: string;
+  onClose: () => void;
+}): ReactNode {
+  const toast = useToast();
+  const toPlaceholder = channel === 'email' ? 'you@example.com' : '+15551234567';
+  const form = useForm({
+    initialValues: {
+      to: defaultTo ?? '',
+      variables: defaultSendVariables(identifier),
+    },
+    fields: { to: { required: true } },
+    onSubmit: async (values) => {
+      let variables: Record<string, unknown> = {};
+      if (values.variables.trim()) {
+        try {
+          const parsed: unknown = JSON.parse(values.variables);
+          if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            toast.error('Variables must be a JSON object');
+            return;
+          }
+          variables = parsed as Record<string, unknown>;
+        } catch {
+          toast.error('Variables must be valid JSON');
+          return;
+        }
+      }
+      try {
+        const result = await client.request<{ data: { result: { status: string; error?: string } } }>(
+          `/api/v1/messaging/send/${channel}`,
+          { method: 'POST', body: JSON.stringify({ identifier, to: values.to, variables }) },
+        );
+        const status = result.data.result.status;
+        if (status === 'SENT' || status === 'DELIVERED') {
+          toast.success(channel === 'email' ? 'Sent — check Mailpit at http://localhost:8025' : 'Sent — check Send Logs (SMS sandbox)');
+          onClose();
+        } else {
+          toast.error(result.data.result.error ?? `Send ${status}`);
+        }
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+    },
+  });
+
+  return (
+    <Modal open onClose={onClose} title={`Send test: ${identifier}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+        <TextField
+          label="To"
+          required
+          error={form.errors.to}
+          value={form.values.to}
+          placeholder={toPlaceholder}
+          onChange={(e) => form.setValue('to', (e.target as HTMLInputElement).value)}
+        />
+        <TextArea
+          label="Variables (JSON)"
+          value={form.values.variables}
+          rows={6}
+          onChange={(e) => form.setValue('variables', (e.target as HTMLTextAreaElement).value)}
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => form.handleSubmit()} disabled={form.submitting}>Send</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+

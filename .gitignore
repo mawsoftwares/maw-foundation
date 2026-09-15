@@ -29,3 +29,6 @@ Thumbs.db
 *.pem
 *.key
 .npmrc
+
+# Local Mailpit binary cache (pnpm mailpit)
+apps/sample-server/.cache/

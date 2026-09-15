@@ -21,6 +21,13 @@ const SENSITIVE_FIELDS: Record<Channel, string[]> = {
 };
 const MASK = '********';
 
+function firstNonEmpty(...values: Array<string | null | undefined>): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+  }
+  return undefined;
+}
+
 export interface MessagingEncryptionService {
   encrypt(plaintext: string): Promise<string>;
   decrypt(ciphertext: string): Promise<string>;
@@ -158,6 +165,7 @@ export function createMessagingRouter(
     requirePermission: (perm: string) => RequestHandler;
     encryption: MessagingEncryptionService;
     fallbackEmailService?: EmailService;
+    defaultFromEmail?: string;
     defaultTenantId?: string;
   },
 ): Router {
@@ -437,13 +445,21 @@ export function createMessagingRouter(
           metadata: { tenantId },
           email: {
             to, cc, bcc, subject: renderedSubject, body: renderedBody,
-            from: (cfg.fromAddress as string | undefined) ?? template.fromAddress ?? undefined,
+            from: firstNonEmpty(
+              typeof cfg.fromAddress === 'string' ? cfg.fromAddress : undefined,
+              template.fromAddress,
+              deps.defaultFromEmail,
+              'no-reply@example.com',
+            ),
           },
         });
       } else if (deps.fallbackEmailService) {
         result = await deps.fallbackEmailService.send({
           tenantId,
-          email: { to, cc, bcc, subject: renderedSubject, body: renderedBody, from: template.fromAddress ?? undefined },
+          email: {
+            to, cc, bcc, subject: renderedSubject, body: renderedBody,
+            from: firstNonEmpty(template.fromAddress, deps.defaultFromEmail, 'no-reply@example.com'),
+          },
         });
       } else {
         return void res.status(400).json({ error: 'No Email Master configured and no fallback SMTP available' });

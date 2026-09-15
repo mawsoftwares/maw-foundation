@@ -242,6 +242,50 @@ try {
         'Sent when an order status changes.'],
     );
     log.info('Messaging demo templates upserted');
+
+    // Local sandbox masters — inserted only when the channel has no row yet so a
+    // real Mailtrap/Twilio config is never overwritten. Email → Mailpit
+    // (`pnpm mailpit`); SMS → in-process catcher on sample-server.
+    const sandboxPort = process.env.PORT ?? '4000';
+    const smsSandboxUrl = `http://127.0.0.1:${sandboxPort}/api/v1/dev/sms-sandbox`;
+    const emailMaster = await client.query(
+      `INSERT INTO messaging_credentials (channel, provider, name, config, is_active)
+       VALUES ($1, $2, $3, $4::jsonb, true)
+       ON CONFLICT (channel) DO NOTHING`,
+      [
+        'email',
+        'smtp',
+        'Local Mailpit',
+        JSON.stringify({
+          host: '127.0.0.1',
+          port: 1025,
+          secure: false,
+          user: '',
+          pass: '',
+          fromAddress: 'no-reply@example.com',
+        }),
+      ],
+    );
+    const smsMaster = await client.query(
+      `INSERT INTO messaging_credentials (channel, provider, name, config, is_active)
+       VALUES ($1, $2, $3, $4::jsonb, true)
+       ON CONFLICT (channel) DO NOTHING`,
+      [
+        'sms',
+        'http',
+        'Local SMS sandbox',
+        JSON.stringify({
+          baseUrl: smsSandboxUrl,
+          method: 'POST',
+          toField: 'to',
+          messageField: 'message',
+        }),
+      ],
+    );
+    log.info('Messaging sandbox masters upserted', {
+      emailInserted: (emailMaster.rowCount ?? 0) > 0,
+      smsInserted: (smsMaster.rowCount ?? 0) > 0,
+    });
   });
 
   log.info('Seed complete.');

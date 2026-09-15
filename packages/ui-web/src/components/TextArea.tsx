@@ -36,7 +36,7 @@ export function TextArea({
           width: '100%',
           padding: 'var(--maw-space-sm) var(--maw-space-md)',
           borderRadius: 'var(--maw-radius-md)',
-          border: error ? "1px solid var(--maw-danger)" : "none",
+          border: `1px solid ${error ? 'var(--maw-danger)' : 'var(--maw-border)'}`,
           fontSize: 'var(--maw-text-md)',
           color: 'var(--maw-fg)',
           background: 'var(--maw-bg)',

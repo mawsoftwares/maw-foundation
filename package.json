@@ -19,6 +19,7 @@
     "format:check": "prettier --check .",
     "sample:server": "pnpm --filter @mawsoftwares/sample-server dev",
     "sample:web": "pnpm --filter @mawsoftwares/sample-web dev",
+    "mailpit": "node apps/sample-server/scripts/mailpit.mjs",
     "deploy:server": "node packages/deployment/bin/maw-deploy.js --project-root apps/sample-server",
     "deploy:web": "node packages/deployment/bin/maw-deploy.js --project-root apps/sample-web",
     "changeset": "changeset",

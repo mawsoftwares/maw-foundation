@@ -36,6 +36,7 @@
     "db:seed": "node --env-file=.env --import=tsx src/db/seed.ts",
     "db:test": "node --env-file=.env --import=tsx src/db/test-connection.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
+    "mailpit": "node scripts/mailpit.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }
