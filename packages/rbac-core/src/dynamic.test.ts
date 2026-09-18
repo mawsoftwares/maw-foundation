@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ModuleRegistry } from './registry';
 import { syncPermissions, type ISyncStore } from './sync';
 import { MasterCache, type ICacheStore } from './cache';
-import { resolvePermission, createPermissions, isAdminRole, matchesPermission } from './permission-resolver';
+import { resolvePermission, createPermissions, isAdminRole, matchesPermission, splitPermissionCode, joinPermissionCode } from './permission-resolver';
 import { checkPermissionDynamic } from './check-permission';
 import type { PermissionDefinition } from './module-types';
 
@@ -115,6 +115,30 @@ describe('syncPermissions', () => {
     expect(result.skipped).toBe(1);
     expect(result.deleted).toBe(0);
   });
+
+  it('does not delete custom (isSystem: false) permissions', async () => {
+    const perms = new Map<string, { id: number; description: string | null; isSystem?: boolean }>();
+    let nextId = 1;
+    const store: ISyncStore = {
+      findPermissionByCode: async (code) => perms.get(code) ?? null,
+      insertPermission: async (code, desc) => { perms.set(code, { id: nextId++, description: desc, isSystem: true }); },
+      updatePermissionDescription: async (code, desc) => { const p = perms.get(code); if (p) p.description = desc; },
+      listAllPermissionCodes: async () => [...perms.entries()].map(([code, p]) => ({ id: p.id, code, isSystem: p.isSystem })),
+      countRoleAssignmentsForPermission: async () => 0,
+      deletePermission: async (id) => { for (const [code, p] of perms) { if (p.id === id) perms.delete(code); } },
+      findFeatureByCode: async () => null,
+      insertFeature: async () => {},
+      updateFeature: async () => {},
+      listAllFeatureCodes: async () => [],
+      countTenantAssignmentsForFeature: async () => 0,
+      deleteFeature: async () => {},
+    };
+    await syncPermissions(store, [{ code: 'Read_Orders', name: 'Read' }]);
+    perms.set('Export_Orders', { id: nextId++, description: 'Custom export', isSystem: false });
+    const result = await syncPermissions(store, [{ code: 'Read_Orders', name: 'Read' }]);
+    expect(result.deleted).toBe(0);
+    expect(perms.has('Export_Orders')).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -214,6 +238,15 @@ describe('permission-resolver', () => {
     expect(matchesPermission(userPerms, 'Read_Users', cache)).toBe(true);
     expect(matchesPermission(userPerms, 'Read_users', cache)).toBe(true);
     expect(matchesPermission(userPerms, 'Delete_Users', cache)).toBe(false);
+  });
+
+  it('matchesPermission treats | and _ as the same join', () => {
+    expect(splitPermissionCode('Read|AuditLogs')).toEqual({ action: 'Read', module: 'AuditLogs' });
+    expect(splitPermissionCode('Read_Users')).toEqual({ action: 'Read', module: 'Users' });
+    expect(joinPermissionCode('Export', 'Customers')).toBe('Export|Customers');
+    expect(matchesPermission(['Read_Users'], 'Read|Users', cache)).toBe(true);
+    expect(matchesPermission(['Read|Users'], 'Read_Users', cache)).toBe(true);
+    expect(matchesPermission(['10_Users'], 'Read|Users', cache)).toBe(true);
   });
 });
 

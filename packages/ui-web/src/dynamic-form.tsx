@@ -12,6 +12,7 @@ import type {
   FieldRendererProps,
   IFieldRegistry,
 } from '@mawsoftwares/sdk';
+import { getPhoneProfile } from '@mawsoftwares/sdk/kernel/validate';
 import { useDynamicForm, evaluateCondition, type UseDynamicFormReturn, type UseDynamicFormOptions, type DynamicFieldState } from './dynamic-form-engine';
 import { TextField } from './components';
 import { TextArea, Select, Checkbox, Toggle, Spinner } from './components';
@@ -85,18 +86,25 @@ function createDefaultRegistry(): IFieldRegistry {
     />
   ));
 
-  registry.register('phone', (props) => (
-    <TextField
-      name={props.field.name}
-      value={String(props.value ?? '')}
-      onChange={(e) => props.onChange((e as { target: { value: string } }).target.value)}
-      onBlur={props.onBlur}
-      placeholder={props.field.placeholder ?? '+1234567890'}
-      disabled={props.disabled}
-      readOnly={props.readOnly}
-      type="tel"
-    />
-  ));
+  registry.register('phone', (props) => {
+    const field = props.field as { maxLength?: number };
+    const profile = getPhoneProfile();
+    return (
+      <TextField
+        name={props.field.name}
+        value={String(props.value ?? '')}
+        onChange={(e) => props.onChange((e as { target: { value: string } }).target.value)}
+        onBlur={props.onBlur}
+        placeholder={props.field.placeholder ?? profile.placeholder}
+        disabled={props.disabled}
+        readOnly={props.readOnly}
+        type="tel"
+        maxLength={field.maxLength ?? profile.inputMaxLength}
+        inputMode="tel"
+        autoComplete="tel"
+      />
+    );
+  });
 
   registry.register('number', (props) => {
     const field = props.field as { min?: number; max?: number; step?: number };

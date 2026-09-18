@@ -15,6 +15,9 @@ export { type ISyncStore, type SyncResult, type SyncLogger, syncPermissions, syn
 export { type ICacheStore, type CacheLogger, MasterCache } from './cache';
 export {
   type PermissionAction,
+  PERMISSION_CODE_SEPARATOR,
+  splitPermissionCode,
+  joinPermissionCode,
   resolvePermission,
   createPermissions,
   isAdminRole,

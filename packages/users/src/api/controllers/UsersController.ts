@@ -9,8 +9,7 @@ import {
   DeleteUserUseCase,
   ActivateUserUseCase,
   DeactivateUserUseCase,
-  ChangePasswordUseCase,
-  ResetPasswordUseCase,
+  AdminResetPasswordUseCase,
 } from '../../application/use-cases';
 import type { CreateUserDto, UpdateUserDto, ListUsersQueryDto } from '../../application/dto';
 
@@ -39,8 +38,7 @@ export class UsersController {
     private readonly deleteUserUseCase: DeleteUserUseCase,
     private readonly activateUserUseCase: ActivateUserUseCase,
     private readonly deactivateUserUseCase: DeactivateUserUseCase,
-    private readonly changePasswordUseCase: ChangePasswordUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly resetPasswordUseCase: AdminResetPasswordUseCase,
   ) {}
 
   readonly createUser: Controller = async ({ body, context }) => {
@@ -103,27 +101,13 @@ export class UsersController {
     return ok({ success: true });
   };
 
-  readonly changePassword: Controller = async ({ params, body, context }) => {
+  readonly resetPassword: Controller = async ({ params, body, context }) => {
     const tenantId = requireTenant(context.tenantId);
     const payload = body as { newPassword?: string };
-    await this.changePasswordUseCase.execute(
-      tenantId,
-      paramId(params),
-      payload.newPassword,
-      context.userId,
-    );
-    return ok({ success: true });
-  };
-
-  readonly resetPassword: Controller = async ({ body, context }) => {
-    const tenantId = requireTenant(context.tenantId);
-    const payload = body as { email?: string; newPassword?: string };
-    await this.resetPasswordUseCase.execute(
-      tenantId,
-      payload.email ?? '',
-      payload.newPassword,
-      context.userId,
-    );
+    if (!payload.newPassword) {
+      throw new Error('newPassword is required');
+    }
+    await this.resetPasswordUseCase.execute(tenantId, paramId(params), payload.newPassword);
     return ok({ success: true });
   };
 }

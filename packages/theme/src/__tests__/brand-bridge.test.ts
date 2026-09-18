@@ -81,10 +81,14 @@ describe('tokensToCssVars', () => {
     expect(light['--maw-surface']).toBe(theme.light.bg);
     expect(light['--maw-canvas']).toBe(light['--maw-bgSubtle']);
     expect(light['--maw-surface']).toBe(light['--maw-bg']);
+    expect(light['--maw-shell-bg']).toBe(theme.light.bg);
+    expect(light['--maw-shell-fg']).toBe(theme.light.fg);
+    expect(light['--maw-shell-blur']).toBe('0px');
 
     const dark = tokensToCssVars(true, theme);
     expect(dark['--maw-canvas']).toBe(theme.dark.bgSubtle);
     expect(dark['--maw-surface']).toBe(theme.dark.bg);
+    expect(dark['--maw-shell-bg']).toBe(theme.dark.bgSubtle);
+    expect(dark['--maw-shell-fg']).toBe(theme.dark.fg);
   });
 });
-

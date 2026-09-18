@@ -7,6 +7,7 @@ import {
   Avatar,
   ErrorState,
   useDynamicAccess,
+  Select,
   type ColumnDef,
   type UseCrudReturn,
 } from '@mawsoftwares/ui-web';
@@ -17,6 +18,10 @@ export interface UsersListProps {
   crud: UseCrudReturn<UserResponseDto>;
   onCreate: () => void;
   onView: (id: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (status: string) => void;
+  onActivate: (id: string) => void;
+  onDeactivate: (id: string) => void;
 }
 
 function statusVariant(status: AccountStatusValue): 'success' | 'warning' | 'danger' | 'default' {
@@ -26,14 +31,23 @@ function statusVariant(status: AccountStatusValue): 'success' | 'warning' | 'dan
   return 'default';
 }
 
+function statusLabel(status: AccountStatusValue): string {
+  if (status === 'SUSPENDED' || status === 'DISABLED') return 'Inactive';
+  if (status === 'PENDING_VERIFICATION') return 'Pending';
+  if (status === 'LOCKED') return 'Locked';
+  if (status === 'ACTIVE') return 'Active';
+  return status;
+}
+
 function displayName(user: UserResponseDto): string {
   const name = `${user.firstName} ${user.lastName}`.trim();
   return name.length > 0 ? name : user.email;
 }
 
-export function UsersList({ crud, onCreate, onView }: UsersListProps): ReactNode {
+export function UsersList({ crud, onCreate, onView, statusFilter, onStatusFilterChange, onActivate, onDeactivate }: UsersListProps): ReactNode {
   const { can } = useDynamicAccess();
   const canCreate = can('Create_Users');
+  const canUpdate = can('Update_Users');
 
   const columns = useMemo<ColumnDef<UserResponseDto>[]>(() => [
     {
@@ -67,7 +81,7 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps): ReactNode
       sortable: true,
       width: 160,
       render: (user) => (
-        <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
+        <Badge variant={statusVariant(user.status)}>{statusLabel(user.status)}</Badge>
       ),
     },
   ], []);
@@ -85,6 +99,20 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps): ReactNode
       filter={crud.filter}
       onFilterChange={crud.setFilter}
       searchPlaceholder="Search by name or email..."
+      toolbar={
+        <Select
+          name="status-filter"
+          value={statusFilter}
+          onChange={(e) => onStatusFilterChange(e.target.value)}
+          options={[
+            { label: 'All Statuses', value: 'ALL' },
+            { label: 'Active', value: 'ACTIVE' },
+            { label: 'Inactive', value: 'SUSPENDED' },
+            { label: 'Pending', value: 'PENDING_VERIFICATION' }
+          ]}
+          style={{ minWidth: 160 }}
+        />
+      }
     >
       <DataTable
         columns={columns}
@@ -99,15 +127,29 @@ export function UsersList({ crud, onCreate, onView }: UsersListProps): ReactNode
         emptyMessage="No users found"
         stickyHeader
         onRowClick={(row) => onView(row.id)}
-        rowActions={(row) => (
-          <Button
-            variant="ghost"
-            onClick={() => onView(row.id)}
-            style={{ fontSize: 'var(--maw-text-xs)', padding: '4px 10px' }}
-          >
-            View
-          </Button>
-        )}
+        rowActions={(row) => {
+          const isActive = row.status === 'ACTIVE';
+          return (
+            <div style={{ display: 'flex', gap: 'var(--maw-space-xs)' }}>
+              {canUpdate && (
+                <Button
+                  variant="ghost"
+                  onClick={() => isActive ? onDeactivate(row.id) : onActivate(row.id)}
+                  style={{ fontSize: 'var(--maw-text-xs)', padding: '4px 10px' }}
+                >
+                  {isActive ? 'Deactivate' : 'Activate'}
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => onView(row.id)}
+                style={{ fontSize: 'var(--maw-text-xs)', padding: '4px 10px' }}
+              >
+                View
+              </Button>
+            </div>
+          );
+        }}
       />
     </ListPage>
   );

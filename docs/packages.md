@@ -35,7 +35,7 @@ See [`docs/module-architecture.md`](./module-architecture.md) for the full class
 | `packages/communication` | `@mawsoftwares/communication` | Stable | NotificationService, email/SMS/in-app, SMTP provider, PgInAppNotificationStore, PgTemplateStore |
 | `packages/queue` | `@mawsoftwares/queue` | Stable | QueueService, JobRunner, InMemoryProvider, PgQueueProvider |
 | `packages/audit` | `@mawsoftwares/audit` | Stable | Audit trail and structured event logging |
-| `packages/masters` | `@mawsoftwares/masters` | Stable | Master data management with caching |
+
 | `packages/import-export` | `@mawsoftwares/import-export` | Stable | CSV/JSON import with validation, mapping, dedup; export with background processing |
 | `packages/reporting` | `@mawsoftwares/reporting` | Stable | Report definitions, filter/sort/group/aggregate, execution engine, saved reports |
 | `packages/deployment` | `@mawsoftwares/deployment` | Scaffold | Deployment utilities and configuration |

@@ -1,5 +1,6 @@
 export * from './Avatar';
 export * from './ProfileAvatarUpload';
+export * from './Icon';
 export * from './IconButton';
 export * from './TextArea';
 export * from './Select';
@@ -37,3 +38,4 @@ export * from './TextField';
 export * from './Card';
 export * from './Badge';
 export * from './Divider';
+export * from './Overlay';

@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { BrandProvider, I18nProvider, ToastProvider } from '@mawsoftwares/ui-web';
 import * as i18n from '@mawsoftwares/sdk/i18n';
 import { AUTH_EN_MESSAGES } from '@mawsoftwares/ui-auth';
+import { Provider } from 'react-redux';
 import { App } from './App';
 import { staticBrandProvider, DEFAULT_TENANT } from './brand-setup';
+import { store } from './store';
 
 i18n.registerLocale('en', {
   ...AUTH_EN_MESSAGES,
@@ -72,20 +74,22 @@ i18n.registerLocale('mr', {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrandProvider
-      tenantId={DEFAULT_TENANT}
-      provider={staticBrandProvider}
-      loadingFallback={
-        <div className="maw-auth-screen" style={{ color: 'var(--maw-fgMuted)' }}>
-          Loading brand...
-        </div>
-      }
-    >
-      <I18nProvider defaultLocale="en">
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </I18nProvider>
-    </BrandProvider>
+    <Provider store={store}>
+      <BrandProvider
+        tenantId={DEFAULT_TENANT}
+        provider={staticBrandProvider}
+        loadingFallback={
+          <div className="maw-auth-screen" style={{ color: 'var(--maw-fgMuted)' }}>
+            Loading brand...
+          </div>
+        }
+      >
+        <I18nProvider defaultLocale="en">
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </I18nProvider>
+      </BrandProvider>
+    </Provider>
   </StrictMode>,
 );

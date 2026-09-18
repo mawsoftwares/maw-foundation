@@ -48,6 +48,7 @@ import {
   PgSocialAccountStore,
   GoogleAuthProvider,
   GitHubAuthProvider,
+  hashPasswordForStorage,
 } from '@mawsoftwares/auth-core';
 import {
   MasterCache,
@@ -77,6 +78,7 @@ import {
   createHealthChecker,
   createConfigEngine,
   APP_CONFIG_DEFAULTS,
+  setDefaultPhoneRegion,
   type ConfigEngine,
 } from '@mawsoftwares/sdk';
 import { DEMO_TENANT } from './repo';
@@ -96,6 +98,9 @@ import {
   WorkerRegistry,
   PgQueueProvider,
 } from '@mawsoftwares/queue';
+import { DynamicAccessProvider } from '@mawsoftwares/ui-web';
+import { schema } from '@mawsoftwares/database';
+import { inArray } from 'drizzle-orm';
 import {
   ExportService,
   InMemoryHistoryStore,
@@ -182,10 +187,13 @@ config.loadLayer('app', {
   appVersion: '0.1.0',
 });
 
+setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
+
 log.info('Config engine ready', {
   layers: ['environment', 'app'],
   appName: config.getString('appName'),
   currency: config.getString('defaultCurrency'),
+  phoneRegion: config.getString('phoneRegion'),
 });
 
 // ---------------------------------------------------------------------------
@@ -267,7 +275,9 @@ const smtpPort = getEnvInt('SMTP_PORT', 587);
 const smtpUser = getEnv('SMTP_USER');
 const smtpPass = getEnv('SMTP_PASS');
 const smtpFrom = getEnv('SMTP_FROM') || getEnv('SMTP_USER') || 'no-reply@example.com';
-const hasSmtp = Boolean(smtpHost && smtpUser && smtpPass);
+// Mailpit (local sandbox) has no auth — host alone is enough to leave console fallback.
+const hasSmtp = Boolean(smtpHost);
+const smtpAuth = smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined;
 
 const communication = createCommunication({
   logger: log.child('communication'),
@@ -275,20 +285,17 @@ const communication = createCommunication({
   useConsoleProviders: !hasSmtp,
 });
 
-if (hasSmtp && smtpHost && smtpUser && smtpPass) {
-  log.info('Registering real SMTP email provider', { host: smtpHost, port: smtpPort });
+if (hasSmtp && smtpHost) {
+  log.info('Registering real SMTP email provider', { host: smtpHost, port: smtpPort, auth: Boolean(smtpAuth) });
   communication.registry.register(
     new SmtpNotificationProvider({
       host: smtpHost,
       port: smtpPort,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
+      ...(smtpAuth !== undefined ? { auth: smtpAuth } : {}),
     })
   );
 } else {
-  log.warn('SMTP environment variables missing; falling back to Console log provider');
+  log.warn('SMTP_HOST not set; falling back to Console log provider. For a local inbox run `pnpm mailpit` and set SMTP_HOST=127.0.0.1 SMTP_PORT=1025');
 }
 
 const authEmails = createAuthEmailSender({
@@ -542,7 +549,6 @@ function requestContext(req: express.Request): AuthenticateContext {
 }
 
 app.post('/auth/login', (req, res) => {
-  console.log('--- POST /auth/login START ---', req.body);
   void (async () => {
     try {
       const { email, password, tenantId, rememberMe } = req.body as {
@@ -745,15 +751,47 @@ app.post('/billing', auth.requireAuth, auth.requirePermission('Create_Billing'),
 
 app.get('/audit-logs', auth.requireAuth, auth.audienceGuard('admin'), auth.requirePermission('Read_AuditLogs'), (req, res) => {
   void (async () => {
-    const { userId, resource, limit } = req.query as { userId?: string; resource?: string; limit?: string };
-    const maw = (req as DynamicAuthedRequest).maw!;
-    const logs = await data.auditStore.query({
-      tenantId: maw.claims.tenantId,
-      userId,
-      resource,
-      limit: limit !== undefined ? parseInt(limit, 10) : 50,
-    });
-    res.json({ logs });
+    try {
+      const { userId, resource, limit, page } = req.query as { userId?: string; resource?: string; limit?: string; page?: string };
+      const maw = (req as DynamicAuthedRequest).maw!;
+      
+      const parsedLimit = limit ? parseInt(limit, 10) : 50;
+      const parsedPage = page ? parseInt(page, 10) : 1;
+      const offset = (parsedPage - 1) * parsedLimit;
+      
+      const [logs, total] = await Promise.all([
+        data.auditStore.query({
+          tenantId: maw.claims.tenantId,
+          userId,
+          resource,
+          limit: parsedLimit,
+          offset,
+        }),
+        data.auditStore.count({
+          tenantId: maw.claims.tenantId,
+          userId,
+          resource,
+        })
+      ]);
+
+      const userIds = [...new Set(logs.map(l => l.userId))];
+      let userMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const usersRows = await data.db.select({ id: schema.users.id, name: schema.users.name, email: schema.users.email })
+          .from(schema.users)
+          .where(inArray(schema.users.id, userIds));
+        userMap = new Map(usersRows.map(u => [u.id, u.name || u.email]));
+      }
+
+      const enrichedLogs = logs.map(l => ({
+        ...l,
+        userName: userMap.get(l.userId) || l.userId
+      }));
+
+      res.json({ logs: enrichedLogs, total });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
   })();
 });
 
@@ -871,13 +909,39 @@ app.use('/api/v1/orders', createOrdersRouter({
 import { createUsersRouter } from './users-routes';
 import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
+import { createMenuRouter } from './menu-routes';
+import { createMessagingRouter } from './messaging-routes';
+import { createDevSandboxRouter } from './dev-sandbox';
 
 const usersRepo = new AuthSchemaUsersRepository(data.db);
 app.use('/api/v1/users', createUsersRouter(usersRepo, {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
+  // Admin-set passwords must be hashed the same way login verifies them: scrypt(sha256(plaintext)),
+  // i.e. as if the client had prehashed it - see resolvePassword()/hashPasswordForStorage().
+  hashPassword: (plain) => Promise.resolve(hashPasswordForStorage(plain)),
 }));
-app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache));
+app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm) => auth.requirePermission(perm), {
+  systemModuleCodes: registry.getAll().map((m) => m.key),
+  systemPermissionCodes: registry.getAllPermissions().map((p) => p.code),
+  auditStore: data.auditStore,
+}));
+app.use('/api/v1/menus', createMenuRouter(data.db, {
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+}));
+app.use('/api/v1/messaging', createMessagingRouter(data.db, {
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+  encryption: new AesEncryptionService(MFA_ENCRYPTION_KEY),
+  fallbackEmailService: communication.emailService,
+  defaultFromEmail: smtpFrom,
+  defaultTenantId: DEMO_TENANT,
+}));
+if (isDev) {
+  app.use('/api/v1/dev/sms-sandbox', createDevSandboxRouter());
+  log.info('SMS sandbox enabled', { url: `http://127.0.0.1:${PORT}/api/v1/dev/sms-sandbox` });
+}
 app.use('/api/v1/tenants', createTenantRoutes({
   tenantRepository,
   requireAuth: auth.requireAuth,
@@ -893,25 +957,7 @@ app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
 });
 
 
-// --- Masters routes (dynamic master data) ---
-import { createMastersRouter } from './modules/masters/routes';
-import {
-  MasterService,
-  PgMasterRepository,
-  PgMasterFieldRepository,
-  PgMasterValueRepository,
-} from '@mawsoftwares/masters';
 
-const masterRepo = new PgMasterRepository(data.db);
-const masterFieldRepo = new PgMasterFieldRepository(data.db);
-const masterValueRepo = new PgMasterValueRepository(data.db);
-const masterService = new MasterService({ db: data.db, masterRepo, fieldRepo: masterFieldRepo, valueRepo: masterValueRepo });
-
-app.use('/api/v1/masters', createMastersRouter({
-  service: masterService,
-  requireAuth: auth.requireAuth,
-  requirePermission: (perm) => auth.requirePermission(perm),
-}));
 
 // --- Export routes (import-export package) ---
 
@@ -969,23 +1015,6 @@ app.get('/api/v1/jobs/:id', auth.requireAuth, (req, res) => {
   })();
 });
 
-// --- Notification routes ---
-
-app.post('/api/v1/notifications/send', auth.requireAuth, (req, res) => {
-  void (async () => {
-    const maw = (req as DynamicAuthedRequest).maw!;
-    const { channel, email, subject, body } = req.body as {
-      channel?: string; email: string; subject: string; body: string;
-    };
-    await communication.emailService.send({
-      tenantId: maw.claims.tenantId,
-      email: { to: email, subject, body },
-      metadata: { source: 'manual' },
-    });
-    res.json({ data: { sent: true, channel: channel ?? 'EMAIL', to: email } });
-  })();
-});
-
 app.get('/api/v1/notifications/in-app', auth.requireAuth, (req, res) => {
   void (async () => {
     const maw = (req as DynamicAuthedRequest).maw!;
@@ -1001,17 +1030,6 @@ app.get('/api/v1/notifications/in-app', auth.requireAuth, (req, res) => {
     );
     res.json({ data: { notifications, unreadCount } });
   })();
-});
-
-app.get('/api/v1/notifications/channels', auth.requireAuth, (_req, res) => {
-  res.json({
-    data: [
-      { id: 'EMAIL', name: 'Email', enabled: true, description: 'Email notifications via EmailService' },
-      { id: 'SMS', name: 'SMS', enabled: true, description: 'SMS notifications via SmsService' },
-      { id: 'PUSH', name: 'Push', enabled: false, description: 'Push notifications (not configured)' },
-      { id: 'IN_APP', name: 'In-App', enabled: true, description: 'In-app notification center via InAppNotificationService' },
-    ],
-  });
 });
 
 // --- Health check (composable) ---
@@ -1040,6 +1058,10 @@ const server = app.listen(PORT, () => {
   log.info(`http://localhost:${PORT} (Postgres)`);
   log.info('Users: superadmin@ / owner Gmail accounts / manager@ / clerk@demo.test (pw: password123)');
   log.info('Try: GET /modules to see all registered modules + permissions');
+  if (isDev) {
+    log.info('Email sandbox: pnpm mailpit  →  http://localhost:8025');
+    log.info(`SMS sandbox: GET/POST http://127.0.0.1:${PORT}/api/v1/dev/sms-sandbox`);
+  }
 });
 
 process.on('SIGTERM', () => {

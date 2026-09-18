@@ -32,8 +32,8 @@ export function Panel({
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   const variantStyles: Record<string, CSSProperties> = {
-    default: { background: 'var(--maw-surface)', border: '1px solid var(--maw-border)' },
-    outlined: { background: 'transparent', border: '1px solid var(--maw-border)' },
+    default: { background: 'var(--maw-surface)', border: "none" },
+    outlined: { background: 'transparent', border: "none" },
     elevated: { background: 'var(--maw-surface)', border: 'none', boxShadow: 'var(--maw-shadow-md)' },
   };
 

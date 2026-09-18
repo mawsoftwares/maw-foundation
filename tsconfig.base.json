@@ -60,8 +60,7 @@
       "@mawsoftwares/api/*": ["packages/api/src/*"],
       "@mawsoftwares/database": ["packages/database/src/index.ts"],
       "@mawsoftwares/database/*": ["packages/database/src/*"],
-      "@mawsoftwares/masters": ["packages/masters/src/index.ts"],
-      "@mawsoftwares/masters/*": ["packages/masters/src/*"],
+
       "@mawsoftwares/testing": ["packages/testing/src/index.ts"],
       "@mawsoftwares/testing/*": ["packages/testing/src/*"],
       "@mawsoftwares/observability": ["packages/observability/src/index.ts"],

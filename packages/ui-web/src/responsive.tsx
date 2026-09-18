@@ -86,10 +86,15 @@ export function Responsive({
   hideAbove,
   hideBelow,
 }: ResponsiveProps): ReactNode {
-  const above = showAbove ? useMediaQuery(`(min-width: ${BREAKPOINTS[showAbove]}px)`) : true;
-  const below = showBelow ? useMediaQuery(`(max-width: ${BREAKPOINTS[showBelow] - 1}px)`) : true;
-  const notAbove = hideAbove ? !useMediaQuery(`(min-width: ${BREAKPOINTS[hideAbove]}px)`) : true;
-  const notBelow = hideBelow ? !useMediaQuery(`(max-width: ${BREAKPOINTS[hideBelow] - 1}px)`) : true;
+  const aboveMatch = useMediaQuery(showAbove ? `(min-width: ${BREAKPOINTS[showAbove]}px)` : 'all');
+  const belowMatch = useMediaQuery(showBelow ? `(max-width: ${BREAKPOINTS[showBelow] - 1}px)` : 'all');
+  const hideAboveMatch = useMediaQuery(hideAbove ? `(min-width: ${BREAKPOINTS[hideAbove]}px)` : 'not all');
+  const hideBelowMatch = useMediaQuery(hideBelow ? `(max-width: ${BREAKPOINTS[hideBelow] - 1}px)` : 'not all');
+
+  const above = showAbove ? aboveMatch : true;
+  const below = showBelow ? belowMatch : true;
+  const notAbove = hideAbove ? !hideAboveMatch : true;
+  const notBelow = hideBelow ? !hideBelowMatch : true;
 
   if (!above || !below || !notAbove || !notBelow) return null;
   return <>{children}</>;

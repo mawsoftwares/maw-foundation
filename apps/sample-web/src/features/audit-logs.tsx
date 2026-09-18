@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
 import { ListPage, DataTable, Badge, Button, TextField, useDynamicAccess, useToast, ErrorState, PageLoader, type ColumnDef } from '@mawsoftwares/ui-web';
 import { client } from '../api';
@@ -7,6 +7,7 @@ interface AuditEntry {
   id: string;
   timestamp: string;
   userId: string;
+  userName?: string;
   action: string;
   resource: string;
   details?: Record<string, unknown>;
@@ -17,10 +18,13 @@ const COLUMNS: ColumnDef<AuditEntry>[] = [
     key: 'timestamp',
     header: 'Time',
     sortable: true,
-    width: 100,
-    render: (row) => new Date(row.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    width: 160,
+    render: (row) => {
+      const d = new Date(row.timestamp);
+      return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    },
   },
-  { key: 'userId', header: 'User', sortable: true },
+  { key: 'userName', header: 'User', sortable: true, render: (row) => row.userName || row.userId },
   {
     key: 'action',
     header: 'Method',
@@ -48,6 +52,9 @@ export function AuditLogsView(): ReactNode {
   const toast = useToast();
   const { can } = useDynamicAccess();
   const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string>();
@@ -60,13 +67,24 @@ export function AuditLogsView(): ReactNode {
     const params = new URLSearchParams();
     if (filterUser) params.set('userId', filterUser);
     if (filterResource) params.set('resource', filterResource);
+    params.set('page', String(page));
+    params.set('limit', String(pageSize));
     const qs = params.toString();
     client
-      .request<{ logs: AuditEntry[] }>(`/audit-logs${qs ? `?${qs}` : ''}`)
-      .then((r) => { setLogs(r.logs); setLoaded(true); })
+      .request<{ logs: AuditEntry[], total: number }>(`/audit-logs${qs ? `?${qs}` : ''}`)
+      .then((r) => { setLogs(r.logs); setTotal(r.total); setLoaded(true); })
       .catch((e: ApiError) => setError(`${e.status}: ${e.message}`))
       .finally(() => setLoading(false));
-  }, [filterUser, filterResource]);
+  }, [filterUser, filterResource, page, pageSize]);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
+
+  const handleSearch = () => {
+    setPage(1);
+    loadLogs();
+  };
 
   const handleExport = useCallback(() => {
     client
@@ -85,31 +103,38 @@ export function AuditLogsView(): ReactNode {
   }, [toast]);
 
   if (error) return <ErrorState title="Failed to load audit logs" message={error} retry={loadLogs} />;
-  if (loading && !loaded) return <PageLoader message="Loading audit logs..." />;
 
   return (
     <ListPage
       title="Audit Logs"
-      description={loaded ? `${logs.length} entries` : undefined}
+      description={loaded ? `${total} entries` : undefined}
       toolbar={
         loaded && can('Export_AuditLogs') ? <Button variant="ghost" onClick={handleExport}>Export CSV</Button> : undefined
       }
     >
       <div style={{ display: 'flex', gap: 'var(--maw-space-sm)', marginBottom: 'var(--maw-space-md)', alignItems: 'flex-end' }}>
         <div style={{ flex: 1 }}>
-          <TextField label="Filter by user" value={filterUser} onChange={(e) => setFilterUser(e.target.value)} />
+          <TextField label="Filter by user ID" value={filterUser} onChange={(e) => setFilterUser(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
         </div>
         <div style={{ flex: 1 }}>
-          <TextField label="Filter by resource" value={filterResource} onChange={(e) => setFilterResource(e.target.value)} />
+          <TextField label="Filter by resource" value={filterResource} onChange={(e) => setFilterResource(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
         </div>
-        <Button onClick={loadLogs} disabled={loading} style={{ marginBottom: 'var(--maw-space-md)' }}>
+        <Button onClick={handleSearch} disabled={loading} style={{ marginBottom: 'var(--maw-space-md)' }}>
           {loading ? 'Loading...' : 'Search'}
         </Button>
       </div>
 
-      {loaded && (
-        <DataTable columns={COLUMNS} data={logs} keyField="id" stickyHeader emptyMessage="No audit logs. Perform some API actions first, then search." />
-      )}
+      <DataTable 
+        columns={COLUMNS} 
+        data={logs} 
+        keyField="id" 
+        stickyHeader 
+        loading={loading}
+        emptyMessage="No audit logs found."
+        pagination={{ page, pageSize, total }}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+      />
     </ListPage>
   );
 }

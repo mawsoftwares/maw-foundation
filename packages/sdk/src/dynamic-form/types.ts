@@ -70,6 +70,10 @@ export interface EmailRule extends ValidationRule {
   readonly type: 'email';
 }
 
+export interface PhoneRule extends ValidationRule {
+  readonly type: 'phone';
+}
+
 export interface UrlRule extends ValidationRule {
   readonly type: 'url';
 }
@@ -102,6 +106,7 @@ export type FormValidationRule =
   | MaxRule
   | PatternRule
   | EmailRule
+  | PhoneRule
   | UrlRule
   | FileSizeRule
   | FileTypeRule
@@ -223,6 +228,8 @@ export interface PasswordFieldDef extends FormFieldBase {
 
 export interface PhoneFieldDef extends FormFieldBase {
   readonly type: 'phone';
+  /** Max input characters (digits + optional formatting). Defaults to 20 in the renderer. */
+  readonly maxLength?: number;
 }
 
 export interface SelectFieldDef extends FormFieldBase {

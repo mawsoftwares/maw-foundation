@@ -255,7 +255,8 @@ export function FormPage({
             )}
             <Button
               type="submit"
-              disabled={loading || dirty === false}
+              loading={loading}
+              disabled={dirty === false}
             >
               {loading ? 'Saving...' : submitLabel}
             </Button>

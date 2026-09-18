@@ -1,6 +1,8 @@
-import { useMemo, useState, useCallback, type ReactNode } from 'react';
-import { createConfigEngine } from '@mawsoftwares/sdk/config/config-engine';
+import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createConfigEngine, APP_CONFIG_DEFAULTS } from '@mawsoftwares/sdk/config/config-engine';
+import { setDefaultPhoneRegion } from '@mawsoftwares/sdk/kernel/validate';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
+import { storedDesignToOverrides } from '@mawsoftwares/theme';
 import {
   AuthProvider,
   DynamicAccessProvider,
@@ -12,10 +14,12 @@ import {
   Breadcrumbs,
   useI18n,
   Avatar,
+  Icon,
   OfflineProvider,
   OfflineBanner,
   FeatureFlagProvider,
   useFeatureFlags,
+  useTheme,
   type NavItem,
   type NavigationConfig,
 } from '@mawsoftwares/ui-web';
@@ -33,21 +37,30 @@ import { UsersView } from './features/users/index';
 import { ShowcaseView } from './features/showcase';
 import { SettingsView } from './features/settings';
 import { AccountView } from './features/account';
-import { MastersView } from './features/masters';
-import { PlatformView } from './features/platform';
-import { JobsView } from './features/jobs';
-import { NotificationsView } from './features/notifications';
+
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
+import { MenusView } from './features/menus';
+import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-settings';
+import { SuperAdminView } from './features/superadmin';
+import { MessagingView } from './features/messaging';
+import { loadMenuTree, type MenuTreeNode } from './menu-tree';
+import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
 import { TopBarActions } from './shell/TopBarActions';
+import { AppConfigProvider } from './config-context';
 
 
 // Offline infrastructure — created once; enabled/disabled via Settings toggle
 const config = createConfigEngine();
-config.loadLayer('app', { offline: { enabled: true } });
+config.loadLayer('app', {
+  ...(APP_CONFIG_DEFAULTS as unknown as Record<string, unknown>),
+  offline: { enabled: true },
+  phoneRegion: 'IN',
+});
+setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'masters' | 'platform' | 'jobs' | 'notifications' | 'feature-flags';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -69,22 +82,15 @@ function clearAuthQuery(): void {
 const SUPERADMIN_ROLES = new Set(['owner', 'super_admin', 'admin']);
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard', group: 'Main', sortOrder: 0 },
-  { key: 'orders', label: 'Orders', icon: '📦', path: '/orders', group: 'Main', sortOrder: 1, permission: 'Read_Orders' },
-  { key: 'reports', label: 'Reports', icon: '📈', path: '/reports', group: 'Main', sortOrder: 2, permission: 'Read_Reports' },
-  { key: 'inventory', label: 'Inventory', icon: '📋', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
-  { key: 'billing', label: 'Billing', icon: '💳', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
-  { key: 'users', label: 'Users', icon: '👤', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
-  { key: 'audit-logs', label: 'Audit Logs', icon: '📝', path: '/audit-logs', group: 'Admin', sortOrder: 6, permission: 'Read_AuditLogs' },
-  { key: 'account', label: 'Account', icon: '🔐', path: '/account', group: 'Admin', sortOrder: 7 },
-  { key: 'masters', label: 'Master Data', icon: '🗄️', path: '/masters', group: 'Admin', sortOrder: 8, permission: 'Master_View' },
-  { key: 'rbac', label: 'RBAC Admin', icon: '🔑', path: '/rbac', group: 'Admin', sortOrder: 8.5 },
-  { key: 'feature-flags', label: 'Feature Flags', icon: '🚩', path: '/feature-flags', group: 'Admin', sortOrder: 8.6, permission: 'Read_FeatureFlags' },
-  { key: 'settings', label: 'Settings', icon: '⚙️', path: '/settings', group: 'Admin', sortOrder: 9 },
-  { key: 'platform', label: 'Platform', icon: '🧩', path: '/platform', group: 'Dev', sortOrder: 95 },
-  { key: 'jobs', label: 'Jobs', icon: '⏳', path: '/jobs', group: 'Dev', sortOrder: 96 },
-  { key: 'notifications', label: 'Notifications', icon: '🔔', path: '/notifications', group: 'Dev', sortOrder: 97 },
-  { key: 'showcase', label: 'UI Showcase', icon: '🎨', path: '/showcase', group: 'Dev', sortOrder: 99 },
+  { key: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', path: '/dashboard', group: 'Main', sortOrder: 0 },
+  { key: 'orders', label: 'Orders', icon: 'shopping-cart', path: '/orders', group: 'Main', sortOrder: 1, permission: 'Read_Orders' },
+  { key: 'reports', label: 'Reports', icon: 'bar-chart', path: '/reports', group: 'Main', sortOrder: 2, permission: 'Read_Reports' },
+  { key: 'inventory', label: 'Inventory', icon: 'clipboard-list', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
+  { key: 'billing', label: 'Billing', icon: 'credit-card', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
+  { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
+  { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
+  { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
+  { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
 ];
 
 /** Maps a page key to the permission required to view it. */
@@ -95,11 +101,35 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   billing: 'Read_Billing',
   users: 'Read_Users',
   'audit-logs': 'Read_AuditLogs',
-  masters: 'Master_View',
+
+  rbac: 'Manage_Rbac',
   'feature-flags': 'Read_FeatureFlags',
+  menus: 'Manage_Menus',
+  theme: 'Manage_Theme',
+  messaging: 'Read_Messaging',
 };
 
-const SUPERADMIN_ONLY_KEYS = new Set(['settings', 'showcase', 'platform', 'jobs', 'notifications', 'rbac']);
+const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings']);
+
+/** Sidebar section for each known nav key, used to group DB-driven menu items the same way the static fallback does. */
+const NAV_GROUPS: Record<string, string> = {
+  dashboard: 'Main', orders: 'Main', reports: 'Main', inventory: 'Main',
+  billing: 'Finance',
+  users: 'Admin', 'audit-logs': 'Admin', account: 'Admin',
+  superadmin: 'Admin', settings: 'Admin',
+};
+
+function menuNodeToNavItem(node: MenuTreeNode): NavItem {
+  return {
+    key: node.key,
+    label: node.label,
+    icon: node.icon ?? 'circle',
+    path: node.path ?? `/${node.key}`,
+    group: NAV_GROUPS[node.key],
+    sortOrder: node.sortOrder,
+    permission: node.permission ?? undefined,
+  };
+}
 
 function AccessDenied({ permission }: { permission: string }): ReactNode {
   return (
@@ -137,14 +167,14 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'users': return <UsersView />;
     case 'audit-logs': return <AuditLogsView />;
     case 'account': return <AccountView />;
-    case 'masters': return <MastersView />;
-    case 'platform': return <PlatformView />;
-    case 'jobs': return <JobsView />;
-    case 'notifications': return <NotificationsView />;
     case 'rbac': return <RbacView />;
     case 'feature-flags': return <FeatureFlagsView />;
+    case 'menus': return <MenusView />;
+    case 'theme': return <ThemeSettingsView />;
+    case 'messaging': return <MessagingView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
+    case 'superadmin': return <SuperAdminView />;
   }
 }
 
@@ -155,7 +185,20 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
+  const { applyThemeOverrides } = useTheme();
   const [page, setPage] = useState<Page>('dashboard');
+
+  useEffect(() => {
+    const stored = localStorage.getItem(DESIGN_MD_STORAGE_KEY);
+    if (stored === null) return;
+    try {
+      const overrides = storedDesignToOverrides(JSON.parse(stored) as unknown);
+      if (overrides !== null) applyThemeOverrides(overrides);
+      else localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
+    } catch {
+      localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
+    }
+  }, [applyThemeOverrides]);
   const deepLink = useMemo(() => readAuthDeepLink(), []);
   const [authPage, setAuthPage] = useState<AuthPage>(deepLink.page);
   const [authToken, setAuthToken] = useState(deepLink.token);
@@ -183,8 +226,37 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const { can: canDynamic, loading: accessLoading } = useDynamicAccess();
   const { isEnabled } = useFeatureFlags();
 
+  // Menu Management drives the real nav tree from the DB (see /menus admin page);
+  // fall back to the static NAV_ITEMS list (still kept in sync as a reference/offline
+  // fallback) if the fetch hasn't completed yet or fails, so the sidebar is never empty.
+  const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
+  const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
+  useEffect(() => {
+    if (session === null) return;
+    let cancelled = false;
+    loadMenuTree()
+      .then((tree) => {
+        if (cancelled) return;
+        setMenuTree(tree);
+        // Only root items become sidebar entries — a node with children (e.g. "Super
+        // Admin") is a hub whose sub-pages are reached via cards on its own page,
+        // not a nested sidebar submenu.
+        const roots = tree.map(menuNodeToNavItem);
+        setDynamicNavItems(roots.length > 0 ? roots : null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMenuTree(null);
+          setDynamicNavItems(null);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [session]);
+
+  const allNavItems = dynamicNavItems ?? NAV_ITEMS;
+
   const navConfig = useMemo<NavigationConfig>(() => {
-    const items = NAV_ITEMS.filter((item) => {
+    const items = allNavItems.filter((item) => {
       // Hide dev/admin-only pages from non-superadmins
       if (SUPERADMIN_ONLY_KEYS.has(item.key) && !isSuperadmin) return false;
       // If the item requires a permission, check it against the live RBAC snapshot
@@ -201,14 +273,11 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     });
     return {
       items,
-      activeKey: page,
+      activeKey: sidebarActiveKey(page, items),
       onNavigate: navigate,
-      breadcrumbs: [
-        { label: 'Home', path: '/dashboard' },
-        { label: NAV_ITEMS.find((n) => n.key === page)?.label ?? page },
-      ],
+      breadcrumbs: buildPageBreadcrumbs(page, allNavItems, menuTree),
     };
-  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled]);
+  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled, allNavItems, menuTree]);
 
   if (loading) return <div className="maw-auth-screen">{t('common.loading')}</div>;
   if (session === null) {
@@ -232,20 +301,18 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       <AppShell
         sidebar={
           <Sidebar
-            header={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 20 }}>⚡</span>
-                <span style={{ fontWeight: 700, fontSize: 'var(--maw-text-md)' }}>MAW Foundation Admin</span>
-              </div>
-            }
-            footer={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            logo={<Icon name="zap" size={22} />}
+            title="MAW Foundation Admin"
+            footer={(collapsed) => (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, justifyContent: collapsed ? 'center' : undefined, width: '100%' }}>
                 <Avatar name={session.userId} size={28} />
-                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
-                  {session.userId}
-                </div>
+                {!collapsed && (
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}>
+                    {session.userId}
+                  </div>
+                )}
               </div>
-            }
+            )}
           />
         }
         header={<Breadcrumbs />}
@@ -262,7 +329,8 @@ export function App(): ReactNode {
   const rbac = useMemo(() => EXAMPLE_RBAC, []);
   const [offlineEnabled, setOfflineEnabled] = useState(false);
   return (
-    <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
+    <AppConfigProvider>
+      <AuthProvider client={client} rbac={rbac} restore={restoreSession}>
       <DynamicAccessProvider load={loadDynamicAccess}>
         <FeatureFlagProvider fetchFlags={async () => ({ 
           'advanced_reports': true,
@@ -274,7 +342,9 @@ export function App(): ReactNode {
           'module.users': true,
           'module.audit-logs': true,
           'module.account': true,
-          'module.masters': true
+
+          'module.rbac': true,
+          'module.menus': true
         })}>
           <OfflineProvider
             networkManager={offlineInfra.networkManager}
@@ -285,6 +355,7 @@ export function App(): ReactNode {
           </OfflineProvider>
         </FeatureFlagProvider>
       </DynamicAccessProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </AppConfigProvider>
   );
 }

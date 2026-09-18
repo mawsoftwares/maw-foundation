@@ -75,11 +75,103 @@ export function email(value: string): ValidationResult {
   return EMAIL_RE.test(value) ? OK : fail('Invalid email address');
 }
 
-const PHONE_RE = /^\+?[1-9]\d{6,14}$/;
+// ---------------------------------------------------------------------------
+// Phone region profiles (app-configurable via setDefaultPhoneRegion)
+// ---------------------------------------------------------------------------
 
-export function phone(value: string): ValidationResult {
-  const digits = value.replace(/[\s\-().]/g, '');
-  return PHONE_RE.test(digits) ? OK : fail('Invalid phone number');
+export interface PhoneValidationProfile {
+  readonly region: string;
+  readonly countryCallingCode?: string;
+  readonly minDigits: number;
+  readonly maxDigits: number;
+  /** Max input characters including optional formatting / country code. */
+  readonly inputMaxLength: number;
+  readonly placeholder: string;
+}
+
+const PHONE_PROFILES: Readonly<Record<string, PhoneValidationProfile>> = {
+  IN: {
+    region: 'IN',
+    countryCallingCode: '91',
+    minDigits: 10,
+    maxDigits: 10,
+    inputMaxLength: 13,
+    placeholder: '9876543210',
+  },
+  INTL: {
+    region: 'INTL',
+    minDigits: 7,
+    maxDigits: 15,
+    inputMaxLength: 20,
+    placeholder: '+1 234 567 8900',
+  },
+};
+
+/** Default matches AppConfig.phoneRegion when apps call setDefaultPhoneRegion at boot. */
+let defaultPhoneRegion = 'IN';
+
+export function setDefaultPhoneRegion(region: string): void {
+  defaultPhoneRegion = region.trim().toUpperCase() || 'IN';
+}
+
+export function getDefaultPhoneRegion(): string {
+  return defaultPhoneRegion;
+}
+
+export function getPhoneProfile(region?: string): PhoneValidationProfile {
+  const key = (region ?? defaultPhoneRegion).trim().toUpperCase();
+  return PHONE_PROFILES[key] ?? PHONE_PROFILES.INTL!;
+}
+
+/** Strip separators; for IN also drop leading +91 / 91 / 0. */
+export function normalizePhoneDigits(value: string, region?: string): string {
+  const profile = getPhoneProfile(region);
+  let digits = value.replace(/[\s\-().]/g, '');
+  if (digits.startsWith('+')) digits = digits.slice(1);
+
+  if (profile.region === 'IN') {
+    if (digits.startsWith('91') && digits.length === 12) {
+      digits = digits.slice(2);
+    } else if (digits.startsWith('0') && digits.length === 11) {
+      digits = digits.slice(1);
+    }
+  }
+
+  return digits;
+}
+
+/**
+ * Validates a phone number for the active (or given) region.
+ * - `IN`: exactly 10 digits, Indian mobile starts with 6–9
+ * - `INTL`: E.164-ish 7–15 digits, first digit 1–9
+ */
+export function phone(value: string, region?: string): ValidationResult {
+  const profile = getPhoneProfile(region);
+  const raw = value.replace(/[\s\-().]/g, '');
+  if (!/^\+?[0-9]+$/.test(raw)) {
+    return fail('Invalid phone number');
+  }
+
+  const national = normalizePhoneDigits(value, region);
+
+  if (national.length < profile.minDigits) {
+    return fail(`Phone number must be at least ${profile.minDigits} digits`);
+  }
+  if (national.length > profile.maxDigits) {
+    return fail(`Phone number must be at most ${profile.maxDigits} digits`);
+  }
+
+  if (profile.region === 'IN') {
+    if (!/^[6-9]\d{9}$/.test(national)) {
+      return fail('Enter a valid 10-digit Indian mobile number');
+    }
+    return OK;
+  }
+
+  if (!/^[1-9]\d*$/.test(national)) {
+    return fail('Invalid phone number');
+  }
+  return OK;
 }
 
 const URL_RE = /^https?:\/\/.+/;

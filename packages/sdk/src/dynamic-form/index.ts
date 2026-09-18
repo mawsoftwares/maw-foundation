@@ -9,6 +9,7 @@ export {
   type MaxRule,
   type PatternRule,
   type EmailRule,
+  type PhoneRule,
   type UrlRule,
   type FileSizeRule,
   type FileTypeRule,

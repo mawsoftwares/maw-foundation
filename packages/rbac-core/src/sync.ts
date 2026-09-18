@@ -9,7 +9,7 @@ export interface ISyncStore {
   findPermissionByCode(code: string): Promise<{ id: number; description: string | null } | null>;
   insertPermission(code: string, description: string): Promise<void>;
   updatePermissionDescription(code: string, description: string): Promise<void>;
-  listAllPermissionCodes(): Promise<{ id: number; code: string }[]>;
+  listAllPermissionCodes(): Promise<{ id: number; code: string; isSystem?: boolean }[]>;
   countRoleAssignmentsForPermission(permissionId: number): Promise<number>;
   deletePermission(permissionId: number): Promise<void>;
 
@@ -63,6 +63,8 @@ export async function syncPermissions(
   const dbPerms = await store.listAllPermissionCodes();
   for (const dbPerm of dbPerms) {
     if (registryCodes.has(dbPerm.code)) continue;
+    // Admin-created permissions must survive boot sync even when unassigned.
+    if (dbPerm.isSystem === false) continue;
     const count = await store.countRoleAssignmentsForPermission(dbPerm.id);
     if (count > 0) {
       logger.warn(`syncPermissions: skipping delete of "${dbPerm.code}" — assigned to ${count} role(s)`);

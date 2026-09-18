@@ -1,6 +1,7 @@
 import { createDatabasePool, closeDatabasePool, runSeed } from '@mawsoftwares/database';
 import { hashPasswordForStorage } from '@mawsoftwares/auth-core';
 import { createLogger } from '@mawsoftwares/sdk';
+import { splitPermissionCode } from '@mawsoftwares/rbac-core';
 import { registry } from '../modules/index';
 
 const log = createLogger('seed');
@@ -94,7 +95,7 @@ try {
     const allPerms = registry.getAllPermissions();
     const permIdMap: Record<string, number> = {};
     for (const p of allPerms) {
-      const name = p.code.split('_')[0] ?? p.code;
+      const name = splitPermissionCode(p.code)?.action ?? p.code;
       const { rows } = await client.query<{ id: number }>(
         `INSERT INTO master_permissions (code, name, description)
          VALUES ($1, $2, $3)
@@ -107,15 +108,39 @@ try {
     log.info('Master permissions upserted', { count: allPerms.length });
 
     // --- Dynamic RBAC: master_modules ---
+    const moduleIdMap: Record<string, number> = {};
     for (const m of registry.getAll()) {
-      await client.query(
+      const { rows } = await client.query<{ id: number }>(
         `INSERT INTO master_modules (code, name)
          VALUES ($1, $2)
-         ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name`,
+         ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
         [m.key, m.name],
       );
+      moduleIdMap[m.key] = rows[0]!.id;
     }
     log.info('Master modules upserted', { count: registry.getAll().length });
+
+    // --- Dynamic RBAC: module_permissions (links each module's own permissions to it,
+    // so the Modules & Permissions admin screen shows them pre-attached rather than
+    // starting from an empty tree) ---
+    let modulePermCount = 0;
+    for (const m of registry.getAll()) {
+      const moduleId = moduleIdMap[m.key];
+      if (moduleId === undefined) continue;
+      for (const p of m.permissions ?? []) {
+        const permId = permIdMap[p.code];
+        if (permId === undefined) continue;
+        await client.query(
+          `INSERT INTO module_permissions (module_id, permission_id)
+           VALUES ($1, $2)
+           ON CONFLICT (module_id, permission_id) DO NOTHING`,
+          [moduleId, permId],
+        );
+        modulePermCount++;
+      }
+    }
+    log.info('Module-permission links upserted', { count: modulePermCount });
 
     // --- Dynamic RBAC: role_permissions ---
     const allPermCodes = allPerms.map((p) => p.code);
@@ -140,6 +165,128 @@ try {
       }
     }
     log.info('Role-permission assignments upserted', { count: rpCount });
+
+    // --- Menu items (admin-editable nav tree; mirrors the app's default navigation) ---
+    // 'superadmin' is a parent item that groups the superadmin-only tools (RBAC, Menu
+    // Management, Feature Flags, UI Showcase) behind one sidebar entry; the sample-web
+    // Super Admin hub page renders them as cards instead of listing them at the top level.
+    const menuItems: {
+      key: string; label: string; path: string; icon: string;
+      permission?: string; sortOrder: number; parentKey?: string;
+    }[] = [
+      { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'layout-dashboard', sortOrder: 0 },
+      { key: 'orders', label: 'Orders', path: '/orders', icon: 'shopping-cart', permission: 'Read_Orders', sortOrder: 10 },
+      { key: 'reports', label: 'Reports', path: '/reports', icon: 'bar-chart', permission: 'Read_Reports', sortOrder: 20 },
+      { key: 'inventory', label: 'Inventory', path: '/inventory', icon: 'clipboard-list', permission: 'Read_Inventory', sortOrder: 30 },
+      { key: 'billing', label: 'Billing', path: '/billing', icon: 'credit-card', permission: 'Read_Billing', sortOrder: 40 },
+      { key: 'users', label: 'Users', path: '/users', icon: 'users', permission: 'Read_Users', sortOrder: 50 },
+      { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60, parentKey: 'superadmin' },
+      { key: 'account', label: 'Account', path: '/account', icon: 'lock', sortOrder: 70 },
+
+      { key: 'superadmin', label: 'Super Admin', path: '/superadmin', icon: 'shield', sortOrder: 84 },
+      { key: 'rbac', label: 'RBAC Admin', path: '/rbac', icon: 'key', permission: 'Manage_Rbac', sortOrder: 85, parentKey: 'superadmin' },
+      { key: 'feature-flags', label: 'Feature Flags', path: '/feature-flags', icon: 'flag', permission: 'Read_FeatureFlags', sortOrder: 86, parentKey: 'superadmin' },
+      { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87, parentKey: 'superadmin' },
+      { key: 'theme', label: 'Theme Designer', path: '/theme', icon: 'palette', permission: 'Manage_Theme', sortOrder: 88, parentKey: 'superadmin' },
+      { key: 'messaging', label: 'Messaging', path: '/messaging', icon: 'mail', permission: 'Read_Messaging', sortOrder: 89, parentKey: 'superadmin' },
+      { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
+
+      { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990, parentKey: 'superadmin' },
+    ];
+    let menuCount = 0;
+    const menuIdByKey: Record<string, number> = {};
+    for (const m of menuItems) {
+      const parentId = m.parentKey ? menuIdByKey[m.parentKey] ?? null : null;
+      const { rows } = await client.query<{ id: number }>(
+        `INSERT INTO menu_items (key, label, path, icon, permission, sort_order, parent_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (key) DO UPDATE SET
+           label = EXCLUDED.label, path = EXCLUDED.path, icon = EXCLUDED.icon,
+           permission = EXCLUDED.permission, sort_order = EXCLUDED.sort_order, parent_id = EXCLUDED.parent_id
+         RETURNING id`,
+        [m.key, m.label, m.path, m.icon, m.permission ?? null, m.sortOrder, parentId],
+      );
+      menuIdByKey[m.key] = rows[0]!.id;
+      menuCount++;
+    }
+    log.info('Menu items upserted', { count: menuCount });
+
+    await client.query(`DELETE FROM menu_items WHERE key = 'notifications'`);
+
+    // --- Messaging: demo templates (email/sms/whatsapp), upserted by identifier ---
+    await client.query(
+      `INSERT INTO messaging_email_templates (identifier, name, subject, body, from_address, variables, description)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (identifier) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, body = EXCLUDED.body`,
+      [
+        'welcome-email', 'Welcome Email', 'Welcome to {{appName}}, {{userName}}!',
+        'Hi {{userName}},\n\nWelcome to {{appName}}! Your account is ready to go.\n\nThanks,\nThe {{appName}} Team',
+        'no-reply@example.com',
+        JSON.stringify([{ name: 'appName', required: true }, { name: 'userName', required: true }]),
+        'Sent when a new user signs up.',
+      ],
+    );
+    await client.query(
+      `INSERT INTO messaging_templates (channel, identifier, name, body, variables, description)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (channel, identifier) DO UPDATE SET name = EXCLUDED.name, body = EXCLUDED.body`,
+      ['sms', 'otp-sms', 'OTP Verification', 'Your {{appName}} verification code is {{otp}}. It expires in {{minutes}} minutes.',
+        JSON.stringify([{ name: 'appName', required: true }, { name: 'otp', required: true }, { name: 'minutes', required: true }]),
+        'One-time-password verification SMS.'],
+    );
+    await client.query(
+      `INSERT INTO messaging_templates (channel, identifier, name, body, variables, description)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (channel, identifier) DO UPDATE SET name = EXCLUDED.name, body = EXCLUDED.body`,
+      ['whatsapp', 'order-update-whatsapp', 'Order Update', 'Hi {{userName}}, your order {{orderId}} is now {{status}}.',
+        JSON.stringify([{ name: 'userName', required: true }, { name: 'orderId', required: true }, { name: 'status', required: true }]),
+        'Sent when an order status changes.'],
+    );
+    log.info('Messaging demo templates upserted');
+
+    // Local sandbox masters — inserted only when the channel has no row yet so a
+    // real Mailtrap/Twilio config is never overwritten. Email → Mailpit
+    // (`pnpm mailpit`); SMS → in-process catcher on sample-server.
+    const sandboxPort = process.env.PORT ?? '4000';
+    const smsSandboxUrl = `http://127.0.0.1:${sandboxPort}/api/v1/dev/sms-sandbox`;
+    const emailMaster = await client.query(
+      `INSERT INTO messaging_credentials (channel, provider, name, config, is_active)
+       VALUES ($1, $2, $3, $4::jsonb, true)
+       ON CONFLICT (channel) DO NOTHING`,
+      [
+        'email',
+        'smtp',
+        'Local Mailpit',
+        JSON.stringify({
+          host: '127.0.0.1',
+          port: 1025,
+          secure: false,
+          user: '',
+          pass: '',
+          fromAddress: 'no-reply@example.com',
+        }),
+      ],
+    );
+    const smsMaster = await client.query(
+      `INSERT INTO messaging_credentials (channel, provider, name, config, is_active)
+       VALUES ($1, $2, $3, $4::jsonb, true)
+       ON CONFLICT (channel) DO NOTHING`,
+      [
+        'sms',
+        'http',
+        'Local SMS sandbox',
+        JSON.stringify({
+          baseUrl: smsSandboxUrl,
+          method: 'POST',
+          toField: 'to',
+          messageField: 'message',
+        }),
+      ],
+    );
+    log.info('Messaging sandbox masters upserted', {
+      emailInserted: (emailMaster.rowCount ?? 0) > 0,
+      smsInserted: (smsMaster.rowCount ?? 0) > 0,
+    });
   });
 
   log.info('Seed complete.');

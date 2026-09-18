@@ -73,7 +73,7 @@ export function SearchBar({
           paddingLeft: 'calc(var(--maw-space-sm) + 24px)',
           paddingRight: value ? 'calc(var(--maw-space-sm) + 24px)' : 'var(--maw-space-lg)',
           borderRadius: 'var(--maw-radius-md)',
-          border: '1px solid var(--maw-border)',
+          border: "none",
           background: 'var(--maw-bg)',
           color: 'var(--maw-fg)',
           fontSize: 'var(--maw-text-sm)',

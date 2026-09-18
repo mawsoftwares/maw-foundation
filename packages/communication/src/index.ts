@@ -15,3 +15,10 @@ export {
 export { SmtpNotificationProvider, type SmtpProviderOptions } from './providers/smtp-provider';
 export { PgInAppNotificationStore } from './pg-notification-store';
 export { PgTemplateStore } from './pg-template-store';
+export { HttpSmsProvider, type HttpSmsProviderOptions } from './providers/http-sms-provider';
+export {
+  HttpWhatsAppProvider,
+  type HttpWhatsAppProviderOptions,
+  normalizeWhatsAppPhone,
+  buildWaMeUrl,
+} from './providers/http-whatsapp-provider';

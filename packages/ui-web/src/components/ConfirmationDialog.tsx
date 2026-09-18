@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { Button } from './Button';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -46,8 +47,6 @@ export function ConfirmationDialog({
   }, [open, onCancel]);
 
   if (!open) return null;
-
-  const confirmBg = variant === 'danger' ? 'var(--maw-danger)' : 'var(--maw-brand)';
 
   return (
     <div
@@ -92,41 +91,12 @@ export function ConfirmationDialog({
           gap: 'var(--maw-space-sm)',
           justifyContent: 'flex-end',
         }}>
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            style={{
-              ...base,
-              padding: 'var(--maw-space-sm) var(--maw-space-lg)',
-              borderRadius: 'var(--maw-radius-md)',
-              border: '1px solid var(--maw-border)',
-              background: 'transparent',
-              color: 'var(--maw-fg)',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: 'var(--maw-text-sm)',
-              fontWeight: 500,
-            }}
-          >
+          <Button variant="ghost" onClick={onCancel} disabled={loading}>
             {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            style={{
-              ...base,
-              padding: 'var(--maw-space-sm) var(--maw-space-lg)',
-              borderRadius: 'var(--maw-radius-md)',
-              border: 'none',
-              background: confirmBg,
-              color: '#fff',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: 'var(--maw-text-sm)',
-              fontWeight: 500,
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? 'Loading…' : confirmLabel}
-          </button>
+          </Button>
+          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} loading={loading}>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
     </div>

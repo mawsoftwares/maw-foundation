@@ -54,6 +54,7 @@ export {
   type Theme,
   type ThemeOverrides,
   type TenantBranding,
+  type ShellTokens,
 } from './theme';
 
 // Core components
@@ -63,6 +64,7 @@ export { Button, TextField, Card, Badge, Divider } from './components';
 export {
   Avatar,
   ProfileAvatarUpload,
+  Icon,
   IconButton,
   TextArea,
   Select,
@@ -76,7 +78,7 @@ export {
   Stack,
   DropdownMenu,
 } from './components';
-export type { ProfileAvatarUploadProps } from './components';
+export type { ProfileAvatarUploadProps, IconProps, IconName } from './components';
 
 // Toast / Notifications
 export { ToastProvider, useToast, type Toast, type ToastVariant } from './toast';
@@ -87,6 +89,8 @@ export {
   ErrorState,
   EmptyState,
   Skeleton,
+  SkeletonText,
+  SkeletonRows,
   LoadingOverlay,
   PageLoader,
 } from './states';
@@ -104,6 +108,71 @@ export {
   type FormFieldState,
   type FormState,
 } from './form';
+
+// Ready-made Field Components
+export {
+  isValidEmail,
+  isValidUrl,
+  isValidPhone,
+  EmailField,
+  PasswordField,
+  PhoneField,
+  UrlField,
+  NumberField,
+  CurrencyField,
+  TextAreaField,
+  SelectField,
+  MultiSelectField,
+  RadioField,
+  CheckboxField,
+  SwitchField,
+  DateField,
+  TimeField,
+  DateTimeField,
+  DateRangeField,
+  AutocompleteField,
+  FileField,
+  ImageField,
+  AvatarField,
+  type EmailFieldProps,
+  type PasswordFieldProps,
+  type PhoneFieldProps,
+  type UrlFieldProps,
+  type NumberFieldProps,
+  type CurrencyFieldProps,
+  type TextAreaFieldProps,
+  type SelectFieldProps,
+  type MultiSelectFieldProps,
+  type RadioFieldProps,
+  type CheckboxFieldProps,
+  type SwitchFieldProps,
+  type DateFieldProps,
+  type TimeFieldProps,
+  type DateTimeFieldProps,
+  type DateRangeFieldProps,
+  type AutocompleteFieldProps,
+  type FileFieldProps,
+  type ImageFieldProps,
+  type AvatarFieldProps,
+  applyMask,
+  unmask,
+  MaskedField,
+  AadhaarField,
+  PanField,
+  OTPField,
+  TagInputField,
+  RatingField,
+  SliderField,
+  ColorField,
+  type MaskedFieldProps,
+  type AadhaarFieldProps,
+  type PanFieldProps,
+  type OTPFieldProps,
+  type TagInputFieldProps,
+  type RatingFieldProps,
+  type SliderFieldProps,
+  type ColorFieldProps,
+} from './fields';
 
 // Data Table
 export {
@@ -213,6 +282,7 @@ export {
   Alert,
   Banner,
   ConfirmationDialog,
+  Overlay,
   type DrawerProps,
   type DialogProps,
   type PopoverProps,
@@ -221,6 +291,7 @@ export {
   type BannerVariant,
   type BannerProps,
   type ConfirmationDialogProps,
+  type OverlayProps,
 } from './components';
 
 // Layout Components (Phase 3)

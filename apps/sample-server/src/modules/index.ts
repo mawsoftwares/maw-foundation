@@ -1,13 +1,16 @@
 import { ModuleRegistry } from '@mawsoftwares/rbac-core';
 import { createLogger, RegistryEvent, type RegistryEventPayload } from '@mawsoftwares/sdk';
-import { usersModule } from './users';
+import { usersModule } from './users/permissions';
 import { reportsModule } from './reports';
 import { ordersModule } from './orders';
 import { inventoryModule } from './inventory';
 import { billingModule } from './billing';
 import { auditLogsModule } from './audit-logs';
-import { mastersModule } from './masters';
+
 import { featureFlagsModule } from './feature-flags';
+import { menusModule } from './menus';
+import { themeModule } from './theme';
+import { messagingModule } from './messaging';
 
 const log = createLogger('registry');
 
@@ -40,6 +43,9 @@ registry.register(
   inventoryModule,
   billingModule,
   auditLogsModule,
-  mastersModule,
+
   featureFlagsModule,
+  menusModule,
+  themeModule,
+  messagingModule,
 );

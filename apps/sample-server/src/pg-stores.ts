@@ -10,6 +10,7 @@ import type {
   ModulePermission,
   FeatureSyncDefinition,
 } from '@mawsoftwares/rbac-core';
+import { splitPermissionCode } from '@mawsoftwares/rbac-core';
 
 export class PgSyncStore implements ISyncStore {
   constructor(private readonly db: DrizzleDb) {}
@@ -23,7 +24,7 @@ export class PgSyncStore implements ISyncStore {
   }
 
   async insertPermission(code: string, description: string) {
-    const name = code.split('_')[0] ?? code;
+    const name = splitPermissionCode(code)?.action ?? code;
     await this.db.insert(schema.masterPermissions).values({ code, name, description });
   }
 
@@ -36,7 +37,11 @@ export class PgSyncStore implements ISyncStore {
 
   async listAllPermissionCodes() {
     return this.db
-      .select({ id: schema.masterPermissions.id, code: schema.masterPermissions.code })
+      .select({
+        id: schema.masterPermissions.id,
+        code: schema.masterPermissions.code,
+        isSystem: schema.masterPermissions.isSystem,
+      })
       .from(schema.masterPermissions)
       .orderBy(schema.masterPermissions.id);
   }

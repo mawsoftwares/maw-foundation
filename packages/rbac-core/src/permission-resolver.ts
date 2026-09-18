@@ -2,12 +2,31 @@ import type { MasterCache } from './cache';
 
 export type PermissionAction = 'Read' | 'Create' | 'Write' | 'Update' | 'Edit' | 'Delete';
 
+/** Join used for new permission codes: `Read|Orders`. Legacy codes still use `_`. */
+export const PERMISSION_CODE_SEPARATOR = '|';
+
 const FALLBACKS: Readonly<Record<string, string>> = {
   create: 'write',
   write: 'create',
   edit: 'update',
   update: 'edit',
 };
+
+export function splitPermissionCode(code: string): { action: string; module: string } | null {
+  const trimmed = code.trim();
+  if (trimmed.length === 0) return null;
+  const sep = trimmed.includes(PERMISSION_CODE_SEPARATOR) ? PERMISSION_CODE_SEPARATOR : '_';
+  const parts = trimmed.split(sep);
+  if (parts.length < 2) return null;
+  const action = parts[0];
+  const moduleName = parts.slice(1).join(sep);
+  if (!action || !moduleName) return null;
+  return { action, module: moduleName };
+}
+
+export function joinPermissionCode(action: string, moduleName: string): string {
+  return `${action}${PERMISSION_CODE_SEPARATOR}${moduleName}`;
+}
 
 /**
  * Resolve a permission string from the master cache at runtime.
@@ -68,8 +87,9 @@ export function isAdminRole(code: string, name?: string): boolean {
 
 /**
  * Match a user's permission list against a required permission string.
- * Supports format `"Action_Module"` (e.g. `"Read_Users"`) and `"permId_Module"`.
- * Case-insensitive module matching. Handles Create↔Write and Edit↔Update fallbacks.
+ * Supports `"Action|Module"` (preferred), legacy `"Action_Module"` (e.g. `"Read_Users"`),
+ * and `"permId_Module"`. `|` and `_` are treated as the same join. Case-insensitive
+ * module matching. Handles Create↔Write and Edit↔Update fallbacks.
  */
 export function matchesPermission(
   userPermissions: readonly string[],
@@ -78,14 +98,26 @@ export function matchesPermission(
 ): boolean {
   if (userPermissions.includes(required)) return true;
 
+  const requiredParts = splitPermissionCode(required);
+  if (requiredParts === null) return false;
+
+  const actionEq = (left: string, right: string) => left.toLowerCase() === right.toLowerCase();
+  const moduleEq = (left: string, right: string) => left.toLowerCase() === right.toLowerCase();
+
+  if (userPermissions.some((up) => {
+    const parts = splitPermissionCode(up);
+    return parts !== null
+      && actionEq(parts.action, requiredParts.action)
+      && moduleEq(parts.module, requiredParts.module);
+  })) {
+    return true;
+  }
+
   const data = cache.getCache();
   if (data === null) return false;
 
-  const parts = required.split('_');
-  if (parts.length < 2) return false;
-
-  const actionOrId = parts[0]!;
-  const moduleName = parts.slice(1).join('_');
+  const actionOrId = requiredParts.action;
+  const moduleName = requiredParts.module;
 
   let permissionId: number;
   const parsedId = parseInt(actionOrId, 10);
@@ -104,9 +136,9 @@ export function matchesPermission(
   }
 
   return userPermissions.some((up) => {
-    const upParts = up.split('_');
-    if (upParts.length < 2) return false;
-    return upParts[0] === String(permissionId) && upParts.slice(1).join('_').toLowerCase() === moduleName.toLowerCase();
+    const upParts = splitPermissionCode(up);
+    if (upParts === null) return false;
+    return upParts.action === String(permissionId) && moduleEq(upParts.module, moduleName);
   });
 }
 

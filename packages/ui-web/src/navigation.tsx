@@ -8,8 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { Button, Badge, Drawer } from './components';
-import { IconButton } from './components';
+import { Button, Badge, Drawer, Icon, IconButton } from './components';
 import { useIsMobile } from './responsive';
 
 // ---------------------------------------------------------------------------
@@ -131,13 +130,25 @@ export function useNavigation(): NavigationContextValue {
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
+type SidebarSlot = ReactNode | ((collapsed: boolean) => ReactNode);
+
+function resolveSidebarSlot(slot: SidebarSlot | undefined, collapsed: boolean): ReactNode {
+  if (slot === undefined) return undefined;
+  if (typeof slot === 'function') return slot(collapsed);
+  return slot;
+}
+
 export function Sidebar({
   header,
+  logo,
+  title,
   footer,
   style,
 }: {
-  header?: ReactNode;
-  footer?: ReactNode;
+  header?: SidebarSlot;
+  logo?: ReactNode;
+  title?: ReactNode;
+  footer?: SidebarSlot;
   style?: CSSProperties;
 }): ReactNode {
   const { items, activeKey, collapsed, navigate, toggleSidebar, setCollapsed } = useNavigation();
@@ -153,6 +164,7 @@ export function Sidebar({
   }, [items]);
 
   const isMobile = useIsMobile();
+  const isRail = collapsed && !isMobile;
   const effectiveWidth = isMobile ? '100%' : (collapsed ? 64 : 260);
 
   const handleNavigate = (path: string) => {
@@ -160,14 +172,52 @@ export function Sidebar({
     if (isMobile) setCollapsed(true);
   };
 
+  const resolvedHeader = resolveSidebarSlot(header, isRail);
+  const brandHeader = logo !== undefined || title !== undefined
+    ? (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          minWidth: 0,
+          width: '100%',
+          justifyContent: isRail ? 'center' : undefined,
+        }}>
+          {logo !== undefined && (
+            <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--maw-brand)' }}>{logo}</span>
+          )}
+          {!isRail && title !== undefined && (
+            <span style={{
+              flex: 1,
+              fontWeight: 700,
+              fontSize: 'var(--maw-text-md)',
+              color: 'var(--maw-shell-fg, var(--maw-fg))',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0,
+            }}>
+              {title}
+            </span>
+          )}
+        </div>
+      )
+    : undefined;
+  const headerContent = resolvedHeader ?? brandHeader;
+  const footerContent = resolveSidebarSlot(footer, isRail);
+
   return (
     <aside
+      className="maw-shell-chrome"
       style={{
         ...base,
         width: effectiveWidth,
         minHeight: isMobile ? '100%' : '100vh',
-        background: isMobile ? 'transparent' : 'var(--maw-surface)',
-        borderRight: isMobile ? 'none' : '1px solid var(--maw-border)',
+        background: isMobile ? 'transparent' : 'var(--maw-shell-bg, var(--maw-surface))',
+        borderRight: isMobile ? 'none' : '1px solid var(--maw-shell-border, var(--maw-border))',
+        color: 'var(--maw-shell-fg, var(--maw-fg))',
+        backdropFilter: 'blur(var(--maw-shell-blur, 0px))',
+        WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 0.2s ease',
@@ -176,19 +226,33 @@ export function Sidebar({
         ...style,
       }}
     >
-      {(header !== undefined || isMobile) && (
+      {(headerContent !== undefined || isMobile) && (
         <div style={{
-          padding: collapsed && !isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-lg)',
-          borderBottom: '1px solid var(--maw-border)',
+          padding: isRail ? '12px 8px' : 'var(--maw-space-lg)',
+          borderBottom: '1px solid var(--maw-shell-border, var(--maw-border))',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: isRail ? 'center' : 'space-between',
           gap: 8,
+          minHeight: 56,
+          flexShrink: 0,
         }}>
-          <div style={{ minWidth: 0, flex: 1 }}>{header}</div>
+          <div style={{
+            minWidth: 0,
+            flex: isRail ? undefined : 1,
+            overflow: 'hidden',
+            display: 'flex',
+            justifyContent: isRail ? 'center' : undefined,
+          }}>
+            {headerContent}
+          </div>
           {isMobile && (
-            <IconButton label="Close menu" onClick={() => setCollapsed(true)}>
-              ✕
+            <IconButton
+              label="Close menu"
+              onClick={() => setCollapsed(true)}
+              style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
+            >
+              <Icon name="x" size={18} />
             </IconButton>
           )}
         </div>
@@ -196,8 +260,12 @@ export function Sidebar({
 
       {!isMobile && (
         <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
-          <IconButton label={collapsed ? 'Expand' : 'Collapse'} onClick={toggleSidebar}>
-            {collapsed ? '→' : '←'}
+          <IconButton
+            label={collapsed ? 'Expand' : 'Collapse'}
+            onClick={toggleSidebar}
+            style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
+          >
+            <Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size={18} />
           </IconButton>
         </div>
       )}
@@ -206,42 +274,60 @@ export function Sidebar({
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && (!collapsed || isMobile) && (
-              <div style={{ padding: '8px 12px 4px', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ padding: '8px 12px 4px', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgSubtle))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {group}
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} active={activeKey === item.key} collapsed={collapsed && !isMobile} onNavigate={handleNavigate} />
+              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={collapsed && !isMobile} onNavigate={handleNavigate} />
             ))}
           </div>
         ))}
       </nav>
 
-      {footer !== undefined && (
-        <div style={{ padding: collapsed ? 'var(--maw-space-md)' : 'var(--maw-space-lg)', borderTop: '1px solid var(--maw-border)' }}>
-          {footer}
+      {footerContent !== undefined && (
+        <div style={{
+          padding: isRail ? '12px 8px' : 'var(--maw-space-lg)',
+          borderTop: '1px solid var(--maw-shell-border, var(--maw-border))',
+          color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))',
+          display: 'flex',
+          justifyContent: isRail ? 'center' : undefined,
+          overflow: 'hidden',
+        }}>
+          {footerContent}
         </div>
       )}
     </aside>
   );
 }
 
+function itemContainsKey(item: NavItem, key: string): boolean {
+  if (item.key === key) return true;
+  return item.children?.some((child) => itemContainsKey(child, key)) ?? false;
+}
+
 function SidebarItem({
   item,
-  active,
+  activeKey,
   collapsed,
   onNavigate,
   depth = 0,
 }: {
   item: NavItem;
-  active: boolean;
+  activeKey: string;
   collapsed: boolean;
   onNavigate: (path: string) => void;
   depth?: number;
 }): ReactNode {
-  const [expanded, setExpanded] = useState(false);
+  const active = item.key === activeKey;
+  const childActive = !active && itemContainsKey(item, activeKey);
+  const [expanded, setExpanded] = useState(childActive);
   const [hovered, setHovered] = useState(false);
   const hasChildren = item.children !== undefined && item.children.length > 0;
+
+  useEffect(() => {
+    if (childActive) setExpanded(true);
+  }, [childActive]);
 
   return (
     <>
@@ -262,12 +348,16 @@ function SidebarItem({
           padding: collapsed ? '10px' : `10px 16px 10px ${16 + depth * 16}px`,
           border: 'none',
           borderRadius: 'var(--maw-radius-md)',
-          background: active 
-            ? 'linear-gradient(135deg, var(--maw-brand) 0%, color-mix(in srgb, var(--maw-brand) 80%, black) 100%)' 
-            : hovered 
-              ? 'var(--maw-bgSubtle)' 
+          background: active
+            ? 'var(--maw-shell-nav-active-bg, var(--maw-brand))'
+            : hovered
+              ? 'var(--maw-shell-hover, var(--maw-bgSubtle))'
               : 'transparent',
-          color: active ? 'var(--maw-brandContrast)' : hovered ? 'var(--maw-brand)' : 'var(--maw-fg)',
+          color: active
+            ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))'
+            : hovered
+              ? 'var(--maw-brand)'
+              : 'var(--maw-shell-fg, var(--maw-fg))',
           fontSize: 'var(--maw-text-sm)',
           fontWeight: active ? 600 : 500,
           cursor: 'pointer',
@@ -275,27 +365,50 @@ function SidebarItem({
           justifyContent: collapsed ? 'center' : undefined,
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           marginBottom: 4,
-          transform: hovered && !active ? 'translateX(4px)' : 'none',
-          boxShadow: active ? '0 4px 12px color-mix(in srgb, var(--maw-brand) 30%, transparent)' : 'none',
+          transform: hovered && !active && !collapsed ? 'translateX(4px)' : 'none',
+          boxShadow: active
+            ? 'var(--maw-shell-nav-active-shadow, none), var(--maw-shell-nav-active-indicator, none)'
+            : 'none',
         }}
       >
-        {item.icon !== undefined && <span style={{ fontSize: 18, width: 22, textAlign: 'center', transition: 'transform 0.2s', transform: hovered ? 'scale(1.15)' : 'scale(1)' }}>{item.icon}</span>}
+        {item.icon !== undefined && (
+          <span style={{
+            display: 'inline-flex',
+            width: 22,
+            height: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'transform 0.2s',
+            transform: hovered ? 'scale(1.08)' : 'scale(1)',
+            color: active ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))' : undefined,
+          }}>
+            <Icon name={item.icon} size={18} />
+          </span>
+        )}
         {!collapsed && (
           <>
-            <span style={{ flex: 1 }}>{item.label}</span>
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
             {item.badge !== undefined && (
-              <Badge style={{ background: active ? 'rgba(255,255,255,0.25)' : undefined, color: active ? 'var(--maw-brandContrast)' : undefined }}>
+              <Badge style={{
+                background: active ? 'color-mix(in srgb, var(--maw-shell-nav-active-fg, var(--maw-brandContrast)) 20%, transparent)' : undefined,
+                color: active ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))' : undefined,
+              }}>
                 {item.badge}
               </Badge>
             )}
-            {hasChildren && <span style={{ fontSize: 10, transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>}
+            {hasChildren && (
+              <span style={{ display: 'inline-flex', transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                <Icon name="chevron-right" size={14} />
+              </span>
+            )}
           </>
         )}
       </button>
       {hasChildren && expanded && !collapsed && (
         <div style={{ paddingTop: 4, paddingBottom: 4 }}>
           {item.children!.map((child) => (
-            <SidebarItem key={child.key} item={child} active={false} collapsed={false} onNavigate={onNavigate} depth={depth + 1} />
+            <SidebarItem key={child.key} item={child} activeKey={activeKey} collapsed={false} onNavigate={onNavigate} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -312,14 +425,14 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
   if (breadcrumbs.length === 0) return null;
 
   return (
-    <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)', ...style }}>
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))', ...style }}>
       {breadcrumbs.map((crumb, i) => {
         const isLast = i === breadcrumbs.length - 1;
         return (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {i > 0 && <span style={{ color: 'var(--maw-fgSubtle)' }}>/</span>}
             {isLast || crumb.path === undefined ? (
-              <span style={{ color: isLast ? 'var(--maw-fg)' : undefined, fontWeight: isLast ? 500 : undefined }}>{crumb.label}</span>
+              <span style={{ color: isLast ? 'var(--maw-shell-fg, var(--maw-fg))' : undefined, fontWeight: isLast ? 500 : undefined }}>{crumb.label}</span>
             ) : (
               <Button
                 variant="ghost"
@@ -360,8 +473,8 @@ export function AppShell({
   const isMobile = useIsMobile();
   const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs } = useNavigation();
   const pageTitle =
-    items.find((item) => item.key === activeKey)?.label
-    ?? breadcrumbs[breadcrumbs.length - 1]?.label
+    breadcrumbs[breadcrumbs.length - 1]?.label
+    ?? items.find((item) => item.key === activeKey)?.label
     ?? '';
 
   return (
@@ -382,12 +495,16 @@ export function AppShell({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
         {(header !== undefined || actions !== undefined || isMobile) && (
           <header
+            className="maw-shell-chrome"
             style={{
               ...base,
               minHeight: isMobile ? 48 : undefined,
               padding: isMobile ? '6px 8px 6px 4px' : '12px var(--maw-space-xl)',
-              background: 'var(--maw-surface)',
-              borderBottom: '1px solid var(--maw-border)',
+              background: 'var(--maw-shell-bg, var(--maw-surface))',
+              borderBottom: '1px solid var(--maw-shell-border, var(--maw-border))',
+              color: 'var(--maw-shell-fg, var(--maw-fg))',
+              backdropFilter: 'blur(var(--maw-shell-blur, 0px))',
+              WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))',
               boxShadow: isMobile ? 'none' : '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
               overflow: 'visible',
               display: 'flex',
@@ -400,9 +517,13 @@ export function AppShell({
             }}
           >
             {isMobile && (
-              <IconButton label="Menu" onClick={toggleSidebar}>
-                ☰
-              </IconButton>
+            <IconButton
+              label="Menu"
+              onClick={toggleSidebar}
+              style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
+            >
+              <Icon name="menu" size={18} />
+            </IconButton>
             )}
             {isMobile ? (
               <>
@@ -413,7 +534,7 @@ export function AppShell({
                   margin: 0,
                   fontSize: 'var(--maw-text-md)',
                   fontWeight: 600,
-                  color: 'var(--maw-fg)',
+                  color: 'var(--maw-shell-fg, var(--maw-fg))',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',

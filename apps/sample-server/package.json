@@ -10,7 +10,6 @@
     "@mawsoftwares/communication": "workspace:*",
     "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/import-export": "workspace:*",
-    "@mawsoftwares/masters": "workspace:*",
     "@mawsoftwares/observability": "workspace:*",
     "@mawsoftwares/queue": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
@@ -18,7 +17,6 @@
     "@mawsoftwares/sdk": "workspace:*",
     "@mawsoftwares/server-express": "workspace:*",
     "@mawsoftwares/tenancy": "workspace:*",
-    "@mawsoftwares/users": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "express": "^5.0.0",
     "multer": "^2.3.0",
@@ -38,6 +36,7 @@
     "db:seed": "node --env-file=.env --import=tsx src/db/seed.ts",
     "db:test": "node --env-file=.env --import=tsx src/db/test-connection.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
+    "mailpit": "node scripts/mailpit.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

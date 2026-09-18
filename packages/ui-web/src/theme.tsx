@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   createTheme,
+  mergeThemeOverrides,
   tokensToCssVars,
+  injectWebFonts,
   type Theme,
   type ThemeOverrides,
   type TenantBranding,
@@ -16,6 +18,7 @@ interface ThemeContextValue {
   setColorMode: (mode: ColorMode) => void;
   toggleColorMode: () => void;
   applyBranding: (branding: TenantBranding) => void;
+  applyThemeOverrides: (next: ThemeOverrides) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -70,15 +73,57 @@ const GLOBAL_CSS = `
     color: var(--maw-fg);
   }
 
+  .text-hero {
+    font-size: var(--maw-text-hero-size, 72px);
+    font-weight: var(--maw-text-hero-weight, 800);
+    line-height: var(--maw-text-hero-lh, 1.05);
+    font-family: var(--maw-text-hero-family, var(--maw-font-family));
+  }
+  .text-h1 {
+    font-size: var(--maw-text-h1-size, 48px);
+    font-weight: var(--maw-text-h1-weight, 700);
+    line-height: var(--maw-text-h1-lh, 1.1);
+    font-family: var(--maw-text-h1-family, var(--maw-font-family));
+  }
+  .text-h2 {
+    font-size: var(--maw-text-h2-size, 32px);
+    font-weight: var(--maw-text-h2-weight, 600);
+    line-height: var(--maw-text-h2-lh, 1.2);
+    font-family: var(--maw-text-h2-family, var(--maw-font-family));
+  }
+  .text-h3 {
+    font-size: var(--maw-text-h3-size, 24px);
+    font-weight: var(--maw-text-h3-weight, 600);
+    line-height: var(--maw-text-h3-lh, 1.3);
+    font-family: var(--maw-text-h3-family, var(--maw-font-family));
+  }
+  .text-body-lg {
+    font-size: var(--maw-text-body-lg-size, 18px);
+    font-weight: var(--maw-text-body-lg-weight, 400);
+    line-height: var(--maw-text-body-lg-lh, 1.6);
+    font-family: var(--maw-text-body-lg-family, var(--maw-font-family));
+  }
+  .text-body {
+    font-size: var(--maw-text-body-size, 16px);
+    font-weight: var(--maw-text-body-weight, 400);
+    line-height: var(--maw-text-body-lh, 1.6);
+    font-family: var(--maw-text-body-family, var(--maw-font-family));
+  }
+  .text-caption {
+    font-size: var(--maw-text-caption-size, 13px);
+    font-weight: var(--maw-text-caption-weight, 500);
+    line-height: var(--maw-text-caption-lh, 1.5);
+    font-family: var(--maw-text-caption-family, var(--maw-font-family));
+  }
+
   .maw-btn-hover:hover {
-    filter: brightness(1.05);
-    transform: translateY(-1px);
-    box-shadow: var(--maw-shadow-sm);
+    filter: brightness(0.96);
+    box-shadow: var(--maw-shadow-md);
   }
   .maw-btn-hover:active {
-    filter: brightness(0.95);
+    filter: brightness(0.9);
     transform: scale(0.98);
-    box-shadow: none;
+    box-shadow: var(--maw-shadow-sm);
   }
   
   .maw-card-hover {
@@ -94,7 +139,7 @@ const GLOBAL_CSS = `
     transition: box-shadow var(--maw-transition-fast), border-color var(--maw-transition-fast), background var(--maw-transition-fast);
   }
   .maw-focus-ring:focus, .maw-focus-ring:focus-within {
-    box-shadow: 0 0 0 3px var(--maw-brandLight);
+    box-shadow: inset 0 0 0 1px var(--maw-brand);
     border-color: var(--maw-brand);
     outline: none;
   }
@@ -180,6 +225,16 @@ const GLOBAL_CSS = `
   .maw-table-row-hover:hover {
     background-color: var(--maw-bgSubtle) !important;
   }
+
+  @keyframes maw-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes maw-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
 `;
 
 export function ThemeProvider({
@@ -190,14 +245,25 @@ export function ThemeProvider({
   children,
 }: ThemeProviderProps): ReactNode {
   const isControlled = colorModeProp !== undefined;
+  // Theme applied at runtime (e.g. from a design.md upload), layered on top of
+  // whatever `overrides` the parent (BrandProvider) currently provides. Tracking it
+  // separately, and re-deriving `theme` from BOTH whenever either changes, means a
+  // custom theme survives `overrides` changing identity later (for example when
+  // the tenant brand config finishes its async load right as a stored design.md is
+  // being re-applied on boot) instead of being silently reset back to `overrides` alone.
+  const [customOverrides, setCustomOverrides] = useState<ThemeOverrides | null>(null);
   const [theme, setTheme] = useState<Theme>(() => createTheme(overrides));
   const [internalMode, setInternalMode] = useState<ColorMode>(() => defaultColorMode ?? readStoredMode());
   const colorMode = isControlled ? colorModeProp : internalMode;
   const [isDark, setIsDark] = useState(() => resolveIsDark(colorMode));
 
   useEffect(() => {
-    setTheme(createTheme(overrides));
-  }, [overrides]);
+    setTheme(createTheme(mergeThemeOverrides(overrides, customOverrides ?? undefined)));
+    
+    // Dynamically inject any Google Fonts found in the new overrides
+    if (customOverrides) injectWebFonts(customOverrides);
+    else if (overrides) injectWebFonts(overrides);
+  }, [overrides, customOverrides]);
 
   useEffect(() => {
     setIsDark(resolveIsDark(colorMode));
@@ -238,13 +304,24 @@ export function ThemeProvider({
     setColorMode(next);
   }, [colorMode, setColorMode]);
 
+  const applyThemeOverrides = useCallback((next: ThemeOverrides) => {
+    setCustomOverrides(next);
+  }, []);
+
   const applyBranding = useCallback((branding: TenantBranding) => {
-    setTheme(createTheme({ ...overrides, branding }));
-  }, [overrides]);
+    const palette: ThemeOverrides['palette'] = {};
+    if (branding.primaryColor) {
+      palette.brand = branding.primaryColor;
+      palette.borderFocus = branding.primaryColor;
+    }
+    if (branding.secondaryColor) palette.brandLight = branding.secondaryColor;
+    if (branding.accentColor) palette.brandDark = branding.accentColor;
+    setCustomOverrides({ branding, palette });
+  }, []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding }),
-    [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding],
+    () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides }),
+    [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides],
   );
 
   return (
@@ -266,4 +343,4 @@ export function useColorMode(): Pick<ThemeContextValue, 'colorMode' | 'isDark' |
   return { colorMode, isDark, setColorMode, toggleColorMode };
 }
 
-export { type Theme, type ThemeOverrides, type TenantBranding } from '@mawsoftwares/theme';
+export { type Theme, type ThemeOverrides, type TenantBranding, type ShellTokens } from '@mawsoftwares/theme';

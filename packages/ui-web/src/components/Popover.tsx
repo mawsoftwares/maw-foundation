@@ -101,7 +101,7 @@ export function Popover({
         transform: translate[placement],
         transformOrigin: transformOrigin[placement],
         background: 'var(--maw-surface)',
-        border: '1px solid var(--maw-border)',
+        border: "none",
         borderRadius: 'var(--maw-radius-lg)',
         boxShadow: 'var(--maw-shadow-lg)',
         padding: 'var(--maw-space-md)',

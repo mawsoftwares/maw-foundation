@@ -225,6 +225,8 @@ export interface AppConfig {
   dateFormat: string;
   timeFormat: string;
   numberFormat: string;
+  /** Phone validation region: `IN` (10-digit mobile) or `INTL` (E.164). */
+  phoneRegion?: string;
   supportEmail?: string;
   supportPhone?: string;
   logo?: string;
@@ -240,6 +242,7 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   dateFormat: 'DD/MM/YYYY',
   timeFormat: 'HH:mm',
   numberFormat: 'en-IN',
+  phoneRegion: 'IN',
 };
 
 // ---------------------------------------------------------------------------

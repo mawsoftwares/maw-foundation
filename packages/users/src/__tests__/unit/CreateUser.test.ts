@@ -26,7 +26,7 @@ describe('CreateUserUseCase', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@example.com',
-      phone: '1234567890',
+      phone: '9876543210',
       password: 'password123',
     };
 
@@ -72,7 +72,7 @@ describe('CreateUserUseCase', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@example.com',
-      phone: '1234567890',
+      phone: '9876543210',
       password: 'password123',
     };
 

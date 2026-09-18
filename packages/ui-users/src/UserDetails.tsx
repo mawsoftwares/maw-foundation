@@ -14,7 +14,7 @@ import {
   useDynamicAccess,
   useForm,
 } from '@mawsoftwares/ui-web';
-import { email, phone } from '@mawsoftwares/sdk/kernel/validate';
+import { email, phone, getPhoneProfile } from '@mawsoftwares/sdk/kernel/validate';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import type { UpdateUserDto, UserResponseDto } from '@mawsoftwares/users';
@@ -45,6 +45,14 @@ function statusVariant(status: AccountStatusValue): 'success' | 'warning' | 'dan
   if (status === 'PENDING_VERIFICATION') return 'warning';
   if (status === 'SUSPENDED' || status === 'LOCKED' || status === 'DISABLED') return 'danger';
   return 'default';
+}
+
+function statusLabel(status: AccountStatusValue): string {
+  if (status === 'SUSPENDED' || status === 'DISABLED') return 'Inactive';
+  if (status === 'PENDING_VERIFICATION') return 'Pending';
+  if (status === 'LOCKED') return 'Locked';
+  if (status === 'ACTIVE') return 'Active';
+  return status;
 }
 
 function displayName(firstName: string, lastName: string, emailAddress: string): string {
@@ -133,6 +141,8 @@ function UserProfileEditor({
       validate: (value: unknown) => {
         const str = String(value ?? '').trim();
         if (str.length === 0) return undefined;
+        const maxLen = getPhoneProfile().inputMaxLength;
+        if (str.length > maxLen) return `Must be at most ${maxLen} characters`;
         const result = phone(str);
         return result.valid ? undefined : result.error;
       },
@@ -218,27 +228,25 @@ function UserProfileEditor({
               </Button>
             </>
           ) : (
-            <>
-              {canUpdate && (
-                <Button
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => handleAction(isActive ? onDeactivate : onActivate)}
-                >
-                  {isActive ? 'Deactivate' : 'Activate'}
-                </Button>
-              )}
-              {canUpdate && (
-                <Button variant="ghost" disabled={busy} onClick={startEdit}>
-                  Edit
-                </Button>
-              )}
-              {canDelete && (
-                <Button variant="danger" disabled={busy} onClick={() => handleAction(onDelete)}>
-                  Delete
-                </Button>
-              )}
-            </>
+            canUpdate && (
+              <Button variant="ghost" disabled={busy} onClick={startEdit}>
+                Edit
+              </Button>
+            )
+          )}
+          {canUpdate && !editing && (
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() => handleAction(isActive ? onDeactivate : onActivate)}
+            >
+              {isActive ? 'Deactivate' : 'Activate'}
+            </Button>
+          )}
+          {canDelete && !editing && (
+            <Button variant="danger" disabled={busy} onClick={() => handleAction(onDelete)}>
+              Delete
+            </Button>
           )}
         </Stack>
       </Stack>
@@ -289,7 +297,7 @@ function UserProfileEditor({
             </div>
             <Stack direction="row" gap="var(--maw-space-sm)" style={{ marginTop: 'var(--maw-space-sm)' }}>
               <Badge>{roleLabel}</Badge>
-              <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
+              <Badge variant={statusVariant(user.status)}>{statusLabel(user.status)}</Badge>
             </Stack>
             {editing && (
               <div style={{ marginTop: 'var(--maw-space-sm)', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)' }}>
@@ -354,7 +362,9 @@ function UserProfileEditor({
                     onBlur={phoneField.onBlur}
                     error={phoneField.error}
                     autoComplete="tel"
-                    placeholder="Optional"
+                    inputMode="tel"
+                    maxLength={getPhoneProfile().inputMaxLength}
+                    placeholder={getPhoneProfile().placeholder}
                   />
                   {roleOptions.length > 0 ? (
                     <Select
@@ -385,7 +395,7 @@ function UserProfileEditor({
             <Panel title="Account">
               <Grid columns={{ xs: 1, sm: 2 }} gap="var(--maw-space-lg)">
                 <ReadValue label="User ID" value={user.id} />
-                <ReadValue label="Status" value={<Badge variant={statusVariant(user.status)}>{user.status}</Badge>} />
+                <ReadValue label="Status" value={<Badge variant={statusVariant(user.status)}>{statusLabel(user.status)}</Badge>} />
                 <ReadValue label="Created" value={formatTimestamp(user.createdAt)} />
                 <ReadValue label="Last updated" value={formatTimestamp(user.updatedAt)} />
                 <ReadValue label="Last login" value={formatTimestamp(user.lastLoginAt)} />

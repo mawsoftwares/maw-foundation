@@ -75,13 +75,13 @@ export type Palette = { [K in PaletteKey]: string };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
 
-export const radius = { none: 0, sm: 6, md: 10, lg: 16, xl: 24, pill: 999 } as const;
+export const radius = { none: 0, sm: 4, md: 4, lg: 8, xl: 12, pill: 999 } as const;
 
 export const shadows = {
-  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+  sm: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
+  md: '0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12)',
+  lg: '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)',
+  xl: '0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12)',
   inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
   none: 'none',
 } as const;
@@ -110,7 +110,7 @@ export const transitions = {
 // ---------------------------------------------------------------------------
 
 export const typography = {
-  fontFamily: "'Geist Variable', system-ui, -apple-system, sans-serif",
+  fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
   monoFamily: "'Geist Mono', 'Fira Code', 'Cascadia Code', monospace",
   size: { xs: 12, sm: 14, md: 16, lg: 20, xl: 28, xxl: 36 },
   weight: { regular: 400, medium: 500, semibold: 600, bold: 700 },
@@ -170,10 +170,37 @@ export interface TenantBranding {
   borderRadius?: number;
 }
 
+/** Frosted application chrome (sidebar + header). Optional — defaults fall back to surface tokens. */
+export interface ShellTokens {
+  bg?: string;
+  fg?: string;
+  fgMuted?: string;
+  border?: string;
+  blur?: string;
+  hover?: string;
+}
+
+export interface TypographyOverrides {
+  fontFamily?: string;
+  monoFamily?: string;
+  scale?: Record<string, { size?: string; weight?: string; lineHeight?: string; family?: string }>;
+}
+
+export interface ComponentOverrides {
+  [componentName: string]: Record<string, string>;
+}
+
 export interface ThemeOverrides {
   branding?: TenantBranding;
   palette?: Partial<Palette>;
   paletteDark?: Partial<Palette>;
+  spacing?: Partial<Record<keyof typeof spacing, number>>;
+  radius?: Partial<Record<keyof typeof radius, number>>;
+  shadows?: Partial<Record<keyof typeof shadows, string>>;
+  transitions?: Partial<Record<keyof typeof transitions, string>>;
+  typography?: TypographyOverrides;
+  shell?: ShellTokens;
+  components?: ComponentOverrides;
 }
 
 export interface Theme {
@@ -190,51 +217,93 @@ export interface Theme {
     size: { [K in keyof typeof typography.size]: number };
     weight: { [K in keyof typeof typography.weight]: number };
     lineHeight: { [K in keyof typeof typography.lineHeight]: number };
+    scale?: TypographyOverrides['scale'];
   };
   breakpoints: { [K in keyof typeof breakpoints]: number };
   containerWidths: { [K in keyof typeof containerWidths]: number };
   branding: TenantBranding;
+  shell?: ShellTokens;
+  components?: ComponentOverrides;
+}
+
+export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverrides): ThemeOverrides | undefined {
+  if (base === undefined) return extra;
+  if (extra === undefined) return base;
+  return {
+    branding: { ...base.branding, ...extra.branding },
+    palette: { ...base.palette, ...extra.palette },
+    paletteDark: { ...base.paletteDark, ...extra.paletteDark },
+    spacing: { ...base.spacing, ...extra.spacing },
+    radius: { ...base.radius, ...extra.radius },
+    shadows: { ...base.shadows, ...extra.shadows },
+    transitions: { ...base.transitions, ...extra.transitions },
+    typography: { ...base.typography, ...extra.typography },
+    shell: extra.shell !== undefined || base.shell !== undefined
+      ? { ...base.shell, ...extra.shell }
+      : undefined,
+  };
+}
+
+function resolveFontFamily(family: string | undefined): string {
+  if (family === undefined || family.trim() === '') return typography.fontFamily;
+  const trimmed = family.trim();
+  if (trimmed.includes(',') || trimmed.startsWith("'") || trimmed.startsWith('"')) return trimmed;
+  return `'${trimmed}', ${typography.fontFamily}`;
 }
 
 export function createTheme(overrides?: ThemeOverrides): Theme {
   const branding = overrides?.branding ?? {};
 
-  const lightOverrides: Partial<Palette> = {
-    ...(overrides?.palette ?? {}),
-  };
+  const lightOverrides: Partial<Palette> = {};
   if (branding.primaryColor) {
     lightOverrides.brand = branding.primaryColor;
     lightOverrides.borderFocus = branding.primaryColor;
   }
+  Object.assign(lightOverrides, overrides?.palette ?? {});
 
-  const darkOverrides: Partial<Palette> = {
-    ...(overrides?.paletteDark ?? {}),
-  };
+  const darkOverrides: Partial<Palette> = {};
   if (branding.accentColor) {
     darkOverrides.brand = branding.accentColor;
     darkOverrides.borderFocus = branding.accentColor;
+  } else if (lightOverrides.brand && overrides?.paletteDark?.brand === undefined) {
+    darkOverrides.brand = lightOverrides.brand;
+    darkOverrides.borderFocus = lightOverrides.borderFocus ?? lightOverrides.brand;
+    if (lightOverrides.brandLight) darkOverrides.brandLight = lightOverrides.brandLight;
+    if (lightOverrides.brandDark) darkOverrides.brandDark = lightOverrides.brandDark;
+    if (lightOverrides.brandContrast) darkOverrides.brandContrast = lightOverrides.brandContrast;
   }
+  Object.assign(darkOverrides, overrides?.paletteDark ?? {});
 
-  const mergedTypo = branding.fontFamily
-    ? { ...typography, fontFamily: `'${branding.fontFamily}', ${typography.fontFamily}` }
-    : typography;
+  const fontFamily = overrides?.typography?.fontFamily ?? branding.fontFamily;
+  const mergedTypo = {
+    ...typography,
+    fontFamily: resolveFontFamily(fontFamily),
+    monoFamily: overrides?.typography?.monoFamily ?? typography.monoFamily,
+    scale: overrides?.typography?.scale,
+  };
 
-  const mergedRadius = branding.borderRadius !== undefined
-    ? { ...radius, md: branding.borderRadius, lg: branding.borderRadius + 4 }
-    : radius;
+  const mergedRadius = {
+    ...radius,
+    ...(branding.borderRadius !== undefined
+      ? { md: branding.borderRadius, lg: branding.borderRadius + 4 }
+      : {}),
+    ...(overrides?.radius ?? {}),
+  };
 
   return {
     light: { ...palette, ...lightOverrides },
     dark: { ...paletteDark, ...darkOverrides },
-    spacing,
+    spacing: { ...spacing, ...overrides?.spacing },
     radius: mergedRadius,
-    shadows,
+    shadows: { ...shadows, ...overrides?.shadows },
     zIndex,
-    transitions,
+    transitions: { ...transitions, ...overrides?.transitions },
     typography: mergedTypo,
     breakpoints,
     containerWidths,
     branding,
+    shell: overrides?.shell,
+    components: overrides?.components,
   };
 }
 
@@ -413,6 +482,16 @@ export function brandConfigToThemeOverrides(brand: BrandConfigLike): ThemeOverri
 // CSS custom properties generation
 // ---------------------------------------------------------------------------
 
+export {
+  parseDesignMarkdown,
+  normalizeDesignMarkdown,
+  toCanonicalDesignMarkdown,
+  storedDesignToOverrides,
+  injectWebFonts,
+  type DesignMdParseResult,
+  type DesignMdNormalizeResult,
+} from './design-md';
+
 export function tokensToCssVars(dark = false, theme?: Theme): Record<string, string> {
   const t = theme ?? defaultTheme;
   const p = dark ? t.dark : t.light;
@@ -433,5 +512,91 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   for (const [k, v] of Object.entries(t.typography.size)) vars[`--maw-text-${k}`] = `${v}px`;
   for (const [k, v] of Object.entries(t.typography.weight)) vars[`--maw-weight-${k}`] = `${v}`;
 
+  if (t.typography.scale) {
+    for (const [k, v] of Object.entries(t.typography.scale)) {
+      if (v.size) vars[`--maw-text-${k}-size`] = v.size;
+      if (v.weight) vars[`--maw-text-${k}-weight`] = v.weight;
+      if (v.lineHeight) vars[`--maw-text-${k}-lh`] = v.lineHeight;
+      if (v.family) vars[`--maw-text-${k}-family`] = v.family;
+    }
+  }
+
+  if (t.components) {
+    for (const [comp, props] of Object.entries(t.components)) {
+      for (const [prop, val] of Object.entries(props)) {
+        vars[`--maw-comp-${comp}-${prop}`] = val;
+      }
+    }
+  }
+
+  // Shell chrome: light design.md shells must not stick when color mode is dark.
+  // Keep an explicit dark/frosted shell (e.g. Evreghen); otherwise follow the active palette.
+  const explicitShell = t.shell;
+  const keepExplicitShell = explicitShell?.bg !== undefined && (
+    !dark || isDarkShellBackground(explicitShell.bg)
+  );
+  if (keepExplicitShell && explicitShell !== undefined) {
+    vars['--maw-shell-bg'] = explicitShell.bg ?? p.bg;
+    vars['--maw-shell-fg'] = explicitShell.fg ?? p.fg;
+    vars['--maw-shell-fg-muted'] = explicitShell.fgMuted ?? p.fgMuted;
+    vars['--maw-shell-border'] = explicitShell.border ?? p.border;
+    vars['--maw-shell-blur'] = explicitShell.blur ?? '0px';
+    vars['--maw-shell-hover'] = explicitShell.hover ?? p.bgSubtle;
+  } else if (dark) {
+    vars['--maw-shell-bg'] = p.bgSubtle;
+    vars['--maw-shell-fg'] = p.fg;
+    vars['--maw-shell-fg-muted'] = p.fgMuted;
+    vars['--maw-shell-border'] = p.border;
+    vars['--maw-shell-blur'] = '0px';
+    vars['--maw-shell-hover'] = p.bgMuted;
+  } else {
+    vars['--maw-shell-bg'] = explicitShell?.bg ?? p.bg;
+    vars['--maw-shell-fg'] = explicitShell?.fg ?? p.fg;
+    vars['--maw-shell-fg-muted'] = explicitShell?.fgMuted ?? p.fgMuted;
+    vars['--maw-shell-border'] = explicitShell?.border ?? p.border;
+    vars['--maw-shell-blur'] = explicitShell?.blur ?? '0px';
+    vars['--maw-shell-hover'] = explicitShell?.hover ?? p.bgSubtle;
+  }
+
+  // Nav active style follows shell luminance: light chrome → soft brand tint;
+  // dark frosted chrome → solid brand fill (Evreghen-style).
+  const shellBg = vars['--maw-shell-bg'];
+  const darkShell = isDarkShellBackground(shellBg);
+  if (darkShell) {
+    vars['--maw-shell-nav-active-bg'] = `linear-gradient(135deg, ${p.brand} 0%, color-mix(in srgb, ${p.brand} 80%, black) 100%)`;
+    vars['--maw-shell-nav-active-fg'] = p.brandContrast;
+    vars['--maw-shell-nav-active-shadow'] = `0 4px 12px color-mix(in srgb, ${p.brand} 30%, transparent)`;
+    vars['--maw-shell-nav-active-indicator'] = 'none';
+  } else {
+    vars['--maw-shell-nav-active-bg'] = `color-mix(in srgb, ${p.brand} 12%, transparent)`;
+    vars['--maw-shell-nav-active-fg'] = p.brand;
+    vars['--maw-shell-nav-active-shadow'] = 'none';
+    vars['--maw-shell-nav-active-indicator'] = `inset 3px 0 0 0 ${p.brand}`;
+  }
+
   return vars;
+}
+
+/** True when sidebar/header chrome should use dark-on-light inverted nav treatments. */
+function isDarkShellBackground(bg: string): boolean {
+  const value = bg.trim().toLowerCase();
+  if (value.includes('rgba(0, 0, 0') || value.includes('rgba(0,0,0')) return true;
+  if (value.includes('rgba(255') || value.includes('rgb(255')) return false;
+  const hex = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex === null) {
+    const rgb = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/);
+    if (rgb === null) return false;
+    const r = Number(rgb[1]) / 255;
+    const g = Number(rgb[2]) / 255;
+    const b = Number(rgb[3]) / 255;
+    const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) < 0.35;
+  }
+  let h = hex[1]!;
+  if (h.length === 3) h = `${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`;
+  const r = Number.parseInt(h.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(h.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(h.slice(4, 6), 16) / 255;
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) < 0.35;
 }
