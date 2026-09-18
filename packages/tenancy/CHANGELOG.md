@@ -1,5 +1,13 @@
 # @mawsoftwares/tenancy
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [74103ab]
+  - @mawsoftwares/database@0.2.0
+  - @mawsoftwares/core@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

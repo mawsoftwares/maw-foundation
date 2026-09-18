@@ -1,5 +1,14 @@
 # @mawsoftwares/reporting
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [74103ab]
+  - @mawsoftwares/sdk@0.2.0
+  - @mawsoftwares/queue@0.1.2
+  - @mawsoftwares/import-export@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

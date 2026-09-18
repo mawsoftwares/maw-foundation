@@ -1,5 +1,15 @@
 # @mawsoftwares/server-hono
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [74103ab]
+  - @mawsoftwares/rbac-core@0.2.0
+  - @mawsoftwares/sdk@0.2.0
+  - @mawsoftwares/auth-core@0.1.2
+  - @mawsoftwares/api@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @mawsoftwares/api-client
 
+## 0.2.0
+
+### Minor Changes
+
+- 74103ab: Menu management, MUI-like theme/shell tokens, RBAC `|` permission codes, and related client/UI work.
+
+  - **ui-web**: ready-made field components, Icon, shell-aware navigation/theme, skeleton helpers
+  - **theme**: design.md engine, shell tokens, denser MUI-like radius/shadow/typography defaults
+  - **api-client**: axios transport, retry/refresh hardening, optional `@mawsoftwares/api-client/react`
+  - **database**: menu + messaging/gateway/service-catalogue schemas; `master_permissions.is_system`
+  - **rbac-core**: `Action|Module` permission codes with legacy `Action_Module` support
+  - **sdk**: stronger phone validation; dynamic-form type tweaks
+  - **communication**: HTTP SMS and WhatsApp providers
+
+### Patch Changes
+
+- Updated dependencies [74103ab]
+  - @mawsoftwares/sdk@0.2.0
+
 ## Unreleased
 
 ### Minor Changes
@@ -21,7 +40,7 @@
   The backoff calculation is exported as the pure function `computeBackoffMs`.
 - Added a proactive JWT-expiry check: `applyAuth()` now decodes the stored
   access token's `exp` claim and, if it has already passed, calls the existing
-  `refresh()` flow *before* attaching the token and sending the request,
+  `refresh()` flow _before_ attaching the token and sending the request,
   instead of only reacting after a 401 comes back. The underlying heuristic is
   exported as `isJwtExpired(token)` for consumers who want it directly. This
   is a best-effort heuristic only (fails open on any decode error), not a
@@ -45,7 +64,7 @@
   "Loading...". Refresh is now single-flight (`inRefresh` + shared lock).
 - Fixed an error-swallowing bug in the offline layer: `OfflineRepository`
   (`findAll`/`findById`/`create`/`update`/`remove`) and the GET-side fallback in
-  `installOfflineInterceptor` previously caught *any* error from an online
+  `installOfflineInterceptor` previously caught _any_ error from an online
   `client.request(...)` call — including genuine 4xx/5xx API error responses —
   and silently fell through to offline/local behavior. They now only fall
   through on a real connectivity failure (no HTTP status was ever received);
