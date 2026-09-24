@@ -97,6 +97,7 @@ export interface ApiRouteOptions {
 export interface ApiRouterOptions {
   readonly version?: string;
   readonly prefix?: string;
+  readonly mergeParams?: boolean;
 }
 
 export function createApiRouter(options?: ApiRouterOptions): {
@@ -107,7 +108,7 @@ export function createApiRouter(options?: ApiRouterOptions): {
   patch: (path: string, controller: Controller, opts?: ApiRouteOptions) => void;
   delete: (path: string, controller: Controller, opts?: ApiRouteOptions) => void;
 } {
-  const router = Router();
+  const router = Router({ mergeParams: options?.mergeParams ?? false });
   const version = options?.version;
 
   function register(
