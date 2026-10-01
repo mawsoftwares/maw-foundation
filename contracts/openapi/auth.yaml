@@ -1,0 +1,669 @@
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Authenticate with email and password
+      description: |
+        Returns JWT tokens and session info. If MFA is enabled for the user,
+        returns a challenge token instead (mfaRequired: true).
+        Password must be prehashed as sha256:<hex> with x-password-prehashed header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  description: Prehashed as sha256:<hex>
+                audience:
+                  type: string
+                  description: Target audience (admin, operator, etc.)
+                deviceId:
+                  type: string
+      responses:
+        '200':
+          description: Login successful (or MFA challenge issued)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/LoginSuccessResponse'
+                  - $ref: '#/components/schemas/MfaChallengeResponse'
+        '400':
+          $ref: '#/components/responses/FlatError400'
+        '401':
+          $ref: '#/components/responses/FlatError401'
+        '423':
+          $ref: '#/components/responses/FlatError423'
+        '429':
+          $ref: '#/components/responses/FlatError429'
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      summary: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId, emailVerificationRequired]
+                properties:
+                  userId:
+                    type: string
+                  emailVerificationRequired:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/FlatError400'
+        '409':
+          $ref: '#/components/responses/FlatError409'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Refresh access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tokens]
+                properties:
+                  tokens:
+                    $ref: '../schemas/common.yaml#/components/schemas/TokenPair'
+        '401':
+          $ref: '#/components/responses/FlatError401'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Revoke the current session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+
+  /auth/verify-email:
+    post:
+      tags: [Auth]
+      operationId: verifyEmail
+      summary: Verify email address with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                    const: true
+        '400':
+          $ref: '#/components/responses/FlatError400'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      operationId: forgotPassword
+      summary: Request password reset email
+      description: Always returns success to avoid user enumeration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset email sent (if account exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      operationId: resetPassword
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+                  description: Prehashed as sha256:<hex>
+      responses:
+        '200':
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reset:
+                    type: boolean
+                    const: true
+        '400':
+          $ref: '#/components/responses/FlatError400'
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      operationId: changePassword
+      summary: Change password (authenticated)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                  description: Prehashed as sha256:<hex>
+                newPassword:
+                  type: string
+                  description: Prehashed as sha256:<hex>
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changed:
+                    type: boolean
+                    const: true
+        '400':
+          $ref: '#/components/responses/FlatError400'
+        '401':
+          $ref: '#/components/responses/FlatError401'
+
+  /auth/sessions:
+    get:
+      tags: [Auth]
+      operationId: listSessions
+      summary: List active sessions for current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Active sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessions]
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '../schemas/common.yaml#/components/schemas/SessionInfo'
+        '401':
+          $ref: '#/components/responses/FlatError401'
+    delete:
+      tags: [Auth]
+      operationId: revokeAllSessions
+      summary: Revoke all sessions for current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revokedAll:
+                    type: boolean
+                    const: true
+
+  /auth/sessions/{id}:
+    delete:
+      tags: [Auth]
+      operationId: revokeSession
+      summary: Revoke a specific session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revoked:
+                    type: boolean
+                    const: true
+        '404':
+          $ref: '#/components/responses/FlatError404'
+
+  /auth/mfa/enroll:
+    post:
+      tags: [Auth]
+      operationId: mfaEnroll
+      summary: Start MFA enrollment (returns TOTP secret)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: MFA enrollment data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [secret, otpauthUri, backupCodes]
+                properties:
+                  secret:
+                    type: string
+                  otpauthUri:
+                    type: string
+                  backupCodes:
+                    type: array
+                    items:
+                      type: string
+
+  /auth/mfa/verify:
+    post:
+      tags: [Auth]
+      operationId: mfaVerify
+      summary: Verify MFA code to complete enrollment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: MFA activated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activated:
+                    type: boolean
+                    const: true
+        '400':
+          $ref: '#/components/responses/FlatError400'
+
+  /auth/mfa/disable:
+    post:
+      tags: [Auth]
+      operationId: mfaDisable
+      summary: Disable MFA
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: MFA disabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  disabled:
+                    type: boolean
+                    const: true
+        '400':
+          $ref: '#/components/responses/FlatError400'
+
+  /auth/mfa/challenge:
+    post:
+      tags: [Auth]
+      operationId: mfaChallenge
+      summary: Complete MFA challenge to finish login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mfaToken, code]
+              properties:
+                mfaToken:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: MFA verified, login complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccessResponse'
+        '400':
+          $ref: '#/components/responses/FlatError400'
+        '401':
+          $ref: '#/components/responses/FlatError401'
+
+  /auth/account:
+    delete:
+      tags: [Auth]
+      operationId: deleteAccount
+      summary: Delete own account (GDPR purge)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  description: Prehashed as sha256:<hex>
+      responses:
+        '200':
+          description: Account purged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  purged:
+                    type: boolean
+                    const: true
+        '401':
+          $ref: '#/components/responses/FlatError401'
+
+  /auth/social/{provider}:
+    get:
+      tags: [Auth]
+      operationId: socialAuthRedirect
+      summary: Get OAuth redirect URL for social login
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github]
+      responses:
+        '200':
+          description: OAuth redirect URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, state]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  state:
+                    type: string
+
+  /auth/social/{provider}/callback:
+    get:
+      tags: [Auth]
+      operationId: socialAuthCallback
+      summary: Handle OAuth callback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github]
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Social login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accessToken, user]
+                properties:
+                  accessToken:
+                    type: string
+                  user:
+                    type: object
+                    required: [id, email, role]
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                  isNewUser:
+                    type: boolean
+                  linkedProviders:
+                    type: array
+                    items:
+                      type: string
+
+  /me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Get current authenticated user info
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userId, tenantId, role, audience]
+                properties:
+                  userId:
+                    type: string
+                  tenantId:
+                    type: string
+                  role:
+                    type: string
+                  audience:
+                    type: string
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/FlatError401'
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, tenantId]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: Prehashed as sha256:<hex>
+        tenantId:
+          type: string
+        role:
+          type: string
+        name:
+          type: string
+
+    LoginSuccessResponse:
+      type: object
+      required: [session, sessionId, tokens, permissions, modules]
+      properties:
+        session:
+          $ref: '../schemas/common.yaml#/components/schemas/Session'
+        sessionId:
+          type: string
+        tokens:
+          $ref: '../schemas/common.yaml#/components/schemas/TokenPair'
+        permissions:
+          type: array
+          items:
+            type: string
+        modules:
+          type: array
+          items:
+            type: object
+
+    MfaChallengeResponse:
+      type: object
+      required: [mfaRequired, challengeToken, expiresAt]
+      properties:
+        mfaRequired:
+          type: boolean
+          const: true
+        challengeToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+  responses:
+    FlatError400:
+      description: Bad request / validation error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'
+    FlatError401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'
+    FlatError404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'
+    FlatError409:
+      description: Conflict (duplicate)
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'
+    FlatError423:
+      description: Account locked
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'
+    FlatError429:
+      description: Rate limited
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'

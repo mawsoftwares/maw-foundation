@@ -1,0 +1,166 @@
+paths:
+  /api/v1/orders:
+    get:
+      tags: [Orders]
+      operationId: listOrders
+      summary: List orders with pagination
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+      responses:
+        '200':
+          description: Paginated order list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrderResponse'
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        $ref: '../schemas/common.yaml#/components/schemas/PaginationMeta'
+    post:
+      tags: [Orders]
+      operationId: createOrder
+      summary: Create a new order
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrderResponse'
+
+  /api/v1/orders/{id}:
+    get:
+      tags: [Orders]
+      operationId: getOrder
+      summary: Get an order by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+
+  /api/v1/orders/export:
+    get:
+      tags: [Orders]
+      operationId: exportOrders
+      summary: Export orders
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Export initiated
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    OrderStatus:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - PREPARING
+        - READY
+        - DELIVERED
+        - CANCELLED
+
+    OrderResponse:
+      type: object
+      required: [id, status, createdAt]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        items:
+          type: array
+          items:
+            type: object
+        totalAmount:
+          type: integer
+          description: Total in minor currency units (paise/cents)
+        customerId:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [productId, quantity]
+            properties:
+              productId:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+              unitPrice:
+                type: integer
+                description: Minor currency units
+        customerId:
+          type: string
+        notes:
+          type: string

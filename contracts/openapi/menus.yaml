@@ -1,0 +1,251 @@
+paths:
+  /api/v1/menus:
+    get:
+      tags: [Menus]
+      operationId: listMenus
+      summary: List all menu items
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Menu item list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MenuResponse'
+    post:
+      tags: [Menus]
+      operationId: createMenu
+      summary: Create a menu item
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMenuRequest'
+      responses:
+        '201':
+          description: Menu item created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MenuResponse'
+
+  /api/v1/menus/tree:
+    get:
+      tags: [Menus]
+      operationId: getMenuTree
+      summary: Get menu as nested tree
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Menu tree
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MenuTreeNode'
+
+  /api/v1/menus/{id}:
+    get:
+      tags: [Menus]
+      operationId: getMenu
+      summary: Get a menu item by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Menu item found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MenuResponse'
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+    put:
+      tags: [Menus]
+      operationId: updateMenu
+      summary: Update a menu item
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMenuRequest'
+      responses:
+        '200':
+          description: Menu item updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MenuResponse'
+
+  /api/v1/menus/reorder:
+    post:
+      tags: [Menus]
+      operationId: reorderMenus
+      summary: Reorder menu items
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [id, sortOrder]
+                    properties:
+                      id:
+                        type: string
+                      sortOrder:
+                        type: integer
+      responses:
+        '200':
+          description: Menu reordered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+
+components:
+  schemas:
+    MenuResponse:
+      type: object
+      required: [id, label, sortOrder]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        icon:
+          type: string
+        path:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        moduleCode:
+          type: string
+        permissionCode:
+          type: string
+        sortOrder:
+          type: integer
+        isActive:
+          type: boolean
+
+    CreateMenuRequest:
+      type: object
+      required: [label]
+      properties:
+        label:
+          type: string
+        icon:
+          type: string
+        path:
+          type: string
+        parentId:
+          type: string
+        moduleCode:
+          type: string
+        permissionCode:
+          type: string
+        sortOrder:
+          type: integer
+
+    UpdateMenuRequest:
+      type: object
+      properties:
+        label:
+          type: string
+        icon:
+          type: string
+        path:
+          type: string
+        parentId:
+          type: string
+        moduleCode:
+          type: string
+        permissionCode:
+          type: string
+        sortOrder:
+          type: integer
+        isActive:
+          type: boolean
+
+    MenuTreeNode:
+      type: object
+      required: [id, label]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        icon:
+          type: string
+        path:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        moduleCode:
+          type: string
+        permissionCode:
+          type: string
+        sortOrder:
+          type: integer
+        isActive:
+          type: boolean
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuTreeNode'

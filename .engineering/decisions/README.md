@@ -10,3 +10,8 @@ This directory contains ADRs documenting key architectural decisions and their r
 - [ADR: CSRF Double-Submit Cookie Pattern](ADR-security-csrf-double-submit.md)
 - [ADR: In-Memory Default Stores with Pg/Redis Swap via Ports](ADR-security-memory-stores.md)
 - [ADR: Client-Side SHA-256 Password Prehashing](ADR-security-password-prehash.md)
+
+## Architecture
+
+- [ADR: Dual Backend Architecture (Node.js + PHP)](ADR-dual-backend.md)
+- [ADR: Laravel for PHP Backend](ADR-php-laravel.md)

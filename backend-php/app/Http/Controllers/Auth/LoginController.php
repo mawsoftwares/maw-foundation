@@ -1,0 +1,157 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Auth;
+
+use App\Domain\Auth\AuthClaims;
+use App\Domain\Auth\AuthTokens;
+use App\Domain\Auth\PasswordHasherInterface;
+use App\Domain\Auth\PrehashResolver;
+use App\Domain\Auth\SessionRepositoryInterface;
+use App\Domain\Auth\TokenBlacklistInterface;
+use App\Domain\Auth\TokenServiceInterface;
+use App\Domain\Shared\Exceptions\UnauthorizedException;
+use App\Domain\User\UserRepositoryInterface;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Str;
+
+final class LoginController extends Controller
+{
+    public function __construct(
+        private readonly UserRepositoryInterface $users,
+        private readonly PasswordHasherInterface $hasher,
+        private readonly TokenServiceInterface $tokenService,
+        private readonly SessionRepositoryInterface $sessions,
+        private readonly TokenBlacklistInterface $blacklist,
+    ) {}
+
+    public function login(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'tenantId' => 'required|string',
+            'audience' => 'sometimes|string',
+        ]);
+
+        $tenantId = (string) $request->input('tenantId');
+        $email = (string) $request->input('email');
+        $rawPassword = (string) $request->input('password');
+        $audience = (string) $request->input('audience', 'cashier');
+
+        $password = PrehashResolver::resolve(
+            $rawPassword,
+            $request->header('x-password-prehashed'),
+            (bool) config('auth.require_prehash', false),
+        );
+
+        $user = $this->users->findByEmail($tenantId, $email);
+
+        if (! $user || ! $this->hasher->verify($password, $user->passwordHash)) {
+            throw new UnauthorizedException('INVALID_CREDENTIALS', 'Invalid email or password');
+        }
+
+        if ($user->accountStatus->value !== 'active') {
+            throw new UnauthorizedException('ACCOUNT_INACTIVE', 'Account is not active');
+        }
+
+        if ($user->mfaEnabled) {
+            $challengeToken = Str::uuid()->toString();
+
+            return new JsonResponse([
+                'requiresMfa' => true,
+                'challengeToken' => $challengeToken,
+                'userId' => $user->id,
+            ]);
+        }
+
+        $tokens = $this->issueTokens($user->id, $tenantId, $user->role, $audience);
+
+        $this->sessions->create($tenantId, $user->id, hash('sha256', $tokens->refreshToken), [
+            'ipAddress' => $request->ip(),
+            'userAgent' => $request->userAgent() ?? 'unknown',
+        ]);
+
+        return new JsonResponse($tokens->toResponse());
+    }
+
+    public function refresh(Request $request): JsonResponse
+    {
+        $request->validate(['refreshToken' => 'required|string']);
+
+        $refreshToken = (string) $request->input('refreshToken');
+        $hash = hash('sha256', $refreshToken);
+
+        $session = $this->sessions->findByRefreshTokenHash($hash);
+        if (! $session) {
+            throw new UnauthorizedException('INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token');
+        }
+
+        $tokens = $this->issueTokens(
+            (string) $session['userId'],
+            (string) $session['tenantId'],
+            'user',
+            'cashier',
+        );
+
+        $this->sessions->revoke((string) $session['id']);
+        $this->sessions->create(
+            (string) $session['tenantId'],
+            (string) $session['userId'],
+            hash('sha256', $tokens->refreshToken),
+            [
+                'ipAddress' => $request->ip(),
+                'userAgent' => $request->userAgent() ?? 'unknown',
+            ],
+        );
+
+        return new JsonResponse($tokens->toResponse());
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $claims = $request->input('auth_claims', []);
+        if (is_array($claims) && isset($claims['jti'])) {
+            $exp = (int) ($claims['exp'] ?? time() + 900);
+            $this->blacklist->add((string) $claims['jti'], $exp);
+        }
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        $userId = (string) $request->input('auth_user_id');
+        $tenantId = (string) $request->input('auth_tenant_id');
+
+        $user = $this->users->findById($tenantId, $userId);
+        if (! $user) {
+            throw new UnauthorizedException('USER_NOT_FOUND', 'Authenticated user not found');
+        }
+
+        return new JsonResponse($user->toResponse());
+    }
+
+    private function issueTokens(string $userId, string $tenantId, string $role, string $audience): AuthTokens
+    {
+        $jti = Str::uuid()->toString();
+        $accessExpiresIn = (int) config('auth.access_token_ttl', 900);
+        $refreshExpiresIn = (int) config('auth.refresh_token_ttl', 604800);
+
+        $accessToken = $this->tokenService->sign([
+            'userId' => $userId,
+            'tenantId' => $tenantId,
+            'role' => $role,
+            'audience' => $audience,
+            'jti' => $jti,
+            'expiresIn' => $accessExpiresIn,
+        ]);
+
+        $refreshToken = Str::random(64);
+
+        return new AuthTokens($accessToken, $refreshToken, $accessExpiresIn, $refreshExpiresIn);
+    }
+}

@@ -1,0 +1,202 @@
+openapi: 3.1.0
+info:
+  title: MAW Foundation API
+  description: |
+    Backend-agnostic API contract for the MAW Foundation platform.
+    Both Node.js and PHP backends implement this contract identically.
+  version: 1.0.0
+  contact:
+    name: MAW Softwares
+    email: mindsatworksolutions@gmail.com
+
+servers:
+  - url: http://localhost:3000
+    description: Local development (Node.js)
+  - url: http://localhost:8000/api
+    description: Local development (PHP / Laravel)
+
+tags:
+  - name: Auth
+    description: Authentication, registration, password management, MFA, sessions
+  - name: Users
+    description: User management (admin)
+  - name: RBAC
+    description: Role-Based Access Control — roles, permissions, modules
+  - name: Tenants
+    description: Multi-tenant management
+  - name: Orders
+    description: Order management
+  - name: Menus
+    description: Menu/navigation management
+  - name: Messaging
+    description: Email templates, credentials, send operations
+  - name: Reporting
+    description: Report definitions, execution, saved reports
+  - name: Files
+    description: File upload, download, management
+  - name: Jobs
+    description: Background job management
+  - name: System
+    description: Health, config, modules, notifications
+
+paths:
+  # --- Auth ---
+  /auth/login:
+    $ref: './auth.yaml#/paths/~1auth~1login'
+  /auth/register:
+    $ref: './auth.yaml#/paths/~1auth~1register'
+  /auth/refresh:
+    $ref: './auth.yaml#/paths/~1auth~1refresh'
+  /auth/logout:
+    $ref: './auth.yaml#/paths/~1auth~1logout'
+  /auth/verify-email:
+    $ref: './auth.yaml#/paths/~1auth~1verify-email'
+  /auth/forgot-password:
+    $ref: './auth.yaml#/paths/~1auth~1forgot-password'
+  /auth/reset-password:
+    $ref: './auth.yaml#/paths/~1auth~1reset-password'
+  /auth/change-password:
+    $ref: './auth.yaml#/paths/~1auth~1change-password'
+  /auth/sessions:
+    $ref: './auth.yaml#/paths/~1auth~1sessions'
+  /auth/sessions/{id}:
+    $ref: './auth.yaml#/paths/~1auth~1sessions~1{id}'
+  /auth/mfa/enroll:
+    $ref: './auth.yaml#/paths/~1auth~1mfa~1enroll'
+  /auth/mfa/verify:
+    $ref: './auth.yaml#/paths/~1auth~1mfa~1verify'
+  /auth/mfa/disable:
+    $ref: './auth.yaml#/paths/~1auth~1mfa~1disable'
+  /auth/mfa/challenge:
+    $ref: './auth.yaml#/paths/~1auth~1mfa~1challenge'
+  /auth/account:
+    $ref: './auth.yaml#/paths/~1auth~1account'
+  /auth/social/{provider}:
+    $ref: './auth.yaml#/paths/~1auth~1social~1{provider}'
+  /auth/social/{provider}/callback:
+    $ref: './auth.yaml#/paths/~1auth~1social~1{provider}~1callback'
+  /me:
+    $ref: './auth.yaml#/paths/~1me'
+
+  # --- Users ---
+  /api/v1/users:
+    $ref: './users.yaml#/paths/~1api~1v1~1users'
+  /api/v1/users/{id}:
+    $ref: './users.yaml#/paths/~1api~1v1~1users~1{id}'
+  /api/v1/users/{id}/activate:
+    $ref: './users.yaml#/paths/~1api~1v1~1users~1{id}~1activate'
+  /api/v1/users/{id}/deactivate:
+    $ref: './users.yaml#/paths/~1api~1v1~1users~1{id}~1deactivate'
+  /api/v1/users/{id}/reset-password:
+    $ref: './users.yaml#/paths/~1api~1v1~1users~1{id}~1reset-password'
+
+  # --- RBAC ---
+  /api/v1/rbac/roles:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1roles'
+  /api/v1/rbac/roles/{id}:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1roles~1{id}'
+  /api/v1/rbac/roles/{id}/workspace:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1roles~1{id}~1workspace'
+  /api/v1/rbac/roles/{id}/permissions:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1roles~1{id}~1permissions'
+  /api/v1/rbac/permissions:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1permissions'
+  /api/v1/rbac/permissions/{id}:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1permissions~1{id}'
+  /api/v1/rbac/permissions/{id}/assignments:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1permissions~1{id}~1assignments'
+  /api/v1/rbac/modules:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1modules'
+  /api/v1/rbac/modules/tree:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1modules~1tree'
+  /api/v1/rbac/modules/{id}:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1modules~1{id}'
+  /api/v1/rbac/modules/{id}/permissions:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1modules~1{id}~1permissions'
+  /api/v1/rbac/modules/{id}/permissions/{permissionId}:
+    $ref: './rbac.yaml#/paths/~1api~1v1~1rbac~1modules~1{id}~1permissions~1{permissionId}'
+
+  # --- Tenants ---
+  /api/v1/tenants:
+    $ref: './tenants.yaml#/paths/~1api~1v1~1tenants'
+  /api/v1/tenants/{id}:
+    $ref: './tenants.yaml#/paths/~1api~1v1~1tenants~1{id}'
+
+  # --- Orders ---
+  /api/v1/orders:
+    $ref: './orders.yaml#/paths/~1api~1v1~1orders'
+  /api/v1/orders/{id}:
+    $ref: './orders.yaml#/paths/~1api~1v1~1orders~1{id}'
+  /api/v1/orders/export:
+    $ref: './orders.yaml#/paths/~1api~1v1~1orders~1export'
+
+  # --- Menus ---
+  /api/v1/menus:
+    $ref: './menus.yaml#/paths/~1api~1v1~1menus'
+  /api/v1/menus/tree:
+    $ref: './menus.yaml#/paths/~1api~1v1~1menus~1tree'
+  /api/v1/menus/{id}:
+    $ref: './menus.yaml#/paths/~1api~1v1~1menus~1{id}'
+  /api/v1/menus/reorder:
+    $ref: './menus.yaml#/paths/~1api~1v1~1menus~1reorder'
+
+  # --- Files ---
+  /files/upload:
+    $ref: './files.yaml#/paths/~1files~1upload'
+  /files:
+    $ref: './files.yaml#/paths/~1files'
+  /files/url/{key}:
+    $ref: './files.yaml#/paths/~1files~1url~1{key}'
+  /files/{key}:
+    $ref: './files.yaml#/paths/~1files~1{key}'
+
+  # --- Jobs ---
+  /api/v1/jobs:
+    $ref: './jobs.yaml#/paths/~1api~1v1~1jobs'
+  /api/v1/jobs/{id}:
+    $ref: './jobs.yaml#/paths/~1api~1v1~1jobs~1{id}'
+
+  # --- Reporting ---
+  /reporting/definitions:
+    $ref: './reporting.yaml#/paths/~1reporting~1definitions'
+  /reporting/definitions/{name}/metadata:
+    $ref: './reporting.yaml#/paths/~1reporting~1definitions~1{name}~1metadata'
+  /reporting/preview:
+    $ref: './reporting.yaml#/paths/~1reporting~1preview'
+  /reporting/run:
+    $ref: './reporting.yaml#/paths/~1reporting~1run'
+  /reporting/save:
+    $ref: './reporting.yaml#/paths/~1reporting~1save'
+  /reporting/saved:
+    $ref: './reporting.yaml#/paths/~1reporting~1saved'
+
+  # --- System ---
+  /health:
+    $ref: './system.yaml#/paths/~1health'
+  /config:
+    $ref: './system.yaml#/paths/~1config'
+  /config/{path}:
+    $ref: './system.yaml#/paths/~1config~1{path}'
+  /modules:
+    $ref: './system.yaml#/paths/~1modules'
+  /api/v1/notifications/in-app:
+    $ref: './system.yaml#/paths/~1api~1v1~1notifications~1in-app'
+  /api/v1/roles:
+    $ref: './system.yaml#/paths/~1api~1v1~1roles'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token (15-min TTL, HS256, JTI blacklisting)
+
+    CsrfToken:
+      type: apiKey
+      in: header
+      name: x-csrf-token
+      description: CSRF double-submit token (required for unsafe methods in cookie mode)
+
+  schemas:
+    $ref: '../schemas/common.yaml#/components/schemas'

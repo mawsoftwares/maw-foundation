@@ -1,0 +1,378 @@
+paths:
+  /api/v1/messaging/email-templates:
+    get:
+      tags: [Messaging]
+      operationId: listEmailTemplates
+      summary: List email templates
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Email template list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmailTemplate'
+    post:
+      tags: [Messaging]
+      operationId: createEmailTemplate
+      summary: Create an email template
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmailTemplateRequest'
+      responses:
+        '201':
+          description: Email template created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EmailTemplate'
+
+  /api/v1/messaging/email-templates/{id}:
+    get:
+      tags: [Messaging]
+      operationId: getEmailTemplate
+      summary: Get an email template
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email template
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EmailTemplate'
+    put:
+      tags: [Messaging]
+      operationId: updateEmailTemplate
+      summary: Update an email template
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmailTemplateRequest'
+      responses:
+        '200':
+          description: Email template updated
+    delete:
+      tags: [Messaging]
+      operationId: deleteEmailTemplate
+      summary: Delete an email template
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email template deleted
+
+  /api/v1/messaging/credentials:
+    get:
+      tags: [Messaging]
+      operationId: listMessagingCredentials
+      summary: List messaging credentials by channel
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Credentials list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MessagingCredential'
+
+  /api/v1/messaging/credentials/{channel}:
+    get:
+      tags: [Messaging]
+      operationId: getMessagingCredential
+      summary: Get credentials for a channel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [email, sms, whatsapp, push]
+      responses:
+        '200':
+          description: Channel credential
+    put:
+      tags: [Messaging]
+      operationId: updateMessagingCredential
+      summary: Update credentials for a channel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Credential updated
+    delete:
+      tags: [Messaging]
+      operationId: deleteMessagingCredential
+      summary: Delete credentials for a channel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Credential deleted
+
+  /api/v1/messaging/logs:
+    get:
+      tags: [Messaging]
+      operationId: listMessagingLogs
+      summary: List messaging delivery logs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Delivery logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+
+  /api/v1/messaging/send/email:
+    post:
+      tags: [Messaging]
+      operationId: sendEmail
+      summary: Send an email
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEmailRequest'
+      responses:
+        '200':
+          description: Email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messageId:
+                    type: string
+                  status:
+                    type: string
+
+  /api/v1/messaging/send/sms:
+    post:
+      tags: [Messaging]
+      operationId: sendSms
+      summary: Send an SMS
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendSmsRequest'
+      responses:
+        '200':
+          description: SMS sent
+
+  /api/v1/messaging/send/whatsapp:
+    post:
+      tags: [Messaging]
+      operationId: sendWhatsApp
+      summary: Send a WhatsApp message
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendWhatsAppRequest'
+      responses:
+        '200':
+          description: WhatsApp message sent
+
+components:
+  schemas:
+    EmailTemplate:
+      type: object
+      required: [id, name, subject, body]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        channel:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateEmailTemplateRequest:
+      type: object
+      required: [name, subject, body]
+      properties:
+        name:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+
+    UpdateEmailTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+
+    MessagingCredential:
+      type: object
+      required: [channel]
+      properties:
+        channel:
+          type: string
+        provider:
+          type: string
+        isConfigured:
+          type: boolean
+
+    SendEmailRequest:
+      type: object
+      required: [to, subject, body]
+      properties:
+        to:
+          type: string
+          format: email
+        subject:
+          type: string
+        body:
+          type: string
+        templateId:
+          type: string
+        variables:
+          type: object
+
+    SendSmsRequest:
+      type: object
+      required: [to, message]
+      properties:
+        to:
+          type: string
+        message:
+          type: string
+        templateId:
+          type: string
+        variables:
+          type: object
+
+    SendWhatsAppRequest:
+      type: object
+      required: [to, message]
+      properties:
+        to:
+          type: string
+        message:
+          type: string
+        templateId:
+          type: string
+        variables:
+          type: object

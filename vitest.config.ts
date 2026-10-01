@@ -77,6 +77,7 @@ export default defineConfig({
       'packages/**/*.test.{ts,tsx}',
       'adapters/**/*.test.{ts,tsx}',
       'apps/**/*.test.{ts,tsx}',
+      'contracts/**/*.test.{ts,tsx}',
     ],
     coverage: {
       provider: 'v8',

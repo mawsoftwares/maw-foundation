@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  verify:
-    name: Typecheck · Lint · Test · Build
+  node:
+    name: Node.js · Typecheck · Lint · Test · Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -58,8 +58,113 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-report-node
           path: coverage/
 
       - name: Build
         run: pnpm build
+
+  php:
+    name: PHP · PHPStan · Pint · PHPUnit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend-php
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: maw_foundation_test
+          POSTGRES_USER: maw_test
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, sodium, intl, mbstring, opcache
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend-php/vendor
+          key: php-composer-${{ hashFiles('backend-php/composer.lock') }}
+          restore-keys: php-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Copy test env
+        run: cp .env.testing .env
+
+      - name: PHPStan (level 8)
+        run: composer typecheck
+
+      - name: Pint (code style)
+        run: composer lint
+
+      - name: Unit Tests
+        run: composer test:unit
+
+      - name: Contract Tests
+        run: composer test:contract
+
+      - name: Integration Tests
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: maw_foundation_test
+          DB_USERNAME: maw_test
+          DB_PASSWORD: test_password
+        run: composer test:integration
+
+      - name: Upload Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-php
+          path: backend-php/coverage/
+        continue-on-error: true
+
+  contract-conformance:
+    name: Cross-Backend Contract Verification
+    needs: [node, php]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write npmrc
+        run: cp .npmrc.example .npmrc
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Contract schema validation
+        run: npx vitest run contracts/verification/validate.test.ts

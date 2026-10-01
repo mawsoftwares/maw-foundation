@@ -1,0 +1,165 @@
+paths:
+  /health:
+    get:
+      tags: [System]
+      operationId: healthCheck
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded]
+                  uptime:
+                    type: number
+                  checks:
+                    type: object
+
+  /config:
+    get:
+      tags: [System]
+      operationId: getConfig
+      summary: Get public configuration
+      responses:
+        '200':
+          description: Configuration object
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /config/{path}:
+    get:
+      tags: [System]
+      operationId: getConfigByPath
+      summary: Get configuration at a specific path
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuration value
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /modules:
+    get:
+      tags: [System]
+      operationId: listAvailableModules
+      summary: List available system modules
+      responses:
+        '200':
+          description: Module list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        version:
+                          type: string
+
+  /api/v1/notifications/in-app:
+    get:
+      tags: [System]
+      operationId: listInAppNotifications
+      summary: List in-app notifications for current user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InAppNotification'
+
+  /api/v1/roles:
+    get:
+      tags: [System]
+      operationId: listUserRoles
+      summary: List roles available to the current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Role list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+
+components:
+  schemas:
+    InAppNotification:
+      type: object
+      required: [id, title, createdAt, read]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        channel:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        read:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+        actionUrl:
+          type: string
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time

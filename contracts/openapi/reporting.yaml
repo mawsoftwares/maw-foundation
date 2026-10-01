@@ -1,0 +1,213 @@
+paths:
+  /reporting/definitions:
+    get:
+      tags: [Reporting]
+      operationId: listReportDefinitions
+      summary: List available report definitions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Report definition list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReportDefinitionSummary'
+
+  /reporting/definitions/{name}/metadata:
+    get:
+      tags: [Reporting]
+      operationId: getReportMetadata
+      summary: Get metadata for a report definition (filters, columns, etc.)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report metadata
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+
+  /reporting/preview:
+    post:
+      tags: [Reporting]
+      operationId: previewReport
+      summary: Preview a report with sample data
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '200':
+          description: Report preview data
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /reporting/run:
+    post:
+      tags: [Reporting]
+      operationId: runReport
+      summary: Execute a report
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '200':
+          description: Report results
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /reporting/save:
+    post:
+      tags: [Reporting]
+      operationId: saveReport
+      summary: Save a report configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveReportRequest'
+      responses:
+        '201':
+          description: Report saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+
+  /reporting/saved:
+    get:
+      tags: [Reporting]
+      operationId: listSavedReports
+      summary: List saved reports
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Saved report list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedReportSummary'
+
+components:
+  schemas:
+    ReportDefinitionSummary:
+      type: object
+      required: [name, label]
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+
+    ReportRequest:
+      type: object
+      required: [definitionName]
+      properties:
+        definitionName:
+          type: string
+        filters:
+          type: object
+        sorting:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              direction:
+                type: string
+                enum: [asc, desc]
+        grouping:
+          type: array
+          items:
+            type: string
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            pageSize:
+              type: integer
+        dateRange:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date
+            to:
+              type: string
+              format: date
+            preset:
+              type: string
+
+    SaveReportRequest:
+      type: object
+      required: [name, definitionName, config]
+      properties:
+        name:
+          type: string
+        definitionName:
+          type: string
+        config:
+          $ref: '#/components/schemas/ReportRequest'
+
+    SavedReportSummary:
+      type: object
+      required: [id, name, definitionName, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        definitionName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

@@ -1,0 +1,138 @@
+paths:
+  /api/v1/jobs:
+    post:
+      tags: [Jobs]
+      operationId: createJob
+      summary: Create a background job
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '201':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    $ref: '#/components/schemas/JobStatus'
+    get:
+      tags: [Jobs]
+      operationId: listJobs
+      summary: List background jobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobResponse'
+
+  /api/v1/jobs/{id}:
+    get:
+      tags: [Jobs]
+      operationId: getJob
+      summary: Get job status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+
+components:
+  schemas:
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - RETRYING
+        - CANCELLED
+
+    CreateJobRequest:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+        payload:
+          type: object
+        priority:
+          type: integer
+          default: 0
+        scheduledAt:
+          type: string
+          format: date-time
+
+    JobResponse:
+      type: object
+      required: [id, type, status, createdAt]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        payload:
+          type: object
+        result:
+          type: object
+        error:
+          type: string
+        attempts:
+          type: integer
+        maxRetries:
+          type: integer
+        priority:
+          type: integer
+        scheduledAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time

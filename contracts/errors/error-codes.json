@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MAW Foundation Error Codes",
+  "description": "Standard error codes used across Node.js and PHP backends. Both backends must map internal errors to these codes.",
+  "codes": {
+    "UNAUTHORIZED": {
+      "httpStatus": 401,
+      "description": "Authentication required or token invalid"
+    },
+    "TOKEN_EXPIRED": {
+      "httpStatus": 401,
+      "description": "JWT access token has expired"
+    },
+    "INVALID_CREDENTIALS": {
+      "httpStatus": 401,
+      "description": "Email or password is incorrect"
+    },
+    "SESSION_EXPIRED": {
+      "httpStatus": 401,
+      "description": "Session or refresh token has expired"
+    },
+    "FORBIDDEN": {
+      "httpStatus": 403,
+      "description": "Authenticated but not authorized for this action"
+    },
+    "OPERATION_NOT_ALLOWED": {
+      "httpStatus": 403,
+      "description": "Operation not allowed in current state"
+    },
+    "FEATURE_DISABLED": {
+      "httpStatus": 403,
+      "description": "Feature is disabled for this tenant/plan"
+    },
+    "ACCOUNT_DISABLED": {
+      "httpStatus": 403,
+      "description": "Account has been disabled by admin"
+    },
+    "NOT_FOUND": {
+      "httpStatus": 404,
+      "description": "Requested resource does not exist"
+    },
+    "CONFLICT": {
+      "httpStatus": 409,
+      "description": "Resource state conflict"
+    },
+    "ALREADY_EXISTS": {
+      "httpStatus": 409,
+      "description": "Resource already exists (duplicate)"
+    },
+    "DUPLICATE_EMAIL": {
+      "httpStatus": 409,
+      "description": "Email address is already registered"
+    },
+    "VALIDATION_FAILED": {
+      "httpStatus": 400,
+      "description": "Request validation failed"
+    },
+    "INVALID_INPUT": {
+      "httpStatus": 400,
+      "description": "Invalid input data"
+    },
+    "MISSING_FIELD": {
+      "httpStatus": 400,
+      "description": "Required field is missing"
+    },
+    "RATE_LIMITED": {
+      "httpStatus": 429,
+      "description": "Too many requests — try again later"
+    },
+    "LIMIT_EXCEEDED": {
+      "httpStatus": 429,
+      "description": "Resource limit exceeded"
+    },
+    "ACCOUNT_LOCKED": {
+      "httpStatus": 423,
+      "description": "Account locked due to too many failed attempts"
+    },
+    "INTERNAL": {
+      "httpStatus": 500,
+      "description": "Internal server error"
+    },
+    "MFA_REQUIRED": {
+      "httpStatus": 401,
+      "description": "Multi-factor authentication is required"
+    },
+    "INVALID_OTP": {
+      "httpStatus": 400,
+      "description": "OTP/MFA code is invalid or expired"
+    },
+    "PASSWORD_POLICY": {
+      "httpStatus": 400,
+      "description": "Password does not meet policy requirements"
+    },
+    "ACCOUNT_PENDING_VERIFICATION": {
+      "httpStatus": 403,
+      "description": "Account email is not yet verified"
+    }
+  }
+}

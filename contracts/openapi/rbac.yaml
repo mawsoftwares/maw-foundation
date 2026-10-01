@@ -1,0 +1,633 @@
+paths:
+  /api/v1/rbac/roles:
+    get:
+      tags: [RBAC]
+      operationId: listRoles
+      summary: List all roles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Role list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoleResponse'
+    post:
+      tags: [RBAC]
+      operationId: createRole
+      summary: Create a new role
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoleResponse'
+        '409':
+          $ref: 'auth.yaml#/components/responses/FlatError409'
+
+  /api/v1/rbac/roles/{id}:
+    put:
+      tags: [RBAC]
+      operationId: updateRole
+      summary: Update a role
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoleResponse'
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+    delete:
+      tags: [RBAC]
+      operationId: deleteRole
+      summary: Delete a role
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Role deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+
+  /api/v1/rbac/roles/{id}/workspace:
+    get:
+      tags: [RBAC]
+      operationId: getRoleWorkspace
+      summary: Get role workspace (composite role data)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Role workspace
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+
+  /api/v1/rbac/roles/{id}/permissions:
+    get:
+      tags: [RBAC]
+      operationId: getRolePermissions
+      summary: List permissions assigned to a role
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Role permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        permissionId:
+                          type: string
+                        moduleId:
+                          type: string
+    post:
+      tags: [RBAC]
+      operationId: setRolePermissions
+      summary: Set permissions for a role
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permissions]
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    type: object
+                    required: [permissionId]
+                    properties:
+                      permissionId:
+                        type: string
+                      moduleId:
+                        type: string
+      responses:
+        '200':
+          description: Permissions set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+
+  /api/v1/rbac/permissions:
+    get:
+      tags: [RBAC]
+      operationId: listPermissions
+      summary: List all permissions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Permission list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionResponse'
+    post:
+      tags: [RBAC]
+      operationId: createPermission
+      summary: Create a new permission
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionRequest'
+      responses:
+        '201':
+          description: Permission created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionResponse'
+        '409':
+          $ref: 'auth.yaml#/components/responses/FlatError409'
+
+  /api/v1/rbac/permissions/{id}:
+    put:
+      tags: [RBAC]
+      operationId: updatePermission
+      summary: Update a permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionRequest'
+      responses:
+        '200':
+          description: Permission updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermissionResponse'
+    delete:
+      tags: [RBAC]
+      operationId: deletePermission
+      summary: Delete a permission (not system permissions)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Permission deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+        '403':
+          description: Cannot delete system permission
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/common.yaml#/components/schemas/FlatErrorResponse'
+
+  /api/v1/rbac/permissions/{id}/assignments:
+    get:
+      tags: [RBAC]
+      operationId: getPermissionAssignments
+      summary: Get roles assigned to a permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Permission assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      roles:
+                        type: array
+                        items:
+                          type: object
+
+  /api/v1/rbac/modules:
+    get:
+      tags: [RBAC]
+      operationId: listModules
+      summary: List all modules
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Module list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleResponse'
+    post:
+      tags: [RBAC]
+      operationId: createModule
+      summary: Create a new module
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModuleRequest'
+      responses:
+        '201':
+          description: Module created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ModuleResponse'
+
+  /api/v1/rbac/modules/tree:
+    get:
+      tags: [RBAC]
+      operationId: getModuleTree
+      summary: Get module tree with nested children and permissions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Module tree
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleTreeNode'
+
+  /api/v1/rbac/modules/{id}:
+    put:
+      tags: [RBAC]
+      operationId: updateModule
+      summary: Update a module
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModuleRequest'
+      responses:
+        '200':
+          description: Module updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ModuleResponse'
+    delete:
+      tags: [RBAC]
+      operationId: deleteModule
+      summary: Delete a module (not system modules)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Module deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+        '403':
+          description: Cannot delete system module
+
+  /api/v1/rbac/modules/{id}/permissions:
+    post:
+      tags: [RBAC]
+      operationId: addModulePermission
+      summary: Add a permission to a module
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Permission added to module
+
+  /api/v1/rbac/modules/{id}/permissions/{permissionId}:
+    delete:
+      tags: [RBAC]
+      operationId: removeModulePermission
+      summary: Remove a permission from a module
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission removed from module
+
+components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    RoleResponse:
+      type: object
+      required: [id, code, name, isActive, sortOrder]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    CreateRoleRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        sortOrder:
+          type: integer
+
+    UpdateRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    PermissionResponse:
+      type: object
+      required: [id, code, name]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        moduleId:
+          type: string
+        isSystem:
+          type: boolean
+
+    CreatePermissionRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        moduleId:
+          type: string
+
+    UpdatePermissionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    ModuleResponse:
+      type: object
+      required: [id, code, name]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        isSystem:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    CreateModuleRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: object
+            required: [code, name]
+            properties:
+              code:
+                type: string
+              name:
+                type: string
+
+    UpdateModuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        sortOrder:
+          type: integer
+
+    ModuleTreeNode:
+      type: object
+      required: [id, code, name]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleTreeNode'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionResponse'

@@ -1,0 +1,150 @@
+paths:
+  /api/v1/tenants:
+    get:
+      tags: [Tenants]
+      operationId: listTenants
+      summary: List all tenants
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tenant list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantResponse'
+    post:
+      tags: [Tenants]
+      operationId: createTenant
+      summary: Create a new tenant
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTenantRequest'
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TenantResponse'
+
+  /api/v1/tenants/{id}:
+    get:
+      tags: [Tenants]
+      operationId: getTenant
+      summary: Get a tenant by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tenant found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TenantResponse'
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+    patch:
+      tags: [Tenants]
+      operationId: updateTenant
+      summary: Update a tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTenantRequest'
+      responses:
+        '200':
+          description: Tenant updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TenantResponse'
+
+components:
+  schemas:
+    TenantResponse:
+      type: object
+      required: [id, name, slug, isActive, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        domain:
+          type: string
+        isActive:
+          type: boolean
+        settings:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateTenantRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        domain:
+          type: string
+        settings:
+          type: object
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        isActive:
+          type: boolean
+        settings:
+          type: object

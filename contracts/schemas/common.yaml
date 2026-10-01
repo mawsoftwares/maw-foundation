@@ -1,0 +1,201 @@
+components:
+  schemas:
+    # --- Standard Envelopes ---
+
+    ApiSuccessResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data: {}
+        message:
+          type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    ApiErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          const: false
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+        details:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+            - type: object
+        requestId:
+          type: string
+
+    FieldError:
+      type: object
+      required: [message]
+      properties:
+        field:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+
+    # --- Auth-style flat error (used by auth/RBAC routes) ---
+
+    FlatErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        violations:
+          type: array
+          items:
+            type: string
+        retryAfterMs:
+          type: integer
+
+    # --- Pagination ---
+
+    ResponseMeta:
+      type: object
+      properties:
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        processingTimeMs:
+          type: number
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginationMeta:
+      type: object
+      required: [page, pageSize, total, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+
+    # --- Error Codes ---
+
+    ErrorCode:
+      type: string
+      enum:
+        - UNAUTHORIZED
+        - TOKEN_EXPIRED
+        - INVALID_CREDENTIALS
+        - SESSION_EXPIRED
+        - FORBIDDEN
+        - OPERATION_NOT_ALLOWED
+        - FEATURE_DISABLED
+        - ACCOUNT_DISABLED
+        - NOT_FOUND
+        - CONFLICT
+        - ALREADY_EXISTS
+        - DUPLICATE_EMAIL
+        - VALIDATION_FAILED
+        - INVALID_INPUT
+        - MISSING_FIELD
+        - RATE_LIMITED
+        - LIMIT_EXCEEDED
+        - ACCOUNT_LOCKED
+        - INTERNAL
+        - MFA_REQUIRED
+        - INVALID_OTP
+        - PASSWORD_POLICY
+        - ACCOUNT_PENDING_VERIFICATION
+
+    # --- Common types ---
+
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    Session:
+      type: object
+      required: [userId, tenantId, role, audience]
+      properties:
+        userId:
+          type: string
+        tenantId:
+          type: string
+        role:
+          type: string
+        accountStatus:
+          type: string
+        audience:
+          type: string
+        entitlements:
+          type: array
+          items:
+            type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        rolePermissions:
+          type: array
+          items:
+            type: string
+        scopeId:
+          type: string
+          nullable: true
+
+    SessionInfo:
+      type: object
+      required: [id, createdAt, lastActiveAt]
+      properties:
+        id:
+          type: string
+        deviceInfo:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        lastActiveAt:
+          type: string
+          format: date-time
+
+    # --- Account Status ---
+
+    AccountStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - DISABLED
+        - LOCKED
+        - PENDING_VERIFICATION
+        - SUSPENDED

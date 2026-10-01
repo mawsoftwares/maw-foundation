@@ -1,0 +1,140 @@
+paths:
+  /files/upload:
+    post:
+      tags: [Files]
+      operationId: uploadFile
+      summary: Upload a file (multipart)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                category:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+                  size:
+                    type: integer
+                  mimeType:
+                    type: string
+        '400':
+          $ref: 'auth.yaml#/components/responses/FlatError400'
+
+  /files:
+    get:
+      tags: [Files]
+      operationId: listFiles
+      summary: List uploaded files
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileMetadata'
+
+  /files/url/{key}:
+    get:
+      tags: [Files]
+      operationId: getFileUrl
+      summary: Get download URL for a file
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+
+  /files/{key}:
+    delete:
+      tags: [Files]
+      operationId: deleteFile
+      summary: Delete a file
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    const: true
+        '404':
+          $ref: 'auth.yaml#/components/responses/FlatError404'
+
+components:
+  schemas:
+    FileMetadata:
+      type: object
+      required: [key, mimeType, size, createdAt]
+      properties:
+        key:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+        category:
+          type: string
+        description:
+          type: string
+        uploadedBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
