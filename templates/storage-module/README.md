@@ -8,6 +8,9 @@ generic attachments, RBAC, tenant isolation, and an orphan-cleanup job. Full des
 The canonical, tested copy lives in `apps/sample-server/src/modules/storage` (+ `apps/sample-web/src/features/storage*`).
 This template is a snapshot of it — re-copy when the sample changes.
 
+API contract: [`contracts/openapi/storage.yaml`](../../contracts/openapi/storage.yaml) — any backend serving this module must follow it
+(the bundled `storage.contract.test.ts` expects the repo's `contracts/` folder; adjust or drop it when copying into a product repo).
+
 ## Copy
 
 ```bash
