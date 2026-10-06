@@ -221,6 +221,29 @@ STORAGE_TEST_S3_BUCKET=client-files STORAGE_TEST_S3_REGION=ap-south-1 \
   INVALID_FILE | INVALID_INPUT | CONFLICT` (prefixed `STORAGE_`). The shared SDK `ErrorCode` union
   was deliberately not extended.
 
+## Reusable UI components
+
+`apps/sample-web/src/features/storage/` (copied into `templates/storage-module/web/storage/`). They depend only on the
+`StorageApi` interface, so any project plugs in its own transport:
+
+```tsx
+import { StorageManager, FileUploader, FileDownloadButton, createStorageApi } from './storage';
+
+const api = createStorageApi((path, init) => myClient.request(path, init));   // any authenticated JSON transport
+
+<StorageManager api={api} can={{ upload: true, deleteFile: false }} accept="image/*,.pdf" maxSizeBytes={10_000_000} notify={toast} />
+<FileUploader api={api} folderId={folderId} accept="image/*" onUploaded={(f) => attach(f.id)} />   // e.g. inside an invoice form
+<FileDownloadButton api={api} fileId={id} label="Download" />                                      // or disposition="inline"
+```
+
+- **StorageManager** — folders, breadcrumbs, search, sort, list/grid, drag & drop upload, in-app preview (image / PDF / video / audio),
+  download, delete with confirmation. Rows are touch-sized on phones, the preview becomes a bottom sheet.
+- **FileUploader / `useUploadQueue`** — drag & drop or tap, real per-file progress (XHR), 2 parallel uploads, cancel, retry,
+  client-side size/type checks. For custom UIs use the hook + `UploadPanel`.
+- **FileDownloadButton** — fetches a fresh signed URL on click, so links never expire in the page.
+- For React Native, reuse `StorageApi`, `createStorageApi` and `useUploadQueue` (swap `putWithProgress` for `FileSystem.uploadAsync` /
+  `fetch` with a blob) and render with `ui-native` components.
+
 ## API summary
 
 | Method & path | Permission |

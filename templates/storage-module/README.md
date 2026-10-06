@@ -12,7 +12,7 @@ This template is a snapshot of it — re-copy when the sample changes.
 
 ```bash
 cp -r templates/storage-module/server apps/my-server/src/modules/storage
-cp    templates/storage-module/web/*   apps/my-web/src/features/
+cp -r templates/storage-module/web/*  apps/my-web/src/features/      # storage/ (reusable components) + page + settings
 cp    templates/storage-module/server/migrations/storage.up.sql   apps/my-server/migrations/<NEXT>_storage.up.sql
 cp    templates/storage-module/server/migrations/storage.down.sql apps/my-server/migrations/<NEXT>_storage.down.sql
 ```

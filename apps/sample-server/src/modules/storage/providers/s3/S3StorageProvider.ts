@@ -48,6 +48,10 @@ export class S3StorageProvider implements StorageProvider {
     this.prefix = config.basePath ? `${config.basePath}/` : '';
     this.client = new S3Client({
       region: config.region,
+      // Newer SDKs add a CRC32 of the (empty) request body to presigned PUT URLs, which S3/R2 then
+      // reject against the real upload. Only compute/validate checksums when an operation requires them.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
       ...(config.endpoint ? { endpoint: config.endpoint, forcePathStyle: true } : {}),
       ...(config.credentials ? { credentials: config.credentials } : {}),
     });

@@ -23,7 +23,7 @@ import {
   updateConfiguration,
   type ConfigurationInput,
   type StorageConfiguration,
-} from './storage-api';
+} from './storage-config-api';
 
 interface FormState {
   provider: 'local' | 's3';

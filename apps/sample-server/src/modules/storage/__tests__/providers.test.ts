@@ -169,6 +169,8 @@ describe('S3StorageProvider signed URLs (offline signing)', () => {
     const signedHeaders = url.searchParams.get('X-Amz-SignedHeaders') ?? '';
     expect(signedHeaders).toContain('content-type');
     expect(signedHeaders).toContain('content-length');
+    // A body checksum baked into the URL would make real uploads fail (it is computed for an empty body).
+    expect([...url.searchParams.keys()].filter((k) => k.toLowerCase().includes('checksum'))).toEqual([]);
     expect(out.url).not.toContain(config.credentials!.secretAccessKey);
     expect(new Date(out.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });

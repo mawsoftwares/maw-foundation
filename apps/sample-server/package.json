@@ -6,6 +6,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",
     "@aws-sdk/s3-request-presigner": "^3.1121.0",
+    "@azure/storage-blob": "^12",
     "@mawsoftwares/api": "workspace:*",
     "@mawsoftwares/audit": "workspace:*",
     "@mawsoftwares/auth-core": "workspace:*",
