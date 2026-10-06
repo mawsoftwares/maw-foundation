@@ -1,4 +1,4 @@
-export const STORAGE_PROVIDER_TYPES = ['local', 's3'] as const;
+export const STORAGE_PROVIDER_TYPES = ['local', 's3', 'r2', 'azure'] as const;
 export type StorageProviderType = (typeof STORAGE_PROVIDER_TYPES)[number];
 
 export const StorageFileStatus = {
@@ -161,9 +161,12 @@ export interface StorageFolderView {
 export interface CreateConfigurationInput {
   readonly provider: StorageProviderType;
   readonly name: string;
+  /** Bucket (S3/R2) or container (Azure). */
   readonly bucket?: string | null;
   readonly region?: string | null;
   readonly endpoint?: string | null;
+  /** Cloudflare account id (R2). */
+  readonly accountId?: string | null;
   readonly basePath?: string | null;
   readonly credentials?: StorageCredentials | null;
   readonly isDefault?: boolean;
@@ -174,6 +177,7 @@ export interface UpdateConfigurationInput {
   readonly bucket?: string | null;
   readonly region?: string | null;
   readonly endpoint?: string | null;
+  readonly accountId?: string | null;
   readonly basePath?: string | null;
   /** Omitted ⇒ keep existing credentials. */
   readonly credentials?: StorageCredentials;

@@ -258,24 +258,32 @@ const api = createStorageApi((path, init) => myClient.request(path, init));   //
 | `POST /storage/attachments` · `GET /storage/attachments?entityType&entityId[&category]` · `DELETE /storage/attachments/:id` | `Upload_` / `Read_` / `Delete_StorageFiles` |
 | `/storage/configurations` (+ `/:id`, `/:id/test`) | `Manage_StorageConfiguration` |
 
-## 10. Adding another provider (example: Cloudflare R2)
+## 10. Adding another provider
 
-R2 is S3-compatible, so the quickest route is configuration only:
-`provider: "s3"` with `endpoint: "https://<account>.r2.cloudflarestorage.com"`, `region: "auto"`.
+Supported today: `local`, `s3` (also any S3-compatible store via **Endpoint**), `r2`, `azure`.
 
-For a provider with its own SDK (e.g. native R2, GCS, Azure):
+| Provider | Admin enters | Notes |
+|---|---|---|
+| Cloudflare R2 (`r2`) | Account ID, bucket, R2 access key + secret | Endpoint derived as `https://<account>.r2.cloudflarestorage.com`, region `auto`. Optional custom endpoint for EU/FedRAMP jurisdictions. Buckets need a CORS rule (`PUT`, `GET`, `Content-Type`). |
+| Azure Blob (`azure`) | Container, storage account name + account key | Direct upload with a create+write **SAS** URL; client must send `x-ms-blob-type: BlockBlob` (returned in `headers`). A SAS cannot pin upload size, so size/type are enforced by the completion check. Configure Blob-service CORS (`PUT`, `GET`, allowed headers `Content-Type, x-ms-blob-type`, expose `ETag`). `endpoint` is only for Azurite/sovereign clouds. |
 
-1. Create `providers/r2/R2StorageProvider.ts` implementing `StorageProvider`
-   (constructor takes `StorageProviderRuntimeConfig`; keep SDK calls and error mapping inside it;
-   prefix keys with `config.basePath`; reuse `assertSafeObjectKey`).
-2. Register it in `providers/index.ts`:
-   `.register('r2', (config) => new R2StorageProvider(config))`.
-3. Add `'r2'` to `STORAGE_PROVIDER_TYPES` in `types/storage.types.ts`, and insert a row in
-   `maw_storage_providers` (new migration: `INSERT … ('r2','Cloudflare R2','r2')`).
-4. Add its validation rules to `validateCreateConfiguration` if it needs different fields.
-5. Add a signing/contract test next to `providers.test.ts`.
+Each provider describes itself with a **descriptor** (`core/StorageProviderDescriptor.ts`): the settings fields it needs, how
+they map onto the stored columns (`normalize`), and how its credential pair is labelled. The API validates through it and
+`GET /storage/providers` exposes it, so the **Storage Settings screen builds its form from the descriptor — no UI change per provider**.
 
-No service, controller or repository changes are required.
+To add a provider (e.g. Google Cloud Storage):
+
+1. `providers/gcs/GcsStorageProvider.ts` implementing `StorageProvider` (constructor takes `StorageProviderRuntimeConfig`; keep SDK
+   calls and error mapping inside; prefix keys with `config.basePath`; reuse `assertSafeObjectKey`; log only error names).
+2. A descriptor in `providers/descriptors.ts` (fields, credential labels, `normalize`).
+3. One line in `providers/index.ts`: `.register('gcs', (c) => new GcsStorageProvider(c), GCS_DESCRIPTOR)`.
+4. Add `'gcs'` to `STORAGE_PROVIDER_TYPES` and a migration inserting its `maw_storage_providers` row (see `030_storage_providers_r2_azure`).
+5. A signing test in `providers.test.ts`, plus an opt-in live test (see `r2-azure.live.integration.test.ts`).
+
+No service, controller, repository or UI change is required.
+
+> **S3 checksum note:** the S3 client is created with `requestChecksumCalculation: 'WHEN_REQUIRED'`. Newer AWS SDKs otherwise add a CRC32 of
+> the empty body to presigned PUT URLs, and S3/R2 then reject the real upload. A test asserts no checksum parameter is signed.
 
 ## Tests
 

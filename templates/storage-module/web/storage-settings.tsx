@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Badge,
   Button,
@@ -19,99 +19,112 @@ import {
   createConfiguration,
   deleteConfiguration,
   listConfigurations,
+  listProviders,
   testConfiguration,
   updateConfiguration,
+  type ConfigFieldName,
   type ConfigurationInput,
+  type ProviderInfo,
   type StorageConfiguration,
 } from './storage-config-api';
 
 interface FormState {
-  provider: 'local' | 's3';
+  provider: string;
   name: string;
-  bucket: string;
-  region: string;
-  endpoint: string;
-  basePath: string;
+  values: Partial<Record<ConfigFieldName, string>>;
   accessKeyId: string;
   secretAccessKey: string;
   isDefault: boolean;
   isActive: boolean;
 }
 
-const EMPTY: FormState = {
-  provider: 's3',
+const emptyForm = (provider: string): FormState => ({
+  provider,
   name: '',
-  bucket: '',
-  region: '',
-  endpoint: '',
-  basePath: '',
+  values: {},
   accessKeyId: '',
   secretAccessKey: '',
   isDefault: false,
   isActive: true,
-};
+});
 
-function toForm(c: StorageConfiguration): FormState {
-  return {
-    provider: c.provider,
-    name: c.name,
-    bucket: c.bucket ?? '',
-    region: c.region ?? '',
-    endpoint: c.endpoint ?? '',
-    basePath: c.basePath,
-    accessKeyId: '',
-    secretAccessKey: '',
-    isDefault: c.isDefault,
-    isActive: c.isActive,
-  };
+function storedValue(c: StorageConfiguration, field: ConfigFieldName): string {
+  switch (field) {
+    case 'bucket': return c.bucket ?? '';
+    case 'region': return c.region ?? '';
+    case 'endpoint': return c.endpoint ?? '';
+    case 'basePath': return c.basePath;
+    default: return '';
+  }
 }
 
-function validate(f: FormState, editing: boolean): string | undefined {
+/** Builds the edit form from a stored config, using each field's `prefillFromEndpoint` hint (e.g. R2 account id). */
+function toForm(c: StorageConfiguration, info: ProviderInfo | undefined): FormState {
+  const values: Partial<Record<ConfigFieldName, string>> = {};
+  for (const f of info?.fields ?? []) {
+    let v = storedValue(c, f.name);
+    if (f.prefillFromEndpoint && c.endpoint) v = new RegExp(f.prefillFromEndpoint).exec(c.endpoint)?.[1] ?? '';
+    // A derived endpoint is not something the admin typed; only show it when it differs from the derived default.
+    if (f.name === 'endpoint' && info?.fields.some((x) => x.prefillFromEndpoint) && /^https:\/\/[^./]+\.r2\./.test(v)) v = '';
+    values[f.name] = v;
+  }
+  return { provider: c.provider, name: c.name, values, accessKeyId: '', secretAccessKey: '', isDefault: c.isDefault, isActive: c.isActive };
+}
+
+function validate(f: FormState, info: ProviderInfo, editing: boolean): string | undefined {
   if (!f.name.trim()) return 'Name is required';
-  if (f.provider === 's3') {
-    if (!f.bucket.trim()) return 'Bucket is required';
-    if (!f.region.trim()) return 'Region is required';
+  for (const field of info.fields) {
+    const skip = editing && field.name === 'accountId'; // an unchanged account id is kept
+    if (field.required && !skip && !(f.values[field.name] ?? '').trim()) return `${field.label} is required`;
   }
-  if (Boolean(f.accessKeyId.trim()) !== Boolean(f.secretAccessKey.trim())) {
-    return editing
-      ? 'Enter both access key and secret to replace credentials, or leave both blank to keep them'
-      : 'Enter both access key and secret, or leave both blank to use the server credentials';
-  }
+  const hasKey = f.accessKeyId.trim().length > 0;
+  const hasSecret = f.secretAccessKey.trim().length > 0;
+  if (hasKey !== hasSecret) return `Enter both ${info.credentials?.accessKeyLabel ?? 'access key'} and ${info.credentials?.secretLabel ?? 'secret'}, or leave both blank`;
+  if (!editing && info.credentials?.required && !hasKey) return `${info.credentials.accessKeyLabel} and ${info.credentials.secretLabel} are required`;
   return undefined;
 }
 
-function toInput(f: FormState, editing: boolean): ConfigurationInput {
-  const s3 = f.provider === 's3';
-  const credentials = f.accessKeyId.trim()
-    ? { accessKeyId: f.accessKeyId.trim(), secretAccessKey: f.secretAccessKey.trim() }
-    : undefined;
-  return {
+function toInput(f: FormState, info: ProviderInfo, editing: boolean): ConfigurationInput {
+  const input: Record<string, unknown> = {
     ...(editing ? {} : { provider: f.provider }),
     name: f.name.trim(),
-    basePath: f.basePath.trim() || null,
-    ...(s3 ? { bucket: f.bucket.trim(), region: f.region.trim(), endpoint: f.endpoint.trim() || null } : {}),
-    ...(s3 && credentials ? { credentials } : {}),
     isDefault: f.isDefault,
     ...(editing ? { isActive: f.isActive } : {}),
   };
+  for (const field of info.fields) {
+    const v = (f.values[field.name] ?? '').trim();
+    if (editing && field.name === 'accountId' && !v) continue;
+    input[field.name] = v || null;
+  }
+  if (info.credentials && f.accessKeyId.trim()) {
+    input['credentials'] = { accessKeyId: f.accessKeyId.trim(), secretAccessKey: f.secretAccessKey.trim() };
+  }
+  return input as unknown as ConfigurationInput;
 }
 
 export function StorageSettingsView(): ReactNode {
   const toast = useToast();
   const [configs, setConfigs] = useState<StorageConfiguration[]>([]);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<StorageConfiguration | 'new'>();
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const [form, setForm] = useState<FormState>(emptyForm('s3'));
   const [formError, setFormError] = useState<string>();
   const [toDelete, setToDelete] = useState<StorageConfiguration>();
+
+  const infoOf = useCallback((type: string) => providers.find((p) => p.type === type), [providers]);
+  const labelOf = (type: string): string => infoOf(type)?.label ?? type;
 
   const load = useCallback(() => {
     setLoading(true);
     setError(undefined);
-    listConfigurations()
-      .then(setConfigs)
+    Promise.all([listConfigurations(), listProviders()])
+      .then(([c, p]) => {
+        setConfigs(c);
+        setProviders(p);
+      })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -138,15 +151,18 @@ export function StorageSettingsView(): ReactNode {
 
   const openForm = (target: StorageConfiguration | 'new'): void => {
     setEditing(target);
-    setForm(target === 'new' ? EMPTY : toForm(target));
+    setForm(target === 'new' ? emptyForm(providers.find((p) => p.type === 's3')?.type ?? providers[0]?.type ?? 's3') : toForm(target, infoOf(target.provider)));
     setFormError(undefined);
   };
 
+  const info = infoOf(form.provider);
+  const isEdit = editing !== undefined && editing !== 'new';
+
   const save = async (): Promise<void> => {
-    const isEdit = editing !== 'new' && editing !== undefined;
-    const problem = validate(form, isEdit);
+    if (!info) return;
+    const problem = validate(form, info, isEdit);
     if (problem) return setFormError(problem);
-    const input = toInput(form, isEdit);
+    const input = toInput(form, info, isEdit);
     const ok = await run(
       () => (isEdit ? updateConfiguration(editing.id, input) : createConfiguration(input)),
       isEdit ? 'Configuration updated' : 'Configuration created',
@@ -162,51 +178,57 @@ export function StorageSettingsView(): ReactNode {
     });
   };
 
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]): void => setForm((f) => ({ ...f, [key]: value }));
-
-  const columns: ColumnDef<StorageConfiguration>[] = [
-    { key: 'name', header: 'Name' },
-    { key: 'provider', header: 'Provider', width: 110, render: (c) => <Badge variant="info">{c.provider === 's3' ? 'S3' : 'Local disk'}</Badge> },
-    {
-      key: 'bucket',
-      header: 'Bucket / Region',
-      render: (c) => (c.provider === 's3' ? `${c.bucket ?? ''} · ${c.region ?? ''}${c.endpoint ? ` · ${c.endpoint}` : ''}` : '—'),
-    },
-    { key: 'basePath', header: 'Base path', render: (c) => c.basePath || '—' },
-    { key: 'hasCredentials', header: 'Credentials', width: 120, render: (c) => (c.provider === 's3' ? (c.hasCredentials ? 'Stored (hidden)' : 'Server default') : '—') },
-    {
-      key: 'isDefault',
-      header: 'Status',
-      width: 150,
-      render: (c) => (
-        <>
-          {c.isDefault && <Badge variant="success">Default</Badge>} {!c.isActive && <Badge variant="warning">Inactive</Badge>}
-        </>
-      ),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      width: 340,
-      render: (c) => (
-        <>
-          <Button variant="ghost" onClick={() => test(c)} disabled={busy}>Test</Button>
-          <Button variant="ghost" onClick={() => openForm(c)}>Edit</Button>
-          {!c.isDefault && c.isActive && (
-            <Button variant="ghost" onClick={() => void run(() => updateConfiguration(c.id, { isDefault: true }), 'Default storage changed')}>Make default</Button>
-          )}
-          {!c.isDefault && (
-            <Button variant="ghost" style={{ color: 'var(--maw-danger)' }} onClick={() => setToDelete(c)}>Delete</Button>
-          )}
-        </>
-      ),
-    },
-  ];
+  const columns = useMemo<ColumnDef<StorageConfiguration>[]>(
+    () => [
+      { key: 'name', header: 'Name' },
+      { key: 'provider', header: 'Provider', width: 190, render: (c) => <Badge variant="info">{labelOf(c.provider)}</Badge> },
+      {
+        key: 'bucket',
+        header: 'Bucket / Container',
+        render: (c) => (c.bucket ? `${c.bucket}${c.region && c.region !== 'auto' ? ` · ${c.region}` : ''}` : '—'),
+      },
+      { key: 'basePath', header: 'Base path', render: (c) => c.basePath || '—' },
+      {
+        key: 'hasCredentials',
+        header: 'Credentials',
+        width: 130,
+        render: (c) => (c.hasCredentials ? 'Stored (hidden)' : infoOf(c.provider)?.credentials ? 'Server default' : '—'),
+      },
+      {
+        key: 'isDefault',
+        header: 'Status',
+        width: 150,
+        render: (c) => (
+          <>
+            {c.isDefault && <Badge variant="success">Default</Badge>} {!c.isActive && <Badge variant="warning">Inactive</Badge>}
+          </>
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        width: 340,
+        render: (c) => (
+          <>
+            <Button variant="ghost" onClick={() => test(c)} disabled={busy}>Test</Button>
+            <Button variant="ghost" onClick={() => openForm(c)}>Edit</Button>
+            {!c.isDefault && c.isActive && (
+              <Button variant="ghost" onClick={() => void run(() => updateConfiguration(c.id, { isDefault: true }), 'Default storage changed')}>Make default</Button>
+            )}
+            {!c.isDefault && (
+              <Button variant="ghost" style={{ color: 'var(--maw-danger)' }} onClick={() => setToDelete(c)}>Delete</Button>
+            )}
+          </>
+        ),
+      },
+    ],
+    [providers, busy],
+  );
 
   if (error) return <ErrorState title="Failed to load storage settings" message={error} retry={load} />;
-  if (loading && configs.length === 0) return <PageLoader message="Loading storage settings..." />;
+  if (loading && configs.length === 0 && providers.length === 0) return <PageLoader message="Loading storage settings..." />;
 
-  const isEdit = editing !== undefined && editing !== 'new';
+  const setField = (name: ConfigFieldName, value: string): void => setForm((f) => ({ ...f, values: { ...f.values, [name]: value } }));
 
   return (
     <>
@@ -226,7 +248,7 @@ export function StorageSettingsView(): ReactNode {
         footer={
           <>
             <Button variant="ghost" onClick={() => setEditing(undefined)}>Cancel</Button>
-            <Button onClick={() => void save()} disabled={busy}>{busy ? 'Saving...' : 'Save'}</Button>
+            <Button onClick={() => void save()} disabled={busy || !info}>{busy ? 'Saving...' : 'Save'}</Button>
           </>
         }
       >
@@ -235,36 +257,36 @@ export function StorageSettingsView(): ReactNode {
           label="Provider"
           value={form.provider}
           disabled={isEdit}
-          onChange={(e) => set('provider', e.target.value as FormState['provider'])}
-          options={[{ value: 's3', label: 'Amazon S3 / S3-compatible' }, { value: 'local', label: 'Local disk (server)' }]}
+          onChange={(e) => setForm({ ...emptyForm(e.target.value), name: form.name, isDefault: form.isDefault })}
+          options={providers.map((p) => ({ value: p.type, label: p.label }))}
         />
+        {info && <p style={{ margin: '0 0 var(--maw-space-md)', color: 'var(--maw-fgMuted)', fontSize: 'var(--maw-text-sm)' }}>{info.description}</p>}
         <FormField label="Name" required>
-          <TextField value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. Production S3" />
+          <TextField value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Production storage" />
         </FormField>
-        {form.provider === 's3' && (
+        {info?.fields.map((field) => (
+          <FormField key={field.name} label={field.label} required={field.required && !(isEdit && field.name === 'accountId')}>
+            <TextField
+              value={form.values[field.name] ?? ''}
+              onChange={(e) => setField(field.name, e.target.value)}
+              placeholder={field.placeholder}
+            />
+            {field.help && <small style={{ color: 'var(--maw-fgMuted)' }}>{field.help}</small>}
+          </FormField>
+        ))}
+        {info?.credentials && (
           <>
-            <FormField label="Bucket" required>
-              <TextField value={form.bucket} onChange={(e) => set('bucket', e.target.value)} placeholder="client-files" />
+            <FormField label={isEdit ? `${info.credentials.accessKeyLabel} (leave blank to keep current)` : info.credentials.accessKeyLabel} required={info.credentials.required && !isEdit}>
+              <TextField value={form.accessKeyId} onChange={(e) => setForm({ ...form, accessKeyId: e.target.value })} autoComplete="off" />
             </FormField>
-            <FormField label="Region" required>
-              <TextField value={form.region} onChange={(e) => set('region', e.target.value)} placeholder="ap-south-1" />
-            </FormField>
-            <FormField label="Endpoint (only for MinIO / R2 / other S3-compatible)">
-              <TextField value={form.endpoint} onChange={(e) => set('endpoint', e.target.value)} placeholder="https://..." />
-            </FormField>
-            <FormField label={isEdit ? 'Access key ID (leave blank to keep current)' : 'Access key ID (blank = server credentials)'}>
-              <TextField value={form.accessKeyId} onChange={(e) => set('accessKeyId', e.target.value)} autoComplete="off" />
-            </FormField>
-            <FormField label={isEdit ? 'Secret access key (leave blank to keep current)' : 'Secret access key'}>
-              <TextField type="password" value={form.secretAccessKey} onChange={(e) => set('secretAccessKey', e.target.value)} autoComplete="new-password" />
+            <FormField label={isEdit ? `${info.credentials.secretLabel} (leave blank to keep current)` : info.credentials.secretLabel} required={info.credentials.required && !isEdit}>
+              <TextField type="password" value={form.secretAccessKey} onChange={(e) => setForm({ ...form, secretAccessKey: e.target.value })} autoComplete="new-password" />
+              {info.credentials.help && <small style={{ color: 'var(--maw-fgMuted)' }}>{info.credentials.help}</small>}
             </FormField>
           </>
         )}
-        <FormField label="Base path (optional folder prefix inside the bucket / storage root)">
-          <TextField value={form.basePath} onChange={(e) => set('basePath', e.target.value)} placeholder="maw/prod" />
-        </FormField>
-        <Checkbox label="Use as default storage" checked={form.isDefault} onChange={(v) => set('isDefault', v)} />
-        {isEdit && <Checkbox label="Active" checked={form.isActive} onChange={(v) => set('isActive', v)} />}
+        <Checkbox label="Use as default storage" checked={form.isDefault} onChange={(v) => setForm({ ...form, isDefault: v })} />
+        {isEdit && <Checkbox label="Active" checked={form.isActive} onChange={(v) => setForm({ ...form, isActive: v })} />}
       </Modal>
 
       <ConfirmationDialog

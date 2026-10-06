@@ -13,7 +13,12 @@ import {
   LocalStorageProvider,
   LocalUrlSigner,
   S3StorageProvider,
+  S3_DESCRIPTOR,
+  R2StorageProvider,
+  AzureBlobStorageProvider,
 } from '../providers';
+
+const AZURE_KEY = Buffer.from('k'.repeat(32)).toString('base64');
 import { buildObjectKey, assertSafeObjectKey, normalizeBasePath, extensionOf } from '../utils/object-key.util';
 
 const SECRET = 'unit-test-signing-secret-123456';
@@ -169,6 +174,8 @@ describe('S3StorageProvider signed URLs (offline signing)', () => {
     const signedHeaders = url.searchParams.get('X-Amz-SignedHeaders') ?? '';
     expect(signedHeaders).toContain('content-type');
     expect(signedHeaders).toContain('content-length');
+    // A body checksum baked into the URL would make real uploads fail (it is computed for an empty body).
+    expect([...url.searchParams.keys()].filter((k) => k.toLowerCase().includes('checksum'))).toEqual([]);
     expect(out.url).not.toContain(config.credentials!.secretAccessKey);
     expect(new Date(out.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });
@@ -202,15 +209,19 @@ describe('StorageProviderFactory', () => {
 
   it('builds the right provider from configuration alone', () => {
     const factory = createDefaultProviderFactory({ localRoot: os.tmpdir(), localSigner: new LocalUrlSigner(SECRET), publicBaseUrl: 'http://x' });
-    expect(factory.supportedTypes().sort()).toEqual(['local', 's3']);
+    expect(factory.supportedTypes().sort()).toEqual(['azure', 'local', 'r2', 's3']);
     expect(factory.get(runtime('local'))).toBeInstanceOf(LocalStorageProvider);
     expect(factory.get(runtime('s3'))).toBeInstanceOf(S3StorageProvider);
+    expect(factory.get({ ...runtime('r2'), endpoint: 'https://acct123456.r2.cloudflarestorage.com' })).toBeInstanceOf(R2StorageProvider);
+    expect(
+      factory.get({ ...runtime('azure'), credentials: { accessKeyId: 'acct', secretAccessKey: AZURE_KEY } }),
+    ).toBeInstanceOf(AzureBlobStorageProvider);
   });
 
   it('throws STORAGE_PROVIDER_NOT_FOUND for unknown providers and accepts new registrations', () => {
     const factory = new StorageProviderFactory();
     expect(() => factory.get(runtime('s3'))).toThrowError(expect.objectContaining({ reason: 'STORAGE_PROVIDER_NOT_FOUND' }));
-    factory.register('s3', () => ({}) as never);
+    factory.register('s3', () => ({}) as never, S3_DESCRIPTOR);
     expect(factory.isSupported('s3')).toBe(true);
     expect(factory.get(runtime('s3'))).toEqual({});
   });
@@ -236,5 +247,67 @@ describe('object key utilities', () => {
     expect(extensionOf('Report.FINAL.PDF')).toBe('pdf');
     expect(extensionOf('noext')).toBe('');
     expect(extensionOf('.hidden')).toBe('');
+  });
+});
+
+describe('R2StorageProvider (offline signing)', () => {
+  const config: StorageProviderRuntimeConfig = {
+    configId: 'c1', tenantId: 't1', providerType: 'r2', bucketName: 'client-files', region: 'auto',
+    endpoint: 'https://abc123def456.r2.cloudflarestorage.com', basePath: 'maw', 
+    credentials: { accessKeyId: 'r2accesskeyid', secretAccessKey: 'r2secretaccesskeyvalue1234567890' },
+  };
+
+  it('signs path-style PUT/GET URLs against the account endpoint with region "auto" and no body checksum', async () => {
+    const p = new R2StorageProvider(config);
+    const up = new URL((await p.createUploadUrl({ key: KEY, contentType: 'application/pdf', contentLength: 10, expiresInSeconds: 600 })).url);
+    expect(up.host).toBe('abc123def456.r2.cloudflarestorage.com');
+    expect(up.pathname).toBe(`/client-files/maw/${KEY}`);
+    expect(up.searchParams.get('X-Amz-Credential')).toContain('/auto/s3/aws4_request');
+    expect(up.searchParams.get('X-Amz-Expires')).toBe('600');
+    expect([...up.searchParams.keys()].filter((k) => k.toLowerCase().includes('checksum'))).toEqual([]);
+    const dl = new URL((await p.createDownloadUrl({ key: KEY, fileName: 'a.pdf', contentType: 'application/pdf', disposition: 'inline', expiresInSeconds: 300 })).url);
+    expect(dl.searchParams.get('response-content-disposition')).toContain('inline');
+  });
+
+  it('requires an account endpoint', () => {
+    expect(() => new R2StorageProvider({ ...config, endpoint: null })).toThrowError(expect.objectContaining({ reason: 'STORAGE_INVALID_INPUT' }));
+  });
+});
+
+describe('AzureBlobStorageProvider (offline SAS signing)', () => {
+  const config: StorageProviderRuntimeConfig = {
+    configId: 'c1', tenantId: 't1', providerType: 'azure', bucketName: 'client-files', region: null, endpoint: null, basePath: 'maw/prod',
+    credentials: { accessKeyId: 'mawstorage', secretAccessKey: AZURE_KEY },
+  };
+
+  it('issues a create+write SAS for direct upload, with the headers Azure requires', async () => {
+    const out = await new AzureBlobStorageProvider(config).createUploadUrl({ key: KEY, contentType: 'image/png', contentLength: 99, expiresInSeconds: 900 });
+    const url = new URL(out.url);
+    expect(out.method).toBe('PUT');
+    expect(out.headers).toEqual({ 'Content-Type': 'image/png', 'x-ms-blob-type': 'BlockBlob' });
+    expect(url.host).toBe('mawstorage.blob.core.windows.net');
+    expect(url.pathname).toBe(`/client-files/maw/prod/${KEY}`);
+    expect(url.searchParams.get('sp')).toBe('cw');
+    expect(url.searchParams.get('spr')).toBe('https');
+    expect(url.searchParams.get('sig')).toBeTruthy();
+    expect(Date.parse(url.searchParams.get('se')!)).toBeGreaterThan(Date.now());
+    expect(out.url).not.toContain(AZURE_KEY);
+  });
+
+  it('issues a read-only SAS for download with disposition and content type overrides', async () => {
+    const out = await new AzureBlobStorageProvider(config).createDownloadUrl({ key: KEY, fileName: 'Invoice 1.pdf', contentType: 'application/pdf', disposition: 'attachment', expiresInSeconds: 300 });
+    const url = new URL(out.url);
+    expect(url.searchParams.get('sp')).toBe('r');
+    expect(url.searchParams.get('rscd')).toContain('attachment; filename="Invoice 1.pdf"');
+    expect(url.searchParams.get('rsct')).toBe('application/pdf');
+  });
+
+  it('supports a custom endpoint (Azurite) and refuses unsafe keys and incomplete config', async () => {
+    const azurite = new AzureBlobStorageProvider({ ...config, endpoint: 'http://127.0.0.1:10000/mawstorage', basePath: '' });
+    const url = new URL((await azurite.createDownloadUrl({ key: KEY, fileName: 'a', contentType: 'a/b', disposition: 'inline', expiresInSeconds: 60 })).url);
+    expect(url.origin).toBe('http://127.0.0.1:10000');
+    await expect(new AzureBlobStorageProvider(config).createUploadUrl({ key: '../x', contentType: 'a/b', contentLength: 1, expiresInSeconds: 60 })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
+    expect(() => new AzureBlobStorageProvider({ ...config, credentials: null })).toThrow();
+    expect(() => new AzureBlobStorageProvider({ ...config, bucketName: null })).toThrow();
   });
 });

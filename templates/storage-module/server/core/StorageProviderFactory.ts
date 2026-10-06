@@ -1,4 +1,5 @@
 import { storageErrors } from './storage.errors';
+import type { ProviderDescriptor } from './StorageProviderDescriptor';
 import type { StorageProvider } from './StorageProvider';
 import type { StorageCredentials, StorageProviderType } from '../types/storage.types';
 
@@ -22,10 +23,23 @@ export type StorageProviderCreator = (config: StorageProviderRuntimeConfig) => S
  */
 export class StorageProviderFactory {
   private readonly creators = new Map<string, StorageProviderCreator>();
+  private readonly descriptorsByType = new Map<string, ProviderDescriptor>();
 
-  register(type: string, creator: StorageProviderCreator): this {
+  /** One call adds a provider: how to build it, and how it describes its own settings. */
+  register(type: string, creator: StorageProviderCreator, descriptor: ProviderDescriptor): this {
     this.creators.set(type, creator);
+    this.descriptorsByType.set(type, descriptor);
     return this;
+  }
+
+  descriptor(type: string): ProviderDescriptor {
+    const found = this.descriptorsByType.get(type);
+    if (!found) throw storageErrors.providerNotFound(type);
+    return found;
+  }
+
+  descriptors(): ProviderDescriptor[] {
+    return [...this.descriptorsByType.values()];
   }
 
   isSupported(type: string): boolean {

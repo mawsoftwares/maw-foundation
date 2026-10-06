@@ -46,6 +46,7 @@ import {
   type StorageProviderType,
 } from '../types/storage.types';
 import { StorageCredentialCipher } from '../utils/credentials.util';
+import { AZURE_DESCRIPTOR, LOCAL_DESCRIPTOR, R2_DESCRIPTOR, S3_DESCRIPTOR } from '../providers/descriptors';
 
 const now = (): string => new Date().toISOString();
 
@@ -53,6 +54,8 @@ export class InMemoryStore {
   providers: StorageProviderRecord[] = [
     { id: 'p-local', code: 'local', name: 'Local', providerType: 'local', isActive: true },
     { id: 'p-s3', code: 's3', name: 'S3', providerType: 's3', isActive: true },
+    { id: 'p-r2', code: 'r2', name: 'R2', providerType: 'r2', isActive: true },
+    { id: 'p-azure', code: 'azure', name: 'Azure', providerType: 'azure', isActive: true },
   ];
   configs = new Map<string, StorageProviderConfig>();
   folders = new Map<string, StorageFolder>();
@@ -337,7 +340,11 @@ export function buildHarness() {
     if (!p) providers.set(config.configId, (p = new FakeProvider(config.configId)));
     return p;
   };
-  factory.register('local', creator).register('s3', creator);
+  factory
+    .register('local', creator, LOCAL_DESCRIPTOR)
+    .register('s3', creator, S3_DESCRIPTOR)
+    .register('r2', creator, R2_DESCRIPTOR)
+    .register('azure', creator, AZURE_DESCRIPTOR);
 
   const encryption = new AesEncryptionService('11'.repeat(32));
   const configRepo = new MemConfigRepo(store);

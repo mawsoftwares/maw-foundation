@@ -11,6 +11,9 @@ import { actorOf, paramOf } from './controller.util';
 export class StorageConfigurationController {
   constructor(private readonly configurations: StorageConfigurationService) {}
 
+  /** Available providers and the settings each needs. */
+  readonly providers: Controller = async () => ok(this.configurations.listProviders());
+
   readonly list: Controller = async ({ context }) => ok(await this.configurations.list(actorOf(context).tenantId));
 
   readonly create: Controller = async ({ body, context }) =>

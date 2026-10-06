@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createLogger } from '@mawsoftwares/sdk';
+import type { ConfigFieldName, ProviderDescriptor } from '../core/StorageProviderDescriptor';
 import type { StorageProvider } from '../core/StorageProvider';
 import type { StorageProviderFactory, StorageProviderRuntimeConfig } from '../core/StorageProviderFactory';
 import { storageErrors } from '../core/storage.errors';
@@ -34,20 +35,27 @@ export class StorageConfigurationService {
     return (await this.deps.configs.list(tenantId)).map(toConfigurationView);
   }
 
+  /** Providers this server can use, with the settings each one needs (drives the admin form). */
+  listProviders(): Array<Omit<ProviderDescriptor, 'normalize'>> {
+    return this.deps.factory.descriptors().map(({ type, label, description, fields, credentials }) => ({ type, label, description, fields, credentials }));
+  }
+
   async create(tenantId: string, input: CreateConfigurationInput): Promise<StorageConfigurationView> {
+    const descriptor = this.deps.factory.descriptor(input.provider);
     const provider = await this.deps.configs.findProviderByType(input.provider);
-    if (!provider || !this.deps.factory.isSupported(input.provider)) throw storageErrors.providerNotFound(input.provider);
-    const isLocal = input.provider === 'local';
-    if (isLocal && input.credentials) throw storageErrors.invalidInput('Local storage does not use credentials');
+    if (!provider) throw storageErrors.providerNotFound(input.provider);
+    this.assertAllowedFields(descriptor, input);
+    this.assertCredentials(descriptor, input.credentials ?? null, true);
+    const settings = descriptor.normalize(input);
 
     const created = await this.deps.configs.create({
       id: randomUUID(),
       tenantId,
       providerId: provider.id,
       name: input.name,
-      bucketName: isLocal ? null : (input.bucket ?? null),
-      region: isLocal ? null : (input.region ?? null),
-      endpoint: isLocal ? null : (input.endpoint ?? null),
+      bucketName: settings.bucket,
+      region: settings.region,
+      endpoint: settings.endpoint,
       basePath: normalizeBasePath(input.basePath),
       encryptedCredentials: input.credentials ? await this.deps.cipher.encrypt(input.credentials) : null,
     });
@@ -60,22 +68,27 @@ export class StorageConfigurationService {
 
   async update(tenantId: string, id: string, input: UpdateConfigurationInput): Promise<StorageConfigurationView> {
     const existing = await this.require(tenantId, id);
-    const isLocal = existing.providerType === 'local';
-    if (isLocal && (input.credentials || input.bucket || input.region || input.endpoint)) {
-      throw storageErrors.invalidInput('Local storage only supports name and base path');
-    }
+    const descriptor = this.deps.factory.descriptor(existing.providerType);
+    this.assertAllowedFields(descriptor, input);
+    this.assertCredentials(descriptor, input.credentials ?? null, false);
     if (input.isActive === false && existing.isDefault) {
       throw storageErrors.conflict('Choose another default configuration before deactivating this one');
     }
-    const bucket = input.bucket === undefined ? existing.bucketName : input.bucket;
-    const region = input.region === undefined ? existing.region : input.region;
-    if (!isLocal && (!bucket || !region)) throw storageErrors.invalidInput('S3 storage requires a bucket and a region');
+
+    const touchesSettings = ['bucket', 'region', 'endpoint', 'accountId'].some((k) => k in input);
+    const settings = touchesSettings
+      ? descriptor.normalize({
+          bucket: input.bucket === undefined ? existing.bucketName : input.bucket,
+          region: input.region === undefined ? existing.region : input.region,
+          // A newly entered account id must win over the endpoint derived from the previous one.
+          endpoint: input.endpoint !== undefined ? input.endpoint : input.accountId ? null : existing.endpoint,
+          accountId: input.accountId,
+        })
+      : undefined;
 
     await this.deps.configs.update(tenantId, id, {
       ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(!isLocal && input.bucket !== undefined ? { bucketName: input.bucket } : {}),
-      ...(!isLocal && input.region !== undefined ? { region: input.region } : {}),
-      ...(!isLocal && input.endpoint !== undefined ? { endpoint: input.endpoint } : {}),
+      ...(settings ? { bucketName: settings.bucket, region: settings.region, endpoint: settings.endpoint } : {}),
       ...(input.basePath !== undefined ? { basePath: normalizeBasePath(input.basePath) } : {}),
       ...(input.credentials ? { encryptedCredentials: await this.deps.cipher.encrypt(input.credentials) } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
@@ -131,6 +144,26 @@ export class StorageConfigurationService {
     const config = await this.deps.configs.findDefault(tenantId);
     if (!config) throw storageErrors.configurationNotFound();
     return config;
+  }
+
+  /** Rejects settings the provider does not use (e.g. a bucket for local disk). */
+  private assertAllowedFields(descriptor: ProviderDescriptor, input: object): void {
+    const allowed = new Set<ConfigFieldName>(descriptor.fields.map((f) => f.name));
+    const entered = input as Partial<Record<ConfigFieldName, string | null>>;
+    for (const name of ['bucket', 'region', 'endpoint', 'accountId'] as const) {
+      const value = entered[name];
+      // `region` is derived by some providers (R2 → "auto"), so it is tolerated, never required, there.
+      if (typeof value === 'string' && value.trim() !== '' && !allowed.has(name) && name !== 'region') {
+        throw storageErrors.invalidInput(`${descriptor.label} does not use "${name}"`);
+      }
+    }
+  }
+
+  private assertCredentials(descriptor: ProviderDescriptor, credentials: object | null, creating: boolean): void {
+    if (!descriptor.credentials && credentials) throw storageErrors.invalidInput(`${descriptor.label} does not use credentials`);
+    if (creating && descriptor.credentials?.required && !credentials) {
+      throw storageErrors.invalidInput(`${descriptor.credentials.accessKeyLabel} and ${descriptor.credentials.secretLabel} are required`);
+    }
   }
 
   private async require(tenantId: string, id: string): Promise<StorageProviderConfig> {

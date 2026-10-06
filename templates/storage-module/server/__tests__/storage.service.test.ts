@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { storageErrors } from '../core/storage.errors';
 import { validateCreateUpload } from '../validators/storage.validators';
+import { S3_DESCRIPTOR } from '../providers/descriptors';
 import { actor, buildHarness, TENANT_A, TENANT_B, uploadFile } from './harness';
 
 const A = actor(TENANT_A);
@@ -183,7 +184,7 @@ describe('configuration secrets', () => {
     h.factory.register('s3', (config) => {
       seen.push(config.credentials);
       return h.providerFor(config.configId);
-    });
+    }, S3_DESCRIPTOR);
     const view = await h.configurations.create(TENANT_A, s3);
     await h.configurations.resolve(TENANT_A, view.id);
     expect(seen[0]).toEqual(s3.credentials);
@@ -203,7 +204,7 @@ describe('configuration secrets', () => {
     const { h } = await setup();
     await expect(h.configurations.create(TENANT_A, { provider: 'local', name: 'x', basePath: '../escape' })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
     await expect(h.configurations.create(TENANT_A, { provider: 'local', name: 'x', credentials: s3.credentials })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
-    await expect(h.configurations.create(TENANT_A, { provider: 's3', name: 'x' })).resolves.toBeDefined(); // validator enforces bucket/region at the API edge
+    await expect(h.configurations.create(TENANT_A, { provider: 's3', name: 'x' })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' }); // bucket + region required
   });
 
   it('keeps exactly one default and protects it from deletion/deactivation', async () => {
@@ -370,5 +371,53 @@ describe('attachments', () => {
     await expect(h.attachments.detach(TENANT_B, first.id)).rejects.toBeDefined();
     await h.attachments.detach(TENANT_A, first.id);
     expect(await h.attachments.list(TENANT_A, 'invoice', '123')).toHaveLength(0);
+  });
+});
+
+describe('R2 and Azure configuration', () => {
+  const creds = { accessKeyId: 'ACCESSKEYID', secretAccessKey: 'super-secret-key-value' };
+
+  it('lists every provider with the settings it needs, without exposing internals', async () => {
+    const { h } = await setup();
+    const providers = h.configurations.listProviders();
+    expect(providers.map((p) => p.type).sort()).toEqual(['azure', 'local', 'r2', 's3']);
+    expect(providers.find((p) => p.type === 'r2')!.fields.map((f) => f.name)).toEqual(['accountId', 'bucket', 'endpoint', 'basePath']);
+    expect(providers.find((p) => p.type === 'azure')!.credentials).toMatchObject({ required: true, accessKeyLabel: 'Storage account name' });
+    expect(JSON.stringify(providers)).not.toContain('normalize');
+  });
+
+  it('derives the R2 endpoint from the account id, pins region to auto, and requires credentials', async () => {
+    const { h } = await setup();
+    await expect(h.configurations.create(TENANT_A, { provider: 'r2', name: 'R2', bucket: 'b', accountId: 'abc123def456' })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
+    const view = await h.configurations.create(TENANT_A, { provider: 'r2', name: 'R2', bucket: 'files', accountId: 'abc123def456', credentials: creds });
+    expect(view).toMatchObject({ provider: 'r2', bucket: 'files', region: 'auto', endpoint: 'https://abc123def456.r2.cloudflarestorage.com', hasCredentials: true });
+    await expect(h.configurations.create(TENANT_A, { provider: 'r2', name: 'R2b', bucket: 'files', credentials: creds })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
+    // custom jurisdiction endpoint wins over the derived one
+    const eu = await h.configurations.create(TENANT_A, { provider: 'r2', name: 'EU', bucket: 'f', accountId: 'abc123def456', endpoint: 'https://abc123def456.eu.r2.cloudflarestorage.com', credentials: creds });
+    expect(eu.endpoint).toContain('.eu.r2.');
+  });
+
+  it('re-derives the R2 endpoint when the account id changes on update', async () => {
+    const { h } = await setup();
+    const view = await h.configurations.create(TENANT_A, { provider: 'r2', name: 'R2', bucket: 'files', accountId: 'abc123def456', credentials: creds });
+    const updated = await h.configurations.update(TENANT_A, view.id, { accountId: 'zzz999yyy888' });
+    expect(updated.endpoint).toBe('https://zzz999yyy888.r2.cloudflarestorage.com');
+    expect(updated.bucket).toBe('files');
+  });
+
+  it('stores Azure container + account/key (encrypted), needs no region, and never returns the key', async () => {
+    const { h } = await setup();
+    await expect(h.configurations.create(TENANT_A, { provider: 'azure', name: 'Az', bucket: 'files' })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
+    await expect(h.configurations.create(TENANT_A, { provider: 'azure', name: 'Az', credentials: creds })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
+    const view = await h.configurations.create(TENANT_A, { provider: 'azure', name: 'Az', bucket: 'files', credentials: creds });
+    expect(view).toMatchObject({ provider: 'azure', bucket: 'files', region: null, hasCredentials: true });
+    expect(h.store.configs.get(view.id)!.encryptedCredentials).not.toContain('super-secret-key-value');
+    expect(JSON.stringify(await h.configurations.list(TENANT_A))).not.toMatch(/super-secret-key-value|ACCESSKEYID/);
+  });
+
+  it('rejects settings a provider does not use', async () => {
+    const { h } = await setup();
+    await expect(h.configurations.create(TENANT_A, { provider: 'local', name: 'L', bucket: 'nope' })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
+    await expect(h.configurations.create(TENANT_A, { provider: 'azure', name: 'A', bucket: 'c', accountId: 'abc123def456', credentials: creds })).rejects.toMatchObject({ reason: 'STORAGE_INVALID_INPUT' });
   });
 });

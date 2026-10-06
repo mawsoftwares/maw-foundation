@@ -7,7 +7,7 @@ const BASE = '/api/v1/storage';
 
 export interface StorageConfiguration {
   id: string;
-  provider: 'local' | 's3';
+  provider: string;
   name: string;
   bucket: string | null;
   region: string | null;
@@ -19,11 +19,12 @@ export interface StorageConfiguration {
 }
 
 export interface ConfigurationInput {
-  provider?: 'local' | 's3';
+  provider?: string;
   name: string;
   bucket?: string | null;
   region?: string | null;
   endpoint?: string | null;
+  accountId?: string | null;
   basePath?: string | null;
   /** Omit to keep existing credentials (update) or use the server's AWS credential chain (create). */
   credentials?: { accessKeyId: string; secretAccessKey: string };
@@ -50,5 +51,30 @@ export async function deleteConfiguration(id: string): Promise<void> {
 
 export async function testConfiguration(id: string): Promise<{ ok: boolean; message: string }> {
   const r = await client.request<ApiSuccessResponse<{ ok: boolean; message: string }>>(`${BASE}/configurations/${id}/test`, { method: 'POST' });
+  return r.data;
+}
+
+export type ConfigFieldName = 'bucket' | 'region' | 'endpoint' | 'accountId' | 'basePath';
+
+export interface ProviderField {
+  name: ConfigFieldName;
+  label: string;
+  required: boolean;
+  placeholder?: string;
+  help?: string;
+  prefillFromEndpoint?: string;
+}
+
+export interface ProviderInfo {
+  type: string;
+  label: string;
+  description: string;
+  fields: ProviderField[];
+  credentials: { required: boolean; accessKeyLabel: string; secretLabel: string; help?: string } | null;
+}
+
+/** Providers the server supports and the settings each one needs — the form is built from this. */
+export async function listProviders(): Promise<ProviderInfo[]> {
+  const r = await client.request<ApiSuccessResponse<ProviderInfo[]>>(`${BASE}/providers`);
   return r.data;
 }

@@ -47,6 +47,7 @@ export function createStorageRouter(c: StorageControllers, deps: StorageRouterDe
   destroy('/attachments/:id', c.files.detach, { middleware: guard(P.deleteFile), metadata: { summary: 'Remove an attachment', tags } });
 
   // Configuration (admin)
+  get('/providers', c.configurations.providers, { middleware: guard(P.manageConfiguration), metadata: { summary: 'List supported storage providers and their settings', tags } });
   get('/configurations', c.configurations.list, { middleware: guard(P.manageConfiguration), metadata: { summary: 'List storage configurations', tags } });
   post('/configurations', c.configurations.create, { middleware: guard(P.manageConfiguration), metadata: { summary: 'Create a storage configuration', tags } });
   patch('/configurations/:id', c.configurations.update, { middleware: guard(P.manageConfiguration), metadata: { summary: 'Update a storage configuration', tags } });

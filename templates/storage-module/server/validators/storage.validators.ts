@@ -177,17 +177,16 @@ export function validateCreateConfiguration(body: unknown): CreateConfigurationI
   const creds = credentials(raw, c);
   const isDefault = raw['isDefault'];
   if (isDefault !== undefined && typeof isDefault !== 'boolean') c.add('isDefault', 'must be a boolean');
-  if (provider === 's3') {
-    if (!bucket) c.add('bucket', 'is required for S3');
-    if (!region) c.add('region', 'is required for S3');
-  }
+  const accountId = nullable(str(raw, 'accountId', c, { max: 64 }), raw, 'accountId');
   c.done();
+  // Which settings each provider requires is the provider's own business (its descriptor); the service enforces it.
   return {
     provider: provider as StorageProviderType,
     name: name!,
     bucket,
     region,
     endpoint,
+    accountId,
     basePath,
     credentials: creds ?? null,
     isDefault: isDefault === true,
@@ -203,6 +202,7 @@ export function validateUpdateConfiguration(body: unknown): UpdateConfigurationI
   const region = nullable(str(raw, 'region', c, { max: 64 }), raw, 'region');
   const basePath = nullable(str(raw, 'basePath', c, { max: 255 }), raw, 'basePath');
   const endpoint = endpointOrNull(raw, c);
+  const accountId = nullable(str(raw, 'accountId', c, { max: 64 }), raw, 'accountId');
   const creds = credentials(raw, c);
   for (const flag of ['isDefault', 'isActive'] as const) {
     if (raw[flag] !== undefined && typeof raw[flag] !== 'boolean') c.add(flag, 'must be a boolean');
@@ -214,6 +214,7 @@ export function validateUpdateConfiguration(body: unknown): UpdateConfigurationI
     ...(region !== undefined ? { region } : {}),
     ...(basePath !== undefined ? { basePath } : {}),
     ...(endpoint !== undefined ? { endpoint } : {}),
+    ...(accountId !== undefined ? { accountId } : {}),
     ...(creds ? { credentials: creds } : {}),
     ...(raw['isDefault'] !== undefined ? { isDefault: raw['isDefault'] as boolean } : {}),
     ...(raw['isActive'] !== undefined ? { isActive: raw['isActive'] as boolean } : {}),
