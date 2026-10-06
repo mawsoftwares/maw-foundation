@@ -1,0 +1,956 @@
+# MAW Storage — provider-agnostic file storage.
+#
+# Behavioural contract (both backends MUST implement all of this identically):
+#
+#  * Direct upload. The server never receives file bytes for cloud providers:
+#      1. POST /storage/uploads            -> pending record + signed upload URL
+#      2. client PUTs the bytes to `uploadUrl` with exactly the returned `headers`
+#      3. POST /storage/uploads/{id}/complete -> server verifies size (and content type when the
+#         provider reports it) and sets status `uploaded` (or `failed`, deleting the stray object)
+#  * Downloads are short-lived signed URLs; bytes never pass through the API.
+#  * Tenant isolation. Tenant and user come ONLY from the authenticated identity. A resource that
+#    belongs to another tenant is indistinguishable from a missing one: respond 404 with the matching
+#    `STORAGE_*_NOT_FOUND` reason, never 403.
+#  * Object keys are server-generated: `tenant/{tenantId}/folder/{folderId|root}/file/{fileId}/original`.
+#    The original file name is metadata only. Keys, provider credentials and provider internals are
+#    NEVER returned by any endpoint.
+#  * Provider credentials are encrypted at rest (AES-256-GCM, `v1:<iv>:<data>:<tag>` hex format, key from
+#    STORAGE_ENCRYPTION_KEY) so either backend can read what the other wrote.
+#  * Folders are logical: sibling names are unique case-insensitively among active folders; a folder can
+#    only be deleted when empty; moves may not create cycles; children use their parent's configuration.
+#  * Files and folders are soft-deleted. Deleting a file hides it immediately, then removes the object; a
+#    provider failure leaves it queued for the cleanup job and still returns 204.
+#  * Error responses use the standard envelope with `details.reason` set to a StorageErrorReason.
+#
+# Required permissions are listed per operation in `x-required-permission`.
+
+paths:
+  /api/v1/storage/providers:
+    get:
+      tags: [Storage]
+      operationId: listStorageProviders
+      summary: List supported providers and the settings each one needs
+      description: |
+        Drives the admin "Storage settings" form. A provider declares its own fields, so clients need no
+        per-provider code.
+      x-required-permission: Manage_StorageConfiguration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Providers
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StorageProviderInfo'
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+
+  /api/v1/storage/configurations:
+    get:
+      tags: [Storage]
+      operationId: listStorageConfigurations
+      summary: List the tenant's storage configurations
+      x-required-permission: Manage_StorageConfiguration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Configurations (safe metadata only — never credentials)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StorageConfiguration'
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+    post:
+      tags: [Storage]
+      operationId: createStorageConfiguration
+      summary: Create a storage configuration
+      description: |
+        The tenant's first configuration becomes its default. Required settings and credential rules are
+        defined per provider by `GET /storage/providers`. R2 derives `endpoint` from `accountId` and fixes
+        `region` to `auto`.
+      x-required-permission: Manage_StorageConfiguration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStorageConfigurationRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfigurationEnvelope'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+
+  /api/v1/storage/configurations/{id}:
+    patch:
+      tags: [Storage]
+      operationId: updateStorageConfiguration
+      summary: Update a storage configuration
+      description: |
+        Credentials are only replaced when `credentials` is supplied. The provider cannot be changed.
+        The default configuration cannot be deactivated.
+      x-required-permission: Manage_StorageConfiguration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStorageConfigurationRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfigurationEnvelope'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+    delete:
+      tags: [Storage]
+      operationId: deleteStorageConfiguration
+      summary: Delete a storage configuration
+      description: Refused (409) for the default configuration and for any configuration referenced by folders or files.
+      x-required-permission: Manage_StorageConfiguration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageId'
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+
+  /api/v1/storage/configurations/{id}/test:
+    post:
+      tags: [Storage]
+      operationId: testStorageConfiguration
+      summary: Probe connectivity and permissions of a configuration
+      description: Always 200 for an existing configuration; failures are reported in `data.ok` with a generic message (no provider details).
+      x-required-permission: Manage_StorageConfiguration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageId'
+      responses:
+        '200':
+          description: Probe result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    type: object
+                    required: [ok, message]
+                    properties:
+                      ok: { type: boolean }
+                      message: { type: string }
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+
+  /api/v1/storage/folders:
+    get:
+      tags: [Storage]
+      operationId: listStorageFolders
+      summary: List folders under a parent
+      x-required-permission: Read_Storage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: parentId
+          in: query
+          description: Parent folder id, or `root` / omitted for root folders.
+          schema: { type: string }
+        - $ref: '#/components/parameters/StorageSearch'
+        - $ref: '#/components/parameters/StoragePage'
+        - $ref: '#/components/parameters/StoragePageSize'
+        - name: sortBy
+          in: query
+          schema: { type: string, enum: [name, createdAt, updatedAt], default: name }
+        - $ref: '#/components/parameters/StorageSortDir'
+      responses:
+        '200':
+          description: Folders (paginated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageFolderPage'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+    post:
+      tags: [Storage]
+      operationId: createStorageFolder
+      summary: Create a folder
+      description: |
+        Without `parentId` creates a root folder on `storageConfigId` (default configuration when omitted).
+        With `parentId` the child inherits the parent's configuration.
+      x-required-permission: Create_StorageFolders
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStorageFolderRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageFolderEnvelope'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+
+  /api/v1/storage/folders/{id}:
+    patch:
+      tags: [Storage]
+      operationId: updateStorageFolder
+      summary: Rename and/or move a folder
+      description: Descendant paths are rewritten. Moving into itself or a descendant is a 409.
+      x-required-permission: Update_StorageFolders
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStorageFolderRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageFolderEnvelope'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+    delete:
+      tags: [Storage]
+      operationId: deleteStorageFolder
+      summary: Delete an empty folder
+      description: 409 when the folder still contains folders or files.
+      x-required-permission: Delete_StorageFolders
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageId'
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+
+  /api/v1/storage/folders/{id}/files:
+    get:
+      tags: [Storage]
+      operationId: listStorageFolderFiles
+      summary: List uploaded files in a folder
+      description: Only files with status `uploaded`. `{id}` may be the literal `root` for files outside any folder.
+      x-required-permission: Read_Storage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Folder id or `root`.
+          schema: { type: string }
+        - $ref: '#/components/parameters/StorageSearch'
+        - $ref: '#/components/parameters/StoragePage'
+        - $ref: '#/components/parameters/StoragePageSize'
+        - name: sortBy
+          in: query
+          schema: { type: string, enum: [name, size, createdAt], default: name }
+        - $ref: '#/components/parameters/StorageSortDir'
+      responses:
+        '200':
+          description: Files (paginated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageFilePage'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+
+  /api/v1/storage/uploads:
+    post:
+      tags: [Storage]
+      operationId: requestStorageUpload
+      summary: Request a signed direct-upload URL
+      description: |
+        Validates name, MIME type, size (against the server limit and optional MIME allow-list), folder and
+        configuration; creates a `pending` file record; returns a short-lived signed URL.
+        The client MUST `PUT` the raw bytes to `uploadUrl` with the returned `headers`
+        (S3/R2 sign `Content-Type` and `Content-Length`; Azure requires `x-ms-blob-type: BlockBlob`).
+        Without `folderId` the file goes to the tenant's default configuration at the root.
+      x-required-permission: Upload_Storage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUploadRequest'
+      responses:
+        '201':
+          description: Signed upload ticket
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    $ref: '#/components/schemas/CreateUploadResponse'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '503': { $ref: '#/components/responses/StorageProviderUnavailable' }
+
+  /api/v1/storage/uploads/{fileId}/complete:
+    post:
+      tags: [Storage]
+      operationId: completeStorageUpload
+      summary: Verify an uploaded object and mark the file uploaded
+      description: |
+        Idempotent: completing an already-`uploaded` file returns it unchanged.
+        * Object missing           -> 409 `STORAGE_UPLOAD_NOT_COMPLETED`; the record stays `pending` (retryable).
+        * Size/type mismatch       -> 409 `STORAGE_UPLOAD_FAILED`; status becomes `failed` and the object is deleted.
+        * Already `failed`/deleted -> 409 `STORAGE_UPLOAD_FAILED`.
+        On success a file version with `versionNumber` 1 is recorded.
+      x-required-permission: Upload_Storage
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageFileId'
+      responses:
+        '200':
+          description: The uploaded file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageFileEnvelope'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+        '503': { $ref: '#/components/responses/StorageProviderUnavailable' }
+
+  /api/v1/storage/files/{fileId}:
+    get:
+      tags: [Storage]
+      operationId: getStorageFile
+      summary: Get file metadata
+      x-required-permission: Read_Storage
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageFileId'
+      responses:
+        '200':
+          description: Metadata only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageFileEnvelope'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+    delete:
+      tags: [Storage]
+      operationId: deleteStorageFile
+      summary: Delete a file
+      description: Soft-deletes, then removes the object. Returns 204 even if the object removal is deferred to the cleanup job.
+      x-required-permission: Delete_StorageFiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageFileId'
+      responses:
+        '204': { description: Deleted }
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+
+  /api/v1/storage/files/{fileId}/download-url:
+    get:
+      tags: [Storage]
+      operationId: getStorageDownloadUrl
+      summary: Get a short-lived signed download URL
+      description: Only for `uploaded` files (409 `STORAGE_UPLOAD_NOT_COMPLETED` otherwise).
+      x-required-permission: Download_Storage
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageFileId'
+        - name: disposition
+          in: query
+          description: '`attachment` saves the file (default); `inline` lets the browser display it.'
+          schema: { type: string, enum: [attachment, inline], default: attachment }
+      responses:
+        '200':
+          description: Signed URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    $ref: '#/components/schemas/DownloadUrlResponse'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+        '503': { $ref: '#/components/responses/StorageProviderUnavailable' }
+
+  /api/v1/storage/attachments:
+    get:
+      tags: [Storage]
+      operationId: listStorageAttachments
+      summary: List the files attached to an entity
+      x-required-permission: Read_Storage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entityType
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/StorageEntityToken' }
+        - name: entityId
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/StorageEntityToken' }
+        - name: category
+          in: query
+          schema: { $ref: '#/components/schemas/StorageEntityToken' }
+      responses:
+        '200':
+          description: Attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StorageAttachment'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+    post:
+      tags: [Storage]
+      operationId: createStorageAttachment
+      summary: Attach an uploaded file to any entity
+      description: |
+        Generic link — the module knows nothing about invoices, employees, etc. Idempotent for the same
+        (file, entityType, entityId, category). Only `uploaded` files can be attached.
+      x-required-permission: Upload_Storage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAttachmentRequest'
+      responses:
+        '201':
+          description: Attachment
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    $ref: '#/components/schemas/StorageAttachment'
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+        '409': { $ref: '#/components/responses/StorageConflict' }
+
+  /api/v1/storage/attachments/{id}:
+    delete:
+      tags: [Storage]
+      operationId: deleteStorageAttachment
+      summary: Remove an attachment link (the file itself is kept)
+      x-required-permission: Delete_StorageFiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorageId'
+      responses:
+        '204': { description: Removed }
+        '400': { $ref: '#/components/responses/StorageValidationError' }
+        '401': { $ref: '#/components/responses/StorageUnauthorized' }
+        '403': { $ref: '#/components/responses/StorageForbidden' }
+        '404': { $ref: '#/components/responses/StorageNotFound' }
+
+  /api/v1/storage/local/{token}:
+    put:
+      tags: [Storage]
+      operationId: uploadViaLocalGateway
+      summary: Direct upload for the `local` provider (signed token, no bearer auth)
+      description: |
+        Only used by tenants whose configuration is `local`; cloud providers upload straight to their own
+        signed URL. The token is an HMAC-signed claim bound to one tenant/configuration/object/operation,
+        its declared size and Content-Type, and an expiry. The request `Content-Type` and `Content-Length`
+        must match the claim. Responses here are NOT enveloped.
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          '*/*':
+            schema: { type: string, format: binary }
+      responses:
+        '200': { description: Stored }
+        '400': { description: Content-Type or Content-Length does not match the signed request }
+        '403': { description: "Invalid, tampered or expired token" }
+        '404': { description: Storage configuration unavailable }
+        '413': { description: Body exceeds the declared size }
+    get:
+      tags: [Storage]
+      operationId: downloadViaLocalGateway
+      summary: Download for the `local` provider (signed token, no bearer auth)
+      description: |
+        Streams the object with `Content-Type`, `Content-Disposition`, `X-Content-Type-Options: nosniff` and
+        `Cache-Control: private, no-store`. Responses other than 200 are NOT enveloped.
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: File bytes
+          content:
+            '*/*':
+              schema: { type: string, format: binary }
+        '403': { description: "Invalid, tampered or expired token" }
+        '404': { description: Object or configuration not found }
+
+components:
+  parameters:
+    StorageId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    StorageFileId:
+      name: fileId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    StorageSearch:
+      name: search
+      in: query
+      description: Case-insensitive substring match on the name (max 100 characters).
+      schema: { type: string, maxLength: 100 }
+    StoragePage:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    StoragePageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    StorageSortDir:
+      name: sortDir
+      in: query
+      schema: { type: string, enum: [asc, desc], default: asc }
+
+  responses:
+    StorageUnauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StorageErrorResponse' }
+    StorageForbidden:
+      description: Missing the required permission
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StorageErrorResponse' }
+    StorageNotFound:
+      description: |
+        Resource not found — including resources owned by another tenant.
+        `details.reason` is one of STORAGE_FILE_NOT_FOUND, STORAGE_FOLDER_NOT_FOUND,
+        STORAGE_CONFIGURATION_NOT_FOUND, STORAGE_OBJECT_NOT_FOUND.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StorageErrorResponse' }
+    StorageValidationError:
+      description: Invalid input (`code` VALIDATION_FAILED; `details.fields` for body validation, or `details.reason`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StorageErrorResponse' }
+    StorageConflict:
+      description: |
+        State conflict. `details.reason` is STORAGE_CONFLICT (duplicate name, non-empty folder, default/in-use
+        configuration, circular move), STORAGE_UPLOAD_NOT_COMPLETED or STORAGE_UPLOAD_FAILED.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StorageErrorResponse' }
+    StorageProviderUnavailable:
+      description: The storage provider could not complete the request (`SERVICE_UNAVAILABLE`, reason STORAGE_PROVIDER_ERROR). No provider details are exposed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StorageErrorResponse' }
+
+  schemas:
+    StorageErrorReason:
+      type: string
+      enum:
+        - STORAGE_PROVIDER_NOT_FOUND
+        - STORAGE_CONFIGURATION_NOT_FOUND
+        - STORAGE_FOLDER_NOT_FOUND
+        - STORAGE_FILE_NOT_FOUND
+        - STORAGE_ACCESS_DENIED
+        - STORAGE_UPLOAD_FAILED
+        - STORAGE_UPLOAD_NOT_COMPLETED
+        - STORAGE_OBJECT_NOT_FOUND
+        - STORAGE_PROVIDER_ERROR
+        - STORAGE_INVALID_FILE
+        - STORAGE_INVALID_INPUT
+        - STORAGE_CONFLICT
+
+    StorageErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, const: false }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              $ref: 'common.yaml#/components/schemas/ErrorCode'
+            message: { type: string }
+            details:
+              type: object
+              properties:
+                reason:
+                  $ref: '#/components/schemas/StorageErrorReason'
+                fields:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field: { type: string }
+                      error: { type: string }
+            requestId: { type: string }
+
+    StorageEntityToken:
+      type: string
+      pattern: '^[A-Za-z0-9_.:-]{1,128}$'
+
+    StorageFileStatus:
+      type: string
+      enum: [pending, uploading, uploaded, failed, deleted]
+
+    StorageFile:
+      type: object
+      required: [id, name, mimeType, size, folderId, status, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, description: Original file name (metadata only; never part of the object key). }
+        mimeType: { type: string }
+        size: { type: integer, minimum: 0, description: Bytes. }
+        folderId: { type: [string, 'null'], format: uuid }
+        status: { $ref: '#/components/schemas/StorageFileStatus' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    StorageFileEnvelope:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: { $ref: '#/components/schemas/StorageFile' }
+
+    StorageFilePage:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/StorageFile' }
+        meta:
+          type: object
+          required: [pagination]
+          properties:
+            pagination: { $ref: 'common.yaml#/components/schemas/PaginationMeta' }
+
+    StorageFolder:
+      type: object
+      required: [id, parentId, name, path, storageConfigId, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        parentId: { type: [string, 'null'], format: uuid }
+        name: { type: string, maxLength: 255 }
+        path: { type: string, description: "Materialised display path, e.g. `/Documents/Contracts`." }
+        storageConfigId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    StorageFolderEnvelope:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: { $ref: '#/components/schemas/StorageFolder' }
+
+    StorageFolderPage:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/StorageFolder' }
+        meta:
+          type: object
+          required: [pagination]
+          properties:
+            pagination: { $ref: 'common.yaml#/components/schemas/PaginationMeta' }
+
+    CreateStorageFolderRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: No slashes, backslashes or control characters; not `.` or `..`.
+        parentId: { type: [string, 'null'], format: uuid }
+        storageConfigId: { type: string, format: uuid }
+
+    UpdateStorageFolderRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        parentId: { type: [string, 'null'], format: uuid, description: New parent; null moves to the root. }
+
+    CreateUploadRequest:
+      type: object
+      required: [fileName, contentType, fileSize]
+      properties:
+        folderId: { type: [string, 'null'], format: uuid }
+        fileName: { type: string, minLength: 1, maxLength: 255 }
+        contentType: { type: string, description: A well-formed MIME type; subject to the server allow-list. }
+        fileSize:
+          type: integer
+          minimum: 1
+          description: Exact size in bytes; capped by the server limit (default 100 MiB).
+
+    CreateUploadResponse:
+      type: object
+      required: [fileId, uploadUrl, method, headers, expiresIn]
+      properties:
+        fileId: { type: string, format: uuid }
+        uploadUrl: { type: string, format: uri }
+        method: { type: string, const: PUT }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+          description: Send exactly these headers with the upload request.
+        expiresIn: { type: integer, description: Seconds the URL stays valid (default 900). }
+
+    DownloadUrlResponse:
+      type: object
+      required: [url, expiresIn]
+      properties:
+        url: { type: string, format: uri }
+        expiresIn: { type: integer, description: Seconds the URL stays valid (default 300). }
+
+    StorageConfiguration:
+      type: object
+      description: Safe metadata only. Credentials, their ciphertext and object keys are never returned.
+      required: [id, provider, name, bucket, region, endpoint, basePath, hasCredentials, isDefault, isActive, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        provider:
+          type: string
+          description: Open set. Currently `local`, `s3`, `r2`, `azure`.
+        name: { type: string }
+        bucket: { type: [string, 'null'], description: Bucket (S3/R2) or container (Azure). }
+        region: { type: [string, 'null'] }
+        endpoint: { type: [string, 'null'] }
+        basePath: { type: string }
+        hasCredentials: { type: boolean }
+        isDefault: { type: boolean }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    StorageConfigurationEnvelope:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: { $ref: '#/components/schemas/StorageConfiguration' }
+
+    StorageCredentials:
+      type: object
+      description: |
+        Write-only. Meaning depends on the provider: S3/R2 access key id + secret; Azure storage account
+        name + account key.
+      required: [accessKeyId, secretAccessKey]
+      properties:
+        accessKeyId: { type: string, maxLength: 256 }
+        secretAccessKey: { type: string, maxLength: 512 }
+
+    CreateStorageConfigurationRequest:
+      type: object
+      required: [provider, name]
+      properties:
+        provider: { type: string, enum: [local, s3, r2, azure] }
+        name: { type: string, maxLength: 128 }
+        bucket: { type: [string, 'null'], maxLength: 255 }
+        region: { type: [string, 'null'], maxLength: 64 }
+        endpoint: { type: [string, 'null'], format: uri, description: http(s) URL. }
+        accountId: { type: [string, 'null'], maxLength: 64, description: Cloudflare account id (R2). }
+        basePath: { type: [string, 'null'], maxLength: 255, description: 'Prefix inside the bucket/root; letters, digits, `_-./`; no traversal.' }
+        credentials: { $ref: '#/components/schemas/StorageCredentials' }
+        isDefault: { type: boolean }
+
+    UpdateStorageConfigurationRequest:
+      type: object
+      properties:
+        name: { type: string, maxLength: 128 }
+        bucket: { type: [string, 'null'], maxLength: 255 }
+        region: { type: [string, 'null'], maxLength: 64 }
+        endpoint: { type: [string, 'null'], format: uri }
+        accountId: { type: [string, 'null'], maxLength: 64 }
+        basePath: { type: [string, 'null'], maxLength: 255 }
+        credentials: { $ref: '#/components/schemas/StorageCredentials' }
+        isDefault: { type: boolean }
+        isActive: { type: boolean }
+
+    StorageProviderInfo:
+      type: object
+      required: [type, label, description, fields, credentials]
+      properties:
+        type: { type: string }
+        label: { type: string }
+        description: { type: string }
+        fields:
+          type: array
+          items:
+            type: object
+            required: [name, label, required]
+            properties:
+              name: { type: string, enum: [bucket, region, endpoint, accountId, basePath] }
+              label: { type: string }
+              required: { type: boolean }
+              placeholder: { type: string }
+              help: { type: string }
+              prefillFromEndpoint: { type: string, description: "Regex source with one capture group, used to pre-fill the field from a stored endpoint." }
+        credentials:
+          type: [object, 'null']
+          description: null when the provider takes no credentials.
+          required: [required, accessKeyLabel, secretLabel]
+          properties:
+            required: { type: boolean }
+            accessKeyLabel: { type: string }
+            secretLabel: { type: string }
+            help: { type: string }
+
+    CreateAttachmentRequest:
+      type: object
+      required: [fileId, entityType, entityId]
+      properties:
+        fileId: { type: string, format: uuid }
+        entityType: { $ref: '#/components/schemas/StorageEntityToken' }
+        entityId: { $ref: '#/components/schemas/StorageEntityToken' }
+        category: { $ref: '#/components/schemas/StorageEntityToken' }
+
+    StorageAttachment:
+      type: object
+      required: [id, tenantId, fileId, entityType, entityId, category, createdBy, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        tenantId: { type: string }
+        fileId: { type: string, format: uuid }
+        entityType: { type: string }
+        entityId: { type: string }
+        category: { type: string, default: general }
+        createdBy: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }

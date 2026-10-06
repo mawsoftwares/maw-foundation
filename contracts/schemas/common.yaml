@@ -128,6 +128,7 @@ components:
         - LIMIT_EXCEEDED
         - ACCOUNT_LOCKED
         - INTERNAL
+        - SERVICE_UNAVAILABLE
         - MFA_REQUIRED
         - INVALID_OTP
         - PASSWORD_POLICY

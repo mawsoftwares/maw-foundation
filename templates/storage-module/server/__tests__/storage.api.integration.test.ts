@@ -19,6 +19,23 @@ import { createGlobalErrorHandler } from '@mawsoftwares/server-express/error-han
 import { AesEncryptionService } from '@mawsoftwares/platform/security/AesEncryptionService';
 import { createStorageModule } from '../index';
 import { STORAGE_LOCAL_GATEWAY_PATH, STORAGE_ROUTE_PREFIX } from '../core/storage.constants';
+import { validateResponse } from '../../../../../../contracts/verification/validate';
+import {
+  StorageConfigurationResponse,
+  StorageDownloadUrlResponse,
+  StorageErrorResponse,
+  StorageFilePageResponse,
+  StorageFileResponse,
+  StorageFolderPageResponse,
+  StorageFolderResponse,
+  StorageUploadResponse,
+} from '../../../../../../contracts/verification/response-schemas';
+
+/** Asserts a real response body satisfies the shared contract (shape, types, no leaked secrets). */
+function conforms(body: unknown, schema: Parameters<typeof validateResponse>[1]): void {
+  const result = validateResponse(body as Record<string, unknown>, schema);
+  expect(result.errors).toEqual([]);
+}
 
 const DATABASE_URL = process.env['STORAGE_TEST_DATABASE_URL'];
 const MIGRATION = path.resolve(__dirname, '../../../../migrations/029_storage.up.sql');
@@ -116,6 +133,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
     const a = await call<{ id: string; isDefault: boolean }>('POST', '/configurations', { body: { provider: 'local', name: 'Local A', basePath: 'a-files' } });
     expect(a.status).toBe(201);
     expect(a.json.data).toMatchObject({ provider: 'local', isDefault: true, basePath: 'a-files' });
+    conforms(a.json, StorageConfigurationResponse);
     configA = a.json.data!.id;
 
     const b = await call<{ id: string }>('POST', '/configurations', { tenant: 'tenant-b', body: { provider: 'local', name: 'Local B' } });
@@ -125,6 +143,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
       body: { provider: 's3', name: 'S3', bucket: 'bkt', region: 'us-east-1', credentials: { accessKeyId: 'AKIAIOSFODNN7EXAMPLE', secretAccessKey: 'topsecretvalue1234' } },
     });
     expect(s3.status).toBe(201);
+    conforms(s3.json, StorageConfigurationResponse);
     const listed = await call('GET', '/configurations');
     const raw = JSON.stringify(listed.json);
     expect(raw).not.toMatch(/topsecretvalue1234|AKIAIOSFODNN7EXAMPLE|encrypted|secretAccessKey/);
@@ -147,6 +166,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
   it('manages nested folders with materialised paths, uniqueness and cycle protection', async () => {
     const root1 = await call<{ id: string; path: string }>('POST', '/folders', { body: { name: 'Documents' } });
     expect(root1.status).toBe(201);
+    conforms(root1.json, StorageFolderResponse);
     folderId = root1.json.data!.id;
     const child = await call<{ id: string; path: string }>('POST', '/folders', { body: { name: 'Invoices', parentId: folderId } });
     expect(child.json.data!.path).toBe('/Documents/Invoices');
@@ -160,6 +180,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
 
     const list = await call<unknown[]>('GET', '/folders');
     expect(list.status).toBe(200);
+    conforms(list.json, StorageFolderPageResponse);
     expect(JSON.stringify(list.json)).toContain('Docs');
     expect((await call('DELETE', `/folders/${folderId}`)).status).toBe(409); // not empty
   });
@@ -170,6 +191,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
       body: { folderId, fileName: 'Invoice 001.pdf', contentType: 'application/pdf', fileSize: content.length },
     });
     expect(up.status).toBe(201);
+    conforms(up.json, StorageUploadResponse);
     const { fileId, uploadUrl, method, headers } = up.json.data!;
     expect(method).toBe('PUT');
     expect(uploadUrl.startsWith(`${origin}${STORAGE_LOCAL_GATEWAY_PATH}/`)).toBe(true);
@@ -179,6 +201,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
     const early = await call('POST', `/uploads/${fileId}/complete`);
     expect(early.status).toBe(409);
     expect(early.json.error?.details?.reason).toBe('STORAGE_UPLOAD_NOT_COMPLETED');
+    conforms(early.json, StorageErrorResponse);
     expect((await call('GET', `/files/${fileId}/download-url`)).status).toBe(409);
 
     // Client uploads directly (no MAW auth, just the signed URL).
@@ -188,21 +211,25 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
     const done = await call<{ status: string; name: string; size: number }>('POST', `/uploads/${fileId}/complete`);
     expect(done.status).toBe(200);
     expect(done.json.data).toMatchObject({ status: 'uploaded', name: 'Invoice 001.pdf', size: content.length });
+    conforms(done.json, StorageFileResponse);
 
     const key = (await pool.query<{ object_key: string }>(`SELECT object_key FROM maw_storage_files WHERE id = $1`, [fileId])).rows[0]!.object_key;
     expect(key).toBe(`tenant/tenant-a/folder/${folderId}/file/${fileId}/original`);
     expect((await pool.query(`SELECT 1 FROM maw_storage_file_versions WHERE file_id = $1 AND version_number = 1`, [fileId])).rowCount).toBe(1);
 
     const meta = await call<Record<string, unknown>>('GET', `/files/${fileId}`);
+    conforms(meta.json, StorageFileResponse);
     expect(Object.keys(meta.json.data!).sort()).toEqual(['createdAt', 'folderId', 'id', 'mimeType', 'name', 'size', 'status', 'updatedAt']);
 
     const dl = await call<{ url: string; expiresIn: number }>('GET', `/files/${fileId}/download-url`);
     expect(dl.json.data!.expiresIn).toBe(300);
+    conforms(dl.json, StorageDownloadUrlResponse);
     const got = await fetch(dl.json.data!.url);
     expect(Buffer.from(await got.arrayBuffer()).equals(content)).toBe(true);
     expect(got.headers.get('content-disposition')).toContain('Invoice%20001.pdf');
 
     const files = await call<unknown[]>('GET', `/folders/${folderId}/files?search=invoice`);
+    conforms(files.json, StorageFilePageResponse);
     expect(JSON.stringify(files.json)).toContain(fileId);
 
     // Attach to a generic entity.
@@ -215,6 +242,7 @@ describe.skipIf(!DATABASE_URL)('MAW Storage API (integration)', () => {
       const res = await call('GET', url, { tenant: 'tenant-b' });
       expect(res.status).toBe(404);
       expect(res.json.error?.details?.reason).toBe('STORAGE_FILE_NOT_FOUND');
+      conforms(res.json, StorageErrorResponse);
     }
     expect((await call('DELETE', `/files/${fileId}`, { tenant: 'tenant-b' })).status).toBe(404);
     expect((await call('GET', `/folders/${folderId}/files`, { tenant: 'tenant-b' })).status).toBe(404);

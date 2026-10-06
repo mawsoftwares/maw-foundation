@@ -18,6 +18,13 @@ use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Middleware\JwtAuthenticate;
 use App\Http\Middleware\TenantResolver;
+use App\Storage\Http\Controllers\ConfigurationController as StorageConfigurationController;
+use App\Storage\Http\Controllers\FileController as StorageFileController;
+use App\Storage\Http\Controllers\FolderController as StorageFolderController;
+use App\Storage\Http\Controllers\LocalGatewayController;
+use App\Storage\Http\Controllers\UploadController as StorageUploadController;
+use App\Storage\Http\Middleware\RequireStoragePermission;
+use App\Storage\Http\Middleware\StorageContext;
 use Illuminate\Support\Facades\Route;
 
 // --- Health ---
@@ -149,5 +156,47 @@ Route::middleware([JwtAuthenticate::class, TenantResolver::class])->group(functi
         Route::post('/run', [ReportingController::class, 'run']);
         Route::post('/save', [ReportingController::class, 'save']);
         Route::get('/saved', [ReportingController::class, 'savedReports']);
+    });
+});
+
+// --- Storage (contracts/openapi/storage.yaml) ---
+// Tenant and user come only from the verified JWT (StorageContext); access is checked against the same RBAC
+// tables the Node backend uses (RequireStoragePermission).
+Route::prefix('v1/storage')->group(function (): void {
+    // Local-provider direct transfer: the signed token is the authorisation, so no bearer auth here.
+    Route::put('/local/{token}', [LocalGatewayController::class, 'put']);
+    Route::get('/local/{token}', [LocalGatewayController::class, 'get']);
+
+    Route::middleware([JwtAuthenticate::class, StorageContext::class])->group(function (): void {
+        $can = static fn (string $permission): string => RequireStoragePermission::class . ':' . $permission;
+
+        // Uploads (direct-to-provider via signed URL)
+        Route::post('/uploads', [StorageUploadController::class, 'request'])->middleware($can('Upload_Storage'));
+        Route::post('/uploads/{fileId}/complete', [StorageUploadController::class, 'complete'])->middleware($can('Upload_Storage'));
+
+        // Files
+        Route::get('/files/{fileId}', [StorageFileController::class, 'show'])->middleware($can('Read_Storage'));
+        Route::get('/files/{fileId}/download-url', [StorageFileController::class, 'downloadUrl'])->middleware($can('Download_Storage'));
+        Route::delete('/files/{fileId}', [StorageFileController::class, 'destroy'])->middleware($can('Delete_StorageFiles'));
+
+        // Folders
+        Route::get('/folders', [StorageFolderController::class, 'index'])->middleware($can('Read_Storage'));
+        Route::post('/folders', [StorageFolderController::class, 'store'])->middleware($can('Create_StorageFolders'));
+        Route::patch('/folders/{id}', [StorageFolderController::class, 'update'])->middleware($can('Update_StorageFolders'));
+        Route::delete('/folders/{id}', [StorageFolderController::class, 'destroy'])->middleware($can('Delete_StorageFolders'));
+        Route::get('/folders/{id}/files', [StorageFileController::class, 'folderFiles'])->middleware($can('Read_Storage'));
+
+        // Attachments (generic entity links)
+        Route::post('/attachments', [StorageFileController::class, 'attach'])->middleware($can('Upload_Storage'));
+        Route::get('/attachments', [StorageFileController::class, 'attachments'])->middleware($can('Read_Storage'));
+        Route::delete('/attachments/{id}', [StorageFileController::class, 'detach'])->middleware($can('Delete_StorageFiles'));
+
+        // Configuration (admin)
+        Route::get('/providers', [StorageConfigurationController::class, 'providers'])->middleware($can('Manage_StorageConfiguration'));
+        Route::get('/configurations', [StorageConfigurationController::class, 'index'])->middleware($can('Manage_StorageConfiguration'));
+        Route::post('/configurations', [StorageConfigurationController::class, 'store'])->middleware($can('Manage_StorageConfiguration'));
+        Route::patch('/configurations/{id}', [StorageConfigurationController::class, 'update'])->middleware($can('Manage_StorageConfiguration'));
+        Route::delete('/configurations/{id}', [StorageConfigurationController::class, 'destroy'])->middleware($can('Manage_StorageConfiguration'));
+        Route::post('/configurations/{id}/test', [StorageConfigurationController::class, 'test'])->middleware($can('Manage_StorageConfiguration'));
     });
 });

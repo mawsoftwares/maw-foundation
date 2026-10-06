@@ -94,6 +94,10 @@
     "ACCOUNT_PENDING_VERIFICATION": {
       "httpStatus": 403,
       "description": "Account email is not yet verified"
+    },
+    "SERVICE_UNAVAILABLE": {
+      "httpStatus": 503,
+      "description": "A dependency (e.g. the storage provider) could not complete the request"
     }
   }
 }

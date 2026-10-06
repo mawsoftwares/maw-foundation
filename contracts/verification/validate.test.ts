@@ -14,6 +14,11 @@ import {
   RoleListResponse,
   SessionListResponse,
   RegisterResponse,
+  StorageFileResponse,
+  StorageConfigurationResponse,
+  StorageUploadResponse,
+  StorageErrorResponse,
+  StorageFilePageResponse,
 } from './response-schemas';
 
 describe('validateResponse', () => {
@@ -138,5 +143,42 @@ describe('compareResponseShapes', () => {
     const resp = { accessToken: 'a', refreshToken: 'b', expiresIn: 900 };
     const diffs = compareResponseShapes(resp, { ...resp });
     expect(diffs).toHaveLength(0);
+  });
+});
+
+describe('storage response schemas', () => {
+  const file = { id: 'f1', name: 'a.pdf', mimeType: 'application/pdf', size: 10, folderId: null, status: 'uploaded', createdAt: 't', updatedAt: 't' };
+  const config = { id: 'c1', provider: 'azure', name: 'n', bucket: 'b', region: null, endpoint: null, basePath: '', hasCredentials: true, isDefault: false, isActive: true, createdAt: 't', updatedAt: 't' };
+
+  it('accepts a valid file envelope, including a null folderId', () => {
+    expect(validateResponse({ success: true, data: file }, StorageFileResponse).valid).toBe(true);
+  });
+
+  it('rejects an unknown file status and a leaked object key', () => {
+    expect(validateResponse({ success: true, data: { ...file, status: 'weird' } }, StorageFileResponse).valid).toBe(false);
+    const leaked = validateResponse({ success: true, data: { ...file, objectKey: 'tenant/x' } }, StorageFileResponse);
+    expect(leaked.valid).toBe(false);
+    expect(leaked.errors.join()).toContain('objectKey');
+  });
+
+  it('flags leaked provider credentials in a configuration', () => {
+    expect(validateResponse({ success: true, data: config }, StorageConfigurationResponse).valid).toBe(true);
+    const leaked = validateResponse({ success: true, data: { ...config, secretAccessKey: 'x', encryptedCredentials: 'y' } }, StorageConfigurationResponse);
+    expect(leaked.errors.join()).toMatch(/secretAccessKey/);
+    expect(leaked.errors.join()).toMatch(/encryptedCredentials/);
+  });
+
+  it('validates upload tickets and paginated lists', () => {
+    expect(validateResponse({ success: true, data: { fileId: 'f', uploadUrl: 'https://x', method: 'PUT', headers: {}, expiresIn: 900 } }, StorageUploadResponse).valid).toBe(true);
+    expect(validateResponse({ success: true, data: { fileId: 'f', uploadUrl: 'https://x', method: 'POST', headers: {}, expiresIn: 900 } }, StorageUploadResponse).valid).toBe(false);
+    const page = { success: true, data: [file], meta: { pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 } } };
+    expect(validateResponse(page, StorageFilePageResponse).valid).toBe(true);
+    expect(validateResponse({ ...page, meta: {} }, StorageFilePageResponse).valid).toBe(false);
+  });
+
+  it('validates storage error envelopes with a known reason', () => {
+    const err = { success: false, error: { code: 'NOT_FOUND', message: 'File not found', details: { reason: 'STORAGE_FILE_NOT_FOUND' } } };
+    expect(validateResponse(err, StorageErrorResponse).valid).toBe(true);
+    expect(validateResponse({ ...err, error: { ...err.error, details: { reason: 'MADE_UP' } } }, StorageErrorResponse).valid).toBe(false);
   });
 });
