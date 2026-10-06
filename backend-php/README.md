@@ -58,6 +58,34 @@ make prod-up
 | `make prod-build` | Build production image |
 | `make prod-up` | Start production stack |
 
+## Deployment
+
+Uses the shared `@mawsoftwares/deploy` engine with `kind: "docker"`. The deploy
+engine clones the repo on the server, copies `.env`, and runs
+`docker compose -f docker-compose.prod.yml build && up`.
+
+```bash
+# From monorepo root:
+
+# Dry run (preview, no SSH)
+npm run deploy:php -- staging --dry-run
+
+# Deploy staging
+npm run deploy:php -- staging
+
+# Deploy production with HTTPS
+npm run deploy:php -- production --setup-https
+
+# Skip rebuild (just restart containers)
+npm run deploy:php -- staging --skip-build
+```
+
+Before first deploy:
+1. Copy `deploy/environments/<env>/.env.example` → `.env`
+2. Fill in `APP_KEY`, `DB_PASSWORD`, `JWT_SECRET`
+3. Set `server` and `ssh.keyPath` in `app.config.json`
+4. Set `deployment.repoUrl` in `app.config.json`
+
 ### Production Docker
 
 The production image uses a multi-stage build:

@@ -24,6 +24,7 @@ modules/users
 |---|---|
 | `users-module/` | Full user management module (domain, application, infra, api, web) |
 | `crud-module/` | Minimal generic CRUD module scaffold for any domain entity |
+| `storage-module/` | File storage (local disk + S3), folders, signed direct upload/download, admin settings UI — see [`docs/storage.md`](../docs/storage.md) |
 
 ## How to Use a Template
 

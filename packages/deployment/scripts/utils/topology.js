@@ -32,11 +32,18 @@ function resolveServiceKind(manifest) {
   if (manifest.kind === 'frontend' || manifest.kind === 'web') {
     return 'frontend'
   }
+  if (manifest.kind === 'docker') {
+    return 'docker'
+  }
   return 'backend'
 }
 
 function isFrontend(manifest) {
   return resolveServiceKind(manifest) === 'frontend'
+}
+
+function isDocker(manifest) {
+  return resolveServiceKind(manifest) === 'docker'
 }
 
 function slugify(value) {
@@ -288,6 +295,7 @@ module.exports = {
   BACKEND_TOPOLOGIES,
   FRONTEND_TOPOLOGIES,
   buildNginxTemplateData,
+  isDocker,
   isDedicatedDomainTopology,
   isFrontend,
   isFrontendDedicatedRoot,

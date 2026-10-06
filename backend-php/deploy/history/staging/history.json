@@ -1,0 +1,21 @@
+[
+  {
+    "id": "deploy-1791030505806",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-10-03T12:28:25.803Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-php",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/backend-php/deploy/generated/staging/nginx.conf"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/api-php.staging.mawsoftwares.in.conf"
+    },
+    "completedAt": "2026-10-03T12:28:25.809Z"
+  }
+]

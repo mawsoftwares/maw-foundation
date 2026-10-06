@@ -83,6 +83,7 @@ import {
 } from '@mawsoftwares/sdk';
 import { DEMO_TENANT } from './repo';
 import { registry } from './modules/index';
+import { createStorageModule, loadStorageConfig, STORAGE_LOCAL_GATEWAY_PATH, STORAGE_ROUTE_PREFIX } from './modules/storage';
 import { createReportingService } from './reporting-setup';
 import { createReportingRoutes } from './reporting-routes';
 import {
@@ -122,6 +123,8 @@ const DATABASE_URL = getRequiredEnv('DATABASE_URL');
 
 interface DataLayer {
   db: import('@mawsoftwares/database').DrizzleDb;
+  /** Raw pool for modules that own plain-SQL repositories (e.g. storage). */
+  pool: import('@mawsoftwares/database').PgPool;
   syncStore: ISyncStore;
   cacheStore: ICacheStore;
   refreshStore: IRefreshTokenStore;
@@ -151,6 +154,7 @@ async function buildDataLayer(): Promise<DataLayer> {
   log.info('Using Postgres data layer');
   return {
     db,
+    pool,
     syncStore: new PgSyncStore(db),
     cacheStore: new PgCacheStore(db),
     refreshStore: new PgRefreshStore(db),
@@ -492,9 +496,50 @@ const { middleware: securityMiddleware, errorHandler: securityErrorHandler } = c
   { rateLimiter, redact, logger: log },
 );
 
+// --- Storage module (provider-agnostic files: local disk / S3) ---
+// Credentials for tenant storage configs are encrypted at rest with STORAGE_ENCRYPTION_KEY
+// (falls back to MFA_ENCRYPTION_KEY, so production must set a real key for one of them).
+const STORAGE_ENCRYPTION_KEY = getEnv('STORAGE_ENCRYPTION_KEY') ?? MFA_ENCRYPTION_KEY;
+if (getEnv('NODE_ENV') === 'production' && /^0+$/.test(STORAGE_ENCRYPTION_KEY)) {
+  throw new Error('STORAGE_ENCRYPTION_KEY (or MFA_ENCRYPTION_KEY) must not be the all-zero development key in production');
+}
+const storage = createStorageModule({
+  pool: data.pool,
+  encryption: new AesEncryptionService(STORAGE_ENCRYPTION_KEY),
+  config: loadStorageConfig((name) => getEnv(name), {
+    signingSecretFallback: JWT_SECRET,
+    publicBaseUrl: getEnv('PUBLIC_URL', `http://localhost:${PORT}`)!,
+  }),
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+});
+
+// Storage maintenance (abandoned uploads, interrupted deletions) runs as a queue job, enqueued on
+// an interval. STORAGE_CLEANUP_INTERVAL_MINUTES=0 disables the schedule; the job can still be
+// enqueued by hand via POST /api/v1/jobs {"type":"storage.cleanup"}.
+workerRegistry.register('storage.cleanup', async () => {
+  const report = await storage.services.cleanup.run({
+    pendingOlderThanHours: getEnvInt('STORAGE_PENDING_UPLOAD_MAX_AGE_HOURS', 24),
+    batchSize: 200,
+  });
+  return { success: true, result: { ...report } };
+});
+const storageCleanupMinutes = getEnvInt('STORAGE_CLEANUP_INTERVAL_MINUTES', 60);
+if (storageCleanupMinutes > 0) {
+  setInterval(() => {
+    void queueService
+      .enqueue({ type: 'storage.cleanup', data: {}, context: { tenantId: 'system', userId: 'system' } })
+      .catch(() => log.error('Could not enqueue storage cleanup'));
+  }, storageCleanupMinutes * 60_000).unref();
+}
+
 const app = express();
-app.use(express.json());
+// The local storage gateway streams raw upload bodies, so the JSON parser must skip it
+// (a JSON file upload would otherwise be consumed before the gateway can stream it to disk).
+const jsonBody = express.json();
+app.use((req, res, next) => (req.path.startsWith(`${STORAGE_LOCAL_GATEWAY_PATH}/`) ? next() : jsonBody(req, res, next)));
 for (const mw of securityMiddleware) app.use(mw);
+app.use(STORAGE_LOCAL_GATEWAY_PATH, storage.localGatewayRouter);
 app.use(observabilityContextMiddleware());
 app.use(createObsRequestLogger({ logger: log, ignorePaths: ['/health'] }));
 app.use(populateRequestContext());
@@ -921,6 +966,7 @@ app.use('/api/v1/users', createUsersRouter(usersRepo, {
   // i.e. as if the client had prehashed it - see resolvePassword()/hashPasswordForStorage().
   hashPassword: (plain) => Promise.resolve(hashPasswordForStorage(plain)),
 }));
+app.use(STORAGE_ROUTE_PREFIX, storage.router);
 app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm) => auth.requirePermission(perm), {
   systemModuleCodes: registry.getAll().map((m) => m.key),
   systemPermissionCodes: registry.getAllPermissions().map((p) => p.code),

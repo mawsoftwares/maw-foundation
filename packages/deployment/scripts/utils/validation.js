@@ -1,6 +1,7 @@
 const path = require('path')
 const { DeploymentError } = require('./errors')
 const {
+  isDocker,
   isFrontend,
   validateBackendTopology,
   validateFrontendTopology,
@@ -49,8 +50,11 @@ function validateManifest(manifest, availableEnvironments) {
     errors.push('Field "ports" is required and must be an object')
   }
 
+  const docker = isDocker(manifest)
   if (frontend) {
     errors.push(...validateFrontendManifest(manifest))
+  } else if (docker) {
+    errors.push(...validateDockerManifest(manifest))
   } else {
     errors.push(...validateBackendManifest(manifest))
   }
@@ -71,7 +75,9 @@ function validateManifest(manifest, availableEnvironments) {
     )
   }
 
-  errors.push(...(frontend ? validateFrontendTopology(manifest) : validateBackendTopology(manifest)))
+  if (!docker) {
+    errors.push(...(frontend ? validateFrontendTopology(manifest) : validateBackendTopology(manifest)))
+  }
 
   if (errors.length > 0) {
     throw new DeploymentError('Manifest validation failed', { errors })
@@ -127,6 +133,25 @@ function validateBackendManifest(manifest) {
   }
 
   errors.push(...validateDeploymentBlock(manifest, ['pull', 'install', 'build', 'migrate'], true))
+  return errors
+}
+
+function validateDockerManifest(manifest) {
+  const errors = []
+
+  if (!manifest.docker || typeof manifest.docker !== 'object') {
+    errors.push('Field "docker" is required for kind "docker" and must be an object')
+  } else {
+    if (typeof manifest.docker.composeFile !== 'string' || !manifest.docker.composeFile.trim()) {
+      errors.push('Field "docker.composeFile" is required (e.g. "docker-compose.prod.yml")')
+    }
+    if (typeof manifest.docker.contextDir !== 'string' || !manifest.docker.contextDir.trim()) {
+      errors.push('Field "docker.contextDir" is required (path to Dockerfile context on the server)')
+    }
+  }
+
+  errors.push(...validateDeploymentBlock(manifest, ['pull'], false))
+
   return errors
 }
 

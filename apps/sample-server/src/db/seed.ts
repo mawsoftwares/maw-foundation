@@ -91,6 +91,15 @@ try {
     }
     log.info('Master roles upserted', { count: roles.length });
 
+    // --- Storage: default local-disk configuration for the demo tenant ---
+    await client.query(
+      `INSERT INTO maw_storage_provider_configs (tenant_id, provider_id, name, is_default)
+       SELECT $1::varchar, p.id, 'Local storage', TRUE FROM maw_storage_providers p
+        WHERE p.code = 'local'
+          AND NOT EXISTS (SELECT 1 FROM maw_storage_provider_configs c WHERE c.tenant_id = $1::varchar)`,
+      [TENANT],
+    );
+
     // --- Dynamic RBAC: master_permissions (from module registry) ---
     const allPerms = registry.getAllPermissions();
     const permIdMap: Record<string, number> = {};
@@ -179,6 +188,7 @@ try {
       { key: 'reports', label: 'Reports', path: '/reports', icon: 'bar-chart', permission: 'Read_Reports', sortOrder: 20 },
       { key: 'inventory', label: 'Inventory', path: '/inventory', icon: 'clipboard-list', permission: 'Read_Inventory', sortOrder: 30 },
       { key: 'billing', label: 'Billing', path: '/billing', icon: 'credit-card', permission: 'Read_Billing', sortOrder: 40 },
+      { key: 'storage', label: 'Files', path: '/storage', icon: 'folder', permission: 'Read_Storage', sortOrder: 45 },
       { key: 'users', label: 'Users', path: '/users', icon: 'users', permission: 'Read_Users', sortOrder: 50 },
       { key: 'audit-logs', label: 'Audit Logs', path: '/audit-logs', icon: 'scroll-text', permission: 'Read_AuditLogs', sortOrder: 60, parentKey: 'superadmin' },
       { key: 'account', label: 'Account', path: '/account', icon: 'lock', sortOrder: 70 },
@@ -189,6 +199,7 @@ try {
       { key: 'menus', label: 'Menu Management', path: '/menus', icon: 'menu', permission: 'Manage_Menus', sortOrder: 87, parentKey: 'superadmin' },
       { key: 'theme', label: 'Theme Designer', path: '/theme', icon: 'palette', permission: 'Manage_Theme', sortOrder: 88, parentKey: 'superadmin' },
       { key: 'messaging', label: 'Messaging', path: '/messaging', icon: 'mail', permission: 'Read_Messaging', sortOrder: 89, parentKey: 'superadmin' },
+      { key: 'storage-settings', label: 'Storage Settings', path: '/storage-settings', icon: 'folder', permission: 'Manage_StorageConfiguration', sortOrder: 91, parentKey: 'superadmin' },
       { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
 
       { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990, parentKey: 'superadmin' },

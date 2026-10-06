@@ -78,6 +78,7 @@ Domain modules whose fields, rules, or UI differ between projects must remain as
 |---|---|---|
 | `users-module` | `templates/users-module/` | Full user management — domain entity, use-cases, Postgres repository, API routes, React UI |
 | `crud-module` | `templates/crud-module/` | Minimal generic CRUD scaffold for any domain entity |
+| `storage-module` | `templates/storage-module/` | Provider-agnostic file storage (local/S3), folders, signed uploads, admin settings UI |
 
 ### Packages that are source module references (private, NOT published)
 

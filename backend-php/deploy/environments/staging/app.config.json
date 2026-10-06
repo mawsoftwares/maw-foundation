@@ -1,0 +1,51 @@
+{
+  "name": "staging",
+  "type": "staging",
+  "kind": "docker",
+  "branch": "main",
+  "server": "YOUR_PHP_SERVER_IP",
+  "deployPath": "/home/deploy/staging/maw-php",
+  "generatedSubPath": "deployment-config",
+  "domain": "api-php.staging.mawsoftwares.in",
+  "ports": {
+    "backend": 8080
+  },
+  "docker": {
+    "composeFile": "docker-compose.prod.yml",
+    "contextDir": "backend-php"
+  },
+  "nginx": {
+    "enabled": true,
+    "autoInstall": true,
+    "confirmBeforeInstall": true,
+    "failOnError": false,
+    "vhostDir": "/home/deploy/nginx/vhosts-enabled",
+    "sitesEnabled": "/etc/nginx/sites-enabled",
+    "ssl": {
+      "enabled": false
+    }
+  },
+  "database": {
+    "name": "maw_foundation_staging",
+    "user": "maw_staging_user",
+    "host": "localhost",
+    "port": 5432
+  },
+  "ssh": {
+    "user": "deploy",
+    "keyPath": "~/.ssh/mac_to_phpserver"
+  },
+  "deployment": {
+    "projectRoot": "/home/deploy/staging/maw-php",
+    "repoUrl": "git@github.com:YOUR_ORG/maw-foundation.git",
+    "requiredEnv": ["APP_KEY", "JWT_SECRET", "DB_PASSWORD"],
+    "commands": {
+      "pull": "git fetch origin && git checkout -B main origin/main",
+      "migrate": "cd backend-php && docker compose -f docker-compose.prod.yml exec app php artisan migrate --force"
+    }
+  },
+  "health": {
+    "protocol": "http",
+    "endpoint": "/health"
+  }
+}

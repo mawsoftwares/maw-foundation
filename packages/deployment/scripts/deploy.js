@@ -28,6 +28,7 @@ const {
 const { setupNginxIfNeeded } = require('./utils/nginxInstall')
 const { collectNpmRunNames } = require('./ensure-package-scripts')
 const {
+  isDocker,
   isFrontend,
   resolveConfigOutputRoot,
   resolveLocalDist,
@@ -227,6 +228,7 @@ async function deploy(environment, options = {}) {
   validateManifest(manifest, availableEnvironments)
 
   const frontend = isFrontend(manifest)
+  const docker = isDocker(manifest)
   if (usingExampleEnv) {
     logger.warn('Using .env.example because .env is missing. Copy it to .env before a real deploy.')
   }
@@ -289,6 +291,20 @@ async function deploy(environment, options = {}) {
           'upload nginx config',
           'optional nginx / HTTPS setup',
         ]
+      : docker
+      ? [
+          'load manifest',
+          'validate config',
+          'generate nginx config',
+          'ensure git repository',
+          'upload .env',
+          'pull configured branch',
+          skipBuild ? 'skip docker build' : 'docker compose build',
+          'docker compose up',
+          'run migrations (artisan)',
+          'run health check',
+          'optional nginx / HTTPS setup',
+        ]
       : [
           'load manifest',
           'validate config',
@@ -306,7 +322,7 @@ async function deploy(environment, options = {}) {
           'optional nginx / HTTPS setup',
         ]
     logger.info('Deployment plan', {
-      kind: frontend ? 'frontend' : 'backend',
+      kind: frontend ? 'frontend' : docker ? 'docker' : 'backend',
       steps: plannedSteps,
       dryRun,
       setupHttps,
@@ -357,6 +373,96 @@ async function deploy(environment, options = {}) {
         uploadDirectory(manifest, localDist, staticRoot, { logger })
         sshExec(manifest, `test -f ${shellQuote(`${staticRoot}/index.html`)}`, { logger })
         logger.info('Published frontend dist', { staticRoot })
+      }
+    } else if (docker) {
+      ensureRemoteGitRepo(manifest, { logger, dryRun })
+
+      if (!dryRun) {
+        sudoAvailable = canUseNonInteractiveSudo(manifest, { logger })
+        if (sudoAvailable) {
+          logger.info('Preflight: non-interactive sudo is available for upload fallback')
+        } else {
+          logger.warn(
+            'Preflight: non-interactive sudo is not available; uploads require direct write access; nginx enable/reload/certbot need passwordless sudo'
+          )
+        }
+
+        logger.info('Creating remote deployment-config directory', { path: configOutputRoot })
+        sshMkdir(manifest, configOutputRoot, { logger })
+        generated.generatedFiles.forEach((filePath) => {
+          scpUploadWithSudoFallback(
+            manifest,
+            filePath,
+            path.posix.join(configOutputRoot, path.basename(filePath)),
+            { logger, canUseSudoFallback: sudoAvailable }
+          )
+        })
+        scpUploadWithSudoFallback(manifest, preparedEnvPath, path.posix.join(configOutputRoot, '.env'), {
+          logger,
+          canUseSudoFallback: sudoAvailable,
+        })
+        logger.info('Uploaded environment and generated config files', { target: configOutputRoot })
+      } else {
+        logger.info('DRY RUN: skipped upload env/config step', {
+          target: configOutputRoot,
+          generatedPreview: generated.generatedFiles,
+        })
+      }
+
+      const contextDir = manifest.docker.contextDir
+      const composeFile = manifest.docker.composeFile
+      const remoteDir = manifest.deployment.projectRoot
+
+      executeStep({
+        dryRun,
+        logger,
+        manifest,
+        title: `Pull branch ${manifest.branch}`,
+        command: manifest.deployment.commands.pull,
+      })
+
+      // Copy .env to Docker context directory
+      if (!dryRun) {
+        sshExec(manifest, `cp ${shellQuote(`${configOutputRoot}/.env`)} ${shellQuote(`${remoteDir}/${contextDir}/.env`)}`, { logger })
+        logger.info('Copied .env to Docker context', { contextDir })
+      }
+
+      if (skipBuild) {
+        logger.info('Skipping Docker build (--skip-build)')
+      } else {
+        executeStep({
+          dryRun,
+          logger,
+          manifest,
+          title: 'Docker Compose build',
+          command: `cd ${contextDir} && docker compose -f ${composeFile} build --no-cache`,
+        })
+      }
+
+      executeStep({
+        dryRun,
+        logger,
+        manifest,
+        title: 'Docker Compose up',
+        command: `cd ${contextDir} && docker compose -f ${composeFile} up -d`,
+      })
+
+      if (manifest.deployment.commands.migrate) {
+        executeStep({
+          dryRun,
+          logger,
+          manifest,
+          title: 'Run database migrations',
+          command: manifest.deployment.commands.migrate,
+        })
+      }
+
+      if (dryRun) {
+        logger.info('DRY RUN: skipped health check')
+      } else {
+        const health = await runHealthCheck(manifest, { logger })
+        logger.info('Health check passed', health)
+        deploymentRecord.healthCheck = health
       }
     } else {
       ensureRemoteGitRepo(manifest, { logger, dryRun })

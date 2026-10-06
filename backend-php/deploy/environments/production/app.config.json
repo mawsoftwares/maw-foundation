@@ -1,0 +1,62 @@
+{
+  "name": "production",
+  "type": "production",
+  "kind": "docker",
+  "hosting": {
+    "topology": "dedicated-domain"
+  },
+  "branch": "main",
+  "server": "YOUR_PHP_SERVER_IP",
+  "deployPath": "/home/deploy/prod/maw-php",
+  "generatedSubPath": "deployment-config",
+  "domain": "api-php.maw-foundation.apps.mawsoftwares.in",
+  "ports": {
+    "backend": 8081
+  },
+  "docker": {
+    "composeFile": "docker-compose.prod.yml",
+    "contextDir": "backend-php"
+  },
+  "nginx": {
+    "enabled": true,
+    "autoInstall": true,
+    "confirmBeforeInstall": true,
+    "failOnError": false,
+    "vhostDir": "/home/deploy/nginx/vhosts-enabled",
+    "sitesEnabled": "/etc/nginx/sites-enabled",
+    "certbot": {
+      "email": "ops@mawsoftwares.in"
+    },
+    "ssl": {
+      "enabled": true,
+      "listenPort": 443,
+      "certificate": "/etc/letsencrypt/live/api-php.maw-foundation.apps.mawsoftwares.in/fullchain.pem",
+      "certificateKey": "/etc/letsencrypt/live/api-php.maw-foundation.apps.mawsoftwares.in/privkey.pem",
+      "redirectHttp": true,
+      "acmeChallengeRoot": "/home/deploy/prod/maw-php/acme-challenge"
+    }
+  },
+  "database": {
+    "name": "maw_foundation_prod",
+    "user": "maw_prod_user",
+    "host": "localhost",
+    "port": 5432
+  },
+  "ssh": {
+    "user": "deploy",
+    "keyPath": "~/.ssh/mac_to_phpserver"
+  },
+  "deployment": {
+    "projectRoot": "/home/deploy/prod/maw-php",
+    "repoUrl": "git@github.com:YOUR_ORG/maw-foundation.git",
+    "requiredEnv": ["APP_KEY", "JWT_SECRET", "DB_PASSWORD"],
+    "commands": {
+      "pull": "git fetch origin && git checkout -B main origin/main",
+      "migrate": "cd backend-php && docker compose -f docker-compose.prod.yml exec app php artisan migrate --force"
+    }
+  },
+  "health": {
+    "protocol": "http",
+    "endpoint": "/health"
+  }
+}

@@ -133,6 +133,12 @@ importers:
 
   apps/sample-server:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1121.0
+        version: 3.1121.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.1121.0
+        version: 3.1121.0
       '@mawsoftwares/api':
         specifier: workspace:*
         version: link:../../packages/api

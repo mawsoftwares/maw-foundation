@@ -141,6 +141,9 @@ jobs:
           path: backend-php/coverage/
         continue-on-error: true
 
+      - name: Docker build (production image)
+        run: docker build --target app -t maw-foundation-php:ci .
+
   contract-conformance:
     name: Cross-Backend Contract Verification
     needs: [node, php]

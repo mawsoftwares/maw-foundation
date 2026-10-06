@@ -1,0 +1,9 @@
+{
+  "name": "@maw-templates/storage-module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Storage source module template (local disk + S3, folders, signed direct upload). Copy to your project's modules/storage directory — do NOT import as a package.",
+  "type": "module",
+  "main": "server/index.ts",
+  "types": "server/index.ts"
+}

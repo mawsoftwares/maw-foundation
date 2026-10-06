@@ -80,26 +80,36 @@ frontend samples under `topology/samples/frontend/`.
 
 ## Sample apps in this repo
 
-`apps/sample-server` and `apps/sample-web` each have a `deploy/` folder.
+`apps/sample-server`, `apps/sample-web`, and `backend-php` each have a `deploy/` folder.
 
 ```bash
 # Preview (no SSH)
 npm run deploy:server -- staging --dry-run
 npm run deploy:web -- staging --dry-run
+npm run deploy:php -- staging --dry-run
 
 # After filling deploy/environments/<env>/.env and SSH/server fields:
 npm run deploy:server -- staging
 npm run deploy:web -- staging --setup-https
+npm run deploy:php -- staging
 ```
 
-| Env | Topology | Web | API |
-| --- | --- | --- | --- |
-| **staging** | shared subpath | `https://apps.mawsoftwares.in/maw-foundation/` | `https://apps.mawsoftwares.in/maw-foundation/api` |
-| **production** | dedicated domains | `https://maw-foundation.apps.mawsoftwares.in` | `https://api.maw-foundation.apps.mawsoftwares.in` |
+| Env | Topology | Web | Node API | PHP API |
+| --- | --- | --- | --- | --- |
+| **staging** | shared subpath | `https://apps.mawsoftwares.in/maw-foundation/` | `https://apps.mawsoftwares.in/maw-foundation/api` | `https://api-php.staging.mawsoftwares.in` |
+| **production** | dedicated domains | `https://maw-foundation.apps.mawsoftwares.in` | `https://api.maw-foundation.apps.mawsoftwares.in` | `https://api-php.maw-foundation.apps.mawsoftwares.in` |
 
-Server: `66.116.243.198`. Backend needs a real `deployment.repoUrl`. Frontend
-does not — copy `.env.example` → `.env` (`VITE_*` for web, `JWT_SECRET` /
-`DATABASE_URL` for API) and run the deploy command.
+Server: `66.116.243.198` (Node). PHP backend deploys to a separate server via
+Docker Compose (`kind: "docker"` in `app.config.json`). Frontend does not need
+`deployment.repoUrl` — copy `.env.example` → `.env` and run the deploy command.
+
+## Service kinds
+
+| Kind | How it deploys | Process manager | Use for |
+| --- | --- | --- | --- |
+| `backend` (default) | git clone → npm install → build → PM2 | PM2 | Node.js/Express/Hono servers |
+| `frontend` / `web` | local build → upload dist/ → nginx | nginx (static) | React/Next.js SPAs |
+| `docker` | git clone → docker compose build → docker compose up | Docker Compose | PHP/Laravel, any containerized backend |
 
 ## Design principles
 

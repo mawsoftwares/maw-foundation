@@ -44,6 +44,8 @@ import { MenusView } from './features/menus';
 import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-settings';
 import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
+import { StorageView } from './features/storage-page';
+import { StorageSettingsView } from './features/storage-settings';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
 import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
 import { TopBarActions } from './shell/TopBarActions';
@@ -60,7 +62,7 @@ config.loadLayer('app', {
 setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -87,6 +89,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'reports', label: 'Reports', icon: 'bar-chart', path: '/reports', group: 'Main', sortOrder: 2, permission: 'Read_Reports' },
   { key: 'inventory', label: 'Inventory', icon: 'clipboard-list', path: '/inventory', group: 'Main', sortOrder: 3, permission: 'Read_Inventory' },
   { key: 'billing', label: 'Billing', icon: 'credit-card', path: '/billing', group: 'Finance', sortOrder: 4, permission: 'Read_Billing' },
+  { key: 'storage', label: 'Files', icon: 'folder', path: '/storage', group: 'Main', sortOrder: 3.5, permission: 'Read_Storage' },
   { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
@@ -107,13 +110,15 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   menus: 'Manage_Menus',
   theme: 'Manage_Theme',
   messaging: 'Read_Messaging',
+  storage: 'Read_Storage',
+  'storage-settings': 'Manage_StorageConfiguration',
 };
 
 const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings']);
 
 /** Sidebar section for each known nav key, used to group DB-driven menu items the same way the static fallback does. */
 const NAV_GROUPS: Record<string, string> = {
-  dashboard: 'Main', orders: 'Main', reports: 'Main', inventory: 'Main',
+  dashboard: 'Main', orders: 'Main', reports: 'Main', inventory: 'Main', storage: 'Main',
   billing: 'Finance',
   users: 'Admin', 'audit-logs': 'Admin', account: 'Admin',
   superadmin: 'Admin', settings: 'Admin',
@@ -172,6 +177,8 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'menus': return <MenusView />;
     case 'theme': return <ThemeSettingsView />;
     case 'messaging': return <MessagingView />;
+    case 'storage': return <StorageView />;
+    case 'storage-settings': return <StorageSettingsView />;
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
     case 'superadmin': return <SuperAdminView />;
@@ -340,6 +347,7 @@ export function App(): ReactNode {
           // 'module.inventory': true,
           // 'module.billing': true,
           'module.users': true,
+          'module.storage': true,
           'module.audit-logs': true,
           'module.account': true,
 

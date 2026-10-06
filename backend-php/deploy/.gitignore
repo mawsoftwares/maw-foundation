@@ -1,0 +1,5 @@
+generated/
+logs/
+# Keep .env.example, ignore actual .env files
+environments/**/.env
+!environments/**/.env.example

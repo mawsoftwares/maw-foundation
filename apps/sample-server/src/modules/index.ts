@@ -11,6 +11,7 @@ import { featureFlagsModule } from './feature-flags';
 import { menusModule } from './menus';
 import { themeModule } from './theme';
 import { messagingModule } from './messaging';
+import { storageModule } from './storage/permissions';
 
 const log = createLogger('registry');
 
@@ -48,4 +49,5 @@ registry.register(
   menusModule,
   themeModule,
   messagingModule,
+  storageModule,
 );

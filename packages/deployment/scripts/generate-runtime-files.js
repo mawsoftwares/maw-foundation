@@ -14,6 +14,7 @@ const { ensureDirSync, writeFileSync } = require('./utils/fileSystem')
 const { renderTemplate } = require('./utils/templateEngine')
 const {
   buildNginxTemplateData,
+  isDocker,
   isFrontend,
   resolveConfigOutputRoot,
   resolveNginxTemplateName,
@@ -22,6 +23,7 @@ const {
 } = require('./utils/topology')
 
 const FRONTEND_SKIP_TYPES = new Set(['ecosystem', 'dockerCompose', 'dockerfile'])
+const DOCKER_SKIP_TYPES = new Set(['ecosystem', 'dockerCompose', 'dockerfile', 'runtime'])
 
 function buildTemplateData(manifest) {
   const processManager = manifest.processManager || {}
@@ -65,9 +67,13 @@ function generateRuntimeFiles(environment, options = {}) {
   const generatedFiles = []
 
   const frontend = isFrontend(manifest)
+  const docker = isDocker(manifest)
 
   for (const [type, templateName] of Object.entries(TEMPLATE_FILE_MAP)) {
     if (frontend && FRONTEND_SKIP_TYPES.has(type)) {
+      continue
+    }
+    if (docker && DOCKER_SKIP_TYPES.has(type)) {
       continue
     }
     const resolvedTemplateName =
