@@ -17,5 +17,6 @@ return [
 
     'providers' => \Illuminate\Support\ServiceProvider::defaultProviders()->merge([
         App\Providers\AppServiceProvider::class,
+        App\Storage\StorageServiceProvider::class,
     ])->toArray(),
 ];

@@ -1,0 +1,29 @@
+{
+  "key": "tenant/t1/folder/root/file/00000000-0000-4000-8000-000000000001/original",
+  "cipher": {
+    "keyHex": "1111111111111111111111111111111111111111111111111111111111111111",
+    "plain": "{\"accessKeyId\":\"AKIAEXAMPLE\",\"secretAccessKey\":\"sec/ret+value==\"}",
+    "ciphertext": "v1:70807e24075d6ba1858cae90:a5b66f05518197c124a0c9657b0c63bf0fe93e78d54732bc55bf53f31167850c96ea2fcf2dad91b622fdc50723bfa74de3c221a577c85f90004cbbfbb74f9ed196:4c351f6eea93f86985969f8935d57bbe"
+  },
+  "localToken": {
+    "secret": "interop-signing-secret-123456",
+    "token": "eyJ0ZW5hbnRJZCI6InQxIiwiY29uZmlnSWQiOiJjMSIsImtleSI6InRlbmFudC90MS9mb2xkZXIvcm9vdC9maWxlLzAwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMS9vcmlnaW5hbCIsIm9wIjoicHV0IiwiZXhwIjo0MTAyNDQ0ODAwLCJjb250ZW50VHlwZSI6ImFwcGxpY2F0aW9uL3BkZiIsImNvbnRlbnRMZW5ndGgiOjEyMzR9.s-THOmKQhYcoOUkAwCMJpId2aIesdPA3XctsVSAS3GQ",
+    "getToken": "eyJ0ZW5hbnRJZCI6InQxIiwiY29uZmlnSWQiOiJjMSIsImtleSI6InRlbmFudC90MS9mb2xkZXIvcm9vdC9maWxlLzAwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMS9vcmlnaW5hbCIsIm9wIjoiZ2V0IiwiZXhwIjo0MTAyNDQ0ODAwLCJjb250ZW50VHlwZSI6ImltYWdlL3BuZyIsImZpbGVOYW1lIjoiaMOpbGxvIFwieFwiLnBuZyIsImRpc3Bvc2l0aW9uIjoiaW5saW5lIn0.kgROfmRMIB-M1zrmAHXss7gCy7y9G_6an5e_vfC0j9g"
+  },
+  "azure": {
+    "account": "mawstorage",
+    "keyBase64": "a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s=",
+    "container": "client-files",
+    "blobName": "maw/prod/tenant/t1/folder/root/file/00000000-0000-4000-8000-000000000001/original",
+    "startsAt": 1791269700,
+    "expiresAt": 1791270900,
+    "upload": "https://mawstorage.blob.core.windows.net/client-files/maw/prod/tenant/t1/folder/root/file/00000000-0000-4000-8000-000000000001/original?sv=2022-11-02&spr=https&st=2026-10-06T06%3A55%3A00Z&se=2026-10-06T07%3A15%3A00Z&sr=b&sp=cw&sig=tsjqRZ0vAQVeQD5mfuQai%2FHO0dh2LiGTs3DSd8Ngr5k%3D",
+    "download": "https://mawstorage.blob.core.windows.net/client-files/maw/prod/tenant/t1/folder/root/file/00000000-0000-4000-8000-000000000001/original?sv=2022-11-02&spr=https&st=2026-10-06T06%3A55%3A00Z&se=2026-10-06T07%3A15%3A00Z&sr=b&sp=r&rscd=attachment%3B%20filename%3D%22Invoice%201.pdf%22%3B%20filename*%3DUTF-8%27%27Invoice%25201.pdf&rsct=application%2Fpdf&sig=%2BA4X1iQuBeS%2Ftu9hMh3m0AhlsgdG9JvfOo1nxjroORQ%3D",
+    "containerList": "https://mawstorage.blob.core.windows.net/client-files?sv=2022-11-02&spr=https&st=2026-10-06T06%3A55%3A00Z&se=2026-10-06T07%3A15%3A00Z&sr=c&sp=l&sig=U1A%2Brn%2BFiaUekccEmKHyUQ6%2Fs2Cqjq2Ga7Gb2Rc9nj8%3D"
+  },
+  "s3": {
+    "signingTime": 1791270000,
+    "put": "https://client-files.s3.ap-south-1.amazonaws.com/maw/prod/tenant/t1/folder/root/file/00000000-0000-4000-8000-000000000001/original?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAEXAMPLEKEY12345%2F20261006%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20261006T070000Z&X-Amz-Expires=900&X-Amz-Signature=856e0d0f9eac5ceff9f98528f90655035c8f3d732fb75e51260dc1f9223b794f&X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost&x-id=PutObject",
+    "get": "https://client-files.s3.ap-south-1.amazonaws.com/maw/prod/tenant/t1/folder/root/file/00000000-0000-4000-8000-000000000001/original?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAEXAMPLEKEY12345%2F20261006%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20261006T070000Z&X-Amz-Expires=300&X-Amz-Signature=f46c5df09999035a6d10f6e90081e5b878d40e40203000b268085de4a3c56e6e&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22Invoice%201.pdf%22%3B%20filename%2A%3DUTF-8%27%27Invoice%25201.pdf&response-content-type=application%2Fpdf&x-id=GetObject"
+  }
+}
