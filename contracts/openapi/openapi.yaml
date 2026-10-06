@@ -34,6 +34,8 @@ tags:
     description: Report definitions, execution, saved reports
   - name: Files
     description: File upload, download, management
+  - name: Storage
+    description: Provider-agnostic file storage (local, S3, R2, Azure) — folders, signed direct upload/download, attachments
   - name: Jobs
     description: Background job management
   - name: System
@@ -149,6 +151,36 @@ paths:
     $ref: './files.yaml#/paths/~1files~1url~1{key}'
   /files/{key}:
     $ref: './files.yaml#/paths/~1files~1{key}'
+
+  # --- Storage ---
+  /api/v1/storage/providers:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1providers'
+  /api/v1/storage/configurations:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1configurations'
+  /api/v1/storage/configurations/{id}:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1configurations~1{id}'
+  /api/v1/storage/configurations/{id}/test:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1configurations~1{id}~1test'
+  /api/v1/storage/folders:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1folders'
+  /api/v1/storage/folders/{id}:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1folders~1{id}'
+  /api/v1/storage/folders/{id}/files:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1folders~1{id}~1files'
+  /api/v1/storage/uploads:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1uploads'
+  /api/v1/storage/uploads/{fileId}/complete:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1uploads~1{fileId}~1complete'
+  /api/v1/storage/files/{fileId}:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1files~1{fileId}'
+  /api/v1/storage/files/{fileId}/download-url:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1files~1{fileId}~1download-url'
+  /api/v1/storage/attachments:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1attachments'
+  /api/v1/storage/attachments/{id}:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1attachments~1{id}'
+  /api/v1/storage/local/{token}:
+    $ref: './storage.yaml#/paths/~1api~1v1~1storage~1local~1{token}'
 
   # --- Jobs ---
   /api/v1/jobs:

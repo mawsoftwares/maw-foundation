@@ -17,7 +17,8 @@ contracts/
 │   ├── menus.yaml          ← Menu/navigation
 │   ├── messaging.yaml      ← Email templates, send operations
 │   ├── reporting.yaml      ← Report definitions, execution
-│   ├── files.yaml          ← File upload/management
+│   ├── files.yaml          ← File upload/management (legacy multipart API)
+│   ├── storage.yaml        ← MAW Storage: folders, signed direct upload/download, providers (local/S3/R2/Azure)
 │   ├── jobs.yaml           ← Background jobs
 │   └── system.yaml         ← Health, config, notifications
 ├── schemas/
@@ -25,6 +26,26 @@ contracts/
 └── errors/
     └── error-codes.json    ← Standard error code registry
 ```
+
+## Backend coverage
+
+| Spec | Node.js | PHP / Laravel |
+|---|---|---|
+| auth, users, rbac, tenants, orders, menus, messaging, reporting, files, jobs, system | implemented | implemented |
+| **storage** | implemented (`apps/sample-server/src/modules/storage`) | implemented (`backend-php/app/Storage`) |
+
+Both backends share the same Postgres database (Node's migrations create the `maw_storage_*` tables) and must
+follow `storage.yaml`: tenant-scoped 404s, server-generated object keys, signed direct upload, and the credential
+cipher format (AES-256-GCM `v1:<iv>:<data>:<tag>`, key `STORAGE_ENCRYPTION_KEY`) so each can read the other's rows.
+To interoperate when both serve one deployment, give them the SAME `STORAGE_ENCRYPTION_KEY`,
+`STORAGE_LOCAL_SIGNING_SECRET`, `JWT_SECRET` and (for local storage) `STORAGE_LOCAL_ROOT`.
+
+Drift checks for storage:
+- Node: `apps/sample-server/src/modules/storage/__tests__/storage.contract.test.ts` (routes, permissions, error
+  reasons, file statuses, providers) and the schema assertions in `storage.api.integration.test.ts`.
+- PHP: `backend-php/tests/Contract/StorageContractTest.php` (same checks against the Laravel routes).
+- Byte-level interoperability: `backend-php/tests/Unit/Storage/NodeInteropTest.php` reproduces values produced by
+  the real Node code/SDKs (`node --import=tsx apps/sample-server/scripts/php-interop-fixtures.ts` regenerates them).
 
 ## Rules
 

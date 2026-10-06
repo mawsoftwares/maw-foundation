@@ -160,7 +160,130 @@ export const SENSITIVE_FIELDS = [
   'verification_token',
   'passwordResetToken',
   'password_reset_token',
+  // Storage: provider secrets and internal object keys must never appear in a response
+  'secretAccessKey',
+  'accessKeyId',
+  'encryptedCredentials',
+  'encrypted_credentials',
+  'objectKey',
+  'object_key',
 ] as const;
+
+// --- Storage response schemas (envelope style: {success, data, meta?}) — see contracts/openapi/storage.yaml ---
+
+export const STORAGE_FILE_STATUSES = ['pending', 'uploading', 'uploaded', 'failed', 'deleted'] as const;
+
+export const StorageFileSchema: ResponseSchema = {
+  id: { type: 'string', required: true },
+  name: { type: 'string', required: true },
+  mimeType: { type: 'string', required: true },
+  size: { type: 'number', required: true },
+  folderId: { type: ['string', 'null'], required: true },
+  status: { type: 'string', required: true, enum: STORAGE_FILE_STATUSES },
+  createdAt: { type: 'string', required: true },
+  updatedAt: { type: 'string', required: true },
+};
+
+export const StorageFolderSchema: ResponseSchema = {
+  id: { type: 'string', required: true },
+  parentId: { type: ['string', 'null'], required: true },
+  name: { type: 'string', required: true },
+  path: { type: 'string', required: true },
+  storageConfigId: { type: 'string', required: true },
+  createdAt: { type: 'string', required: true },
+  updatedAt: { type: 'string', required: true },
+};
+
+export const StorageConfigurationSchema: ResponseSchema = {
+  id: { type: 'string', required: true },
+  provider: { type: 'string', required: true },
+  name: { type: 'string', required: true },
+  bucket: { type: ['string', 'null'], required: true },
+  region: { type: ['string', 'null'], required: true },
+  endpoint: { type: ['string', 'null'], required: true },
+  basePath: { type: 'string', required: true },
+  hasCredentials: { type: 'boolean', required: true },
+  isDefault: { type: 'boolean', required: true },
+  isActive: { type: 'boolean', required: true },
+  createdAt: { type: 'string', required: true },
+  updatedAt: { type: 'string', required: true },
+};
+
+const envelopeOf = (properties: ResponseSchema): ResponseSchema => ({
+  success: { type: 'boolean', required: true },
+  data: { type: 'object', required: true, properties },
+});
+
+const pageOf = (properties: ResponseSchema): ResponseSchema => ({
+  success: { type: 'boolean', required: true },
+  data: { type: 'array', required: true, items: { type: 'object', properties } },
+  meta: {
+    type: 'object',
+    required: true,
+    properties: {
+      pagination: {
+        type: 'object',
+        required: true,
+        properties: {
+          page: { type: 'number', required: true },
+          pageSize: { type: 'number', required: true },
+          total: { type: 'number', required: true },
+          totalPages: { type: 'number', required: true },
+        },
+      },
+    },
+  },
+});
+
+export const StorageFileResponse = envelopeOf(StorageFileSchema);
+export const StorageFolderResponse = envelopeOf(StorageFolderSchema);
+export const StorageConfigurationResponse = envelopeOf(StorageConfigurationSchema);
+export const StorageFilePageResponse = pageOf(StorageFileSchema);
+export const StorageFolderPageResponse = pageOf(StorageFolderSchema);
+
+export const StorageUploadResponse = envelopeOf({
+  fileId: { type: 'string', required: true },
+  uploadUrl: { type: 'string', required: true },
+  method: { type: 'string', required: true, enum: ['PUT'] },
+  headers: { type: 'object', required: true },
+  expiresIn: { type: 'number', required: true },
+});
+
+export const StorageDownloadUrlResponse = envelopeOf({
+  url: { type: 'string', required: true },
+  expiresIn: { type: 'number', required: true },
+});
+
+export const STORAGE_ERROR_REASONS = [
+  'STORAGE_PROVIDER_NOT_FOUND',
+  'STORAGE_CONFIGURATION_NOT_FOUND',
+  'STORAGE_FOLDER_NOT_FOUND',
+  'STORAGE_FILE_NOT_FOUND',
+  'STORAGE_ACCESS_DENIED',
+  'STORAGE_UPLOAD_FAILED',
+  'STORAGE_UPLOAD_NOT_COMPLETED',
+  'STORAGE_OBJECT_NOT_FOUND',
+  'STORAGE_PROVIDER_ERROR',
+  'STORAGE_INVALID_FILE',
+  'STORAGE_INVALID_INPUT',
+  'STORAGE_CONFLICT',
+] as const;
+
+export const StorageErrorResponse: ResponseSchema = {
+  success: { type: 'boolean', required: true },
+  error: {
+    type: 'object',
+    required: true,
+    properties: {
+      code: { type: 'string', required: true },
+      message: { type: 'string', required: true },
+      details: {
+        type: 'object',
+        properties: { reason: { type: 'string', enum: STORAGE_ERROR_REASONS } },
+      },
+    },
+  },
+};
 
 // --- Error code enum (must match contracts/errors/error-codes.json) ---
 
@@ -184,6 +307,7 @@ export const ERROR_CODES = [
   'LIMIT_EXCEEDED',
   'ACCOUNT_LOCKED',
   'INTERNAL',
+  'SERVICE_UNAVAILABLE',
   'MFA_REQUIRED',
   'INVALID_OTP',
   'PASSWORD_POLICY',

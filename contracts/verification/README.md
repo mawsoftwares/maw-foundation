@@ -7,6 +7,9 @@ Automated tooling to verify both Node.js and PHP backends conform to the shared 
 ### Response Schemas (`response-schemas.ts`)
 TypeScript definitions of every API response shape, derived from the OpenAPI specs. Used as the source of truth for validation.
 
+### Storage schemas
+`response-schemas.ts` also defines the `Storage*` response shapes (files, folders, configurations, upload tickets, errors) and extends the sensitive-field list with provider secrets and object keys, so any backend response that leaks them fails validation.
+
 ### Validator (`validate.ts`)
 Two functions:
 - `validateResponse(body, schema)` — checks a single response against a schema (field presence, types, sensitive field leaks)
