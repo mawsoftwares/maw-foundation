@@ -9,13 +9,14 @@ use App\Domain\Auth\TokenServiceInterface;
 use App\Domain\Shared\Contracts\AccountStatus;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
 use App\Infrastructure\Persistence\Eloquent\Models\UserSessionModel;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class SessionManagementTest extends TestCase
 {
-    use RefreshDatabase;
+    // The schema is owned by the Node migrations, so tests roll back instead of rebuilding (RefreshDatabase would drop it).
+    use DatabaseTransactions;
 
     private const TENANT_ID = 'test-tenant-001';
 
@@ -33,12 +34,10 @@ final class SessionManagementTest extends TestCase
             'tenant_id' => self::TENANT_ID,
             'email' => 'user@example.com',
             'password_hash' => $hasher->hash('password'),
-            'first_name' => 'Test',
-            'last_name' => 'User',
+            'name' => 'Test User',
             'role' => 'user',
             'account_status' => AccountStatus::ACTIVE->value,
             'email_verified' => true,
-            'failed_login_attempts' => 0,
             'mfa_enabled' => false,
         ]);
 
@@ -61,10 +60,12 @@ final class SessionManagementTest extends TestCase
             'refresh_token_hash' => hash('sha256', 'token1'),
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
-            'last_used_at' => now(),
+            'created_at' => now(),
+            'last_active_at' => now(),
+            'expires_at' => now()->addDay(),
         ]);
 
-        $response = $this->getJson('/api/auth/sessions', [
+        $response = $this->getJson('/api/v1/auth/sessions', [
             'Authorization' => "Bearer {$this->userToken}",
         ]);
 
@@ -86,10 +87,12 @@ final class SessionManagementTest extends TestCase
             'refresh_token_hash' => hash('sha256', 'token2'),
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit',
-            'last_used_at' => now(),
+            'created_at' => now(),
+            'last_active_at' => now(),
+            'expires_at' => now()->addDay(),
         ]);
 
-        $response = $this->deleteJson('/api/auth/sessions/sess-to-revoke', [], [
+        $response = $this->deleteJson('/api/v1/auth/sessions/sess-to-revoke', [], [
             'Authorization' => "Bearer {$this->userToken}",
         ]);
 
@@ -107,10 +110,12 @@ final class SessionManagementTest extends TestCase
             'refresh_token_hash' => hash('sha256', 'token3'),
             'ip_address' => '10.0.0.1',
             'user_agent' => 'Other',
-            'last_used_at' => now(),
+            'created_at' => now(),
+            'last_active_at' => now(),
+            'expires_at' => now()->addDay(),
         ]);
 
-        $response = $this->deleteJson('/api/auth/sessions/sess-other', [], [
+        $response = $this->deleteJson('/api/v1/auth/sessions/sess-other', [], [
             'Authorization' => "Bearer {$this->userToken}",
         ]);
 
@@ -127,7 +132,9 @@ final class SessionManagementTest extends TestCase
             'refresh_token_hash' => hash('sha256', 'a'),
             'ip_address' => '127.0.0.1',
             'user_agent' => 'A',
-            'last_used_at' => now(),
+            'created_at' => now(),
+            'last_active_at' => now(),
+            'expires_at' => now()->addDay(),
         ]);
 
         UserSessionModel::create([
@@ -137,10 +144,12 @@ final class SessionManagementTest extends TestCase
             'refresh_token_hash' => hash('sha256', 'b'),
             'ip_address' => '127.0.0.1',
             'user_agent' => 'B',
-            'last_used_at' => now(),
+            'created_at' => now(),
+            'last_active_at' => now(),
+            'expires_at' => now()->addDay(),
         ]);
 
-        $response = $this->deleteJson('/api/auth/sessions', [], [
+        $response = $this->deleteJson('/api/v1/auth/sessions', [], [
             'Authorization' => "Bearer {$this->userToken}",
         ]);
 

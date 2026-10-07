@@ -52,6 +52,7 @@ import {
 } from '@mawsoftwares/auth-core';
 import {
   MasterCache,
+  filterVisibleRoles,
   syncModules,
   type ISyncStore,
   type ICacheStore,
@@ -955,6 +956,7 @@ import { createUsersRouter } from './users-routes';
 import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
 import { createMenuRouter } from './menu-routes';
+import { createThemeRouter, PgThemeStore } from './theme-routes';
 import { createMessagingRouter } from './messaging-routes';
 import { createDevSandboxRouter } from './dev-sandbox';
 
@@ -965,6 +967,7 @@ app.use('/api/v1/users', createUsersRouter(usersRepo, {
   // Admin-set passwords must be hashed the same way login verifies them: scrypt(sha256(plaintext)),
   // i.e. as if the client had prehashed it - see resolvePassword()/hashPasswordForStorage().
   hashPassword: (plain) => Promise.resolve(hashPasswordForStorage(plain)),
+  roleSource: () => Promise.resolve(cache.getCache()?.roles ?? []),
 }));
 app.use(STORAGE_ROUTE_PREFIX, storage.router);
 app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm) => auth.requirePermission(perm), {
@@ -973,6 +976,11 @@ app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm
   auditStore: data.auditStore,
 }));
 app.use('/api/v1/menus', createMenuRouter(data.db, {
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+}));
+// Application-wide theme: stored here, loaded by every client, instead of living in each browser's localStorage.
+app.use('/api/v1/theme', createThemeRouter(new PgThemeStore(data.db), {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
 }));
@@ -993,10 +1001,12 @@ app.use('/api/v1/tenants', createTenantRoutes({
   requireAuth: auth.requireAuth,
 }));
 
-app.get('/api/v1/roles', auth.requireAuth, (_req, res) => {
+app.get('/api/v1/roles', auth.requireAuth, (req, res) => {
   const master = cache.getCache();
-  const roles = (master?.roles ?? [])
-    .filter((r) => r.isActive && r.code !== 'super_admin')
+  // Strict ladder: only roles strictly below the caller's (so super_admin is never listed, and
+  // an admin never sees admin/owner/super_admin). Replaces the old hard-coded super_admin exclusion.
+  const roles = filterVisibleRoles(master?.roles ?? [], (req as DynamicAuthedRequest).maw?.claims.role)
+    .filter((r) => r.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((r) => ({ code: r.code, name: r.name, id: r.id }));
   res.json({ data: roles });

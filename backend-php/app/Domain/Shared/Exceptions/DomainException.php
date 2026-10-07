@@ -16,6 +16,16 @@ abstract class DomainException extends RuntimeException
         parent::__construct($message);
     }
 
+    public function httpStatus(): int
+    {
+        return $this->httpStatus;
+    }
+
+    public function errorCode(): string
+    {
+        return $this->errorCode;
+    }
+
     /**
      * @return array<string, mixed>
      */

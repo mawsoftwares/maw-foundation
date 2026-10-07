@@ -12,7 +12,7 @@ final class HealthEndpointTest extends TestCase
     #[Test]
     public function health_endpoint_returns_200(): void
     {
-        $response = $this->getJson('/api/health');
+        $response = $this->getJson('/api/v1/health');
 
         $response->assertOk();
         $response->assertJsonStructure([

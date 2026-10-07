@@ -11,7 +11,11 @@ use App\Domain\Auth\PrehashResolver;
 use App\Domain\Auth\SessionRepositoryInterface;
 use App\Domain\Auth\TokenBlacklistInterface;
 use App\Domain\Auth\TokenServiceInterface;
+use App\Domain\Shared\Contracts\AccountStatus;
 use App\Domain\Shared\Exceptions\UnauthorizedException;
+use App\Domain\Shared\ValueObjects\Email;
+use App\Domain\Shared\ValueObjects\TenantId;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\User\UserRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,13 +38,11 @@ final class LoginController extends Controller
             'email' => 'required|email',
             'password' => 'required|string',
             'tenantId' => 'required|string',
-            'audience' => 'sometimes|string',
         ]);
 
         $tenantId = (string) $request->input('tenantId');
         $email = (string) $request->input('email');
         $rawPassword = (string) $request->input('password');
-        $audience = (string) $request->input('audience', 'cashier');
 
         $password = PrehashResolver::resolve(
             $rawPassword,
@@ -48,13 +50,18 @@ final class LoginController extends Controller
             (bool) config('auth.require_prehash', false),
         );
 
-        $user = $this->users->findByEmail($tenantId, $email);
+        $user = $this->users->findByEmail(TenantId::from($tenantId), Email::from($email));
 
         if (! $user || ! $this->hasher->verify($password, $user->passwordHash)) {
             throw new UnauthorizedException('INVALID_CREDENTIALS', 'Invalid email or password');
         }
 
-        if ($user->accountStatus->value !== 'active') {
+        // Hashes written with a 16-byte salt (older Node) verify slowly; upgrade them once, now that we have the plaintext.
+        if ($this->hasher->needsRehash($user->passwordHash)) {
+            $this->users->updatePassword($user->id, $this->hasher->hash($password));
+        }
+
+        if ($user->accountStatus !== AccountStatus::ACTIVE) {
             throw new UnauthorizedException('ACCOUNT_INACTIVE', 'Account is not active');
         }
 
@@ -64,16 +71,17 @@ final class LoginController extends Controller
             return new JsonResponse([
                 'requiresMfa' => true,
                 'challengeToken' => $challengeToken,
-                'userId' => $user->id,
+                'userId' => $user->id->value,
             ]);
         }
 
-        $tokens = $this->issueTokens($user->id, $tenantId, $user->role, $audience);
+        $tokens = $this->issueTokens($user->id->value, $tenantId, $user->role, $user->audience);
 
-        $this->sessions->create($tenantId, $user->id, hash('sha256', $tokens->refreshToken), [
+        $this->sessions->create($tenantId, $user->id->value, hash('sha256', $tokens->refreshToken), [
             'ipAddress' => $request->ip(),
             'userAgent' => $request->userAgent() ?? 'unknown',
         ]);
+        $this->users->updateLastLogin($user->id, now()->toIso8601String());
 
         return new JsonResponse($tokens->toResponse());
     }
@@ -90,12 +98,14 @@ final class LoginController extends Controller
             throw new UnauthorizedException('INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token');
         }
 
-        $tokens = $this->issueTokens(
-            (string) $session['userId'],
-            (string) $session['tenantId'],
-            'user',
-            'cashier',
-        );
+        // Role and audience come from the user's CURRENT record, never a hard-coded value, so a refresh cannot
+        // outlive a demotion or a disabled account.
+        $user = $this->users->findById(UserId::from((string) $session['userId']));
+        if (! $user || $user->tenantId->value !== (string) $session['tenantId'] || $user->accountStatus !== AccountStatus::ACTIVE) {
+            throw new UnauthorizedException('INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token');
+        }
+
+        $tokens = $this->issueTokens($user->id->value, $user->tenantId->value, $user->role, $user->audience);
 
         $this->sessions->revoke((string) $session['id']);
         $this->sessions->create(
@@ -127,8 +137,8 @@ final class LoginController extends Controller
         $userId = (string) $request->input('auth_user_id');
         $tenantId = (string) $request->input('auth_tenant_id');
 
-        $user = $this->users->findById($tenantId, $userId);
-        if (! $user) {
+        $user = $this->users->findById(UserId::from($userId));
+        if (! $user || $user->tenantId->value !== $tenantId) {
             throw new UnauthorizedException('USER_NOT_FOUND', 'Authenticated user not found');
         }
 

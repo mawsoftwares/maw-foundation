@@ -124,6 +124,7 @@ export class PgCacheStore implements ICacheStore {
         name: schema.masterRoles.name,
         isActive: schema.masterRoles.isActive,
         sortOrder: schema.masterRoles.sortOrder,
+        level: schema.masterRoles.level,
       })
       .from(schema.masterRoles)
       .where(eq(schema.masterRoles.isActive, true))

@@ -18,12 +18,13 @@ const users = [
 ];
 
 const roles = [
-  { code: 'super_admin', name: 'Super Admin', sortOrder: -1 },
-  { code: 'owner',       name: 'Owner',       sortOrder: 0 },
-  { code: 'admin',       name: 'Admin',       sortOrder: 1 },
-  { code: 'manager',     name: 'Manager',     sortOrder: 2 },
-  { code: 'clerk',       name: 'Clerk',       sortOrder: 3 },
-  { code: 'viewer',      name: 'Viewer',      sortOrder: 4 },
+  // level = hierarchy rank (higher outranks lower; same level cannot see each other).
+  { code: 'super_admin', name: 'Super Admin', sortOrder: -1, level: 100 },
+  { code: 'owner',       name: 'Owner',       sortOrder: 0,  level: 90 },
+  { code: 'admin',       name: 'Admin',       sortOrder: 1,  level: 80 },
+  { code: 'manager',     name: 'Manager',     sortOrder: 2,  level: 60 },
+  { code: 'clerk',       name: 'Clerk',       sortOrder: 3,  level: 40 },
+  { code: 'viewer',      name: 'Viewer',      sortOrder: 4,  level: 20 },
 ];
 
 const rolePermissionMap: Record<string, string[]> = {
@@ -81,11 +82,11 @@ try {
     const roleIdMap: Record<string, number> = {};
     for (const r of roles) {
       const { rows } = await client.query<{ id: number }>(
-        `INSERT INTO master_roles (code, name, sort_order)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order
+        `INSERT INTO master_roles (code, name, sort_order, level)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, sort_order = EXCLUDED.sort_order, level = EXCLUDED.level
          RETURNING id`,
-        [r.code, r.name, r.sortOrder],
+        [r.code, r.name, r.sortOrder, r.level],
       );
       roleIdMap[r.code] = rows[0]!.id;
     }

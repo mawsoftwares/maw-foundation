@@ -28,7 +28,9 @@ final class EloquentSessionRepository implements SessionRepositoryInterface
             'refresh_token_hash' => $refreshTokenHash,
             'ip_address' => $metadata['ipAddress'] ?? '0.0.0.0',
             'user_agent' => $metadata['userAgent'] ?? 'unknown',
-            'last_used_at' => now(),
+            'created_at' => now(),
+            'last_active_at' => now(),
+            'expires_at' => now()->addSeconds((int) config('auth.refresh_token_ttl', 604800)),
         ]);
 
         return $id;
@@ -58,14 +60,15 @@ final class EloquentSessionRepository implements SessionRepositoryInterface
         return UserSessionModel::where('tenant_id', $tenantId)
             ->where('user_id', $userId)
             ->whereNull('revoked_at')
-            ->orderBy('last_used_at', 'desc')
+            ->where('expires_at', '>', now())
+            ->orderBy('last_active_at', 'desc')
             ->get()
             ->map(fn (UserSessionModel $s) => [
                 'id' => $s->id,
                 'ipAddress' => $s->ip_address,
                 'userAgent' => $s->user_agent,
                 'createdAt' => $s->created_at?->toIso8601String(),
-                'lastUsedAt' => $s->last_used_at?->toIso8601String(),
+                'lastUsedAt' => $s->last_active_at?->toIso8601String(),
             ])
             ->all();
     }
@@ -85,6 +88,7 @@ final class EloquentSessionRepository implements SessionRepositoryInterface
     {
         $session = UserSessionModel::where('refresh_token_hash', $hash)
             ->whereNull('revoked_at')
+            ->where('expires_at', '>', now())
             ->first();
 
         if (! $session) {

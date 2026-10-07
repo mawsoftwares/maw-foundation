@@ -1,5 +1,5 @@
 import type { MasterCache } from './cache';
-import { isAdminRole, matchesPermission } from './permission-resolver';
+import { matchesPermission } from './permission-resolver';
 
 export interface PermissionCheckContext {
   userId: string;
@@ -14,7 +14,8 @@ export interface PermissionCheckResult {
 
 /**
  * Core dynamic permission check — used by server adapters (Express/Hono middleware) and
- * can also be called directly in service code. Admin roles bypass all checks.
+ * can also be called directly in service code. No role bypasses the check: access is purely
+ * data-driven (the role's assigned permissions).
  *
  * Ported from Sushmapet's checkPermission middleware, extracted into a pure function
  * so the middleware adapter is a thin wrapper.

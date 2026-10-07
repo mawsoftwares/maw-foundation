@@ -17,6 +17,9 @@ class UserSessionModel extends Model
 
     public $incrementing = false;
 
+    /** `user_sessions` has created_at but no updated_at, so Eloquent must not manage timestamps. */
+    public $timestamps = false;
+
     protected $fillable = [
         'id',
         'tenant_id',
@@ -24,7 +27,9 @@ class UserSessionModel extends Model
         'refresh_token_hash',
         'ip_address',
         'user_agent',
-        'last_used_at',
+        'created_at',
+        'last_active_at',
+        'expires_at',
         'revoked_at',
     ];
 
@@ -34,10 +39,10 @@ class UserSessionModel extends Model
     protected function casts(): array
     {
         return [
-            'last_used_at' => 'datetime',
+            'last_active_at' => 'datetime',
+            'expires_at' => 'datetime',
             'revoked_at' => 'datetime',
             'created_at' => 'datetime',
-            'updated_at' => 'datetime',
         ];
     }
 }

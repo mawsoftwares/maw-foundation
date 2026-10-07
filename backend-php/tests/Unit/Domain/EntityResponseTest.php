@@ -9,6 +9,8 @@ use App\Domain\Rbac\PermissionEntity;
 use App\Domain\Rbac\RoleEntity;
 use App\Domain\Shared\Contracts\AccountStatus;
 use App\Domain\Shared\ValueObjects\Email;
+use App\Domain\Shared\ValueObjects\TenantId;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\User\UserEntity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,25 +21,27 @@ final class EntityResponseTest extends TestCase
     public function user_entity_toResponse_excludes_sensitive_fields(): void
     {
         $user = new UserEntity(
-            id: 'u1',
-            tenantId: 't1',
+            id: UserId::from('u1'),
+            tenantId: TenantId::from('t1'),
             email: Email::from('test@example.com'),
             passwordHash: 'secret-hash',
-            firstName: 'John',
-            lastName: 'Doe',
-            phone: '+1234567890',
             role: 'admin',
+            audience: 'admin',
+            scopeId: null,
             accountStatus: AccountStatus::ACTIVE,
             emailVerified: true,
-            failedLoginAttempts: 0,
             mfaEnabled: false,
+            name: 'John Doe',
+            lastLoginAt: null,
+            createdAt: new \DateTimeImmutable('2024-01-01T00:00:00+00:00'),
+            updatedAt: new \DateTimeImmutable('2024-01-01T12:00:00+00:00'),
         );
 
         $response = $user->toResponse();
 
         $this->assertSame('u1', $response['id']);
         $this->assertSame('test@example.com', $response['email']);
-        $this->assertSame('John', $response['firstName']);
+        $this->assertSame('John Doe', $response['name']);
         $this->assertArrayNotHasKey('passwordHash', $response);
         $this->assertArrayNotHasKey('password_hash', $response);
     }
@@ -112,10 +116,11 @@ final class EntityResponseTest extends TestCase
     #[Test]
     public function account_status_enum_values_match_node(): void
     {
-        $this->assertSame('active', AccountStatus::ACTIVE->value);
-        $this->assertSame('suspended', AccountStatus::SUSPENDED->value);
-        $this->assertSame('pending_verification', AccountStatus::PENDING_VERIFICATION->value);
-        $this->assertSame('deactivated', AccountStatus::DEACTIVATED->value);
-        $this->assertSame('locked', AccountStatus::LOCKED->value);
+        // Mirrors packages/sdk/src/security/AccountStatus.ts and the users_account_status_check constraint.
+        $this->assertSame('ACTIVE', AccountStatus::ACTIVE->value);
+        $this->assertSame('SUSPENDED', AccountStatus::SUSPENDED->value);
+        $this->assertSame('PENDING_VERIFICATION', AccountStatus::PENDING_VERIFICATION->value);
+        $this->assertSame('DISABLED', AccountStatus::DISABLED->value);
+        $this->assertSame('LOCKED', AccountStatus::LOCKED->value);
     }
 }

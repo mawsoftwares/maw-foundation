@@ -1,0 +1,1 @@
+ALTER TABLE master_roles DROP COLUMN IF EXISTS level;

@@ -5,10 +5,12 @@ import { eq, and, sql, count } from 'drizzle-orm';
 import type { MasterCache } from '@mawsoftwares/rbac-core';
 import type { IAuditStore } from '@mawsoftwares/audit';
 import type { DynamicAuthedRequest } from '@mawsoftwares/server-express';
+import { getRoleLevel, outranks } from '@mawsoftwares/rbac-core';
+import { actorOf } from './role-hierarchy-guard';
 import { buildRoleWorkspace, type PermissionRow, type ModuleRow } from './rbac-workspace';
 
 function toRoleDto(r: typeof schema.masterRoles.$inferSelect) {
-  return { id: r.id, code: r.code, name: r.name, description: r.description, isActive: r.isActive, sortOrder: r.sortOrder };
+  return { id: r.id, code: r.code, name: r.name, description: r.description, isActive: r.isActive, sortOrder: r.sortOrder, level: r.level };
 }
 function toPermissionDto(r: typeof schema.masterPermissions.$inferSelect) {
   return {
@@ -90,10 +92,35 @@ export function createRbacRouter(
   // roles/permissions/modules/module-permission assignments, all equally sensitive.
   router.use(requirePermission('Manage_Rbac'));
 
-  // --- Roles CRUD ---
-  router.get('/roles', async (_req, res) => {
+  // --- Role hierarchy (strict ladder) ---
+  // Callers only see / manage roles strictly below their own level. Hidden roles answer 404.
+  const loadRoleLevels = () =>
+    db.select({ id: schema.masterRoles.id, code: schema.masterRoles.code, level: schema.masterRoles.level }).from(schema.masterRoles);
+  const callerLevel = async (req: Request) => {
+    const actor = actorOf(req);
+    return getRoleLevel(await loadRoleLevels(), actor?.role);
+  };
+
+  router.use('/roles/:id', async (req, res, next) => {
     try {
-      const rows = await db.select().from(schema.masterRoles).orderBy(schema.masterRoles.sortOrder);
+      const level = await callerLevel(req);
+      const target = (await db.select({ level: schema.masterRoles.level }).from(schema.masterRoles)
+        .where(eq(schema.masterRoles.id, Number(req.params['id']))))[0];
+      if (target && !outranks(level, target.level)) {
+        return void res.status(404).json({ error: 'Role not found' });
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // --- Roles CRUD ---
+  router.get('/roles', async (req, res) => {
+    try {
+      const level = await callerLevel(req);
+      const rows = (await db.select().from(schema.masterRoles).orderBy(schema.masterRoles.sortOrder))
+        .filter((r) => outranks(level, r.level));
       res.json({ data: rows.map(toRoleDto) });
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
@@ -103,9 +130,13 @@ export function createRbacRouter(
   router.post('/roles', async (req, res) => {
     try {
       const { code, name, description, sortOrder } = req.body;
+      const newLevel = Number(req.body.level ?? 0);
+      if (!Number.isInteger(newLevel) || !outranks(await callerLevel(req), newLevel)) {
+        return void res.status(403).json({ error: 'A role must be created strictly below your own level.' });
+      }
       const rows = await db
         .insert(schema.masterRoles)
-        .values({ code, name, description: description || null, sortOrder: sortOrder || 0 })
+        .values({ code, name, description: description || null, sortOrder: sortOrder || 0, level: newLevel })
         .returning();
       await cache.load();
       auditRbac(auditStore, req, 'ROLE_CREATED', 'rbac.role', String(rows[0]!.id), { code, name });
@@ -122,9 +153,17 @@ export function createRbacRouter(
     try {
       const { id } = req.params;
       const { name, description, sortOrder, isActive } = req.body;
+      const levelPatch: { level?: number } = {};
+      if (req.body.level !== undefined) {
+        const newLevel = Number(req.body.level);
+        if (!Number.isInteger(newLevel) || !outranks(await callerLevel(req), newLevel)) {
+          return void res.status(403).json({ error: 'A role must stay strictly below your own level.' });
+        }
+        levelPatch.level = newLevel;
+      }
       const rows = await db
         .update(schema.masterRoles)
-        .set({ name, description: description || null, sortOrder: sortOrder || 0, isActive: isActive !== false, updatedAt: new Date() })
+        .set({ name, description: description || null, sortOrder: sortOrder || 0, isActive: isActive !== false, ...levelPatch, updatedAt: new Date() })
         .where(eq(schema.masterRoles.id, Number(id)))
         .returning();
       await cache.load();
@@ -215,11 +254,15 @@ export function createRbacRouter(
           id: schema.masterRoles.id,
           code: schema.masterRoles.code,
           name: schema.masterRoles.name,
+          level: schema.masterRoles.level,
         })
         .from(schema.rolePermissions)
         .innerJoin(schema.masterRoles, eq(schema.masterRoles.id, schema.rolePermissions.roleId))
         .where(eq(schema.rolePermissions.permissionId, permissionId));
-      const unique = new Map(rows.map((r) => [r.id, r]));
+      const level = await callerLevel(req);
+      const unique = new Map(
+        rows.filter((r) => outranks(level, r.level)).map(({ level: _l, ...r }) => [r.id, r]),
+      );
       res.json({ data: { count: unique.size, roles: [...unique.values()] } });
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
@@ -623,6 +666,29 @@ export function createRbacRouter(
         .where(eq(schema.rolePermissions.roleId, Number(id)));
       const oldIds = previous.map((r) => r.permissionId).sort((a, b) => a - b);
       const newIds = (assignments ?? []).map((a) => a.permissionId).sort((a, b) => a - b);
+
+      // Grant ceiling: a caller may only add or remove permissions they hold themselves, so an admin
+      // can never hand out (or strip) anything beyond their own authority.
+      const actorRoleCode = actorOf(req)?.role;
+      const actorRole = (await db.select({ id: schema.masterRoles.id }).from(schema.masterRoles)
+        .where(eq(schema.masterRoles.code, actorRoleCode ?? '')))[0];
+      const held = new Set(
+        actorRole
+          ? (await db.select({ permissionId: schema.rolePermissions.permissionId }).from(schema.rolePermissions)
+              .where(eq(schema.rolePermissions.roleId, actorRole.id))).map((r) => r.permissionId)
+          : [],
+      );
+      const changed = [
+        ...newIds.filter((pid) => !oldIds.includes(pid)),
+        ...oldIds.filter((pid) => !newIds.includes(pid)),
+      ];
+      const beyond = [...new Set(changed.filter((pid) => !held.has(pid)))];
+      if (beyond.length > 0) {
+        return void res.status(403).json({
+          error: 'You can only grant or revoke permissions that you hold yourself.',
+          permissionIds: beyond,
+        });
+      }
 
       await db.transaction(async (tx) => {
         await tx.delete(schema.rolePermissions).where(eq(schema.rolePermissions.roleId, Number(id)));

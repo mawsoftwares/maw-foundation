@@ -24,3 +24,10 @@ export {
   matchesPermission,
 } from './permission-resolver';
 export { type PermissionCheckContext, type PermissionCheckResult, checkPermissionDynamic } from './check-permission';
+export {
+  LEVEL_UNKNOWN_TARGET,
+  getRoleLevel,
+  outranks,
+  canManageRole,
+  filterVisibleRoles,
+} from './role-hierarchy';

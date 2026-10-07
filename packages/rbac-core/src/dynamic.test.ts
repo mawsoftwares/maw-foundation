@@ -256,15 +256,19 @@ describe('permission-resolver', () => {
 
 describe('isAdminRole', () => {
   it('recognises admin codes', () => {
-    expect(isAdminRole('admin')).toBe(true);
-    expect(isAdminRole('ADMIN')).toBe(true);
     expect(isAdminRole('super_admin')).toBe(true);
+    expect(isAdminRole('SUPER_ADMIN')).toBe(true);
     expect(isAdminRole('superadmin')).toBe(true);
     expect(isAdminRole('manager')).toBe(false);
   });
 
+  it('does not treat plain admin as top of the ladder', () => {
+    expect(isAdminRole('admin')).toBe(false);
+    expect(isAdminRole('ADMIN')).toBe(false);
+    expect(isAdminRole('x', 'Admin')).toBe(false);
+  });
+
   it('recognises admin names', () => {
-    expect(isAdminRole('mgr', 'Admin')).toBe(true);
     expect(isAdminRole('mgr', 'Super Admin')).toBe(true);
     expect(isAdminRole('mgr', 'Manager')).toBe(false);
   });
@@ -298,14 +302,14 @@ describe('checkPermissionDynamic', () => {
     await cache.load();
   });
 
-  it('admin role bypasses all checks', async () => {
+  it('admin role has no bypass — a role with no assignments is denied', async () => {
     const result = await checkPermissionDynamic(
       { userId: 'u1', roleId: 1 },
       'Read_Users',
       cache,
     );
-    expect(result.granted).toBe(true);
-    expect(result.reason).toBe('admin_bypass');
+    expect(result.granted).toBe(false);
+    expect(result.reason).toBe('denied');
   });
 
   it('manager with permission is granted', async () => {

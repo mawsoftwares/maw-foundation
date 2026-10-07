@@ -7,6 +7,8 @@ export const masterRoles = pgTable('master_roles', {
   description: text('description'),
   isActive: boolean('is_active').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
+  // Hierarchy rank: higher outranks lower; same level cannot see each other (rbac-core/role-hierarchy).
+  level: integer('level').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });

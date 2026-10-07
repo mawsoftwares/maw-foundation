@@ -11,6 +11,8 @@ use App\Domain\Rbac\PermissionEntity;
 use App\Domain\Rbac\RoleEntity;
 use App\Domain\Shared\Contracts\AccountStatus;
 use App\Domain\Shared\ValueObjects\Email;
+use App\Domain\Shared\ValueObjects\TenantId;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\User\UserEntity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,28 +27,28 @@ final class DualBackendConformanceTest extends TestCase
     public function user_response_shape_matches_node(): void
     {
         $user = new UserEntity(
-            id: 'u1',
-            tenantId: 't1',
+            id: UserId::from('u1'),
+            tenantId: TenantId::from('t1'),
             email: Email::from('test@example.com'),
-            passwordHash: 'hash',
-            firstName: 'John',
-            lastName: 'Doe',
-            phone: '+1234567890',
+            passwordHash: 'secret-hash',
             role: 'admin',
+            audience: 'admin',
+            scopeId: null,
             accountStatus: AccountStatus::ACTIVE,
             emailVerified: true,
-            failedLoginAttempts: 0,
             mfaEnabled: false,
+            name: 'John Doe',
+            lastLoginAt: null,
             createdAt: new \DateTimeImmutable('2024-01-01T00:00:00+00:00'),
             updatedAt: new \DateTimeImmutable('2024-01-01T12:00:00+00:00'),
         );
 
         $response = $user->toResponse();
 
-        // Node.js UserRecord.toResponse() returns these exact camelCase keys
+        // contracts/openapi/users.yaml UserResponse — exact camelCase keys
         $expectedKeys = [
-            'id', 'email', 'firstName', 'lastName', 'phone', 'role',
-            'accountStatus', 'emailVerified', 'mfaEnabled', 'createdAt', 'updatedAt',
+            'id', 'tenantId', 'email', 'name', 'role', 'audience', 'scopeId',
+            'accountStatus', 'emailVerified', 'mfaEnabled', 'lastLoginAt', 'createdAt', 'updatedAt',
         ];
 
         foreach ($expectedKeys as $key) {
@@ -57,9 +59,7 @@ final class DualBackendConformanceTest extends TestCase
         $this->assertArrayNotHasKey('password_hash', $response);
         $this->assertArrayNotHasKey('passwordHash', $response);
         $this->assertArrayNotHasKey('tenant_id', $response);
-        $this->assertArrayNotHasKey('tenantId', $response);
         $this->assertArrayNotHasKey('mfa_secret', $response);
-        $this->assertArrayNotHasKey('failed_login_attempts', $response);
     }
 
     #[Test]
@@ -137,7 +137,7 @@ final class DualBackendConformanceTest extends TestCase
     public function account_status_values_match_node_enum(): void
     {
         // Node.js AccountStatus enum values (from SDK)
-        $nodeValues = ['active', 'suspended', 'pending_verification', 'deactivated', 'locked'];
+        $nodeValues = ['PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED', 'LOCKED', 'DISABLED'];
 
         $phpValues = array_map(fn (AccountStatus $s) => $s->value, AccountStatus::cases());
 

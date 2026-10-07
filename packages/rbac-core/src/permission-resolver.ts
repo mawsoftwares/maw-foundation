@@ -73,14 +73,16 @@ export function createPermissions(cache: MasterCache) {
 }
 
 /**
- * Admin-role check. A role with code or name matching these patterns gets full access.
+ * Top-of-ladder check: true only for the super admin role (code `super_admin` / `superadmin`, or
+ * name "Super Admin"). Plain `admin` is deliberately NOT included — it sits below super_admin on
+ * the role ladder (see role-hierarchy.ts), so its access comes only from its assigned permissions.
  */
 export function isAdminRole(code: string, name?: string): boolean {
   const lower = code.toLowerCase();
-  if (lower === 'admin' || lower === 'super_admin' || lower === 'superadmin') return true;
+  if (lower === 'super_admin' || lower === 'superadmin') return true;
   if (name !== undefined) {
     const n = name.toLowerCase();
-    if (n === 'admin' || n === 'super admin' || n === 'superadmin') return true;
+    if (n === 'super admin' || n === 'superadmin') return true;
   }
   return false;
 }

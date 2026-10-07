@@ -23,7 +23,9 @@ final class TenantResolver
 
         $request->merge(['tenant_id' => $tenantId]);
 
-        DB::statement("SET LOCAL app.tenant_id = ?", [$tenantId]);
+        // `SET` cannot take bind parameters, so use set_config(). Session-scoped (not LOCAL): outside a transaction a
+        // LOCAL setting would vanish immediately, and the connection lives only for this request, so it cannot leak.
+        DB::select("SELECT set_config('app.tenant_id', ?, false)", [$tenantId]);
 
         return $next($request);
     }

@@ -19,11 +19,11 @@ final class ExceptionsTest extends TestCase
     {
         $e = new ValidationException('Bad input');
         $this->assertSame(400, $e->httpStatus());
-        $this->assertSame('VALIDATION_ERROR', $e->errorCode());
+        $this->assertSame('VALIDATION_FAILED', $e->errorCode());
 
         $api = $e->toApiError();
         $this->assertSame('Bad input', $api['error']);
-        $this->assertSame('VALIDATION_ERROR', $api['code']);
+        $this->assertSame('VALIDATION_FAILED', $api['code']);
     }
 
     #[Test]

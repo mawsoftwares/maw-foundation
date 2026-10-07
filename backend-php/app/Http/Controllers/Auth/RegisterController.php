@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Domain\Auth\PasswordHasherInterface;
 use App\Domain\Auth\PrehashResolver;
 use App\Domain\Shared\ValueObjects\Email;
+use App\Domain\Shared\ValueObjects\TenantId;
 use App\Domain\User\CreateUserData;
 use App\Domain\User\UserRepositoryInterface;
 use Illuminate\Http\JsonResponse;
@@ -37,21 +38,20 @@ final class RegisterController extends Controller
             (bool) config('auth.require_prehash', false),
         );
 
-        $tenantId = (string) $request->input('tenantId');
-
         $data = new CreateUserData(
+            tenantId: TenantId::from((string) $request->input('tenantId')),
             email: Email::from((string) $request->input('email')),
             passwordHash: $this->hasher->hash($password),
-            firstName: (string) $request->input('firstName'),
-            lastName: (string) $request->input('lastName'),
-            role: 'user',
-            phone: $request->input('phone') ? (string) $request->input('phone') : null,
+            // Self-registration never grants more than the lowest rung of the role ladder.
+            role: (string) config('auth.default_registration_role', 'viewer'),
+            name: trim($request->input('firstName') . ' ' . $request->input('lastName')),
+            accountStatus: 'PENDING_VERIFICATION',
         );
 
-        $user = $this->users->create($tenantId, $data);
+        $user = $this->users->create($data);
 
         return new JsonResponse([
-            'userId' => $user->id,
+            'userId' => $user->id->value,
             'emailVerificationRequired' => true,
         ], 201);
     }

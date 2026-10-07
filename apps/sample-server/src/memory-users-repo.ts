@@ -76,6 +76,15 @@ export class MemoryUsersRepository implements IUsersRepository {
       );
     }
 
+    if (query.role) {
+      result = result.filter((u) => u.role === query.role);
+    }
+
+    if (query.visibleRoles) {
+      const visible = new Set(query.visibleRoles);
+      result = result.filter((u) => u.id === query.viewerId || (u.role !== undefined && visible.has(u.role)));
+    }
+
     const total = result.length;
     const limit = query.limit && query.limit > 0 ? query.limit : 20;
     const offset = ((query.page || 1) - 1) * limit;

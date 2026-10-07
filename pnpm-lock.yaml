@@ -181,6 +181,9 @@ importers:
       '@mawsoftwares/tenancy':
         specifier: workspace:*
         version: link:../../packages/tenancy
+      '@mawsoftwares/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)

@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
+/** The shared `users` table (same one the Node backend uses): one `name` column, upper-case `account_status`. */
 class UserModel extends Authenticatable
 {
     use HasUuids;
@@ -21,32 +22,22 @@ class UserModel extends Authenticatable
         'id',
         'tenant_id',
         'email',
-        'password_hash',
-        'first_name',
-        'last_name',
-        'phone',
         'role',
+        'audience',
+        'scope_id',
+        'password_hash',
+        'name',
+        'phone',
+        'avatar',
         'account_status',
         'email_verified',
-        'email_verified_at',
-        'verification_token',
-        'verification_token_expires_at',
-        'password_reset_token',
-        'password_reset_token_expires_at',
-        'failed_login_attempts',
-        'locked_until',
-        'last_login_at',
+        'phone_verified',
         'mfa_enabled',
-        'mfa_secret',
-        'mfa_recovery_codes',
+        'last_login_at',
     ];
 
     protected $hidden = [
         'password_hash',
-        'mfa_secret',
-        'mfa_recovery_codes',
-        'verification_token',
-        'password_reset_token',
     ];
 
     /**
@@ -56,14 +47,9 @@ class UserModel extends Authenticatable
     {
         return [
             'email_verified' => 'boolean',
+            'phone_verified' => 'boolean',
             'mfa_enabled' => 'boolean',
-            'failed_login_attempts' => 'integer',
-            'email_verified_at' => 'datetime',
-            'verification_token_expires_at' => 'datetime',
-            'password_reset_token_expires_at' => 'datetime',
-            'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
-            'mfa_recovery_codes' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react
 import { createConfigEngine, APP_CONFIG_DEFAULTS } from '@mawsoftwares/sdk/config/config-engine';
 import { setDefaultPhoneRegion } from '@mawsoftwares/sdk/kernel/validate';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
-import { storedDesignToOverrides } from '@mawsoftwares/theme';
+import { storedDesignToOverrides, normalizeDesignMarkdown } from '@mawsoftwares/theme';
 import {
   AuthProvider,
   DynamicAccessProvider,
@@ -23,7 +23,7 @@ import {
   type NavItem,
   type NavigationConfig,
 } from '@mawsoftwares/ui-web';
-import { client } from './api';
+import { client, sharedTheme } from './api';
 import { loadDynamicAccess, restoreSession } from './session';
 import { setupOffline } from './offline-setup';
 import { LoginForm, RegisterForm, VerifyEmailForm, ForgotPasswordForm, ResetPasswordForm } from '@mawsoftwares/ui-auth';
@@ -40,7 +40,7 @@ import { AccountView } from './features/account';
 import { RbacView } from './features/rbac';
 import { FeatureFlagsView } from './features/feature-flags';
 import { MenusView } from './features/menus';
-import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY } from './features/theme-settings';
+import { ThemeSettingsView, DESIGN_MD_STORAGE_KEY, DESIGN_MD_CONTENT_STORAGE_KEY } from './features/theme-settings';
 import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
 import { loadMenuTree, type MenuTreeNode } from './menu-tree';
@@ -61,7 +61,7 @@ type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'user
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
-const SUPERADMIN_ROLES = new Set(['owner', 'super_admin', 'admin']);
+const SUPERADMIN_ROLES = new Set(['super_admin']); // top of the role ladder only
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', path: '/dashboard', group: 'Main', sortOrder: 0 },
@@ -177,6 +177,41 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     }
   }, [applyThemeOverrides]);
+
+  // The theme is application-wide: once signed in, load the shared one from the server (and re-check when the window
+  // regains focus), so a change made by an admin reaches everyone. The localStorage copy above is only a first-paint cache.
+  useEffect(() => {
+    if (session === null) return undefined;
+    let cancelled = false;
+    const syncSharedTheme = async (): Promise<void> => {
+      try {
+        const designMd = await sharedTheme.load();
+        if (cancelled) return;
+        if (designMd === null) {
+          // An admin reset the theme: drop our cached copy and reload once into the default.
+          if (localStorage.getItem(DESIGN_MD_STORAGE_KEY) !== null) {
+            localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
+            localStorage.removeItem(DESIGN_MD_CONTENT_STORAGE_KEY);
+            window.location.reload();
+          }
+          return;
+        }
+        const normalized = normalizeDesignMarkdown(designMd);
+        if (normalized.recognized.length === 0) return;
+        applyThemeOverrides(normalized.overrides);
+        localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(normalized.overrides));
+        localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, normalized.canonical);
+      } catch {
+        // Offline or the request failed: keep whatever is already applied.
+      }
+    };
+    void syncSharedTheme();
+    window.addEventListener('focus', syncSharedTheme);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', syncSharedTheme);
+    };
+  }, [session, applyThemeOverrides]);
 
   const [authPage, setAuthPage] = useState<AuthPage>('login');
 

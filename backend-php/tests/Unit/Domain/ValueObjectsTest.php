@@ -16,7 +16,7 @@ final class ValueObjectsTest extends TestCase
     public function email_lowercases_input(): void
     {
         $email = Email::from('User@Example.COM');
-        $this->assertSame('user@example.com', $email->value());
+        $this->assertSame('user@example.com', $email->value);
     }
 
     #[Test]
@@ -39,7 +39,7 @@ final class ValueObjectsTest extends TestCase
     {
         $uuid = '550e8400-e29b-41d4-a716-446655440000';
         $id = UserId::from($uuid);
-        $this->assertSame($uuid, $id->value());
+        $this->assertSame($uuid, $id->value);
     }
 
     #[Test]
@@ -47,7 +47,7 @@ final class ValueObjectsTest extends TestCase
     {
         $a = UserId::generate();
         $b = UserId::generate();
-        $this->assertNotSame($a->value(), $b->value());
+        $this->assertNotSame($a->value, $b->value);
     }
 
     #[Test]
@@ -62,6 +62,6 @@ final class ValueObjectsTest extends TestCase
     {
         $uuid = '660e8400-e29b-41d4-a716-446655440000';
         $id = TenantId::from($uuid);
-        $this->assertSame($uuid, $id->value());
+        $this->assertSame($uuid, $id->value);
     }
 }

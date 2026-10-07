@@ -58,6 +58,10 @@ export interface ListUsersQueryDto {
   createdTo?: string;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  /** Role-hierarchy scope (server-set, never from the client): only users holding one of these roles... */
+  visibleRoles?: string[];
+  /** ...plus this user (the viewer always sees themselves). */
+  viewerId?: string;
 }
 
 export interface UserResponseDto {

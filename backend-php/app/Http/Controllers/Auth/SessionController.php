@@ -34,7 +34,7 @@ final class SessionController extends Controller
         $revoked = $this->sessions->revokeOwned($sessionId, $tenantId, $userId);
 
         if (! $revoked) {
-            throw new NotFoundException('Session not found');
+            throw new NotFoundException('Session', $sessionId);
         }
 
         return new JsonResponse(['success' => true]);

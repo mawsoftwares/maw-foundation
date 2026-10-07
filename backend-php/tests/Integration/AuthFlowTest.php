@@ -8,13 +8,14 @@ use App\Domain\Auth\PasswordHasherInterface;
 use App\Domain\Auth\TokenServiceInterface;
 use App\Domain\Shared\Contracts\AccountStatus;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class AuthFlowTest extends TestCase
 {
-    use RefreshDatabase;
+    // The schema is owned by the Node migrations, so tests roll back instead of rebuilding (RefreshDatabase would drop it).
+    use DatabaseTransactions;
 
     private const TENANT_ID = 'test-tenant-001';
 
@@ -28,16 +29,14 @@ final class AuthFlowTest extends TestCase
             'tenant_id' => self::TENANT_ID,
             'email' => 'test@example.com',
             'password_hash' => $hasher->hash('password123'),
-            'first_name' => 'Test',
-            'last_name' => 'User',
+            'name' => 'Test User',
             'role' => 'admin',
             'account_status' => AccountStatus::ACTIVE->value,
             'email_verified' => true,
-            'failed_login_attempts' => 0,
             'mfa_enabled' => false,
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'test@example.com',
             'password' => 'password123',
             'tenantId' => self::TENANT_ID,
@@ -54,7 +53,7 @@ final class AuthFlowTest extends TestCase
     #[Test]
     public function login_returns_401_for_invalid_credentials(): void
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'nonexistent@example.com',
             'password' => 'wrong',
             'tenantId' => self::TENANT_ID,
@@ -75,16 +74,14 @@ final class AuthFlowTest extends TestCase
             'tenant_id' => self::TENANT_ID,
             'email' => 'suspended@example.com',
             'password_hash' => $hasher->hash('password123'),
-            'first_name' => 'Suspended',
-            'last_name' => 'User',
+            'name' => 'Suspended User',
             'role' => 'user',
             'account_status' => AccountStatus::SUSPENDED->value,
             'email_verified' => true,
-            'failed_login_attempts' => 0,
             'mfa_enabled' => false,
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'suspended@example.com',
             'password' => 'password123',
             'tenantId' => self::TENANT_ID,
@@ -105,12 +102,10 @@ final class AuthFlowTest extends TestCase
             'tenant_id' => self::TENANT_ID,
             'email' => 'me@example.com',
             'password_hash' => $hasher->hash('password123'),
-            'first_name' => 'Current',
-            'last_name' => 'User',
+            'name' => 'Current User',
             'role' => 'admin',
             'account_status' => AccountStatus::ACTIVE->value,
             'email_verified' => true,
-            'failed_login_attempts' => 0,
             'mfa_enabled' => false,
         ]);
 
@@ -122,7 +117,7 @@ final class AuthFlowTest extends TestCase
             'expiresIn' => 900,
         ]);
 
-        $response = $this->getJson('/api/auth/me', [
+        $response = $this->getJson('/api/v1/auth/me', [
             'Authorization' => "Bearer {$token}",
         ]);
 
@@ -130,7 +125,7 @@ final class AuthFlowTest extends TestCase
         $response->assertJson([
             'id' => 'user-003',
             'email' => 'me@example.com',
-            'firstName' => 'Current',
+            'name' => 'Current User',
         ]);
         $response->assertJsonMissing(['passwordHash']);
     }
@@ -138,7 +133,7 @@ final class AuthFlowTest extends TestCase
     #[Test]
     public function protected_route_rejects_missing_token(): void
     {
-        $response = $this->getJson('/api/auth/me');
+        $response = $this->getJson('/api/v1/auth/me');
 
         $response->assertUnauthorized();
     }
@@ -157,7 +152,7 @@ final class AuthFlowTest extends TestCase
             'expiresIn' => 900,
         ]);
 
-        $response = $this->postJson('/api/auth/logout', [], [
+        $response = $this->postJson('/api/v1/auth/logout', [], [
             'Authorization' => "Bearer {$token}",
         ]);
 
@@ -168,7 +163,7 @@ final class AuthFlowTest extends TestCase
     #[Test]
     public function register_creates_user_with_pending_status(): void
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'email' => 'newuser@example.com',
             'password' => 'securepass123',
             'firstName' => 'New',
@@ -182,7 +177,7 @@ final class AuthFlowTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'newuser@example.com',
-            'account_status' => 'pending_verification',
+            'account_status' => 'PENDING_VERIFICATION',
             'tenant_id' => self::TENANT_ID,
         ]);
     }
@@ -197,16 +192,14 @@ final class AuthFlowTest extends TestCase
             'tenant_id' => self::TENANT_ID,
             'email' => 'existing@example.com',
             'password_hash' => $hasher->hash('password'),
-            'first_name' => 'Existing',
-            'last_name' => 'User',
+            'name' => 'Existing User',
             'role' => 'user',
             'account_status' => AccountStatus::ACTIVE->value,
             'email_verified' => true,
-            'failed_login_attempts' => 0,
             'mfa_enabled' => false,
         ]);
 
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'email' => 'existing@example.com',
             'password' => 'securepass123',
             'firstName' => 'Dup',
@@ -229,16 +222,14 @@ final class AuthFlowTest extends TestCase
             'tenant_id' => self::TENANT_ID,
             'email' => 'prehash@example.com',
             'password_hash' => $hasher->hash($prehash),
-            'first_name' => 'Prehash',
-            'last_name' => 'User',
+            'name' => 'Prehash User',
             'role' => 'user',
             'account_status' => AccountStatus::ACTIVE->value,
             'email_verified' => true,
-            'failed_login_attempts' => 0,
             'mfa_enabled' => false,
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'prehash@example.com',
             'password' => "sha256:{$prehash}",
             'tenantId' => self::TENANT_ID,

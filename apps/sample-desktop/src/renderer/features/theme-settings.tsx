@@ -1,12 +1,16 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Card, Stack, Badge, Banner, Button, TextAreaField, useTheme, useDynamicAccess, ListPage } from '@mawsoftwares/ui-web';
 import { normalizeDesignMarkdown, type DesignMdNormalizeResult } from '@mawsoftwares/theme';
+import { sharedTheme } from '../api';
 
-/** Read by App.tsx's Shell on boot to re-apply the last design.md theme after a reload. */
+/**
+ * First-paint cache of the shared theme. The source of truth is the server (`sharedTheme`, /api/v1/theme), so a theme
+ * set by an admin reaches every user; this only avoids a flash of the default theme while that request is in flight.
+ */
 export const DESIGN_MD_STORAGE_KEY = 'maw-design-md-branding';
 
 /** Raw markdown text behind the last-applied theme, so the editor can be reopened where it was left off. */
-const DESIGN_MD_CONTENT_STORAGE_KEY = 'maw-design-md-content';
+export const DESIGN_MD_CONTENT_STORAGE_KEY = 'maw-design-md-content';
 
 const DEFAULT_TEMPLATE = `---
 version: alpha
@@ -177,8 +181,9 @@ export function ThemeSettingsView(): ReactNode {
   const [applying, setApplying] = useState(false);
   const [result, setResult] = useState<DesignMdNormalizeResult>();
   const [error, setError] = useState<string>();
+  const [sharedStatus, setSharedStatus] = useState<'idle' | 'saved' | 'failed'>('idle');
 
-  const applyText = useCallback((text: string) => {
+  const applyText = useCallback(async (text: string) => {
     const normalized = normalizeDesignMarkdown(text);
     setResult(normalized);
     if (normalized.recognized.length === 0) {
@@ -187,11 +192,20 @@ export function ThemeSettingsView(): ReactNode {
       return normalized;
     }
     setDesignMdText(normalized.canonical);
-    applyThemeOverrides(normalized.overrides);
+    applyThemeOverrides(normalized.overrides); // instant preview on this screen
     localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(normalized.overrides));
     localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, normalized.canonical);
+    if (canManage) {
+      try {
+        await sharedTheme.save(normalized.canonical); // ...and store it for every user of the application
+        setSharedStatus('saved');
+      } catch (err) {
+        setSharedStatus('failed');
+        setError(`Applied on this device only — could not save it for everyone: ${err instanceof Error ? err.message : 'request failed'}`);
+      }
+    }
     return normalized;
-  }, [applyThemeOverrides]);
+  }, [applyThemeOverrides, canManage]);
 
   const handleFile = useCallback(async (file: File) => {
     setApplying(true);
@@ -199,7 +213,7 @@ export function ThemeSettingsView(): ReactNode {
     try {
       const text = await file.text();
       setDesignMdText(text);
-      applyText(text);
+      await applyText(text);
       setFileName(file.name);
     } catch {
       setError('Could not read that file. Make sure it is a plain-text .md file.');
@@ -208,10 +222,16 @@ export function ThemeSettingsView(): ReactNode {
     }
   }, [applyText]);
 
-  const handleApplyText = useCallback(() => {
+  const handleApplyText = useCallback(async () => {
     setError(undefined);
     setFileName(undefined);
-    applyText(designMdText);
+    setSharedStatus('idle');
+    setApplying(true);
+    try {
+      await applyText(designMdText);
+    } finally {
+      setApplying(false);
+    }
   }, [applyText, designMdText]);
 
   const handleDownload = useCallback(() => {
@@ -224,11 +244,18 @@ export function ThemeSettingsView(): ReactNode {
     URL.revokeObjectURL(url);
   }, [designMdText]);
 
-  const handleReset = useCallback(() => {
+  const handleReset = useCallback(async () => {
+    setError(undefined);
+    try {
+      if (canManage) await sharedTheme.reset(); // back to the default for everyone
+    } catch (err) {
+      setError(`Could not reset the shared theme: ${err instanceof Error ? err.message : 'request failed'}`);
+      return;
+    }
     localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     localStorage.removeItem(DESIGN_MD_CONTENT_STORAGE_KEY);
     window.location.reload();
-  }, []);
+  }, [canManage]);
 
   return (
     <ListPage
@@ -330,6 +357,7 @@ export function ThemeSettingsView(): ReactNode {
           )}
 
           {error !== undefined && <Banner variant="danger">{error}</Banner>}
+          {sharedStatus === 'saved' && <Banner variant="info">Saved for everyone — every user of this application now gets this theme.</Banner>}
 
           {result !== undefined && (
             <Stack direction="column" gap="var(--maw-space-sm)">

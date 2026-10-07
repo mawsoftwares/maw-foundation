@@ -1,6 +1,6 @@
 import type { DrizzleDb } from '@mawsoftwares/database';
 import { schema } from '@mawsoftwares/database';
-import { eq, and, ne, sql, asc, desc, inArray } from 'drizzle-orm';
+import { eq, and, ne, or, sql, asc, desc, inArray } from 'drizzle-orm';
 import type { PgClient } from '@mawsoftwares/database';
 import type { IUsersRepository, User, ListUsersQueryDto } from './modules/users';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
@@ -119,6 +119,13 @@ export class AuthSchemaUsersRepository implements IUsersRepository {
     
     if (query.role) {
       conditions.push(eq(schema.users.role, query.role));
+    }
+
+    if (query.visibleRoles) {
+      const scope = query.visibleRoles.length > 0
+        ? or(inArray(schema.users.role, query.visibleRoles), eq(schema.users.id, query.viewerId ?? ''))
+        : eq(schema.users.id, query.viewerId ?? '');
+      if (scope) conditions.push(scope);
     }
 
     if (query.createdFrom) {
