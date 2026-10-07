@@ -209,7 +209,7 @@ throw new ValidationError(fields);
 
 Reuse `ErrorCode` from `@mawsoftwares/sdk/kernel/errors` (`NOT_FOUND`, `ALREADY_EXISTS`, `DUPLICATE_EMAIL`, `VALIDATION_FAILED`, `CONFLICT`, …). Add a new code only if none fit.
 
-Put helpers in `packages/<module>/src/errors/` — copy `packages/users/src/errors` or `packages/masters/src/errors`. Include `details.field` when the UI should attach the message to a form input.
+Put helpers in `packages/<module>/src/errors/` — copy `templates/users-module/server/errors` or `packages/masters/src/errors`. Include `details.field` when the UI should attach the message to a form input.
 
 ---
 
@@ -267,7 +267,7 @@ Unknown / non-`AppError` failures must remain `500` with `{ error: { code: 'INTE
 | File | Purpose |
 |---|---|
 | `packages/sdk/src/kernel/errors.ts` | `AppError`, `ErrorCode`, `NotFoundError`, `ValidationError`, `isAppErrorLike` |
-| `packages/users/src/errors/index.ts` | Example domain helpers |
+| `templates/users-module/server/errors/index.ts` | Example domain helpers |
 | `packages/masters/src/errors/index.ts` | Example domain helpers |
 | `packages/api/src/errors/translate.ts` | `withErrorTranslation` |
 | `packages/server-express/src/error-handler.ts` | Global Express handler |

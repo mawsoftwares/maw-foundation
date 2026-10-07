@@ -58,8 +58,6 @@ See [`docs/module-architecture.md`](./module-architecture.md) for the full class
 | `packages/ui-native` | `@mawsoftwares/ui-native` | Stable | React Native design system |
 | `packages/ui-auth` | `@mawsoftwares/ui-auth` | Stable | Auth UI components (login, register, password reset forms) |
 
-> **Note**: `packages/ui-users` (`@mawsoftwares/ui-users`) is the UI layer of the `users` source module template. It is marked `private: true` and is NOT published. See the Source Module Templates section below.
-
 
 ## Sample Apps
 
@@ -76,17 +74,20 @@ Domain modules whose fields, rules, or UI differ between projects must remain as
 
 | Template | Location | Description |
 |---|---|---|
-| `users-module` | `templates/users-module/` | Full user management — domain entity, use-cases, Postgres repository, API routes, React UI |
+| `users-module` | `templates/users-module/` | Full user management — domain entity, use-cases, controllers, Postgres repository, migrations, React UI (UsersManager, list, form, details) |
 | `crud-module` | `templates/crud-module/` | Minimal generic CRUD scaffold for any domain entity |
 | `storage-module` | `templates/storage-module/` | Provider-agnostic file storage (local/S3), folders, signed uploads, admin settings UI |
 
-### Packages that are source module references (private, NOT published)
+### The users module is a template, not a package
 
-| Directory | Status | Notes |
-|---|---|---|
-| `packages/users` | `private: true` — template reference | The baseline users module. Kept in `packages/` for workspace resolution by `sample-server`/`sample-web`. Copy from `templates/users-module/` for new projects. |
-| `packages/ui-users` | `private: true` — template reference | UI layer of the users module. Copy from `templates/users-module/web/` for new projects. |
+There is no `@mawsoftwares/users` or `@mawsoftwares/ui-users` package. User fields change per product (employee codes, outlets, departments…), so the module ships as source in `templates/users-module/`:
 
-These packages are not published to npm. New projects should copy from `templates/` instead.
+```
+templates/users-module/
+├── server/   domain, use-cases, controllers, repository, migrations, errors, tests, module.ts
+└── web/      UsersManager, UsersList, UserForm, UserDetails, types.ts
+```
+
+Copy `server/` into your backend's `modules/users/` and `web/` into your frontend's `features/users/ui/`, then own it. `apps/sample-server`, `apps/sample-web` and `apps/sample-desktop` each hold their own copy as the worked example. `web/types.ts` carries the DTOs so the web copy never imports server code; keep it in step with `server/application/dto`.
 
 See [`docs/module-architecture.md`](./module-architecture.md) for the classification rule and scaffolding guide.

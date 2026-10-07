@@ -27,7 +27,6 @@ packages/
   platform       @mawsoftwares/platform — session, crypto, storage engines
   rbac-core      @mawsoftwares/rbac — capability→permission vocab + resolveEffectiveAccess()
   auth-core      @mawsoftwares/auth — JWT, refresh, password, MFA (framework-agnostic)
-  users          @mawsoftwares/users — user management foundation
   tenancy        @mawsoftwares/tenancy — multi-tenant context, resolution, isolation
   modules        @mawsoftwares/modules — module registry + lifecycle + events
   feature-flags  @mawsoftwares/feature-flags — tenant-aware feature flag service

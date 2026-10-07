@@ -1,75 +1,119 @@
 import { hashPassword } from '@mawsoftwares/auth-core';
+import { validateFields } from '@mawsoftwares/sdk/kernel/validate';
 import { randomUUID } from 'crypto';
-import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
-import type { CreateUserDto, UserResponseDto } from '../dto';
-import { toUserResponseDto } from './index';
+import { CreateUserDto, CreateUserSchema, UserResponseDto } from '../dto';
+import { AccountStatus } from '@mawsoftwares/sdk/security/AccountStatus';
+import { userEmailExists, userPhoneExists, userValidationFailed } from '../../errors';
 
-/**
- * Users Module Template — CreateUser use case.
- *
- * This is where project-specific creation logic lives.
- * Add your own validation, duplicate checks, default assignments, events.
- *
- * Uses @mawsoftwares/auth-core for password hashing (Foundation dependency).
- */
+// Basic mapping function
+export function toUserResponseDto(user: unknown): UserResponseDto {
+  const u = user as {
+    id: string;
+    tenantId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    avatar?: string;
+    role?: string;
+    status: string;
+    emailVerifiedAt?: string;
+    phoneVerifiedAt?: string;
+    lastLoginAt?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  return {
+    id: u.id,
+    tenantId: u.tenantId,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    phone: u.phone,
+    avatar: u.avatar,
+    role: u.role,
+    status: u.status as UserResponseDto['status'],
+    emailVerifiedAt: u.emailVerifiedAt,
+    phoneVerifiedAt: u.phoneVerifiedAt,
+    lastLoginAt: u.lastLoginAt,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
+  };
+}
+
+
 export class CreateUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly auditService?: { log: (event: string, data: Record<string, unknown>) => void },
-    private readonly eventBus?: { emit: (name: string, payload: Record<string, unknown>) => void },
+    private readonly rbacService?: unknown,
+    private readonly auditService?: unknown,
+    private readonly eventBus?: unknown,
   ) {}
 
   async execute(input: CreateUserDto, actorId?: string): Promise<UserResponseDto> {
-    // ── Validation ────────────────────────────────────────────────────────
-    if (!input.firstName?.trim()) throw new Error('USER_FIRST_NAME_REQUIRED');
-    if (!input.lastName?.trim())  throw new Error('USER_LAST_NAME_REQUIRED');
-    if (!input.email?.trim())     throw new Error('USER_EMAIL_REQUIRED');
+    const errors = validateFields(input as unknown as Record<string, unknown>, CreateUserSchema as never);
+    if (errors.length > 0) {
+      throw userValidationFailed(errors);
+    }
 
     const email = input.email.trim().toLowerCase();
 
-    // ── Uniqueness checks ─────────────────────────────────────────────────
     const emailExists = await this.userRepository.existsByEmail(input.tenantId, email);
-    if (emailExists) throw new Error('USER_EMAIL_ALREADY_EXISTS');
+    if (emailExists) {
+      throw userEmailExists();
+    }
 
     if (input.phone) {
       const phoneExists = await this.userRepository.existsByPhone(input.tenantId, input.phone);
-      if (phoneExists) throw new Error('USER_PHONE_ALREADY_EXISTS');
+      if (phoneExists) {
+        throw userPhoneExists();
+      }
     }
 
-    // ── Hash password via @mawsoftwares/auth-core ─────────────────────────
     const passwordHash = input.password ? await hashPassword(input.password) : '';
-
-    // ── Persist ───────────────────────────────────────────────────────────
-    const id   = randomUUID();
-    const role = input.role?.trim() ?? 'viewer';
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const role = input.role?.trim() || 'viewer';
 
     const user = await this.userRepository.create({
       id,
-      tenantId:  input.tenantId,
-      firstName: input.firstName.trim(),
-      lastName:  input.lastName.trim(),
+      tenantId: input.tenantId,
+      firstName: input.firstName,
+      lastName: input.lastName,
       email,
-      phone:        input.phone,
+      phone: input.phone,
       passwordHash,
-      avatar:       input.avatar,
+      avatar: input.avatar,
       role,
-      status:    AccountStatus.ACTIVE,
+      status: AccountStatus.ACTIVE,
       createdBy: actorId,
       deletedAt: null,
     });
 
-    // ── Side-effects ──────────────────────────────────────────────────────
-    this.auditService?.log('USER_CREATED', {
-      actor: actorId, target: user.id,
-      metadata: { email: user.email, role },
-    });
+    if (input.roleId && this.rbacService) {
+      await (this.rbacService as { assignRole: (userId: string, roleId: string, tenantId: string) => Promise<void> })
+        .assignRole(user.id, input.roleId, input.tenantId);
+      if (this.auditService) {
+        (this.auditService as { log: (event: string, data: Record<string, unknown>) => void })
+          .log('ROLE_ASSIGNED', { actor: actorId, target: user.id, metadata: { roleId: input.roleId } });
+      }
+    }
 
-    this.eventBus?.emit('UserCreated', {
-      type: 'USER_CREATED', userId: user.id,
-      tenantId: user.tenantId, actorId,
-      timestamp: new Date().toISOString(),
-    });
+    if (this.eventBus) {
+      (this.eventBus as { emit: (name: string, payload: Record<string, unknown>) => void }).emit('UserCreated', {
+        type: 'USER_CREATED',
+        userId: user.id,
+        tenantId: user.tenantId,
+        actorId,
+        timestamp: now,
+      });
+    }
+
+    if (this.auditService) {
+      (this.auditService as { log: (event: string, data: Record<string, unknown>) => void })
+        .log('USER_CREATED', { actor: actorId, target: user.id, metadata: { email: user.email, role } });
+    }
 
     return toUserResponseDto(user);
   }

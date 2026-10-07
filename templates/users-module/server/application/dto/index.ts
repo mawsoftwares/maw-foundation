@@ -1,6 +1,12 @@
+import {
+  required,
+  email,
+  phone,
+  minLength,
+  maxLength,
+  getPhoneProfile,
+} from '@mawsoftwares/sdk/kernel/validate';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
-
-// ── Create ─────────────────────────────────────────────────────────────────
 
 export interface CreateUserDto {
   tenantId: string;
@@ -9,20 +15,29 @@ export interface CreateUserDto {
   email: string;
   phone?: string;
   password?: string;
-  avatar?: string;
+  /** Auth role code (preferred). Maps to users.role. */
   role?: string;
-  roleId?: string;      // Optional RBAC role assignment
+  /** Optional RBAC role id (legacy); prefer `role`. */
+  roleId?: string;
+  /** Profile image URL (e.g. from /files/upload). */
+  avatar?: string;
+}
 
-  // Add project-specific fields here (must match User entity)
+function phoneValidators(val: string | undefined): { valid: boolean; error?: string } {
+  if (!val) return { valid: true };
+  const format = phone(val);
+  if (!format.valid) return format;
+  return maxLength(getPhoneProfile().inputMaxLength)(val);
 }
 
 export const CreateUserSchema = {
-  firstName: { required: true, minLength: 1, maxLength: 100 },
-  lastName:  { required: true, minLength: 1, maxLength: 100 },
-  email:     { required: true, format: 'email' },
-} as const;
-
-// ── Update ─────────────────────────────────────────────────────────────────
+  tenantId: [required],
+  firstName: [required, minLength(1), maxLength(100)],
+  lastName: [required, minLength(1), maxLength(100)],
+  email: [required, email],
+  phone: [phoneValidators],
+  password: [required, minLength(8)],
+};
 
 export interface UpdateUserDto {
   firstName?: string;
@@ -32,11 +47,24 @@ export interface UpdateUserDto {
   avatar?: string;
   role?: string;
   status?: AccountStatusValue;
-
-  // Add project-specific fields here
 }
 
-// ── Response ───────────────────────────────────────────────────────────────
+export const UpdateUserSchema = {
+  firstName: [(val: string | undefined) => (val === undefined ? { valid: true } : minLength(1)(val))],
+  lastName: [(val: string | undefined) => (val === undefined ? { valid: true } : minLength(1)(val))],
+  email: [(val: string | undefined) => (val === undefined ? { valid: true } : email(val))],
+  phone: [(val: string | undefined) => (val === undefined ? { valid: true } : phoneValidators(val))],
+};
+
+export interface ListUsersQueryDto {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: AccountStatusValue;
+  role?: string;
+  createdFrom?: string;
+  createdTo?: string;
+}
 
 export interface UserResponseDto {
   id: string;
@@ -53,25 +81,12 @@ export interface UserResponseDto {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
-
-  // Add project-specific response fields here
 }
 
-// ── List ───────────────────────────────────────────────────────────────────
-
-export interface ListUsersQueryDto {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: AccountStatusValue;
-  role?: string;
-  createdFrom?: string;
-  createdTo?: string;
-}
-
-export interface ListUsersResponseDto {
+export interface PaginatedUserResponse {
   items: UserResponseDto[];
-  total: number;
   page: number;
-  pageSize: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }

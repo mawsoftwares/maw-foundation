@@ -21,7 +21,7 @@ throw new NotFoundError('Order', id);
 throw new ValidationError(fields);
 ```
 
-Put domain helpers in `packages/<module>/src/errors/` (copy `packages/users/src/errors` or `packages/masters/src/errors`). Prefer existing `ErrorCode` values (`NOT_FOUND`, `ALREADY_EXISTS`, `DUPLICATE_EMAIL`, `VALIDATION_FAILED`, `CONFLICT`). Add a new `ErrorCode` only if none fit.
+Put domain helpers in `packages/<module>/src/errors/` (copy `templates/users-module/server/errors` or `packages/masters/src/errors`). Prefer existing `ErrorCode` values (`NOT_FOUND`, `ALREADY_EXISTS`, `DUPLICATE_EMAIL`, `VALIDATION_FAILED`, `CONFLICT`). Add a new `ErrorCode` only if none fit.
 
 ## Controllers must not catch
 

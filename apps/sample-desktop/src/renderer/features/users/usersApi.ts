@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { apiBaseQuery } from '../../store/apiBaseQuery';
-import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
+import type { UserResponseDto, CreateUserDto, UpdateUserDto } from './ui';
 
 // Redux Toolkit (RTK Query) data layer for the Users module — the reference
 // implementation the Module Generator's frontend templates follow. Each

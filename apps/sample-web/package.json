@@ -12,7 +12,6 @@
     "@mawsoftwares/sdk": "workspace:*",
     "@mawsoftwares/theme": "workspace:*",
     "@mawsoftwares/ui-auth": "workspace:*",
-    "@mawsoftwares/ui-users": "workspace:*",
     "@mawsoftwares/ui-web": "workspace:*",
     "@reduxjs/toolkit": "^2.5.0",
     "react-redux": "^9.2.0",

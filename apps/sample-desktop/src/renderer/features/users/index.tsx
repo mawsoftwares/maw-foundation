@@ -1,14 +1,14 @@
-import { UsersManager, type IUserApiService } from '@mawsoftwares/ui-users';
+import { UsersManager, type IUserApiService } from './ui';
 import { client } from '../../api';
 import { store } from '../../store';
 import { usersApi } from './usersApi';
 import { useAppConfig } from '../../config-context';
 
 import type { ListParams } from '@mawsoftwares/ui-web';
-import type { UserResponseDto, CreateUserDto, UpdateUserDto } from '@mawsoftwares/users';
+import type { UserResponseDto, CreateUserDto, UpdateUserDto } from './ui';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 
-// Same IUserApiService contract @mawsoftwares/ui-users' <UsersManager> expects,
+// Same IUserApiService contract ./ui <UsersManager> expects,
 // but backed by Redux Toolkit (RTK Query) underneath instead of ad hoc
 // client.request() calls — dispatching each endpoint's `.initiate(...)` and
 // unwrapping it gives RTK Query's caching/dedup/invalidation for free while

@@ -1,18 +1,38 @@
 import type { IUsersRepository } from '../../infrastructure/repositories/UserRepository';
+import { userNotFound, userOperationFailed } from '../../errors';
 
 export class DeleteUserUseCase {
   constructor(
     private readonly userRepository: IUsersRepository,
-    private readonly auditService?: { log: (event: string, data: Record<string, unknown>) => void },
+    private readonly auditService?: any,
+    private readonly eventBus?: any,
   ) {}
 
   async execute(id: string, tenantId: string, actorId?: string): Promise<void> {
     const user = await this.userRepository.findById(id, tenantId);
-    if (user === null) throw new Error('USER_NOT_FOUND');
+    if (!user || user.deletedAt) {
+      throw userNotFound(id);
+    }
 
-    const deleted = await this.userRepository.softDelete(id, tenantId);
-    if (!deleted) throw new Error('USER_NOT_FOUND');
+    // Protection logic for system users could go here.
 
-    this.auditService?.log('USER_DELETED', { actor: actorId, target: id });
+    const success = await this.userRepository.softDelete(id, tenantId);
+    if (!success) {
+      throw userOperationFailed('delete');
+    }
+
+    if (this.eventBus) {
+      this.eventBus.emit('UserDeleted', {
+        type: 'USER_DELETED',
+        userId: id,
+        tenantId,
+        actorId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (this.auditService) {
+      this.auditService.log('USER_DELETED', { actor: actorId, target: id });
+    }
   }
 }

@@ -325,7 +325,7 @@ Project C → modules/production    (converging to common shape)
 
 ## 8. Do Not Create `@mawsoftwares/users`
 
-The historical `packages/users` in this repository is now marked `private: true` and is not published.
+The historical `packages/users` and `packages/ui-users` have been removed from this repository; the users module now lives only as source in `templates/users-module/` (server + web).
 
 Do NOT create a large generic `@mawsoftwares/users` package attempting to serve all project types. The configuration surface required to support Restaurant, ERP, CRM, HR, Manufacturing schemas would be enormous and brittle.
 

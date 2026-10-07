@@ -1,4 +1,8 @@
-import type { AuditableEntity, TenantScopedEntity, SoftDeletableEntity } from '@mawsoftwares/database';
+import type {
+  AuditableEntity,
+  TenantScopedEntity,
+  SoftDeletableEntity,
+} from '@mawsoftwares/database';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 
 /**
@@ -30,7 +34,7 @@ import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatu
  *   - infrastructure/database/migrations/001_create_users_table.ts
  *   - infrastructure/repositories/UserRepository.ts (mapper + insert columns)
  *   - application/dto/index.ts (CreateUserDto, UpdateUserDto, UserResponseDto)
- *   - web/components/UserForm.tsx (add form fields)
+ *   - web/UserForm.tsx (add form fields)
  */
 export interface User extends AuditableEntity, TenantScopedEntity, SoftDeletableEntity {
   firstName: string;
@@ -39,12 +43,10 @@ export interface User extends AuditableEntity, TenantScopedEntity, SoftDeletable
   phone?: string;
   passwordHash: string;
   avatar?: string;
-  /** RBAC role code (e.g. 'owner', 'manager', 'viewer'). */
+  /** Auth / RBAC role code (e.g. owner, manager). Optional on the domain; required in auth persistence. */
   role?: string;
   status: AccountStatusValue;
   emailVerifiedAt?: string;
   phoneVerifiedAt?: string;
   lastLoginAt?: string;
-
-  // ── Add project-specific fields below ────────────────────────────────────
 }

@@ -9,7 +9,7 @@ This monorepo still links packages locally via pnpm workspaces (`workspace:*`) s
 | Published (`private: false`) | Not published (`private: true`) |
 |---|---|
 | `@mawsoftwares/sdk`, `core`, `config`, `platform`, `database`, … | `apps/*` (samples) |
-| `@mawsoftwares/auth-core`, `rbac-core`, `tenancy`, `server-express`, … | `@mawsoftwares/users`, `@mawsoftwares/ui-users` (copy from `templates/`) |
+| `@mawsoftwares/auth-core`, `rbac-core`, `tenancy`, `server-express`, … | `@maw-templates/users-module` and the other templates (copy from `templates/`) |
 | `@mawsoftwares/ui-web`, `ui-auth`, `theme`, `api-client`, … | `@maw-templates/*` (copy into the product) |
 
 `@mawsoftwares/ui-native` is excluded from the pnpm workspace (Expo install), so the release workflow does not publish it. Publish it from `packages/ui-native` separately if a mobile product needs it.
@@ -78,7 +78,7 @@ Plain `node dist/server.js` will not load `.ts` files from `node_modules`. Use t
 
 ### 5. Users / other domain modules
 
-Do **not** `pnpm add @mawsoftwares/users`. Copy [`templates/users-module`](../templates/users-module) into the product and own the code. See [`docs/module-architecture.md`](./module-architecture.md).
+There is no users package. Copy [`templates/users-module`](../templates/users-module) into the product and own the code. See [`docs/module-architecture.md`](./module-architecture.md).
 
 Full wiring walkthrough: [`.engineering/platform-reuse.md`](../.engineering/platform-reuse.md).
 

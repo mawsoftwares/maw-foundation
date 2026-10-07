@@ -10,7 +10,6 @@ const pkgs = [
   'platform',
   'rbac-core',
   'auth-core',
-  'users',
   'tenancy',
   'modules',
   'feature-flags',
@@ -78,6 +77,7 @@ export default defineConfig({
       'adapters/**/*.test.{ts,tsx}',
       'apps/**/*.test.{ts,tsx}',
       'contracts/**/*.test.{ts,tsx}',
+      'templates/users-module/**/*.test.{ts,tsx}',
     ],
     coverage: {
       provider: 'v8',

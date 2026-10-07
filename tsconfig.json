@@ -11,7 +11,6 @@
     "packages/platform/src",
     "packages/rbac-core/src",
     "packages/auth-core/src",
-    "packages/users/src",
     "packages/tenancy/src",
     "packages/modules/src",
     "packages/feature-flags/src",
@@ -31,7 +30,8 @@
     "adapters/hono/src",
     "adapters/postgres/src",
     "apps/sample-server/src",
-    "apps/sample-web/src"
+    "apps/sample-web/src",
+    "templates/users-module"
   ],
   "exclude": ["**/node_modules", "**/dist", "**/*.test.ts", "**/*.test.tsx"]
 }

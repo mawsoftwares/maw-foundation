@@ -87,9 +87,6 @@ importers:
       '@mawsoftwares/ui-auth':
         specifier: workspace:*
         version: link:../../packages/ui-auth
-      '@mawsoftwares/ui-users':
-        specifier: workspace:*
-        version: link:../../packages/ui-users
       '@mawsoftwares/ui-web':
         specifier: workspace:*
         version: link:../../packages/ui-web
@@ -239,9 +236,6 @@ importers:
       '@mawsoftwares/ui-auth':
         specifier: workspace:*
         version: link:../../packages/ui-auth
-      '@mawsoftwares/ui-users':
-        specifier: workspace:*
-        version: link:../../packages/ui-users
       '@mawsoftwares/ui-web':
         specifier: workspace:*
         version: link:../../packages/ui-web
@@ -565,28 +559,6 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  packages/ui-users:
-    dependencies:
-      '@mawsoftwares/sdk':
-        specifier: workspace:*
-        version: link:../sdk
-      '@mawsoftwares/ui-web':
-        specifier: workspace:*
-        version: link:../ui-web
-      '@mawsoftwares/users':
-        specifier: workspace:*
-        version: link:../users
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.3
-
   packages/ui-web:
     dependencies:
       '@mawsoftwares/api-client':
@@ -614,24 +586,6 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.8(react@19.2.8)
-
-  packages/users:
-    dependencies:
-      '@mawsoftwares/api':
-        specifier: workspace:*
-        version: link:../api
-      '@mawsoftwares/auth-core':
-        specifier: workspace:*
-        version: link:../auth-core
-      '@mawsoftwares/database':
-        specifier: workspace:*
-        version: link:../database
-      '@mawsoftwares/rbac-core':
-        specifier: workspace:*
-        version: link:../rbac-core
-      '@mawsoftwares/sdk':
-        specifier: workspace:*
-        version: link:../sdk
 
   templates/crud-module: {}
 
@@ -5056,11 +5010,6 @@ packages:
   react-devtools-core@6.1.5:
     resolution: {integrity: sha512-ePrwPfxAnB+7hgnEr8vpKxL9cmnp7F322t8oqcPshbIQQhDKgFDW4tjhF2wjVbdXF9O/nyuy3sQWd9JGpiLPvA==}
 
-  react-dom@18.3.1:
-    resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
-    peerDependencies:
-      react: ^18.3.1
-
   react-dom@19.2.8:
     resolution: {integrity: sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==}
     peerDependencies:
@@ -5098,10 +5047,6 @@ packages:
 
   react-refresh@0.17.0:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
-    engines: {node: '>=0.10.0'}
-
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
     engines: {node: '>=0.10.0'}
 
   react@19.2.8:
@@ -5248,9 +5193,6 @@ packages:
   sax@1.6.1:
     resolution: {integrity: sha512-42tBVwLWnaQvW5zc4HbZrTuWccECCZfBi92FDuwtqxasH+JbPB3/FOKb1m222K42R4WxuxzzMsTswfzgtSu64Q==}
     engines: {node: '>=11.0.0'}
-
-  scheduler@0.23.2:
-    resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
 
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
@@ -8253,6 +8195,14 @@ snapshots:
     optionalDependencies:
       vite: 6.4.3(@types/node@24.13.3)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)
 
+  '@vitest/mocker@3.2.7(vite@6.4.3(@types/node@26.4.1)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))':
+    dependencies:
+      '@vitest/spy': 3.2.7
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 6.4.3(@types/node@26.4.1)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0)
+
   '@vitest/pretty-format@3.2.7':
     dependencies:
       tinyrainbow: 2.0.0
@@ -11205,12 +11155,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  react-dom@18.3.1(react@18.3.1):
-    dependencies:
-      loose-envify: 1.4.0
-      react: 18.3.1
-      scheduler: 0.23.2
-
   react-dom@19.2.8(react@19.2.8):
     dependencies:
       react: 19.2.8
@@ -11273,10 +11217,6 @@ snapshots:
   react-refresh@0.14.2: {}
 
   react-refresh@0.17.0: {}
-
-  react@18.3.1:
-    dependencies:
-      loose-envify: 1.4.0
 
   react@19.2.8: {}
 
@@ -11458,10 +11398,6 @@ snapshots:
       truncate-utf8-bytes: 1.0.2
 
   sax@1.6.1: {}
-
-  scheduler@0.23.2:
-    dependencies:
-      loose-envify: 1.4.0
 
   scheduler@0.27.0: {}
 
@@ -12048,7 +11984,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
-      '@vitest/mocker': 3.2.7(vite@6.4.3(@types/node@24.13.3)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
+      '@vitest/mocker': 3.2.7(vite@6.4.3(@types/node@26.4.1)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
       '@vitest/pretty-format': 3.2.7
       '@vitest/runner': 3.2.7
       '@vitest/snapshot': 3.2.7

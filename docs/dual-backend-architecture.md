@@ -9,7 +9,7 @@ MAW Foundation (pnpm workspaces)
 ├── packages/          — 27 shared packages (@mawsoftwares/ scope)
 ├── adapters/          — express, hono, postgres adapters
 ├── apps/              — sample-server (Express), sample-web, sample-mobile
-├── templates/         — copy-to-own starters (users, ui-users)
+├── templates/         — copy-to-own starters (users-module: server + web)
 ├── .engineering/      — constitution, decisions, patterns, anti-patterns
 └── docs/              — architecture, security, component docs
 ```
