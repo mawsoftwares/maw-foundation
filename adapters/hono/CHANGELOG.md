@@ -1,5 +1,11 @@
 # @mawsoftwares/hono
 
+## 0.1.3
+
+### Patch Changes
+
+- @mawsoftwares/server-hono@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

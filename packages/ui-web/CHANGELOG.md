@@ -1,5 +1,14 @@
 # @mawsoftwares/ui-web
 
+## 0.2.1
+
+### Patch Changes
+
+- Theme: shared theme client (`createSharedThemeClient`) and full design.md spec support. ui-web: Icon component and token-driven component styling updates. rbac-core: role-hierarchy updates.
+- Updated dependencies
+  - @mawsoftwares/theme@0.2.1
+  - @mawsoftwares/rbac-core@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
