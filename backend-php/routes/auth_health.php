@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\System\SessionInfoController;
 use App\Http\Middleware\JwtAuthenticate;
 use App\Http\Middleware\TenantResolver;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,10 @@ Route::get('/health', fn () => response()->json([
     'service' => 'maw-foundation-php',
     'timestamp' => now()->toIso8601String(),
 ]));
+
+// --- Node sample-server root aliases used by sample-web ---
+Route::get('/modules', [SessionInfoController::class, 'modules']);
+Route::get('/me', [SessionInfoController::class, 'me'])->middleware([JwtAuthenticate::class, TenantResolver::class]);
 
 // --- Auth (public) ---
 Route::prefix('auth')->group(function (): void {

@@ -1,4 +1,4 @@
-import type { Palette, ShellTokens, TenantBranding, ThemeOverrides } from './index';
+import type { ComponentOverrides, Palette, ShellTokens, TenantBranding, ThemeOverrides, TypographyOverrides } from './index';
 
 /**
  * design.md → MAW theme adapter.
@@ -193,7 +193,21 @@ export interface DesignMdParseResult {
   readonly recognized: readonly { field: string; value: string }[];
   readonly warnings: readonly string[];
   readonly name?: string;
+  readonly description?: string;
+  /** Prose sections of the markdown body (rationale, do/don't rules) — kept verbatim, not discarded. */
+  readonly sections: readonly DesignMdSection[];
 }
+
+export interface DesignMdSection {
+  readonly level: number;
+  readonly heading: string;
+  readonly content: string;
+}
+
+const KNOWN_ROOT_KEYS = new Set([
+  'version', 'name', 'description', 'colors', 'palette', 'tokens', 'theme', 'semantic', '$schema',
+  'typography', 'rounded', 'radius', 'spacing', 'layout', 'motion', 'elevation', 'shadows', 'components',
+]);
 
 export interface DesignMdNormalizeResult extends DesignMdParseResult {
   readonly canonical: string;
@@ -981,6 +995,8 @@ function emptyOverrides(): ThemeOverrides {
     transitions: {},
     typography: {},
     shell: {},
+    components: {},
+    extraTokens: {},
   };
 }
 
@@ -1207,6 +1223,148 @@ function firstMonoFamily(typography: YamlMap): string | undefined {
   return undefined;
 }
 
+
+/** `{colors.primary}` → value; refs to non-scalar tokens (e.g. `{typography.body-sm}`) → the token's name. */
+function resolveComponentValue(value: string, root: YamlMap): string {
+  const resolved = resolveTokenRefs(value, root);
+  return resolved.replace(/\{typography\.([A-Za-z0-9_-]+)\}/g, '$1').replace(/\{([A-Za-z0-9_.-]+)\}/g, (full, path: string) => {
+    const found = asString(getPath(root, path));
+    return found ?? full;
+  });
+}
+
+/** Every `typography.<name>` entry with a fontSize becomes a type-scale step (size, weight, line-height, tracking). */
+function collectTypeScale(typography: YamlMap, root: YamlMap, recognized: { field: string; value: string }[]): TypographyOverrides['scale'] | undefined {
+  const scale: NonNullable<TypographyOverrides['scale']> = {};
+  for (const [name, node] of Object.entries(typography)) {
+    if (!isYamlMap(node)) continue;
+    const size = asString(node.fontSize) ?? asString(node['font-size']);
+    const weight = asString(node.fontWeight) ?? asString(node['font-weight']);
+    const lineHeight = asString(node.lineHeight) ?? asString(node['line-height']);
+    const family = asString(node.fontFamily) ?? asString(node['font-family']);
+    const letterSpacing = asString(node.letterSpacing) ?? asString(node['letter-spacing']);
+    if (size === undefined && weight === undefined && lineHeight === undefined && letterSpacing === undefined) {
+      if (family !== undefined) scale[name] = { family: resolveTokenRefs(family, root) };
+      continue;
+    }
+    const entry: NonNullable<TypographyOverrides['scale']>[string] = {};
+    if (size !== undefined) entry.size = resolveTokenRefs(size, root);
+    if (weight !== undefined) entry.weight = weight;
+    if (lineHeight !== undefined) entry.lineHeight = resolveTokenRefs(lineHeight, root);
+    if (family !== undefined) entry.family = resolveTokenRefs(family, root);
+    if (letterSpacing !== undefined) entry.letterSpacing = letterSpacing;
+    scale[name] = entry;
+    recognized.push({ field: `typography.${name}`, value: [size, weight, lineHeight].filter(Boolean).join(' / ') });
+  }
+  return Object.keys(scale).length > 0 ? scale : undefined;
+}
+
+function collectComponents(components: YamlMap, root: YamlMap, recognized: { field: string; value: string }[]): ComponentOverrides {
+  const out: ComponentOverrides = {};
+  for (const [name, node] of Object.entries(components)) {
+    if (!isYamlMap(node)) continue;
+    const props: Record<string, string> = {};
+    for (const [prop, raw] of Object.entries(node)) {
+      const value = asString(raw);
+      if (value === undefined) continue;
+      props[prop] = resolveComponentValue(value, root);
+    }
+    if (Object.keys(props).length === 0) continue;
+    out[name] = props;
+    recognized.push({ field: `components.${name}`, value: Object.keys(props).join(', ') });
+  }
+  return out;
+}
+
+/** Sections of the design file that have no dedicated theme slot are kept as `--maw-<prefix>-<key>` tokens. */
+function collectExtraTokens(
+  root: YamlMap,
+  colors: YamlMap,
+  extra: Record<string, string>,
+  recognized: { field: string; value: string }[],
+): void {
+  const put = (token: string, field: string, raw: YamlValue | undefined): void => {
+    const str = asString(raw);
+    if (str === undefined) return;
+    const value = resolveTokenRefs(str, root);
+    extra[token] = value;
+    recognized.push({ field, value });
+  };
+
+  for (const [key, raw] of Object.entries(colors)) {
+    const norm = normalizeTokenKey(key);
+    const unmapped = resolveLightRole(key) === undefined && DARK_COLOR_ALIASES[norm] === undefined
+      && !norm.startsWith('dark-') && !pathLooksShell(['colors'], key);
+    if (!norm.startsWith('status-') && !unmapped) continue;
+    const resolved = resolveTokenRefs(asString(raw) ?? '', root);
+    if (extractCssColor(resolved) === undefined && !isCssColor(resolved)) continue;
+    put(`color-${norm}`, `colors.${key}`, resolved);
+  }
+
+  const layout = isYamlMap(root.layout) ? root.layout : undefined;
+  if (layout !== undefined) {
+    for (const [key, raw] of Object.entries(layout)) put(`layout-${normalizeTokenKey(key)}`, `layout.${key}`, raw);
+  }
+
+  const spacingNode = isYamlMap(root.spacing) ? root.spacing : undefined;
+  if (spacingNode !== undefined) {
+    for (const [key, raw] of Object.entries(spacingNode)) {
+      if (SPACING_SLOTS.has(key)) continue;
+      put(`space-${normalizeTokenKey(key)}`, `spacing.${key}`, raw);
+    }
+  }
+
+  const motion = isYamlMap(root.motion) ? root.motion : undefined;
+  if (motion !== undefined) {
+    for (const [key, raw] of Object.entries(motion)) {
+      if (key === 'fast' || key === 'normal' || key === 'slow' || key === 'easing-standard') continue;
+      put(`motion-${normalizeTokenKey(key)}`, `motion.${key}`, raw);
+    }
+    put('motion-easing', 'motion.easing-standard', motion['easing-standard']);
+  }
+
+  const elevation = isYamlMap(root.elevation) ? root.elevation : undefined;
+  if (elevation !== undefined) {
+    for (const [key, raw] of Object.entries(elevation)) {
+      if (key === 'shell-blur' || key === 'shell-opacity' || key === 'shell-border-opacity') continue;
+      put(`elevation-${normalizeTokenKey(key)}`, `elevation.${key}`, raw);
+    }
+  }
+
+  const rounded = isYamlMap(root.rounded) ? root.rounded : isYamlMap(root.radius) ? root.radius : undefined;
+  if (rounded !== undefined) {
+    for (const [key, raw] of Object.entries(rounded)) {
+      if (ROUNDED_SLOTS.has(key)) continue;
+      put(`radius-${normalizeTokenKey(key)}`, `rounded.${key}`, raw);
+    }
+  }
+}
+
+const SPACING_SLOTS = new Set(['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']);
+const ROUNDED_SLOTS = new Set(['sm', 'md', 'lg', 'xl', 'pill', 'default']);
+
+function extractSections(body: string): DesignMdSection[] {
+  const sections: DesignMdSection[] = [];
+  const withoutFences = body.replace(/```[\s\S]*?```/g, (block) => block.replace(/^#/gm, '\u0000#'));
+  let current: { level: number; heading: string; lines: string[] } | null = null;
+  const flush = (): void => {
+    if (current === null) return;
+    const content = current.lines.join('\n').replace(/\u0000#/g, '#').trim();
+    if (content !== '') sections.push({ level: current.level, heading: current.heading, content });
+  };
+  for (const line of withoutFences.split(/\r?\n/)) {
+    const heading = line.match(/^(#{1,4})\s+(.+?)\s*#*$/);
+    if (heading?.[1] !== undefined && heading[2] !== undefined) {
+      flush();
+      current = { level: heading[1].length, heading: heading[2], lines: [] };
+      continue;
+    }
+    current?.lines.push(line);
+  }
+  flush();
+  return sections;
+}
+
 function yamlToOverrides(
   root: YamlMap,
   recognized: { field: string; value: string }[],
@@ -1394,6 +1552,21 @@ function yamlToOverrides(
     }
   }
 
+  if (typography !== undefined) {
+    const scale = collectTypeScale(typography, root, recognized);
+    if (scale !== undefined) typographyOverride.scale = scale;
+  }
+
+  const componentTokens = components !== undefined ? collectComponents(components, root, recognized) : {};
+  const extraTokens: Record<string, string> = {};
+  collectExtraTokens(root, colors, extraTokens, recognized);
+  overrides.components = componentTokens;
+  overrides.extraTokens = extraTokens;
+
+  for (const key of Object.keys(root)) {
+    if (!KNOWN_ROOT_KEYS.has(key)) warnings.push(`Section "${key}" is not part of the design.md spec — ignored.`);
+  }
+
   return compactOverrides(overrides, branding, palette, paletteDark, radius, spacing, shadows, transitions, typographyOverride, shell);
 }
 
@@ -1426,6 +1599,8 @@ function compactOverrides(
   if (Object.keys(mergedTransitions).length > 0) next.transitions = mergedTransitions;
   if (Object.keys(mergedTypo).length > 0) next.typography = mergedTypo;
   if (Object.keys(mergedShell).length > 0) next.shell = mergedShell;
+  if (overrides.components !== undefined && Object.keys(overrides.components).length > 0) next.components = overrides.components;
+  if (overrides.extraTokens !== undefined && Object.keys(overrides.extraTokens).length > 0) next.extraTokens = overrides.extraTokens;
   return next;
 }
 
@@ -1562,9 +1737,10 @@ function harvestLooseLines(
     const norm = normalizeTokenKey(key);
     
     // Typography Scale parsing (e.g., text-hero, text-h1)
-    if (norm.startsWith('text-')) {
+    const specSizeMatch = value.match(/(\d+)px/);
+    if (norm.startsWith('text-') && specSizeMatch !== null) {
       const scaleKey = norm.replace('text-', '');
-      const sizeMatch = value.match(/(\d+)px/);
+      const sizeMatch = specSizeMatch;
       const lhMatch = value.match(/([\d.]+)\s*line[-\s]height/i);
       const weightMatch = value.match(/bold|semibold|medium|regular|light|100|200|300|400|500|600|700|800|900/i);
       const family = value.replace(/(\d+)px|([\d.]+)\s*line[-\s]height|bold|semibold|medium|regular|light|\b\d{3}\b|,/gi, '').trim();
@@ -1624,6 +1800,8 @@ function mergeOverrideGaps(base: ThemeOverrides, extra: ThemeOverrides): ThemeOv
     transitions: { ...extra.transitions, ...base.transitions },
     typography: { ...extra.typography, ...base.typography },
     shell: { ...extra.shell, ...base.shell },
+    components: { ...extra.components, ...base.components },
+    extraTokens: { ...extra.extraTokens, ...base.extraTokens },
   };
 }
 
@@ -1637,6 +1815,8 @@ function pruneEmpty(overrides: ThemeOverrides): ThemeOverrides {
   if (overrides.transitions !== undefined && Object.keys(overrides.transitions).length > 0) next.transitions = overrides.transitions;
   if (overrides.typography !== undefined && Object.keys(overrides.typography).length > 0) next.typography = overrides.typography;
   if (overrides.shell !== undefined && Object.keys(overrides.shell).length > 0) next.shell = overrides.shell;
+  if (overrides.components !== undefined && Object.keys(overrides.components).length > 0) next.components = overrides.components;
+  if (overrides.extraTokens !== undefined && Object.keys(overrides.extraTokens).length > 0) next.extraTokens = overrides.extraTokens;
   return next;
 }
 
@@ -1658,6 +1838,10 @@ export function toCanonicalDesignMarkdown(parsed: DesignMdParseResult): string {
   const shell = overrides.shell ?? {};
   const name = parsed.name ?? 'Imported Theme';
   const lines: string[] = ['---', 'version: alpha', `name: ${yamlQuote(name)}`];
+  if (parsed.description !== undefined) lines.push(`description: ${yamlQuote(parsed.description)}`);
+  const extra = overrides.extraTokens ?? {};
+  const extraBy = (prefix: string): Array<readonly [string, string]> =>
+    Object.entries(extra).filter(([k]) => k.startsWith(prefix)).map(([k, v]) => [k.slice(prefix.length), v] as const);
 
   const colorEntries: Array<readonly [string, string]> = [];
   for (const [role, canonical] of Object.entries(PALETTE_TO_CANONICAL) as Array<[keyof Palette, string]>) {
@@ -1671,6 +1855,7 @@ export function toCanonicalDesignMarkdown(parsed: DesignMdParseResult): string {
   if (shell.fg !== undefined && palette.brandContrast === undefined) {
     colorEntries.push(['on-shell', shell.fg]);
   }
+  colorEntries.push(...extraBy('color-'));
   if (colorEntries.length > 0) {
     lines.push('colors:');
     emitMap(lines, '  ', colorEntries);
@@ -1678,15 +1863,18 @@ export function toCanonicalDesignMarkdown(parsed: DesignMdParseResult): string {
 
   const family = overrides.typography?.fontFamily ?? parsed.branding.fontFamily;
   const mono = overrides.typography?.monoFamily;
-  if (family !== undefined || mono !== undefined) {
+  const scale: NonNullable<TypographyOverrides['scale']> = { ...overrides.typography?.scale };
+  if (family !== undefined && scale['body-md'] === undefined) scale['body-md'] = { family };
+  if (mono !== undefined && scale['code-sm'] === undefined) scale['code-sm'] = { family: mono };
+  if (Object.keys(scale).length > 0) {
     lines.push('typography:');
-    if (family !== undefined) {
-      lines.push('  body-md:');
-      lines.push(`    fontFamily: ${yamlQuote(family)}`);
-    }
-    if (mono !== undefined) {
-      lines.push('  code-sm:');
-      lines.push(`    fontFamily: ${yamlQuote(mono)}`);
+    for (const [key, step] of Object.entries(scale)) {
+      lines.push(`  ${/[^A-Za-z0-9_-]/.test(key) ? yamlQuote(key) : key}:`);
+      if (step.family !== undefined) lines.push(`    fontFamily: ${yamlQuote(step.family)}`);
+      if (step.size !== undefined) lines.push(`    fontSize: ${yamlQuote(step.size)}`);
+      if (step.weight !== undefined) lines.push(`    fontWeight: ${yamlQuote(step.weight)}`);
+      if (step.lineHeight !== undefined) lines.push(`    lineHeight: ${yamlQuote(step.lineHeight)}`);
+      if (step.letterSpacing !== undefined) lines.push(`    letterSpacing: ${yamlQuote(step.letterSpacing)}`);
     }
   }
 
@@ -1697,40 +1885,89 @@ export function toCanonicalDesignMarkdown(parsed: DesignMdParseResult): string {
     if (md !== undefined) lines.push(`  md: ${yamlQuote(`${md}px`)}`);
     if (overrides.radius?.lg !== undefined) lines.push(`  lg: ${yamlQuote(`${overrides.radius.lg}px`)}`);
     if (overrides.radius?.pill !== undefined) lines.push(`  pill: ${yamlQuote(`${overrides.radius.pill}px`)}`);
+    emitMap(lines, '  ', extraBy('radius-'));
   }
 
-  if (overrides.spacing !== undefined && Object.keys(overrides.spacing).length > 0) {
+  const spacingExtras = extraBy('space-');
+  if ((overrides.spacing !== undefined && Object.keys(overrides.spacing).length > 0) || spacingExtras.length > 0) {
     lines.push('spacing:');
     const map: Array<readonly [string, keyof NonNullable<ThemeOverrides['spacing']>]> = [
       ['xs', 'xs'], ['sm', 'sm'], ['md', 'md'], ['lg', 'lg'], ['xl', 'xl'],
       ['2xl', 'xxl'], ['3xl', 'xxxl'],
     ];
     for (const [from, to] of map) {
-      const n = overrides.spacing[to];
+      const n = overrides.spacing?.[to];
       if (n !== undefined) lines.push(`  ${/^[0-9]/.test(from) ? yamlQuote(from) : from}: ${yamlQuote(`${n}px`)}`);
     }
+    emitMap(lines, '  ', spacingExtras);
   }
 
-  if (shell.bg !== undefined || shell.blur !== undefined) {
-    if (shell.blur !== undefined) {
-      lines.push('elevation:');
-      lines.push(`  shell-blur: ${yamlQuote(shell.blur)}`);
-    }
+  const layoutEntries = extraBy('layout-');
+  if (layoutEntries.length > 0) {
+    lines.push('layout:');
+    emitMap(lines, '  ', layoutEntries);
+  }
+
+  const motionEntries = extraBy('motion-').map(([k, v]) => [k === 'easing' ? 'easing-standard' : k, v] as const);
+  const transitions = overrides.transitions ?? {};
+  const durations = (['fast', 'normal', 'slow'] as const)
+    .flatMap((k) => {
+      const v = transitions[k];
+      return v === undefined ? [] : [[k, v.split(' ')[0] ?? v] as const];
+    });
+  if (durations.length > 0 || motionEntries.length > 0) {
+    lines.push('motion:');
+    emitMap(lines, '  ', [...durations, ...motionEntries]);
+  }
+
+  const shadowEntries = (['sm', 'md', 'lg'] as const).flatMap((k) => {
+    const v = overrides.shadows?.[k];
+    return v === undefined ? [] : [[k === 'sm' ? 'subtle' : k === 'md' ? 'raised' : 'dialog', v] as const];
+  });
+  if (shadowEntries.length > 0) {
+    lines.push('shadows:');
+    emitMap(lines, '  ', shadowEntries);
+  }
+
+  const elevationEntries: Array<readonly [string, string]> = [
+    ...(shell.blur !== undefined ? [['shell-blur', shell.blur] as const] : []),
+    ...extraBy('elevation-'),
+  ];
+  if (elevationEntries.length > 0) {
+    lines.push('elevation:');
+    emitMap(lines, '  ', elevationEntries);
+  }
+
+  const components: Record<string, Record<string, string>> = {};
+  for (const [name, props] of Object.entries(overrides.components ?? {})) components[name] = { ...props };
+  const setIfAbsent = (name: string, prop: string, value: string | undefined): void => {
+    if (value === undefined) return;
+    const target = components[name] ?? (components[name] = {});
+    if (target[prop] === undefined) target[prop] = value;
+  };
+  setIfAbsent('shell-sidebar', 'backgroundColor', shell.bg);
+  setIfAbsent('shell-sidebar', 'textColor', shell.fg);
+  setIfAbsent('nav-item', 'textColor', shell.fgMuted);
+  if (Object.keys(components).length > 0) {
     lines.push('components:');
-    lines.push('  shell-sidebar:');
-    if (shell.bg !== undefined) lines.push(`    backgroundColor: ${yamlQuote(shell.bg)}`);
-    if (shell.fg !== undefined) lines.push(`    textColor: ${yamlQuote(shell.fg)}`);
-    if (shell.fgMuted !== undefined) {
-      lines.push('  nav-item:');
-      lines.push(`    textColor: ${yamlQuote(shell.fgMuted)}`);
+    for (const [name, props] of Object.entries(components)) {
+      if (Object.keys(props).length === 0) continue;
+      lines.push(`  ${/[^A-Za-z0-9_-]/.test(name) ? yamlQuote(name) : name}:`);
+      emitMap(lines, '    ', Object.entries(props));
     }
   }
 
   lines.push('---');
   lines.push('');
-  lines.push('# Canonical MAW design tokens (adapted from any design.md format).');
-  lines.push('# Edit and click Apply changes to update the live theme.');
-  return `${lines.join('\n')}\n`;
+  if (parsed.sections.length > 0) {
+    for (const section of parsed.sections) {
+      lines.push(`${'#'.repeat(section.level)} ${section.heading}`, '', section.content, '');
+    }
+  } else {
+    lines.push('# Canonical MAW design tokens (adapted from any design.md format).');
+    lines.push('# Edit and click Apply changes to update the live theme.');
+  }
+  return `${lines.join('\n').trimEnd()}\n`;
 }
 
 export function parseDesignMarkdown(content: string): DesignMdParseResult {
@@ -1738,6 +1975,7 @@ export function parseDesignMarkdown(content: string): DesignMdParseResult {
   const recognized: { field: string; value: string }[] = [];
   const warnings: string[] = [];
   let name: string | undefined;
+  let description: string | undefined;
   let overrides: ThemeOverrides = emptyOverrides();
 
   const roots = collectYamlRoots(content);
@@ -1746,6 +1984,8 @@ export function parseDesignMarkdown(content: string): DesignMdParseResult {
     overrides = mergeOverrideGaps(fromYaml, overrides);
     const yamlName = asString(root.name);
     if (yamlName !== undefined) name = yamlName;
+    const yamlDescription = asString(root.description);
+    if (yamlDescription !== undefined) description = yamlDescription;
   }
 
   Object.assign(branding, overrides.branding);
@@ -1811,7 +2051,9 @@ export function parseDesignMarkdown(content: string): DesignMdParseResult {
     warnings.push('No recognized design tokens found — expected colors, CSS variables, or "Primary Color: #4f46e5" lines.');
   }
 
-  return { branding, overrides, recognized, warnings, name };
+  const sections = extractSections(yaml !== null ? body : content);
+
+  return { branding, overrides, recognized, warnings, name, description, sections };
 }
 
 /**
@@ -1833,6 +2075,8 @@ export function normalizeDesignMarkdown(content: string): DesignMdNormalizeResul
     recognized: reparsed.recognized,
     warnings: parsed.warnings,
     name: parsed.name,
+    description: parsed.description ?? reparsed.description,
+    sections: reparsed.sections,
     canonical,
     converted,
   };

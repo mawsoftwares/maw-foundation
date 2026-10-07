@@ -134,6 +134,46 @@ final class AccessRepository
         ) !== null;
     }
 
+    /**
+     * Permission codes for the user's role — same join as {@see userHasPermission}.
+     *
+     * @return list<string>
+     */
+    public function permissionCodesForUser(string $tenantId, string $userId): array
+    {
+        $rows = DB::select(
+            'SELECT DISTINCT p.code FROM users u
+               JOIN master_roles r ON r.code = u.role AND r.is_active
+               JOIN role_permissions rp ON rp.role_id = r.id
+               JOIN master_permissions p ON p.id = rp.permission_id AND p.is_active
+              WHERE u.id = ? AND u.tenant_id = ?
+              ORDER BY p.code',
+            [$userId, $tenantId],
+        );
+
+        return array_values(array_map(static fn (object $r): string => (string) $r->code, $rows));
+    }
+
+    /**
+     * Slim module catalog for sample-web (`CatalogModule`: key, name, audience).
+     * Reads shared `master_modules` (synced by Node); audience defaults to admin
+     * because that column lives on the Node in-memory registry, not this table.
+     *
+     * @return list<array{key: string, name: string, audience: string}>
+     */
+    public function catalogModules(): array
+    {
+        $rows = DB::select(
+            'SELECT code, name FROM master_modules WHERE is_active ORDER BY sort_order, id',
+        );
+
+        return array_values(array_map(static fn (object $r): array => [
+            'key' => (string) $r->code,
+            'name' => (string) $r->name,
+            'audience' => 'admin',
+        ], $rows));
+    }
+
     // --- Users ---
 
     public function userRole(string $tenantId, string $userId): ?string

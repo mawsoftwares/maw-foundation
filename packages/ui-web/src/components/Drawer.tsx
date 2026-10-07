@@ -83,7 +83,7 @@ export function Drawer({
           [side]: 0,
           width: panelWidth,
           maxWidth: panelMaxWidth,
-          background: 'var(--maw-surface)',
+          background: 'var(--maw-comp-drawers-background, var(--maw-surface))',
           boxShadow: side === 'left'
             ? '4px 0 24px color-mix(in srgb, #000 12%, transparent)'
             : '-4px 0 24px color-mix(in srgb, #000 12%, transparent)',

@@ -7,7 +7,7 @@ return [
     'default_registration_role' => env('DEFAULT_REGISTRATION_ROLE', 'viewer'),
 
     // Tenant used for unauthenticated reads (the login page's public theme) when the caller names none.
-    'default_tenant_id' => env('DEFAULT_TENANT_ID'),
+    'default_tenant_id' => env('DEFAULT_TENANT_ID', 'demo-tenant'),
 
     'jwt_secret' => env('JWT_SECRET', 'dev-only-secret-change-me'),
     'jwt_algorithm' => env('JWT_ALGORITHM', 'HS256'),

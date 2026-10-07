@@ -62,11 +62,11 @@ export function Modal({
         className="maw-animate-in"
         style={{
           ...base,
-          background: 'var(--maw-surface)',
+          background: 'var(--maw-comp-modals-background, var(--maw-surface))',
           borderRadius: isMobile
             ? 'var(--maw-radius-lg) var(--maw-radius-lg) 0 0'
-            : 'var(--maw-radius-lg)',
-          boxShadow: 'var(--maw-shadow-xl)',
+            : 'var(--maw-comp-modals-border-radius, var(--maw-radius-lg))',
+          boxShadow: 'var(--maw-comp-modals-shadow, var(--maw-shadow-xl))',
           width: isMobile ? '100%' : width,
           maxWidth: isMobile ? '100%' : '90vw',
           maxHeight: isMobile ? '90vh' : '85vh',

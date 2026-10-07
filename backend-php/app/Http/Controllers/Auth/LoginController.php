@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Access\AccessRepository;
 use App\Domain\Auth\AuthClaims;
 use App\Domain\Auth\AuthTokens;
 use App\Domain\Auth\PasswordHasherInterface;
@@ -16,6 +17,7 @@ use App\Domain\Shared\Exceptions\UnauthorizedException;
 use App\Domain\Shared\ValueObjects\Email;
 use App\Domain\Shared\ValueObjects\TenantId;
 use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\User\UserEntity;
 use App\Domain\User\UserRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,6 +32,7 @@ final class LoginController extends Controller
         private readonly TokenServiceInterface $tokenService,
         private readonly SessionRepositoryInterface $sessions,
         private readonly TokenBlacklistInterface $blacklist,
+        private readonly AccessRepository $access,
     ) {}
 
     public function login(Request $request): JsonResponse
@@ -37,10 +40,12 @@ final class LoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
-            'tenantId' => 'required|string',
+            'tenantId' => 'sometimes|nullable|string',
         ]);
 
-        $tenantId = (string) $request->input('tenantId');
+        // Single-tenant clients (sample-web's LoginForm) send no tenantId; fall back to the configured default,
+        // exactly like the Node backend does with DEMO_TENANT.
+        $tenantId = (string) ($request->input('tenantId') ?: config('auth.default_tenant_id'));
         $email = (string) $request->input('email');
         $rawPassword = (string) $request->input('password');
 
@@ -83,7 +88,7 @@ final class LoginController extends Controller
         ]);
         $this->users->updateLastLogin($user->id, now()->toIso8601String());
 
-        return new JsonResponse($tokens->toResponse());
+        return new JsonResponse($this->authResult($tokens, $user));
     }
 
     public function refresh(Request $request): JsonResponse
@@ -118,7 +123,7 @@ final class LoginController extends Controller
             ],
         );
 
-        return new JsonResponse($tokens->toResponse());
+        return new JsonResponse($this->authResult($tokens, $user));
     }
 
     public function logout(Request $request): JsonResponse
@@ -143,6 +148,34 @@ final class LoginController extends Controller
         }
 
         return new JsonResponse($user->toResponse());
+    }
+
+    /**
+     * Flat token fields stay for the PHP contract tests; `tokens` + `session` give web/RN clients (api-client's
+     * AuthResult) the same shape the Node backend returns.
+     *
+     * @return array<string, mixed>
+     */
+    private function authResult(AuthTokens $tokens, UserEntity $user): array
+    {
+        $flat = $tokens->toResponse();
+
+        return $flat + [
+            'tokens' => [
+                'accessToken' => $tokens->accessToken,
+                'refreshToken' => $tokens->refreshToken,
+            ],
+            'session' => [
+                'userId' => $user->id->value,
+                'tenantId' => $user->tenantId->value,
+                'role' => $user->role,
+                'accountStatus' => $user->accountStatus->value,
+                'audience' => $user->audience,
+                'entitlements' => array_column($this->access->catalogModules(), 'key'),
+                'capabilities' => [],
+                'scopeId' => $user->scopeId,
+            ],
+        ];
     }
 
     private function issueTokens(string $userId, string $tenantId, string $role, string $audience): AuthTokens

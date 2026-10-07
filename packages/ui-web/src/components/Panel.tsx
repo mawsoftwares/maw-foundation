@@ -32,15 +32,15 @@ export function Panel({
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   const variantStyles: Record<string, CSSProperties> = {
-    default: { background: 'var(--maw-surface)', border: "none" },
+    default: { background: 'var(--maw-comp-panels-background, var(--maw-surface))', border: "none" },
     outlined: { background: 'transparent', border: "none" },
-    elevated: { background: 'var(--maw-surface)', border: 'none', boxShadow: 'var(--maw-shadow-md)' },
+    elevated: { background: 'var(--maw-comp-panels-background, var(--maw-surface))', border: 'none', boxShadow: 'var(--maw-comp-panels-shadow, var(--maw-shadow-md))' },
   };
 
   return (
     <div style={{
       ...base,
-      borderRadius: 'var(--maw-radius-md)',
+      borderRadius: 'var(--maw-comp-panels-border-radius, var(--maw-radius-md))',
       overflow: 'hidden',
       ...variantStyles[variant],
       ...style,

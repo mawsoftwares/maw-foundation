@@ -23,17 +23,18 @@ export function Badge({
     info: { bg: 'var(--maw-infoBg)', fg: 'var(--maw-info)' },
   };
   const c = colors[variant] ?? colors.default!;
+  const v = colors[variant] !== undefined ? variant : 'default';
   return (
     <span
       style={{
         ...base,
         display: 'inline-block',
-        padding: '2px var(--maw-space-sm)',
-        borderRadius: 'var(--maw-radius-pill)',
-        fontSize: 'var(--maw-text-xs)',
-        fontWeight: 500,
-        background: c.bg,
-        color: c.fg,
+        padding: 'var(--maw-comp-badges-padding, 2px var(--maw-space-sm))',
+        borderRadius: 'var(--maw-comp-badges-border-radius, var(--maw-radius-pill))',
+        fontSize: 'var(--maw-comp-badges-font-size, var(--maw-text-xs))',
+        fontWeight: 'var(--maw-comp-badges-font-weight, 500)',
+        background: `var(--maw-comp-badges-${v}-background, var(--maw-comp-badges-background, ${c.bg}))`,
+        color: `var(--maw-comp-badges-${v}-text-color, var(--maw-comp-badges-text-color, ${c.fg}))`,
         ...style,
       }}
     >

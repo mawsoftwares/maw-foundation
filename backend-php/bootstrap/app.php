@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Domain exceptions (403 / 404 / 409 / 400 ...) keep their own status and flat `{error, code}` body instead of
         // surfacing as a 500. Runs after the storage renderer, which returns null for non-storage routes.
         $exceptions->render(static function (\App\Domain\Shared\Exceptions\DomainException $e, \Illuminate\Http\Request $request) {
-            return $request->is('api/*', 'auth/*', 'health')
+            return $request->is('api/*', 'auth/*', 'health', 'me', 'modules')
                 ? new \Illuminate\Http\JsonResponse($e->toApiError(), $e->httpStatus)
                 : null;
         });

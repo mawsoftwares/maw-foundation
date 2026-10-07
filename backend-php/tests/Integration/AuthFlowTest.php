@@ -20,6 +20,29 @@ final class AuthFlowTest extends TestCase
     private const TENANT_ID = 'test-tenant-001';
 
     #[Test]
+    public function login_without_tenant_id_uses_the_default_tenant(): void
+    {
+        config(['auth.default_tenant_id' => self::TENANT_ID]);
+
+        UserModel::create([
+            'id' => 'user-default-tenant',
+            'tenant_id' => self::TENANT_ID,
+            'email' => 'default-tenant@example.com',
+            'password_hash' => app(PasswordHasherInterface::class)->hash('password123'),
+            'name' => 'Default Tenant User',
+            'role' => 'admin',
+            'account_status' => AccountStatus::ACTIVE->value,
+            'email_verified' => true,
+            'mfa_enabled' => false,
+        ]);
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'default-tenant@example.com',
+            'password' => 'password123',
+        ])->assertOk()->assertJsonStructure(['accessToken', 'refreshToken']);
+    }
+
+    #[Test]
     public function login_returns_tokens_for_valid_credentials(): void
     {
         $hasher = app(PasswordHasherInterface::class);

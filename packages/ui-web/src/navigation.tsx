@@ -165,7 +165,9 @@ export function Sidebar({
 
   const isMobile = useIsMobile();
   const isRail = collapsed && !isMobile;
-  const effectiveWidth = isMobile ? '100%' : (collapsed ? 64 : 260);
+  const effectiveWidth = isMobile
+    ? '100%'
+    : (collapsed ? 'var(--maw-layout-shell-sidebar-collapsed, 64px)' : 'var(--maw-layout-shell-sidebar-expanded, 260px)');
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -270,7 +272,7 @@ export function Sidebar({
         </div>
       )}
 
-      <nav style={{ flex: 1, overflowY: 'auto', padding: 'var(--maw-space-xs)' }}>
+      <nav style={{ flex: 1, overflowY: 'auto', padding: 'var(--maw-comp-shell-sidebar-padding, var(--maw-space-xs))' }}>
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && (!collapsed || isMobile) && (
@@ -345,16 +347,22 @@ function SidebarItem({
           alignItems: 'center',
           gap: 12,
           width: '100%',
-          padding: collapsed ? '10px' : `10px 16px 10px ${16 + depth * 16}px`,
+          padding: collapsed
+            ? '10px'
+            : depth === 0
+              ? 'var(--maw-comp-nav-item-padding, 10px 16px)'
+              : `10px 16px 10px ${16 + depth * 16}px`,
           border: 'none',
-          borderRadius: 'var(--maw-radius-md)',
+          borderRadius: active
+            ? 'var(--maw-comp-nav-item-active-border-radius, var(--maw-comp-nav-item-border-radius, var(--maw-radius-md)))'
+            : 'var(--maw-comp-nav-item-border-radius, var(--maw-radius-md))',
           background: active
-            ? 'var(--maw-shell-nav-active-bg, var(--maw-brand))'
+            ? 'var(--maw-comp-nav-item-active-background, var(--maw-shell-nav-active-bg, var(--maw-brand)))'
             : hovered
               ? 'var(--maw-shell-hover, var(--maw-bgSubtle))'
               : 'transparent',
           color: active
-            ? 'var(--maw-shell-nav-active-fg, var(--maw-brandContrast))'
+            ? 'var(--maw-comp-nav-item-active-text-color, var(--maw-shell-nav-active-fg, var(--maw-brandContrast)))'
             : hovered
               ? 'var(--maw-brand)'
               : 'var(--maw-shell-fg, var(--maw-fg))',
@@ -498,8 +506,8 @@ export function AppShell({
             className="maw-shell-chrome"
             style={{
               ...base,
-              minHeight: isMobile ? 48 : undefined,
-              padding: isMobile ? '6px 8px 6px 4px' : '12px var(--maw-space-xl)',
+              minHeight: isMobile ? 48 : 'var(--maw-layout-shell-header-height, auto)',
+              padding: isMobile ? '6px 8px 6px 4px' : 'var(--maw-comp-shell-header-padding, 12px var(--maw-space-xl))',
               background: 'var(--maw-shell-bg, var(--maw-surface))',
               borderBottom: '1px solid var(--maw-shell-border, var(--maw-border))',
               color: 'var(--maw-shell-fg, var(--maw-fg))',
@@ -558,7 +566,9 @@ export function AppShell({
             )}
           </header>
         )}
-        <main style={{ flex: 1, padding: isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-xl)', overflowY: 'auto', overflowX: 'hidden' }}>{children}</main>
+        <main style={{ flex: 1, padding: isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-container-padding, var(--maw-space-xl))', overflowY: 'auto', overflowX: 'hidden' }}>
+          <div style={{ width: '100%', maxWidth: 'var(--maw-layout-container-max, none)', margin: '0 auto' }}>{children}</div>
+        </main>
         {isMobile ? null : (
           <footer style={{
             padding: 'var(--maw-space-lg) var(--maw-space-xl)',

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\File\FileController;
 use App\Http\Controllers\Job\JobController;
-use App\Http\Controllers\Menu\MenuController;
+use App\Access\Http\Controllers\MenuItemController;
 use App\Http\Controllers\Messaging\EmailTemplateController;
 use App\Http\Controllers\Messaging\MessagingController;
 use App\Http\Controllers\Order\OrderController;
@@ -51,6 +51,16 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('/', [ThemeController::class, 'destroy'])->middleware($can('Manage_Theme'));
         });
 
+        // Menu Management over `menu_items` (same table / shapes as Node). The tree needs only a signed-in user.
+        Route::prefix('menus')->group(function () use ($can): void {
+            Route::get('/tree', [MenuItemController::class, 'tree']);
+            Route::get('/', [MenuItemController::class, 'index'])->middleware($can('Manage_Menus'));
+            Route::post('/', [MenuItemController::class, 'store'])->middleware($can('Manage_Menus'));
+            Route::post('/reorder', [MenuItemController::class, 'reorder'])->middleware($can('Manage_Menus'));
+            Route::get('/{id}', [MenuItemController::class, 'show'])->middleware($can('Manage_Menus'));
+            Route::put('/{id}', [MenuItemController::class, 'update'])->middleware($can('Manage_Menus'));
+        });
+
         Route::prefix('users')->group(function () use ($can): void {
             Route::get('/', [AccessUserController::class, 'index'])->middleware($can('Read_Users'));
             Route::post('/', [AccessUserController::class, 'store'])->middleware($can('Create_Users'));
@@ -83,16 +93,6 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/', [ModuleController::class, 'store']);
             Route::put('/{moduleId}', [ModuleController::class, 'update']);
             Route::delete('/{moduleId}', [ModuleController::class, 'destroy']);
-        });
-
-        // --- Menus ---
-        Route::prefix('menus')->group(function (): void {
-            Route::get('/', [MenuController::class, 'index']);
-            Route::get('/tree', [MenuController::class, 'tree']);
-            Route::post('/', [MenuController::class, 'store']);
-            Route::post('/reorder', [MenuController::class, 'reorder']);
-            Route::get('/{id}', [MenuController::class, 'show']);
-            Route::put('/{id}', [MenuController::class, 'update']);
         });
 
         // --- Files ---

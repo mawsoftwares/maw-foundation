@@ -35,14 +35,16 @@ export function Tabs({
           onClick={() => onChange(tab.key)}
           style={{
             ...base,
-            padding: 'var(--maw-space-sm) var(--maw-space-lg)',
+            padding: 'var(--maw-comp-tabs-padding, var(--maw-space-sm) var(--maw-space-lg))',
             border: 'none',
             background: 'none',
-            color: activeTab === tab.key ? 'var(--maw-brand)' : 'var(--maw-fgMuted)',
+            color: activeTab === tab.key
+              ? 'var(--maw-comp-tabs-active-text-color, var(--maw-brand))'
+              : 'var(--maw-comp-tabs-text-color, var(--maw-fgMuted))',
             fontWeight: activeTab === tab.key ? 600 : 400,
-            fontSize: 'var(--maw-text-sm)',
+            fontSize: 'var(--maw-comp-tabs-font-size, var(--maw-text-sm))',
             cursor: 'pointer',
-            borderBottom: activeTab === tab.key ? '2px solid var(--maw-brand)' : '2px solid transparent',
+            borderBottom: activeTab === tab.key ? '2px solid var(--maw-comp-tabs-active-border-color, var(--maw-brand))' : '2px solid transparent',
             marginBottom: -1,
             transition: 'var(--maw-transition-fast)',
           }}

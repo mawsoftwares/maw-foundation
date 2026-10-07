@@ -47,7 +47,9 @@ export function Toggle({
           width: 44,
           height: 24,
           borderRadius: 12,
-          background: checked ? 'var(--maw-brand)' : 'var(--maw-border)',
+          background: checked
+            ? 'var(--maw-comp-toggles-active-background, var(--maw-brand))'
+            : 'var(--maw-comp-toggles-background, var(--maw-border))',
           position: 'relative',
           transition: 'var(--maw-transition-fast)',
         }}

@@ -57,10 +57,10 @@ export function DropdownMenu({
             right: 0,
             marginTop: 4,
             minWidth: 160,
-            background: 'var(--maw-surface)',
+            background: 'var(--maw-comp-menus-background, var(--maw-surface))',
             border: "none",
-            borderRadius: 'var(--maw-radius-md)',
-            boxShadow: 'var(--maw-shadow-lg)',
+            borderRadius: 'var(--maw-comp-menus-border-radius, var(--maw-radius-md))',
+            boxShadow: 'var(--maw-comp-menus-shadow, var(--maw-shadow-lg))',
             zIndex: 'var(--maw-z-dropdown)' as unknown as number,
             overflow: 'hidden',
           }}
@@ -81,14 +81,14 @@ export function DropdownMenu({
                 ...base,
                 display: 'block',
                 width: '100%',
-                padding: 'var(--maw-space-sm) var(--maw-space-md)',
+                padding: 'var(--maw-comp-menus-padding, var(--maw-space-sm) var(--maw-space-md))',
                 border: 'none',
                 background: 'none',
                 textAlign: 'left',
-                fontSize: 'var(--maw-text-sm)',
+                fontSize: 'var(--maw-comp-menus-font-size, var(--maw-text-sm))',
                 color: item.disabled
                   ? 'var(--maw-fgSubtle)'
-                  : item.danger ? 'var(--maw-danger)' : 'var(--maw-fg)',
+                  : item.danger ? 'var(--maw-danger)' : 'var(--maw-comp-menus-text-color, var(--maw-fg))',
                 cursor: item.disabled ? 'not-allowed' : 'pointer',
                 opacity: item.disabled ? 0.6 : 1,
               }}

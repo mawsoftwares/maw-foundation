@@ -566,7 +566,7 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
         if (kebab !== prop) vars[`--maw-comp-${comp}-${kebab}`] = val;
       }
     }
-    applyComponentAliases(t.components, vars);
+    applyComponentAliases(t.components, t.typography.scale, vars);
   }
 
   if (t.extraTokens) {
@@ -622,22 +622,82 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
 }
 
 /**
- * design.md names components `button-primary` with CSS-ish props (`backgroundColor`, `rounded`); ui-web's Button
- * reads `--maw-comp-buttons-primary-background` etc. Bridge the two so a design file styles real buttons.
+ * Design files name components in the singular (`button-primary`, `input`, `dialog`) with CSS-ish props
+ * (`backgroundColor`, `rounded`). ui-web reads `--maw-comp-<family>-[variant-]<prop>` (`buttons`, `inputs`, `modals`, …).
+ * This table maps design names onto those families.
  */
-function applyComponentAliases(components: NonNullable<Theme['components']>, vars: Record<string, string>): void {
+const COMPONENT_FAMILIES: Readonly<Record<string, string>> = {
+  button: 'buttons', buttons: 'buttons',
+  card: 'cards', cards: 'cards',
+  input: 'inputs', inputs: 'inputs', field: 'inputs', 'text-field': 'inputs', textfield: 'inputs',
+  select: 'inputs', textarea: 'inputs', 'text-area': 'inputs',
+  badge: 'badges', badges: 'badges', chip: 'badges', tag: 'badges', status: 'badges',
+  tab: 'tabs', tabs: 'tabs',
+  modal: 'modals', modals: 'modals', dialog: 'modals', dialogs: 'modals',
+  drawer: 'drawers', drawers: 'drawers',
+  alert: 'alerts', alerts: 'alerts',
+  banner: 'banners', banners: 'banners',
+  panel: 'panels', panels: 'panels',
+  popover: 'popovers', popovers: 'popovers',
+  menu: 'menus', menus: 'menus', dropdown: 'menus', 'dropdown-menu': 'menus',
+  tooltip: 'tooltips', tooltips: 'tooltips',
+  toggle: 'toggles', toggles: 'toggles', switch: 'toggles',
+  table: 'tables', tables: 'tables', 'data-table': 'tables',
+};
+
+const COMPONENT_PROP_ALIASES: Readonly<Record<string, string>> = {
+  backgroundColor: 'background', background: 'background',
+  textColor: 'text-color', color: 'text-color',
+  rounded: 'border-radius', borderRadius: 'border-radius', radius: 'border-radius',
+  borderColor: 'border-color', border: 'border',
+  shadow: 'shadow', boxShadow: 'shadow', elevation: 'shadow',
+  fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing',
+  padding: 'padding', height: 'height', width: 'width', gap: 'gap',
+};
+
+function splitComponentName(name: string): { family: string; variant?: string } | undefined {
+  const exact = COMPONENT_FAMILIES[name];
+  if (exact !== undefined) return { family: exact };
+  const parts = name.split('-');
+  for (let i = parts.length - 1; i >= 1; i--) {
+    const family = COMPONENT_FAMILIES[parts.slice(0, i).join('-')];
+    if (family !== undefined) return { family, variant: parts.slice(i).join('-') };
+  }
+  return undefined;
+}
+
+function applyComponentAliases(
+  components: NonNullable<Theme['components']>,
+  scale: Theme['typography']['scale'],
+  vars: Record<string, string>,
+): void {
   for (const [comp, props] of Object.entries(components)) {
-    const variant = /^buttons?-(.+)$/.exec(comp)?.[1];
-    if (variant === undefined) continue;
-    const bg = props.backgroundColor ?? props.background;
-    const fg = props.textColor ?? props.color;
-    if (bg !== undefined) vars[`--maw-comp-buttons-${variant}-background`] = bg;
-    if (fg !== undefined) vars[`--maw-comp-buttons-${variant}-text-color`] = fg;
-    if (props.border !== undefined) vars[`--maw-comp-buttons-${variant}-border`] = props.border;
-    if (variant === 'primary') {
-      if (props.height !== undefined) vars['--maw-comp-buttons-medium-height'] = props.height;
-      if (props.padding !== undefined) vars['--maw-comp-buttons-medium-padding-h'] = props.padding;
-      if (props.rounded !== undefined) vars['--maw-comp-buttons-border-radius'] = props.rounded;
+    const target = splitComponentName(comp);
+    const prefix = target === undefined
+      ? `--maw-comp-${comp}`
+      : `--maw-comp-${target.family}${target.variant !== undefined && target.variant !== 'default' ? `-${target.variant}` : ''}`;
+
+    const canonical: Record<string, string> = {};
+    for (const [prop, val] of Object.entries(props)) {
+      if (prop === 'typography') {
+        const step = scale?.[val] ?? scale?.[TYPE_SCALE_ALIASES[val] ?? ''];
+        if (step?.size !== undefined) canonical['font-size'] = step.size;
+        if (step?.weight !== undefined) canonical['font-weight'] = step.weight;
+        if (step?.lineHeight !== undefined) canonical['line-height'] = step.lineHeight;
+        if (step?.letterSpacing !== undefined) canonical['letter-spacing'] = step.letterSpacing;
+        continue;
+      }
+      const key = COMPONENT_PROP_ALIASES[prop];
+      if (key !== undefined && canonical[key] === undefined) canonical[key] = val;
+    }
+    for (const [key, val] of Object.entries(canonical)) vars[`${prefix}-${key}`] = val;
+
+    // Button predates the generic scheme and reads `medium-*` / family-wide radius for the primary action.
+    if (target?.family === 'buttons' && target.variant === 'primary') {
+      if (canonical.height !== undefined) vars['--maw-comp-buttons-medium-height'] = canonical.height;
+      if (canonical.padding !== undefined) vars['--maw-comp-buttons-medium-padding-h'] = canonical.padding;
+      if (canonical['font-size'] !== undefined) vars['--maw-comp-buttons-medium-font-size'] = canonical['font-size'];
+      if (canonical['border-radius'] !== undefined) vars['--maw-comp-buttons-border-radius'] = canonical['border-radius'];
     }
   }
 }
