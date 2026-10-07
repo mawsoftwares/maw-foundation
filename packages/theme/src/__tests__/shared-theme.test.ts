@@ -15,6 +15,19 @@ function fakeServer() {
 }
 
 describe('shared theme client', () => {
+  it('loadPublic hits the unauthenticated route, passing the tenant when given', async () => {
+    const paths: string[] = [];
+    const request: ThemeRequest = async <T>(path: string) => {
+      paths.push(path);
+      return { data: { designMd: '# public' } } as T;
+    };
+    const theme = createSharedThemeClient(request);
+
+    expect(await theme.loadPublic()).toBe('# public');
+    expect(await theme.loadPublic('acme corp/1')).toBe('# public');
+    expect(paths).toEqual(['/api/v1/theme/public', '/api/v1/theme/public?tenantId=acme%20corp%2F1']);
+  });
+
   it('loads null when nothing is set, then what an admin saved, then null after reset', async () => {
     const { request, calls } = fakeServer();
     const theme = createSharedThemeClient(request);

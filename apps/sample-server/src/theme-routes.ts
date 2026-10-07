@@ -48,11 +48,35 @@ function toRecord(row: typeof schema.tenantTheme.$inferSelect): ThemeRecord {
 /** A design.md is a few KB; anything near this is not a theme. */
 export const MAX_DESIGN_MD_BYTES = 64 * 1024;
 
+/** Tenant ids are opaque slugs; anything else on the public route is treated as "no such tenant". */
+const TENANT_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
+
 export function createThemeRouter(
   store: ThemeStore,
-  deps: { requireAuth: RequestHandler; requirePermission: (perm: string) => RequestHandler },
+  deps: {
+    requireAuth: RequestHandler;
+    requirePermission: (perm: string) => RequestHandler;
+    /** Tenant used by the public read when the caller names none (the same default login uses). */
+    defaultTenantId?: string;
+  },
 ): Router {
   const router = Router();
+
+  // PUBLIC, registered before requireAuth: the login page has no token yet but should already look like the app.
+  // It exposes only the design.md (colors/fonts) — never who changed it or when — and answers the same `null` for a
+  // tenant with no theme and for one that doesn't exist, so it can't be used to probe for tenants.
+  router.get('/public', async (req, res, next) => {
+    try {
+      const requested = typeof req.query['tenantId'] === 'string' ? req.query['tenantId'] : deps.defaultTenantId;
+      const tenantId = requested !== undefined && TENANT_ID_PATTERN.test(requested) ? requested : undefined;
+      const record = tenantId === undefined ? null : await store.get(tenantId);
+      res.set('Cache-Control', 'public, max-age=30');
+      res.json({ data: record === null ? null : { designMd: record.designMd } });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.use(deps.requireAuth);
 
   // Every signed-in user reads the shared theme; only Manage_Theme may change it.

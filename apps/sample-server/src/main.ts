@@ -983,6 +983,7 @@ app.use('/api/v1/menus', createMenuRouter(data.db, {
 app.use('/api/v1/theme', createThemeRouter(new PgThemeStore(data.db), {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
+  defaultTenantId: DEMO_TENANT,
 }));
 app.use('/api/v1/messaging', createMessagingRouter(data.db, {
   requireAuth: auth.requireAuth,

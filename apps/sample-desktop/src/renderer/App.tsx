@@ -178,14 +178,16 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     }
   }, [applyThemeOverrides]);
 
-  // The theme is application-wide: once signed in, load the shared one from the server (and re-check when the window
-  // regains focus), so a change made by an admin reaches everyone. The localStorage copy above is only a first-paint cache.
+  // The theme is application-wide: load the shared one from the server (and re-check when the window regains focus),
+  // so a change made by an admin reaches everyone. Signed in -> the authenticated read; signed out (the login page)
+  // -> the public read, so even a first-time visitor sees the real theme. The localStorage copy above is only a
+  // first-paint cache.
+  const signedIn = session !== null;
   useEffect(() => {
-    if (session === null) return undefined;
     let cancelled = false;
     const syncSharedTheme = async (): Promise<void> => {
       try {
-        const designMd = await sharedTheme.load();
+        const designMd = await (signedIn ? sharedTheme.load() : sharedTheme.loadPublic());
         if (cancelled) return;
         if (designMd === null) {
           // An admin reset the theme: drop our cached copy and reload once into the default.
@@ -211,7 +213,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       cancelled = true;
       window.removeEventListener('focus', syncSharedTheme);
     };
-  }, [session, applyThemeOverrides]);
+  }, [signedIn, applyThemeOverrides]);
 
   const [authPage, setAuthPage] = useState<AuthPage>('login');
 

@@ -42,8 +42,8 @@ describe('application-wide theme API', () => {
 
   beforeAll(async () => {
     const app = express();
-    app.use('/api/v1/theme', createThemeRouter(store, { requireAuth, requirePermission }));
-    await new Promise<void>((resolve) => { server = app.listen(0, resolve); });
+    app.use('/api/v1/theme', createThemeRouter(store, { requireAuth, requirePermission, defaultTenantId: 't1' }));
+    await new Promise<void>((resolve) => { server = app.listen(0, () => resolve()); });
     base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v1/theme`;
   });
   afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
@@ -93,6 +93,33 @@ describe('application-wide theme API', () => {
     expect((await call('PUT', admin, { designMd: 'x'.repeat(MAX_DESIGN_MD_BYTES + 1) })).status).toBe(413);
     expect((await call('PUT', admin, { designMd: 'just some prose, no colors here' })).status).toBe(422);
     expect(store.rows.get('t1')).toBe(before);
+  });
+
+  describe('public read (login page, no token)', () => {
+    const pub = (qs = '') => fetch(`${base}/public${qs}`);
+
+    it('needs no sign-in and returns only the design.md', async () => {
+      await call('PUT', admin, { designMd: DESIGN_MD });
+      const res = await pub();
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { data: Record<string, unknown> };
+      expect(Object.keys(body.data)).toEqual(['designMd']); // no updatedBy / updatedAt leaked
+      expect(body.data['designMd']).toContain('#a855f7');
+      expect(res.headers.get('cache-control')).toContain('max-age');
+    });
+
+    it('uses the named tenant, falls back to the default one, and answers null for unknown or malformed ids', async () => {
+      await store.set('t2', DESIGN_MD.replace('#a855f7', '#00ff00'), 'u');
+      expect(((await (await pub('?tenantId=t2')).json()) as { data: { designMd: string } }).data.designMd).toContain('#00ff00');
+      expect(((await (await pub()).json()) as { data: { designMd: string } }).data.designMd).toContain('#a855f7'); // default t1
+      expect(await (await pub('?tenantId=nope')).json()).toEqual({ data: null });
+      expect(await (await pub('?tenantId=..%2F..%2Fetc')).json()).toEqual({ data: null });
+    });
+
+    it('does not open up the authenticated routes', async () => {
+      expect((await call('GET', {})).status).toBe(401);
+      expect((await fetch(base, { method: 'PUT', body: '{}' })).status).toBe(401);
+    });
   });
 
   it('reset removes the theme for everyone', async () => {

@@ -183,8 +183,21 @@ export interface ShellTokens {
 export interface TypographyOverrides {
   fontFamily?: string;
   monoFamily?: string;
-  scale?: Record<string, { size?: string; weight?: string; lineHeight?: string; family?: string }>;
+  scale?: Record<string, { size?: string; weight?: string; lineHeight?: string; family?: string; letterSpacing?: string }>;
 }
+
+/**
+ * Design-file type-scale names → the semantic text classes ui-web ships (`.text-h1`, `.text-body`, …).
+ * A design.md can name its scale anything (`headline-xl`); both the raw name and the alias get CSS vars.
+ */
+export const TYPE_SCALE_ALIASES: Readonly<Record<string, string>> = {
+  'display-hero': 'hero', display: 'hero', 'display-lg': 'hero',
+  'headline-xl': 'h1', 'headline-1': 'h1', 'heading-1': 'h1',
+  'headline-lg': 'h2', headline: 'h2', 'headline-2': 'h2', 'heading-2': 'h2',
+  'title-md': 'h3', title: 'h3', 'headline-3': 'h3', 'heading-3': 'h3',
+  'body-md': 'body', 'body-base': 'body',
+  'body-sm': 'caption',
+};
 
 export interface ComponentOverrides {
   [componentName: string]: Record<string, string>;
@@ -201,6 +214,11 @@ export interface ThemeOverrides {
   typography?: TypographyOverrides;
   shell?: ShellTokens;
   components?: ComponentOverrides;
+  /**
+   * Design tokens with no dedicated slot (layout sizes, extra spacing/motion/elevation, non-palette colors).
+   * Key is the CSS custom-property name without `--maw-`, e.g. `layout-container-max`, `color-status-mock-bg`.
+   */
+  extraTokens?: Record<string, string>;
 }
 
 export interface Theme {
@@ -224,6 +242,7 @@ export interface Theme {
   branding: TenantBranding;
   shell?: ShellTokens;
   components?: ComponentOverrides;
+  extraTokens?: Record<string, string>;
 }
 
 export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverrides): ThemeOverrides | undefined {
@@ -240,6 +259,12 @@ export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverride
     typography: { ...base.typography, ...extra.typography },
     shell: extra.shell !== undefined || base.shell !== undefined
       ? { ...base.shell, ...extra.shell }
+      : undefined,
+    components: extra.components !== undefined || base.components !== undefined
+      ? { ...base.components, ...extra.components }
+      : undefined,
+    extraTokens: extra.extraTokens !== undefined || base.extraTokens !== undefined
+      ? { ...base.extraTokens, ...extra.extraTokens }
       : undefined,
   };
 }
@@ -304,6 +329,7 @@ export function createTheme(overrides?: ThemeOverrides): Theme {
     branding,
     shell: overrides?.shell,
     components: overrides?.components,
+    extraTokens: overrides?.extraTokens,
   };
 }
 
@@ -518,6 +544,17 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
       if (v.weight) vars[`--maw-text-${k}-weight`] = v.weight;
       if (v.lineHeight) vars[`--maw-text-${k}-lh`] = v.lineHeight;
       if (v.family) vars[`--maw-text-${k}-family`] = v.family;
+      if (v.letterSpacing) vars[`--maw-text-${k}-ls`] = v.letterSpacing;
+    }
+    // Alias design-file names onto the semantic text classes unless the file set them directly.
+    for (const [k, v] of Object.entries(t.typography.scale)) {
+      const alias = TYPE_SCALE_ALIASES[k];
+      if (alias === undefined || t.typography.scale[alias] !== undefined) continue;
+      if (v.size) vars[`--maw-text-${alias}-size`] = v.size;
+      if (v.weight) vars[`--maw-text-${alias}-weight`] = v.weight;
+      if (v.lineHeight) vars[`--maw-text-${alias}-lh`] = v.lineHeight;
+      if (v.family) vars[`--maw-text-${alias}-family`] = v.family;
+      if (v.letterSpacing) vars[`--maw-text-${alias}-ls`] = v.letterSpacing;
     }
   }
 
@@ -525,8 +562,15 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
     for (const [comp, props] of Object.entries(t.components)) {
       for (const [prop, val] of Object.entries(props)) {
         vars[`--maw-comp-${comp}-${prop}`] = val;
+        const kebab = prop.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+        if (kebab !== prop) vars[`--maw-comp-${comp}-${kebab}`] = val;
       }
     }
+    applyComponentAliases(t.components, vars);
+  }
+
+  if (t.extraTokens) {
+    for (const [k, v] of Object.entries(t.extraTokens)) vars[`--maw-${k}`] = v;
   }
 
   // Shell chrome: light design.md shells must not stick when color mode is dark.
@@ -575,6 +619,27 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
   }
 
   return vars;
+}
+
+/**
+ * design.md names components `button-primary` with CSS-ish props (`backgroundColor`, `rounded`); ui-web's Button
+ * reads `--maw-comp-buttons-primary-background` etc. Bridge the two so a design file styles real buttons.
+ */
+function applyComponentAliases(components: NonNullable<Theme['components']>, vars: Record<string, string>): void {
+  for (const [comp, props] of Object.entries(components)) {
+    const variant = /^buttons?-(.+)$/.exec(comp)?.[1];
+    if (variant === undefined) continue;
+    const bg = props.backgroundColor ?? props.background;
+    const fg = props.textColor ?? props.color;
+    if (bg !== undefined) vars[`--maw-comp-buttons-${variant}-background`] = bg;
+    if (fg !== undefined) vars[`--maw-comp-buttons-${variant}-text-color`] = fg;
+    if (props.border !== undefined) vars[`--maw-comp-buttons-${variant}-border`] = props.border;
+    if (variant === 'primary') {
+      if (props.height !== undefined) vars['--maw-comp-buttons-medium-height'] = props.height;
+      if (props.padding !== undefined) vars['--maw-comp-buttons-medium-padding-h'] = props.padding;
+      if (props.rounded !== undefined) vars['--maw-comp-buttons-border-radius'] = props.rounded;
+    }
+  }
 }
 
 /** True when sidebar/header chrome should use dark-on-light inverted nav treatments. */

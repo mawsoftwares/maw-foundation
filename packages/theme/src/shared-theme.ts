@@ -14,6 +14,11 @@ const PATH = '/api/v1/theme';
 export interface SharedThemeClient {
   /** The shared design.md, or `null` when no custom theme is set (use the built-in default). */
   load(): Promise<string | null>;
+  /**
+   * Same as `load()` but needs no sign-in — for the login page. Omit `tenantId` to use the server's default tenant
+   * (the one login itself defaults to).
+   */
+  loadPublic(tenantId?: string): Promise<string | null>;
   /** Replace the shared theme; resolves to the canonical design.md the server stored. Needs Manage_Theme. */
   save(designMd: string): Promise<string>;
   /** Back to the built-in default for everyone. Needs Manage_Theme. */
@@ -24,6 +29,11 @@ export function createSharedThemeClient(request: ThemeRequest): SharedThemeClien
   return {
     async load() {
       const res = await request<ThemeEnvelope>(PATH);
+      return res.data?.designMd ?? null;
+    },
+    async loadPublic(tenantId) {
+      const query = tenantId === undefined ? '' : `?tenantId=${encodeURIComponent(tenantId)}`;
+      const res = await request<ThemeEnvelope>(`${PATH}/public${query}`);
       return res.data?.designMd ?? null;
     },
     async save(designMd) {

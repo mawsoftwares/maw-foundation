@@ -12,6 +12,7 @@ use App\Http\Controllers\Rbac\ModuleController;
 use App\Http\Controllers\Reporting\ReportingController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Access\Http\Controllers\RoleController as AccessRoleController;
+use App\Access\Http\Controllers\ThemeController;
 use App\Access\Http\Controllers\UserController as AccessUserController;
 use App\Access\Http\Middleware\AccessContext;
 use App\Access\Http\Middleware\RequireAccessPermission;
@@ -32,6 +33,9 @@ Route::prefix('v1')->group(function (): void {
     // --- Health + Auth (shared with the root-level aliases, see routes/auth_health.php) ---
     require __DIR__ . '/auth_health.php';
 
+    // --- Public theme read (login page, no token) — rate limited; exposes only the design.md ---
+    Route::get('/theme/public', [ThemeController::class, 'publicShow'])->middleware('throttle:public-read');
+
     // --- Users + Roles (strict role ladder) ---
     // Same Postgres tables and permissions as the Node backend (users, master_roles, role_permissions). Callers only
     // see / manage users and roles strictly below their own level; see App\Access\RoleHierarchy + AccessPolicy.
@@ -39,6 +43,13 @@ Route::prefix('v1')->group(function (): void {
         $can = static fn (string $permission): string => RequireAccessPermission::class . ':' . $permission;
 
         Route::get('/roles', [AccessRoleController::class, 'assignable']);
+
+        // Application-wide theme: every signed-in user reads it, only Manage_Theme changes it.
+        Route::prefix('theme')->group(function () use ($can): void {
+            Route::get('/', [ThemeController::class, 'show']);
+            Route::put('/', [ThemeController::class, 'update'])->middleware($can('Manage_Theme'));
+            Route::delete('/', [ThemeController::class, 'destroy'])->middleware($can('Manage_Theme'));
+        });
 
         Route::prefix('users')->group(function () use ($can): void {
             Route::get('/', [AccessUserController::class, 'index'])->middleware($can('Read_Users'));

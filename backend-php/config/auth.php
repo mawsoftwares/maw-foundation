@@ -6,6 +6,9 @@ return [
     // Role given to self-registered users (lowest rung of the role ladder).
     'default_registration_role' => env('DEFAULT_REGISTRATION_ROLE', 'viewer'),
 
+    // Tenant used for unauthenticated reads (the login page's public theme) when the caller names none.
+    'default_tenant_id' => env('DEFAULT_TENANT_ID'),
+
     'jwt_secret' => env('JWT_SECRET', 'dev-only-secret-change-me'),
     'jwt_algorithm' => env('JWT_ALGORITHM', 'HS256'),
     'jwt_issuer' => env('JWT_ISSUER', 'maw-foundation'),

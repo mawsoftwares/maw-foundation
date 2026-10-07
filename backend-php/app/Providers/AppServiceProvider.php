@@ -30,6 +30,9 @@ use App\Infrastructure\Persistence\Repositories\EloquentReportingRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentSessionRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentTenantRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentUserRepository;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 final class AppServiceProvider extends ServiceProvider
@@ -84,5 +87,9 @@ final class AppServiceProvider extends ServiceProvider
                 );
             }
         }
+
+        // Anonymous endpoints (the login page's public theme) are limited per client IP. A NAMED limiter is used on purpose:
+        // the `throttle:60,1` shorthand resolves the current user through the `api` guard first, which has no driver here.
+        RateLimiter::for('public-read', static fn (Request $request): Limit => Limit::perMinute(60)->by((string) $request->ip()));
     }
 }
