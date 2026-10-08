@@ -58,7 +58,8 @@ import {
   type ICacheStore,
 } from '@mawsoftwares/rbac-core';
 import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, populateRequestContext, createTenantMiddleware, createTenantRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@mawsoftwares/server-express';
-import { PgTenantRepository, AlsTenantContextHolder, HeaderTenantResolver } from '@mawsoftwares/tenancy';
+import { AlsTenantContextHolder, HeaderTenantResolver } from '@mawsoftwares/tenancy';
+import { PgTenantRepository } from '@mawsoftwares/postgres';
 import { initializeObservability } from '@mawsoftwares/observability';
 import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
 import { LocalFileStorage, PgFileMetadataStore, validateSecuritySecrets } from '@mawsoftwares/platform/server';

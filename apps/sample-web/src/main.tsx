@@ -6,6 +6,7 @@ import { AUTH_EN_MESSAGES } from '@mawsoftwares/ui-auth';
 import { Provider } from 'react-redux';
 import { App } from './App';
 import { staticBrandProvider, DEFAULT_TENANT } from './brand-setup';
+import { themeRegistry } from './themes';
 import { store } from './store';
 
 i18n.registerLocale('en', {
@@ -78,6 +79,7 @@ createRoot(document.getElementById('root')!).render(
       <BrandProvider
         tenantId={DEFAULT_TENANT}
         provider={staticBrandProvider}
+        themes={themeRegistry}
         loadingFallback={
           <div className="maw-auth-screen" style={{ color: 'var(--maw-fgMuted)' }}>
             Loading brand...

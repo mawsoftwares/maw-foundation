@@ -11,12 +11,13 @@ export function Badge({
   children,
   style,
 }: {
-  variant?: 'default' | 'success' | 'danger' | 'warning' | 'info';
+  variant?: 'default' | 'neutral' | 'success' | 'danger' | 'warning' | 'info';
   children: ReactNode;
   style?: CSSProperties;
 }): ReactNode {
   const colors: Record<string, { bg: string; fg: string }> = {
     default: { bg: 'var(--maw-bgMuted)', fg: 'var(--maw-fgMuted)' },
+    neutral: { bg: 'var(--maw-bgMuted)', fg: 'var(--maw-fgMuted)' },
     success: { bg: 'var(--maw-successBg)', fg: 'var(--maw-success)' },
     danger: { bg: 'var(--maw-dangerBg)', fg: 'var(--maw-danger)' },
     warning: { bg: 'var(--maw-warningBg)', fg: 'var(--maw-warning)' },

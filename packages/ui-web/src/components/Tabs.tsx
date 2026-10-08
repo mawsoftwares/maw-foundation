@@ -28,11 +28,14 @@ export function Tabs({
   style?: CSSProperties;
 }): ReactNode {
   return (
-    <div style={{ ...base, display: 'flex', borderBottom: '1px solid var(--maw-border)', ...style }}>
+    <div role="tablist" style={{ ...base, display: 'flex', borderBottom: '1px solid var(--maw-comp-tabs-border-color, var(--maw-border))', ...style }}>
       {tabs.map((tab) => (
         <button
           key={tab.key}
+          role="tab"
+          aria-selected={activeTab === tab.key}
           onClick={() => onChange(tab.key)}
+          className={`maw-tab maw-focusable${activeTab === tab.key ? ' maw-tab--active' : ''}`}
           style={{
             ...base,
             padding: 'var(--maw-comp-tabs-padding, var(--maw-space-sm) var(--maw-space-lg))',

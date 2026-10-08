@@ -18,8 +18,7 @@ export class RolloutEvaluator {
       return false; // If targetId is missing, exclude from rollout
     }
 
-    // We can use the existing isRolledOut logic, or implement deterministic hashing here.
-    // Assuming isRolledOut from @mawsoftwares/sdk is a function (targetId: string, percentage: number, flagKey: string) -> boolean
+    // Salted by flag key so one flag's rollout does not select the same users as every other flag's.
     return isRolledOut(targetId, rollout.percentage, rollout.flagKey);
   }
 }

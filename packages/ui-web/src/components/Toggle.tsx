@@ -31,13 +31,14 @@ export function Toggle({
 }): ReactNode {
   return (
     <label
+      className={`maw-toggle${disabled ? ' maw-toggle--disabled' : ''}`}
       style={{
         ...base,
         display: 'inline-flex',
         alignItems: 'center',
         gap: 'var(--maw-space-sm)',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
+        opacity: disabled ? 'var(--maw-state-disabled-opacity, 0.6)' as unknown as number : 1,
         ...style,
       }}
     >
@@ -59,7 +60,7 @@ export function Toggle({
             width: 20,
             height: 20,
             borderRadius: '50%',
-            background: '#fff',
+            background: 'var(--maw-comp-toggles-thumb-background, #ffffff)',
             position: 'absolute',
             top: 2,
             left: checked ? 22 : 2,

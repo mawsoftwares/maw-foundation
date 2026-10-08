@@ -48,8 +48,11 @@ describe('tokensToRNStyles', () => {
 
   it('strips font fallback chains to first face', () => {
     const styles = tokensToRNStyles();
-    expect(styles.typography.fontFamily).toBe('Geist Variable');
+    expect(styles.typography.fontFamily).toBe('Roboto'); // the theme default; its web stack is "'Roboto', 'Helvetica', …"
     expect(styles.typography.fontFamily).not.toContain(',');
+
+    const custom = tokensToRNStyles(false, createTheme({ typography: { fontFamily: "'Inter', system-ui, sans-serif" } }));
+    expect(custom.typography.fontFamily).toBe('Inter');
   });
 
   it('returns font weights as strings for RN', () => {

@@ -60,6 +60,12 @@ importers:
       '@mawsoftwares/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@mawsoftwares/tenancy':
+        specifier: workspace:*
+        version: link:../../packages/tenancy
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
 
   apps/sample-desktop:
     dependencies:
@@ -160,6 +166,9 @@ importers:
       '@mawsoftwares/observability':
         specifier: workspace:*
         version: link:../../packages/observability
+      '@mawsoftwares/postgres':
+        specifier: workspace:*
+        version: link:../../adapters/postgres
       '@mawsoftwares/queue':
         specifier: workspace:*
         version: link:../../packages/queue
@@ -516,12 +525,6 @@ importers:
       '@mawsoftwares/core':
         specifier: workspace:*
         version: link:../core
-      '@mawsoftwares/database':
-        specifier: workspace:*
-        version: link:../database
-      drizzle-orm:
-        specifier: ^0.45.2
-        version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
 
   packages/testing:
     dependencies:

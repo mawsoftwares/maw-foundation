@@ -1,5 +1,5 @@
-import { FeatureDependency, DependencyType } from '../domain/types.js';
-import { EvaluationReason } from '../domain/enums.js';
+import { FeatureDependency } from '../domain/types.js';
+import { DependencyType, EvaluationReason } from '../domain/enums.js';
 import { PipelineEvaluator } from './PipelineEvaluator.js';
 import { FeatureEvaluationContext } from '../domain/context.js';
 
@@ -9,7 +9,7 @@ export class DependencyEvaluator {
   async evaluate(
     dependencies: FeatureDependency[],
     context: FeatureEvaluationContext,
-    evaluatedFlags: Set<string> // for circular dependency detection
+    evaluatedFlags: Set<string> // the chain of flags being evaluated, for circular dependency detection
   ): Promise<{ passed: boolean; reason?: EvaluationReason }> {
     if (!dependencies || dependencies.length === 0) return { passed: true };
 
@@ -19,7 +19,9 @@ export class DependencyEvaluator {
         return { passed: false, reason: EvaluationReason.DEPENDENCY_DISABLED };
       }
 
-      const depResult = await this.pipelineEvaluator.evaluate(dep.dependsOnFlagKey, context, evaluatedFlags);
+      // Each dependency gets its own copy of the chain: siblings that share a dependency (a diamond: A needs B and C,
+      // both need D) are not circular, only a flag that appears among its own ancestors is.
+      const depResult = await this.pipelineEvaluator.evaluate(dep.dependsOnFlagKey, context, new Set(evaluatedFlags));
 
       if (dep.type === DependencyType.REQUIRES) {
         if (!depResult.enabled) {

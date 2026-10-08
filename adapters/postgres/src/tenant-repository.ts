@@ -7,7 +7,7 @@ import type {
   TenantStatus,
   CreateTenantInput,
   UpdateTenantInput,
-} from './index';
+} from '@mawsoftwares/tenancy';
 
 type TenantRow = typeof schema.tenants.$inferSelect;
 

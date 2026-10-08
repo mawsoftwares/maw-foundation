@@ -38,7 +38,7 @@ export class CachedFeatureFlagRepository implements FeatureFlagRepository {
   }
 
   async getRollout(flagKey: string): Promise<FeatureRollout | undefined> {
-    let rollout = await this.cache.getRollout(flagKey);
+    const rollout = await this.cache.getRollout(flagKey);
     if (rollout === undefined) {
       const dbRollout = await this.dbRepo.getRollout(flagKey);
       // store null if not found to avoid repeated cache misses
@@ -49,7 +49,7 @@ export class CachedFeatureFlagRepository implements FeatureFlagRepository {
   }
 
   async getSchedule(flagKey: string): Promise<FeatureSchedule | undefined> {
-    let schedule = await this.cache.getSchedule(flagKey);
+    const schedule = await this.cache.getSchedule(flagKey);
     if (schedule === undefined) {
       const dbSchedule = await this.dbRepo.getSchedule(flagKey);
       await this.cache.setSchedule(flagKey, dbSchedule || null);

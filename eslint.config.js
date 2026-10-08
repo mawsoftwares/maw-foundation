@@ -64,6 +64,9 @@ export default tseslint.config(
   {
     ignores: [
       '**/node_modules/**',
+      // Third-party code we do not own (PHP composer packages ship minified JS) and package-manager caches.
+      '**/vendor/**',
+      '**/.pnpm-store/**',
       '**/dist/**',
       '**/.next/**',
       '**/build/**',

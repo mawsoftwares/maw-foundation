@@ -21,9 +21,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@mawsoftwares/core": "workspace:*",
-    "@mawsoftwares/database": "workspace:*",
-    "drizzle-orm": "^0.45.2"
+    "@mawsoftwares/core": "workspace:*"
   },
   "peerDependencies": {},
   "peerDependenciesMeta": {},

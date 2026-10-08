@@ -45,7 +45,7 @@ export function FeatureFlagProvider({ children, fetchFlags }: FeatureFlagProvide
 
   useEffect(() => {
     loadFlags();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Load once on mount.
   }, []);
 
   const value = useMemo<FeatureFlagContextValue>(() => ({

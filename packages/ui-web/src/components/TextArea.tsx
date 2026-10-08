@@ -31,7 +31,7 @@ export function TextArea({
       )}
       <textarea
         {...props}
-        className={`maw-focus-ring ${props.className || ''}`.trim()}
+        className={`maw-focus-ring maw-input ${props.className || ''}`.trim()}
         style={{
           ...base,
           width: '100%',

@@ -186,7 +186,7 @@ export function DataTable<T extends object>({
   };
 
   return (
-    <div style={{ ...base, border: '1px solid var(--maw-border)', borderRadius: 'var(--maw-radius-lg)', overflow: 'hidden', background: 'var(--maw-surface)', ...style }}>
+    <div style={{ ...base, border: '1px solid var(--maw-comp-tables-border-color, var(--maw-border))', borderRadius: 'var(--maw-comp-tables-border-radius, var(--maw-radius-lg))', overflow: 'hidden', background: 'var(--maw-comp-tables-row-background, var(--maw-surface))', ...style }}>
       {responsive && isMobile ? renderMobileCards() : (
       <div style={{ overflowX: 'auto', background: 'var(--maw-surface)' }}>
         <table
@@ -200,7 +200,7 @@ export function DataTable<T extends object>({
           <thead>
             <tr>
               {selectable && (
-                <th style={{ padding: cellPadding, width: 40, textAlign: 'center', position: stickyHeader ? 'sticky' : undefined, top: stickyHeader ? 0 : undefined, background: 'var(--maw-bgMuted)', borderBottom: '1px solid var(--maw-border)' }}>
+                <th style={{ padding: cellPadding, width: 40, textAlign: 'center', position: stickyHeader ? 'sticky' : undefined, top: stickyHeader ? 0 : undefined, background: 'var(--maw-comp-tables-header-background, var(--maw-bgMuted))', borderBottom: '1px solid var(--maw-comp-tables-border-color, var(--maw-border))' }}>
                   <Checkbox label="" checked={allSelected} onChange={toggleAll} />
                 </th>
               )}
@@ -215,13 +215,13 @@ export function DataTable<T extends object>({
                     width: col.width,
                     cursor: col.sortable ? 'pointer' : 'default',
                     userSelect: col.sortable ? 'none' : undefined,
-                    fontWeight: 700,
-                    fontSize: 'var(--maw-text-xs)',
-                    color: 'var(--maw-fgMuted)',
+                    fontWeight: 'var(--maw-comp-tables-header-font-weight, 700)' as unknown as number,
+                    fontSize: 'var(--maw-comp-tables-header-font-size, var(--maw-text-xs))',
+                    color: 'var(--maw-comp-tables-header-text-color, var(--maw-fgMuted))',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    borderBottom: '1px solid var(--maw-border)',
-                    background: 'var(--maw-bgMuted)',
+                    borderBottom: '1px solid var(--maw-comp-tables-border-color, var(--maw-border))',
+                    background: 'var(--maw-comp-tables-header-background, var(--maw-bgMuted))',
                     whiteSpace: 'nowrap',
                     position: stickyHeader ? 'sticky' : undefined,
                     top: stickyHeader ? 0 : undefined,
@@ -234,7 +234,7 @@ export function DataTable<T extends object>({
                 </th>
               ))}
               {rowActions !== undefined && (
-                <th style={{ padding: cellPadding, width: 60, background: 'var(--maw-bgMuted)', borderBottom: '1px solid var(--maw-border)', position: stickyHeader ? 'sticky' : undefined, top: stickyHeader ? 0 : undefined }} />
+                <th style={{ padding: cellPadding, width: 60, background: 'var(--maw-comp-tables-header-background, var(--maw-bgMuted))', borderBottom: '1px solid var(--maw-comp-tables-border-color, var(--maw-border))', position: stickyHeader ? 'sticky' : undefined, top: stickyHeader ? 0 : undefined }} />
               )}
             </tr>
           </thead>
@@ -262,12 +262,15 @@ export function DataTable<T extends object>({
               return (
                 <tr
                   key={key}
-                  className="maw-table-row-hover"
+                  className={`maw-table-row-hover${isSelected ? ' maw-table-row--selected' : ''}`}
+                  aria-selected={selectable ? isSelected : undefined}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
-                    background: isSelected ? 'var(--maw-bgSubtle)' : 'var(--maw-surface)',
-                    borderBottom: '1px solid var(--maw-border)',
+                    background: isSelected
+                      ? 'var(--maw-comp-tables-row-selected-background, var(--maw-bgSubtle))'
+                      : 'var(--maw-comp-tables-row-background, var(--maw-surface))',
+                    borderBottom: '1px solid var(--maw-comp-tables-border-color, var(--maw-border))',
                   }}
                 >
                   {selectable && (
@@ -307,8 +310,9 @@ export function DataTable<T extends object>({
             justifyContent: 'space-between',
             padding: 'var(--maw-space-sm) var(--maw-space-md)',
             fontSize: 'var(--maw-text-xs)',
-            color: 'var(--maw-fgMuted)',
-            borderTop: '1px solid var(--maw-border)',
+            color: 'var(--maw-comp-pagination-text-color, var(--maw-fgMuted))',
+            background: 'var(--maw-comp-pagination-background, transparent)',
+            borderTop: '1px solid var(--maw-comp-tables-border-color, var(--maw-border))',
           }}
         >
           <Stack direction="row" align="center" gap="8px">

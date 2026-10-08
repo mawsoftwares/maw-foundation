@@ -50,7 +50,7 @@ export function Modal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'var(--maw-overlay)',
+        background: 'var(--maw-comp-modals-overlay-background, var(--maw-overlay))',
         display: 'flex',
         alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
@@ -76,14 +76,14 @@ export function Modal({
         }}
       >
         {title !== undefined && (
-          <div style={{ padding: 'var(--maw-space-lg) var(--maw-space-xl)', borderBottom: '1px solid var(--maw-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ margin: 0, fontSize: 'var(--maw-text-lg)', fontWeight: 600, color: 'var(--maw-fg)' }}>{title}</h2>
-            <IconButton label="Close" onClick={onClose}>✕</IconButton>
+          <div style={{ padding: 'var(--maw-comp-modals-header-padding, var(--maw-space-lg) var(--maw-space-xl))', background: 'var(--maw-comp-modals-header-background, transparent)', borderBottom: 'var(--maw-comp-modals-header-border, 1px solid var(--maw-border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ margin: 0, fontSize: 'var(--maw-comp-modals-title-font-size, var(--maw-text-lg))', fontWeight: 'var(--maw-comp-modals-title-font-weight, 600)' as unknown as number, color: 'var(--maw-comp-modals-title-text-color, var(--maw-fg))' }}>{title}</h2>
+            <IconButton label="Close" onClick={onClose} style={{ color: 'var(--maw-comp-modals-close-text-color, inherit)' }}>✕</IconButton>
           </div>
         )}
-        <div style={{ padding: 'var(--maw-space-xl)', overflowY: 'auto', flex: 1 }}>{children}</div>
+        <div style={{ padding: 'var(--maw-comp-modals-body-padding, var(--maw-space-xl))', color: 'var(--maw-comp-modals-body-text-color, inherit)', overflowY: 'auto', flex: 1 }}>{children}</div>
         {footer !== undefined && (
-          <div style={{ padding: 'var(--maw-space-lg) var(--maw-space-xl)', borderTop: '1px solid var(--maw-border)', display: 'flex', gap: 'var(--maw-space-sm)', justifyContent: 'flex-end' }}>
+          <div style={{ padding: 'var(--maw-comp-modals-footer-padding, var(--maw-space-lg) var(--maw-space-xl))', background: 'var(--maw-comp-modals-footer-background, transparent)', borderTop: 'var(--maw-comp-modals-footer-border, 1px solid var(--maw-border))', display: 'flex', gap: 'var(--maw-space-sm)', justifyContent: 'flex-end' }}>
             {footer}
           </div>
         )}

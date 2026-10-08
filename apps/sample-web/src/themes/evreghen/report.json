@@ -1,0 +1,349 @@
+{
+  "summary": {
+    "errors": 11,
+    "warnings": 8,
+    "info": 0,
+    "overridden": 0
+  },
+  "areas": [
+    {
+      "area": "colors",
+      "status": "match"
+    },
+    {
+      "area": "typography",
+      "status": "match"
+    },
+    {
+      "area": "spacing",
+      "status": "match"
+    },
+    {
+      "area": "radius",
+      "status": "match"
+    },
+    {
+      "area": "shadows",
+      "status": "match"
+    },
+    {
+      "area": "buttons",
+      "status": "match"
+    },
+    {
+      "area": "forms",
+      "status": "defaults"
+    },
+    {
+      "area": "cards",
+      "status": "defaults"
+    },
+    {
+      "area": "navigation",
+      "status": "match"
+    },
+    {
+      "area": "components",
+      "status": "defaults"
+    },
+    {
+      "area": "responsive",
+      "status": "defaults"
+    },
+    {
+      "area": "accessibility",
+      "status": "fail"
+    }
+  ],
+  "findings": [
+    {
+      "id": "a11y.contrast.light.fgSubtle-on-bg",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "palette.fgSubtle",
+      "message": "Placeholder / tertiary text (light): contrast 1.47:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set fgSubtle to #737579 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "fgSubtle": "#737579"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.brandContrast-on-brand",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "palette.brandContrast",
+      "message": "Primary button text (light): contrast 2.82:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set brandContrast to #303030 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "brandContrast": "#303030"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.brand-on-bg",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "palette.brand",
+      "message": "Brand-coloured text and links (light): contrast 2.82:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set brand to #c45500 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "brand": "#c45500"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.success-on-successBg",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "palette.success",
+      "message": "Success badge text (light): contrast 2.05:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set success to #008139 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "success": "#008139"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.danger-on-dangerBg",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "path": "palette.danger",
+      "message": "Error badge text (light): contrast 3.48:1, needs 4.5:1. Passes only for large text.",
+      "fix": {
+        "description": "Set danger to #d8262e (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "danger": "#d8262e"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.warning-on-warningBg",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "palette.warning",
+      "message": "Warning badge text (light): contrast 1.78:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set warning to #8e6b00 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "warning": "#8e6b00"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.info-on-infoBg",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "path": "palette.info",
+      "message": "Info badge text (light): contrast 3.04:1, needs 4.5:1. Passes only for large text.",
+      "fix": {
+        "description": "Set info to #2665c9 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "palette": {
+            "info": "#2665c9"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.light.component.nav-item-active",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "message": "nav-item-active text on its background (light): contrast 2.82:1, needs 4.5:1."
+    },
+    {
+      "id": "a11y.contrast.light.component.buttons-primary",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "message": "buttons-primary text on its background (light): contrast 2.82:1, needs 4.5:1."
+    },
+    {
+      "id": "a11y.focus.light.ring-on-bg",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "path": "palette.borderFocus",
+      "message": "Keyboard focus ring on bg (light): contrast 2.85:1, needs 3:1.",
+      "fix": {
+        "description": "Set borderFocus to #f26d14 (nearest colour that reaches 3:1)",
+        "patch": {
+          "palette": {
+            "borderFocus": "#f26d14"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.focus.light.ring-on-bgSubtle",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "path": "palette.borderFocus",
+      "message": "Keyboard focus ring on bg subtle (light): contrast 2.74:1, needs 3:1.",
+      "fix": {
+        "description": "Set borderFocus to #ed6a14 (nearest colour that reaches 3:1)",
+        "patch": {
+          "palette": {
+            "borderFocus": "#ed6a14"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.disabled.light.contrast",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "message": "Disabled text is almost invisible on its background (light, 1.24:1). WCAG exempts disabled controls, but users still need to see them."
+    },
+    {
+      "id": "a11y.contrast.dark.fgSubtle-on-bg",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "paletteDark.fgSubtle",
+      "message": "Placeholder / tertiary text (dark): contrast 2.04:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set fgSubtle to #afafb5 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "paletteDark": {
+            "fgSubtle": "#afafb5"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.dark.brandContrast-on-brand",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "path": "paletteDark.brandContrast",
+      "message": "Primary button text (dark): contrast 2.82:1, needs 4.5:1.",
+      "fix": {
+        "description": "Set brandContrast to #303030 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "paletteDark": {
+            "brandContrast": "#303030"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.dark.brand-on-bg",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "path": "paletteDark.brand",
+      "message": "Brand-coloured text and links (dark): contrast 3.49:1, needs 4.5:1. Passes only for large text.",
+      "fix": {
+        "description": "Set brand to #fe9545 (nearest colour that reaches 4.5:1)",
+        "patch": {
+          "paletteDark": {
+            "brand": "#fe9545"
+          }
+        }
+      }
+    },
+    {
+      "id": "a11y.contrast.dark.component.nav-item-active",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "message": "nav-item-active text on its background (dark): contrast 2.82:1, needs 4.5:1."
+    },
+    {
+      "id": "a11y.contrast.dark.component.buttons-primary",
+      "area": "accessibility",
+      "severity": "error",
+      "accessibility": true,
+      "message": "buttons-primary text on its background (dark): contrast 2.82:1, needs 4.5:1."
+    },
+    {
+      "id": "a11y.font-size.body-sm",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "path": "typography.scale.body-sm.size",
+      "message": "Type step \"body-sm\" is 13px; 14px or more is recommended for body text."
+    },
+    {
+      "id": "a11y.target.buttons",
+      "area": "accessibility",
+      "severity": "warning",
+      "accessibility": true,
+      "message": "Button height is 40px; 44px is recommended for touch targets on mobile."
+    }
+  ],
+  "analysis": {
+    "spacingSystem": {
+      "kind": "4px",
+      "base": 4,
+      "fit": 1
+    },
+    "spacingSystemBasis": "detected",
+    "radiusStyle": "rounded",
+    "hasDarkMode": true,
+    "typeScaleSteps": [
+      "display-hero",
+      "headline-xl",
+      "headline-lg",
+      "title-md",
+      "body-lg",
+      "body-md",
+      "body-sm",
+      "label-md",
+      "label-sm",
+      "code-sm"
+    ],
+    "coverage": {
+      "present": [
+        "primary",
+        "onPrimary",
+        "background",
+        "card",
+        "text",
+        "textMuted",
+        "border",
+        "success",
+        "warning",
+        "error",
+        "info"
+      ],
+      "missing": []
+    },
+    "sources": {
+      "design": 142,
+      "derived": 4,
+      "estimated": 0,
+      "manual": 0,
+      "default": 0
+    },
+    "review": []
+  },
+  "skipped": []
+}

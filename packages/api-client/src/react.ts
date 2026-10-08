@@ -64,7 +64,7 @@ export function useApiRequest<T>(
         result.cancel?.('unmounted');
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `deps` is supplied by the caller, so it cannot be statically checked.
   }, deps);
 
   return { data, error, loading };

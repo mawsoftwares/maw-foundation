@@ -221,19 +221,19 @@ export function FormField({
   return (
     <div style={{ fontFamily: 'var(--maw-font-family)', marginBottom: 'var(--maw-space-md)' }}>
       {label !== undefined && (
-        <div style={{ marginBottom: 'var(--maw-space-xs)', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)', fontWeight: 500 }}>
+        <div style={{ marginBottom: 'var(--maw-space-xs)', fontSize: 'var(--maw-comp-forms-label-font-size, var(--maw-text-sm))', color: 'var(--maw-comp-forms-label-text-color, var(--maw-fgMuted))', fontWeight: 'var(--maw-comp-forms-label-font-weight, 500)' as unknown as number }}>
           {label}
-          {required && <span style={{ color: 'var(--maw-danger)', marginLeft: 2 }}>*</span>}
+          {required && <span aria-hidden="true" style={{ color: 'var(--maw-comp-forms-required-text-color, var(--maw-danger))', marginLeft: 2 }}>*</span>}
         </div>
       )}
       {children}
       {error !== undefined && (
-        <div style={{ marginTop: 'var(--maw-space-xs)', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-danger)' }}>
+        <div style={{ marginTop: 'var(--maw-space-xs)', fontSize: 'var(--maw-comp-forms-error-font-size, var(--maw-text-xs))', color: 'var(--maw-comp-forms-error-text-color, var(--maw-danger))' }}>
           {error}
         </div>
       )}
       {hint !== undefined && error === undefined && (
-        <div style={{ marginTop: 'var(--maw-space-xs)', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgSubtle)' }}>
+        <div style={{ marginTop: 'var(--maw-space-xs)', fontSize: 'var(--maw-comp-forms-helper-font-size, var(--maw-text-xs))', color: 'var(--maw-comp-forms-helper-text-color, var(--maw-fgSubtle))' }}>
           {hint}
         </div>
       )}

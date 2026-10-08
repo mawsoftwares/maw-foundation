@@ -11,6 +11,15 @@ export function actorOf(req: Request): { userId: string; tenantId: string; role:
   return claims ? { userId: claims.userId, tenantId: claims.tenantId, role: claims.role } : undefined;
 }
 
+export interface UserHierarchyGuards {
+  /** For routes with `/:id`: hides and blocks users the actor does not outrank. */
+  readonly guardTarget: RequestHandler;
+  /** For create/update: the role being assigned must be strictly below the actor's. */
+  readonly guardAssignedRole: RequestHandler;
+  /** Role codes the actor may see or assign. */
+  readonly visibleRoleCodes: (actorRole: string) => Promise<string[]>;
+}
+
 /**
  * Enforces the strict role ladder on the user-management API.
  *
@@ -18,7 +27,7 @@ export function actorOf(req: Request): { userId: string; tenantId: string; role:
  *   hidden user's existence isn't revealed). Users can always reach themselves.
  * - A role can be assigned only if it is strictly below the actor's (403 otherwise).
  */
-export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRepository) {
+export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRepository): UserHierarchyGuards {
   /** Role codes the actor may see/assign. */
   async function visibleRoleCodes(actorRole: string): Promise<string[]> {
     const roles = await roleSource();

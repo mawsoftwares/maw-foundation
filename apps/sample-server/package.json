@@ -14,6 +14,7 @@
     "@mawsoftwares/database": "workspace:*",
     "@mawsoftwares/import-export": "workspace:*",
     "@mawsoftwares/observability": "workspace:*",
+    "@mawsoftwares/postgres": "workspace:*",
     "@mawsoftwares/queue": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
     "@mawsoftwares/reporting": "workspace:*",

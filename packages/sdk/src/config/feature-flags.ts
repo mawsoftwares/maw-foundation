@@ -78,13 +78,19 @@ export function createFlagStore<K extends string>(
 // Percentage-based rollout helper
 // ---------------------------------------------------------------------------
 
+/**
+ * Deterministic percentage rollout. Pass `salt` (typically the flag key) so different flags select different
+ * users; without it the result depends only on `userId`, as before.
+ */
 export function isRolledOut(
   userId: string,
   percentage: number,
+  salt?: string,
 ): boolean {
+  const key = salt === undefined ? userId : `${salt}:${userId}`;
   let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = (hash * 31 + userId.charCodeAt(i)) | 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0;
   }
   return (Math.abs(hash) % 100) < percentage;
 }

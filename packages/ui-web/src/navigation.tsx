@@ -359,13 +359,13 @@ function SidebarItem({
           background: active
             ? 'var(--maw-comp-nav-item-active-background, var(--maw-shell-nav-active-bg, var(--maw-brand)))'
             : hovered
-              ? 'var(--maw-shell-hover, var(--maw-bgSubtle))'
-              : 'transparent',
+              ? 'var(--maw-comp-nav-item-hover-background, var(--maw-shell-hover, var(--maw-bgSubtle)))'
+              : 'var(--maw-comp-nav-item-background, transparent)',
           color: active
             ? 'var(--maw-comp-nav-item-active-text-color, var(--maw-shell-nav-active-fg, var(--maw-brandContrast)))'
             : hovered
-              ? 'var(--maw-brand)'
-              : 'var(--maw-shell-fg, var(--maw-fg))',
+              ? 'var(--maw-comp-nav-item-hover-text-color, var(--maw-brand))'
+              : 'var(--maw-comp-nav-item-text-color, var(--maw-shell-fg, var(--maw-fg)))',
           fontSize: 'var(--maw-text-sm)',
           fontWeight: active ? 600 : 500,
           cursor: 'pointer',

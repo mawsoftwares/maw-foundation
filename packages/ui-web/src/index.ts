@@ -78,7 +78,7 @@ export {
   Stack,
   DropdownMenu,
 } from './components';
-export type { ProfileAvatarUploadProps, IconProps, IconName } from './components';
+export type { ProfileAvatarUploadProps, IconProps, IconName, ButtonVariant, CardVariant } from './components';
 
 // Toast / Notifications
 export { ToastProvider, useToast, type Toast, type ToastVariant } from './toast';
@@ -373,3 +373,6 @@ export {
   type ResponsiveProp,
   type ResponsiveContainerProps,
 } from './responsive';
+
+export { ThemeProbes, type ThemeProbesProps } from './theme-probes';
+export { ClientThemeProvider, useClientTheme, type ClientThemeProviderProps, type ClientThemeContextValue } from './client-theme';

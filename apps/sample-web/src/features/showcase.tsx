@@ -10,6 +10,7 @@ import {
   DataGridTab,
   DynamicFormsTab,
   FileUploadTab,
+  ThemePlaygroundTab,
 } from './showcase/index';
 
 const TABS = [
@@ -22,6 +23,7 @@ const TABS = [
   { key: 'datagrid', label: 'DataGrid' },
   { key: 'forms', label: 'Dynamic Forms' },
   { key: 'upload', label: 'File Upload' },
+  { key: 'playground', label: 'Theme Playground' },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -98,6 +100,8 @@ export function ShowcaseView(): ReactNode {
       {activeTab === 'forms' && <DynamicFormsTab />}
 
       {activeTab === 'upload' && <FileUploadTab />}
+
+      {activeTab === 'playground' && <ThemePlaygroundTab />}
     </div>
   );
 }

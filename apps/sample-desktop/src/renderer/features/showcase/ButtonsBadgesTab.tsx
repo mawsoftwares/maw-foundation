@@ -12,7 +12,6 @@ import {
   DropdownMenu,
   useToast,
   useColorMode,
-  useI18n,
 } from '@mawsoftwares/ui-web';
 
 interface Props {
@@ -23,7 +22,6 @@ interface Props {
 export function ButtonsBadgesTab({ locale, setLocale }: Props): ReactNode {
   const toast = useToast();
   const { isDark, toggleColorMode } = useColorMode();
-  const { } = useI18n();
 
   return (
     <Card>

@@ -62,7 +62,7 @@ Make a module a Foundation npm package when **all** of the following are true:
 | `@mawsoftwares/observability` | Logger, metrics, tracing, ALS context |
 | `@mawsoftwares/auth-core` | JWT, password hashing, MFA/OTP, registration, sessions, OAuth |
 | `@mawsoftwares/rbac-core` | Module registry, permission resolver, RBAC sync, master cache |
-| `@mawsoftwares/tenancy` | Tenant contracts, PgTenantRepository, resolvers |
+| `@mawsoftwares/tenancy` | Tenant contracts, resolvers |
 | `@mawsoftwares/modules` | Module lifecycle, event bus |
 | `@mawsoftwares/communication` | Email, SMS, in-app notifications |
 | `@mawsoftwares/queue` | QueueService, JobRunner, PgQueueProvider |

@@ -299,8 +299,8 @@ function extractCssColor(value: string): string | undefined {
   let alphaOverride: number | undefined;
   
   if (opacityMatch) {
-    baseColorStr = opacityMatch[1].trim();
-    alphaOverride = parseInt(opacityMatch[2], 10) / 100;
+    baseColorStr = (opacityMatch[1] ?? '').trim();
+    alphaOverride = parseInt(opacityMatch[2] ?? '', 10) / 100;
   }
   
   let extracted: string | undefined;
@@ -381,7 +381,8 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const g = rgb.g / 255;
   const b = rgb.b / 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0, l = (max + min) / 2;
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
   if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
@@ -1664,7 +1665,7 @@ function harvestLooseLines(
     // Track active component section (e.g. `### Buttons` or `## Cards`)
     const headingMatch = line.match(/^#{2,4}\s+(.+)$/);
     if (headingMatch) {
-      const heading = headingMatch[1].trim();
+      const heading = (headingMatch[1] ?? '').trim();
       if (/Colors|Typography|Spacing|Radius|Elevation|Shadows|Overview/i.test(heading)) {
         currentComponent = null;
       } else {
@@ -1970,7 +1971,15 @@ export function toCanonicalDesignMarkdown(parsed: DesignMdParseResult): string {
   return `${lines.join('\n').trimEnd()}\n`;
 }
 
-export function parseDesignMarkdown(content: string): DesignMdParseResult {
+export interface DesignMdParseOptions {
+  /**
+   * Re-map loud or low-contrast colours so the app shell stays usable (the Theme Designer's behaviour).
+   * Defaults to `true`. Set `false` to keep every colour exactly as the file states it.
+   */
+  readonly adapt?: boolean;
+}
+
+export function parseDesignMarkdown(content: string, options: DesignMdParseOptions = {}): DesignMdParseResult {
   const branding: TenantBranding = {};
   const recognized: { field: string; value: string }[] = [];
   const warnings: string[] = [];
@@ -2025,7 +2034,7 @@ export function parseDesignMarkdown(content: string): DesignMdParseResult {
     }
   }
 
-  if (Object.keys(overrides.palette ?? {}).length > 0 || Object.keys(overrides.shell ?? {}).length > 0) {
+  if (options.adapt !== false && (Object.keys(overrides.palette ?? {}).length > 0 || Object.keys(overrides.shell ?? {}).length > 0)) {
     if (adaptPaletteToSystem(overrides, recognized)) {
       warnings.push('Adapted into MAW roles: accents on actions, quiet neutrals on page chrome.');
     }
@@ -2119,6 +2128,13 @@ const GOOGLE_FONTS = new Set([
   'Plus Jakarta Sans', 'DM Sans', 'Manrope'
 ]);
 
+/** The Google Fonts stylesheet URL for the first face of a font stack, or `undefined` if it is not a Google font we load. */
+export function googleFontUrl(family: string): string | undefined {
+  const first = family.match(/^['"]?([^,'"]+)['"]?/)?.[1];
+  if (first === undefined || !GOOGLE_FONTS.has(first)) return undefined;
+  return `https://fonts.googleapis.com/css2?family=${first.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
+}
+
 /**
  * Parses the font family from overrides and dynamically injects the Google Font if found.
  */
@@ -2127,12 +2143,9 @@ export function injectWebFonts(overrides: ThemeOverrides): void {
   const family = overrides.typography?.fontFamily ?? overrides.branding?.fontFamily;
   if (!family) return;
   
-  const match = family.match(/^['"]?([^,'"]+)['"]?/);
-  const firstFont = match ? match[1] : undefined;
-  
-  if (firstFont && GOOGLE_FONTS.has(firstFont)) {
-    const fontUrl = `https://fonts.googleapis.com/css2?family=${firstFont.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
-    
+  const fontUrl = googleFontUrl(family);
+
+  if (fontUrl !== undefined) {
     if (document.querySelector(`link[href="${fontUrl}"]`)) return;
     
     if (!document.querySelector('link[href="https://fonts.googleapis.com"]')) {
@@ -2155,3 +2168,18 @@ export function injectWebFonts(overrides: ThemeOverrides): void {
   }
 }
 
+
+const SYSTEM_FONTS = new Set([
+  'serif', 'sans-serif', 'monospace', 'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace', '-apple-system', 'blinkmacsystemfont',
+  'arial', 'helvetica', 'helvetica neue', 'times new roman', 'georgia', 'verdana', 'tahoma', 'courier new', 'segoe ui', 'roboto',
+]);
+
+/**
+ * Whether the first face of a font stack will be available at runtime: a system font, or one `injectWebFonts`
+ * loads. Anything else needs a font source the design did not provide.
+ */
+export function isLoadableFont(family: string): boolean {
+  const first = family.match(/^['"]?([^,'"]+)['"]?/)?.[1]?.trim();
+  if (first === undefined || first === '') return true;
+  return SYSTEM_FONTS.has(first.toLowerCase()) || GOOGLE_FONTS.has(first);
+}

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { BrandConfig, IBrandConfigProvider } from '@mawsoftwares/sdk';
 import { DEFAULT_BRAND_CONFIG, BrandResolver, InMemoryBrandCache } from '@mawsoftwares/sdk';
-import { brandConfigToThemeOverrides, createTheme, type Theme } from '@mawsoftwares/theme';
+import { brandConfigToThemeOverrides, createTheme, extendTheme, type Theme, type ThemeRegistry } from '@mawsoftwares/theme';
 import { ThemeProvider } from './theme';
 
 export type BrandColorMode = 'light' | 'dark' | 'system';
@@ -47,6 +47,11 @@ export interface BrandProviderProps {
   readonly cacheTtlMs?: number;
   readonly children: ReactNode;
   readonly loadingFallback?: ReactNode;
+  /**
+   * Full client themes (from a design, see `designToTheme`). A tenant whose id is registered gets that theme layered
+   * over its brand colours, so switching tenant switches the whole visual language, not just the palette.
+   */
+  readonly themes?: ThemeRegistry;
 }
 
 export function BrandProvider({
@@ -56,6 +61,7 @@ export function BrandProvider({
   cacheTtlMs,
   children,
   loadingFallback,
+  themes,
 }: BrandProviderProps): ReactNode {
   const resolver = useMemo(
     () => new BrandResolver({
@@ -74,10 +80,12 @@ export function BrandProvider({
   const [colorMode, setColorModeState] = useState<BrandColorMode>(() => readStoredMode() ?? defaultMode);
   const [isDark, setIsDark] = useState(() => resolveIsDark(colorMode));
 
-  const theme = useMemo(() => {
-    const overrides = brandConfigToThemeOverrides(brand);
-    return createTheme(overrides);
-  }, [brand]);
+  const themeOverrides = useMemo(() => {
+    const fromBrand = brandConfigToThemeOverrides(brand);
+    return themes?.has(brand.tenantId) === true ? extendTheme(fromBrand, themes.resolveOverrides(brand.tenantId)) : fromBrand;
+  }, [brand, themes]);
+
+  const theme = useMemo(() => createTheme(themeOverrides), [themeOverrides]);
 
   const loadBrand = useCallback(async (tid: string) => {
     setLoading(true);
@@ -141,8 +149,6 @@ export function BrandProvider({
     () => ({ brand, theme, colorMode, isDark, loading, error, setColorMode, toggleColorMode, switchTenant }),
     [brand, theme, colorMode, isDark, loading, error, setColorMode, toggleColorMode, switchTenant],
   );
-
-  const themeOverrides = useMemo(() => brandConfigToThemeOverrides(brand), [brand]);
 
   return (
     <BrandContext.Provider value={value}>

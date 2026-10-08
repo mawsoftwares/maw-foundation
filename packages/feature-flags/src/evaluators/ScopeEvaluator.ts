@@ -1,4 +1,5 @@
-import { FeatureOverride, FlagScope, FlagState } from '../domain/types.js';
+import { FeatureOverride } from '../domain/types.js';
+import { FlagScope, FlagState } from '../domain/enums.js';
 import { FeatureEvaluationContext } from '../domain/context.js';
 import { EvaluationReason } from '../domain/enums.js';
 

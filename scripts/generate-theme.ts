@@ -1,0 +1,171 @@
+/**
+ * Design file → client theme.
+ *
+ *   pnpm theme:generate --input design.md --client client-a
+ *
+ * Runs the design through the full pipeline (adapter → analysis → theme), validates it, and writes
+ * `<out>/<client>/{theme.json,theme.css,theme.ts,report.json,design.json}` plus a regenerated `<out>/index.ts`
+ * registry. A client stores only what differs from the theme it extends, so nothing is duplicated.
+ */
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, extname, join, resolve } from 'node:path';
+import {
+  createDesignMdAdapter, createDesignPipeline, createThemeRegistry, designToTheme,
+  diffThemeOverrides, exportThemeBundle, exportThemeCss, exportThemeTs, extendTheme, parseThemeJson, validateTheme,
+  type DesignInputKind, type NormalizedDesign, type ThemeDefinition, type ThemeOverrides,
+} from '../packages/theme/src/index';
+
+interface Args {
+  input: string;
+  client: string;
+  out: string;
+  extends: string;
+  name?: string;
+  manual?: string;
+  kind?: DesignInputKind;
+  adaptation: 'as-stated' | 'importer';
+  strict: boolean;
+}
+
+const USAGE = `Usage: pnpm theme:generate --input <file> --client <id> [options]
+
+  --input <file>      design.md, .css or .json tokens
+  --client <id>       theme id, e.g. client-a (letters, digits, dashes)
+  --out <dir>         themes directory (default: apps/sample-web/src/themes)
+  --extends <id>      theme this one builds on (default: default)
+  --name <name>       display name (default: the design's own name)
+  --manual <file>     JSON corrections (partial NormalizedDesign) applied over what was extracted
+  --kind <kind>       force the input kind (design-md | css | json-tokens)
+  --adaptation <m>    as-stated (default) | importer
+  --strict            exit 1 if validation finds open errors`;
+
+function parseArgs(argv: readonly string[]): Args {
+  const flags = new Map<string, string>();
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i] ?? '';
+    if (!arg.startsWith('--')) throw new Error(`Unexpected argument "${arg}"\n\n${USAGE}`);
+    const key = arg.slice(2);
+    if (key === 'strict') { flags.set(key, 'true'); continue; }
+    const value = argv[++i];
+    if (value === undefined || value.startsWith('--')) throw new Error(`--${key} needs a value\n\n${USAGE}`);
+    flags.set(key, value);
+  }
+  const input = flags.get('input');
+  const client = flags.get('client');
+  if (input === undefined || client === undefined) throw new Error(`--input and --client are required\n\n${USAGE}`);
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(client)) throw new Error(`--client must be lowercase letters, digits and dashes (got "${client}")`);
+  const adaptation = flags.get('adaptation') ?? 'as-stated';
+  if (adaptation !== 'as-stated' && adaptation !== 'importer') throw new Error(`--adaptation must be as-stated or importer`);
+  const kind = flags.get('kind');
+  if (kind !== undefined && !['design-md', 'css', 'json-tokens'].includes(kind)) throw new Error('--kind must be design-md, css or json-tokens');
+  return {
+    input, client, adaptation,
+    out: flags.get('out') ?? 'apps/sample-web/src/themes',
+    extends: flags.get('extends') ?? 'default',
+    ...(flags.get('name') === undefined ? {} : { name: flags.get('name') as string }),
+    ...(flags.get('manual') === undefined ? {} : { manual: flags.get('manual') as string }),
+    ...(kind === undefined ? {} : { kind: kind as DesignInputKind }),
+    strict: flags.has('strict'),
+  };
+}
+
+function kindFor(file: string, forced: DesignInputKind | undefined): DesignInputKind {
+  if (forced !== undefined) return forced;
+  const ext = extname(file).toLowerCase();
+  if (ext === '.css') return 'css';
+  if (ext === '.json') return 'json-tokens';
+  return 'design-md';
+}
+
+const write = (path: string, content: string): void => {
+  mkdirSync(join(path, '..'), { recursive: true });
+  writeFileSync(path, content);
+};
+
+/** Every client theme already on disk, as registry definitions (`theme.json` is the source of truth). */
+function loadExisting(out: string): ThemeDefinition[] {
+  if (!existsSync(out)) return [];
+  return readdirSync(out, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && existsSync(join(out, d.name, 'theme.json')))
+    .map((d) => {
+      const file = parseThemeJson(readFileSync(join(out, d.name, 'theme.json'), 'utf8'));
+      return { id: d.name, ...(file.extends === undefined ? {} : { extends: file.extends }), overrides: file.overrides };
+    });
+}
+
+/** A safe identifier for a theme id (`default` is reserved, `4x` starts with a digit), e.g. `client-a` → `clientATheme`. */
+const camel = (id: string): string => `${id.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase()).replace(/^[0-9]/, (d) => `t${d}`)}Theme`;
+
+function writeIndex(out: string, ids: readonly string[]): void {
+  const sorted = ['default', ...ids.filter((i) => i !== 'default').sort()];
+  const lines = [
+    '// Generated by `pnpm theme:generate`. Do not edit.',
+    "import { createThemeRegistry } from '@mawsoftwares/theme';",
+    ...sorted.map((id) => `import { definition as ${camel(id)} } from './${id}/theme';`),
+    '',
+    `export const clientThemes = [${sorted.map(camel).join(', ')}];`,
+    '',
+    'export const themeRegistry = createThemeRegistry(clientThemes);',
+    '',
+  ];
+  write(join(out, 'index.ts'), lines.join('\n'));
+}
+
+async function main(): Promise<void> {
+  const args = parseArgs(process.argv.slice(2));
+  const out = resolve(args.out);
+  const inputPath = resolve(args.input);
+  if (!existsSync(inputPath)) throw new Error(`Input not found: ${inputPath}`);
+
+  // Make sure the base exists; `default` is the empty theme (the foundation's built-in defaults).
+  if (!existsSync(join(out, 'default', 'theme.json'))) {
+    const bundle = exportThemeBundle({}, { name: 'Default', id: 'default' });
+    for (const [file, content] of Object.entries(bundle)) write(join(out, 'default', file), content);
+  }
+  const existing = loadExisting(out).filter((d) => d.id !== args.client);
+  const registry = createThemeRegistry(existing);
+  if (!registry.has(args.extends)) throw new Error(`Cannot extend "${args.extends}": no such theme in ${out}`);
+
+  const manual = args.manual === undefined ? undefined : (JSON.parse(readFileSync(resolve(args.manual), 'utf8')) as Partial<NormalizedDesign>);
+  const pipeline = createDesignPipeline([createDesignMdAdapter({ adaptation: args.adaptation })]);
+  const result = await designToTheme(
+    { kind: kindFor(inputPath, args.kind), content: readFileSync(inputPath, 'utf8'), name: basename(inputPath) },
+    { pipeline, ...(manual === undefined ? {} : { manual }) },
+  );
+
+  const base: ThemeOverrides = registry.resolveOverrides(args.extends);
+  const stored = diffThemeOverrides(base, result.overrides);
+  const resolved = extendTheme(base, stored);
+  const name = args.name ?? result.design.meta.name ?? args.client;
+
+  const bundle = exportThemeBundle(stored, { name, id: args.client, extends: args.extends });
+  const dir = join(out, args.client);
+  write(join(dir, 'theme.json'), bundle['theme.json']);
+  write(join(dir, 'theme.ts'), exportThemeTs(stored, { id: args.client, extends: args.extends }));
+  write(join(dir, 'theme.css'), exportThemeCss(resolved, { header: `Theme: ${name} (${args.client}, extends ${args.extends}). Generated by pnpm theme:generate.` }));
+  write(join(dir, 'design.json'), `${JSON.stringify(result.design, null, 2)}\n`);
+
+  const report = validateTheme({ overrides: resolved, design: result.design });
+  write(join(dir, 'report.json'), `${JSON.stringify({ summary: report.summary, areas: report.areas.map((a) => ({ area: a.area, status: a.status })), findings: report.findings, analysis: result.analysis, skipped: report.skipped }, null, 2)}\n`);
+  writeIndex(out, loadExisting(out).map((d) => d.id));
+
+  const mark = { match: '✓', review: '!', fail: '✕', defaults: '–' } as const;
+  console.log(`\nTheme "${name}" → ${dir}`);
+  console.log(`  extends ${args.extends}; stores ${Object.keys(stored).filter((k) => k !== 'provenance').length} section(s) of overrides`);
+  console.log(`  spacing: ${result.analysis.spacingSystem.kind} (${result.analysis.spacingSystemBasis}) · radius: ${result.analysis.radiusStyle ?? 'not stated'} · dark mode: ${result.analysis.hasDarkMode ? 'specified' : 'derived'}`);
+  console.log(`  tokens: ${result.analysis.sources.design} exact, ${result.analysis.sources.derived} derived, ${result.analysis.sources.estimated} estimated, ${result.analysis.sources.manual} manual`);
+  console.log(`\nValidation: ${report.summary.errors} error(s), ${report.summary.warnings} warning(s), ${report.summary.info} note(s)`);
+  console.log(`  ${report.areas.map((a) => `${a.area} ${mark[a.status]}`).join('  ')}`);
+  console.log('  (✓ checked · ! needs a look · ✕ error · – design silent, defaults used)');
+  for (const f of report.findings.filter((x) => x.severity === 'error').slice(0, 8)) console.log(`  ✕ ${f.message}`);
+  for (const f of report.findings.filter((x) => x.severity === 'warning').slice(0, 6)) console.log(`  ! ${f.message}`);
+  console.log(`\nFull report: ${join(dir, 'report.json')}`);
+  console.log('Visual checks (rendered comparison, reference overlay) are in the Theme Playground.\n');
+  if (args.strict && report.summary.errors > 0) process.exitCode = 1;
+}
+
+main().catch((e: unknown) => {
+  console.error(e instanceof Error ? e.message : e);
+  process.exitCode = 1;
+});
+

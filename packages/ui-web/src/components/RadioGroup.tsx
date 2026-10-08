@@ -110,7 +110,8 @@ export function RadioGroup({
                 checked={value === opt.value}
                 onChange={() => onChange(opt.value)}
                 disabled={isDisabled}
-                style={{ accentColor: 'var(--maw-brand)', width: 18, height: 18, margin: 0 }}
+                className="maw-focusable"
+                style={{ accentColor: 'var(--maw-comp-radios-accent-color, var(--maw-brand))', width: 'var(--maw-comp-radios-size, 18px)', height: 'var(--maw-comp-radios-size, 18px)', margin: 0 }}
               />
               {opt.label}
             </label>

@@ -7,3 +7,4 @@ export { PatternsTab } from './PatternsTab';
 export { DataGridTab } from './DataGridTab';
 export { DynamicFormsTab } from './DynamicFormsTab';
 export { FileUploadTab } from './FileUploadTab';
+export { ThemePlaygroundTab } from './ThemePlaygroundTab';

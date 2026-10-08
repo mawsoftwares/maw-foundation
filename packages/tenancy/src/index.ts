@@ -167,7 +167,6 @@ export function requireActiveTenant(tenant: Tenant): void {
 // Implementations (tree-shakeable — only pulled in when imported)
 // ---------------------------------------------------------------------------
 
-export { PgTenantRepository } from './pg-tenant-repository';
 export { AlsTenantContextHolder } from './als-tenant-context';
 export { HeaderTenantResolver } from './resolvers/header-resolver';
 export { SubdomainTenantResolver } from './resolvers/subdomain-resolver';

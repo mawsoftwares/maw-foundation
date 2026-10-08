@@ -4,6 +4,11 @@ import {
   mergeThemeOverrides,
   tokensToCssVars,
   injectWebFonts,
+  responsiveCss,
+  responsiveVarNames,
+  componentStateCss,
+  DEFAULT_STATE_SPECS,
+  type ComponentStateSpec,
   type Theme,
   type ThemeOverrides,
   type TenantBranding,
@@ -49,6 +54,8 @@ export interface ThemeProviderProps {
   /** When set, color mode is controlled by the parent (e.g. BrandProvider). */
   readonly colorMode?: ColorMode;
   readonly onColorModeChange?: (mode: ColorMode) => void;
+  /** State-styling specs for components beyond the built-in set; see `componentStateCss`. */
+  readonly extraStateSpecs?: readonly ComponentStateSpec[];
   readonly children: ReactNode;
 }
 
@@ -230,7 +237,20 @@ const GLOBAL_CSS = `
     transition: background-color var(--maw-transition-fast);
   }
   .maw-table-row-hover:hover {
-    background-color: var(--maw-bgSubtle) !important;
+    background-color: var(--maw-comp-tables-row-hover-background, var(--maw-bgSubtle)) !important;
+  }
+  .maw-table-row--selected:hover {
+    background-color: var(--maw-comp-tables-row-selected-background, var(--maw-bgSubtle)) !important;
+  }
+
+  /* Keyboard focus visibility for controls that have no focus style of their own. */
+  .maw-focusable:focus-visible {
+    outline: var(--maw-state-focus-ring-width, 2px) solid var(--maw-state-focus-ring, var(--maw-brand));
+    outline-offset: var(--maw-state-focus-ring-offset, 2px);
+  }
+  .maw-input:disabled {
+    opacity: var(--maw-state-disabled-opacity, 0.6);
+    cursor: not-allowed;
   }
 
   @keyframes maw-spin {
@@ -249,6 +269,7 @@ export function ThemeProvider({
   defaultColorMode,
   colorMode: colorModeProp,
   onColorModeChange,
+  extraStateSpecs,
   children,
 }: ThemeProviderProps): ReactNode {
   const isControlled = colorModeProp !== undefined;
@@ -290,7 +311,10 @@ export function ThemeProvider({
   useLayoutEffect(() => {
     const vars = tokensToCssVars(isDark, theme);
     const root = document.documentElement;
+    // Responsive tokens live in the <style> below: an inline value would beat its media-query overrides.
+    const responsiveOwned = new Set(responsiveVarNames(theme.responsive));
     for (const [prop, val] of Object.entries(vars)) {
+      if (responsiveOwned.has(prop)) continue;
       root.style.setProperty(prop, val);
     }
     root.setAttribute('data-theme', isDark ? 'dark' : 'light');
@@ -326,6 +350,20 @@ export function ThemeProvider({
     setCustomOverrides({ branding, palette });
   }, []);
 
+  const responsiveStyles = useMemo(
+    () => responsiveCss(theme.responsive, theme.breakpoints),
+    [theme.responsive, theme.breakpoints],
+  );
+
+  // Only the state tokens the active theme defines produce rules (see componentStateCss).
+  const stateStyles = useMemo(
+    () => componentStateCss(
+      tokensToCssVars(isDark, theme),
+      extraStateSpecs === undefined ? DEFAULT_STATE_SPECS : [...DEFAULT_STATE_SPECS, ...extraStateSpecs],
+    ),
+    [isDark, theme, extraStateSpecs],
+  );
+
   const value = useMemo<ThemeContextValue>(
     () => ({ theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides }),
     [theme, colorMode, isDark, setColorMode, toggleColorMode, applyBranding, applyThemeOverrides],
@@ -334,6 +372,8 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider value={value}>
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
+      {responsiveStyles !== '' && <style data-maw-responsive dangerouslySetInnerHTML={{ __html: responsiveStyles }} />}
+      {stateStyles !== '' && <style data-maw-component-states dangerouslySetInnerHTML={{ __html: stateStyles }} />}
       {children}
     </ThemeContext.Provider>
   );

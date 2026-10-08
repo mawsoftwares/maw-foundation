@@ -6,6 +6,10 @@
  * that the UI kit consumes. No code changes needed for white-label — just config.
  */
 
+import { responsiveBaseVars, type ResponsiveTokens } from './core/responsive';
+import { deriveStateVars } from './core/semantic';
+import type { ProvenanceMap } from './core/provenance';
+
 // ---------------------------------------------------------------------------
 // Palette
 // ---------------------------------------------------------------------------
@@ -219,6 +223,12 @@ export interface ThemeOverrides {
    * Key is the CSS custom-property name without `--maw-`, e.g. `layout-container-max`, `color-status-mock-bg`.
    */
   extraTokens?: Record<string, string>;
+  /** Same as `extraTokens`, applied only in dark mode (wins over `extraTokens` there). */
+  extraTokensDark?: Record<string, string>;
+  /** Tokens that change per device class (desktop is the base). Key = CSS variable name without `--maw-`. */
+  responsive?: ResponsiveTokens;
+  /** Where each token came from and how far to trust it; keyed by token path. */
+  provenance?: ProvenanceMap;
 }
 
 export interface Theme {
@@ -243,6 +253,9 @@ export interface Theme {
   shell?: ShellTokens;
   components?: ComponentOverrides;
   extraTokens?: Record<string, string>;
+  extraTokensDark?: Record<string, string>;
+  responsive?: ResponsiveTokens;
+  provenance?: ProvenanceMap;
 }
 
 export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverrides): ThemeOverrides | undefined {
@@ -265,6 +278,15 @@ export function mergeThemeOverrides(base?: ThemeOverrides, extra?: ThemeOverride
       : undefined,
     extraTokens: extra.extraTokens !== undefined || base.extraTokens !== undefined
       ? { ...base.extraTokens, ...extra.extraTokens }
+      : undefined,
+    extraTokensDark: extra.extraTokensDark !== undefined || base.extraTokensDark !== undefined
+      ? { ...base.extraTokensDark, ...extra.extraTokensDark }
+      : undefined,
+    responsive: extra.responsive !== undefined || base.responsive !== undefined
+      ? { ...base.responsive, ...extra.responsive }
+      : undefined,
+    provenance: extra.provenance !== undefined || base.provenance !== undefined
+      ? { ...base.provenance, ...extra.provenance }
       : undefined,
   };
 }
@@ -330,6 +352,9 @@ export function createTheme(overrides?: ThemeOverrides): Theme {
     shell: overrides?.shell,
     components: overrides?.components,
     extraTokens: overrides?.extraTokens,
+    extraTokensDark: overrides?.extraTokensDark,
+    responsive: overrides?.responsive,
+    provenance: overrides?.provenance,
   };
 }
 
@@ -514,6 +539,9 @@ export {
   toCanonicalDesignMarkdown,
   storedDesignToOverrides,
   injectWebFonts,
+  isLoadableFont,
+  googleFontUrl,
+  type DesignMdParseOptions,
   type DesignMdParseResult,
   type DesignMdNormalizeResult,
 } from './design-md';
@@ -569,9 +597,17 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
     applyComponentAliases(t.components, t.typography.scale, vars);
   }
 
+  // Interaction-state tokens come before extraTokens/responsive so a design can override them.
+  Object.assign(vars, deriveStateVars(p));
+
   if (t.extraTokens) {
     for (const [k, v] of Object.entries(t.extraTokens)) vars[`--maw-${k}`] = v;
   }
+  if (dark && t.extraTokensDark) {
+    for (const [k, v] of Object.entries(t.extraTokensDark)) vars[`--maw-${k}`] = v;
+  }
+  // Desktop (base) value of responsive tokens; per-device overrides come from `responsiveCss`.
+  Object.assign(vars, responsiveBaseVars(t.responsive));
 
   // Shell chrome: light design.md shells must not stick when color mode is dark.
   // Keep an explicit dark/frosted shell (e.g. Evreghen); otherwise follow the active palette.
@@ -643,6 +679,11 @@ const COMPONENT_FAMILIES: Readonly<Record<string, string>> = {
   tooltip: 'tooltips', tooltips: 'tooltips',
   toggle: 'toggles', toggles: 'toggles', switch: 'toggles',
   table: 'tables', tables: 'tables', 'data-table': 'tables',
+  form: 'forms', forms: 'forms',
+  checkbox: 'checkboxes', checkboxes: 'checkboxes',
+  radio: 'radios', radios: 'radios',
+  pagination: 'pagination',
+  breadcrumb: 'breadcrumbs', breadcrumbs: 'breadcrumbs',
 };
 
 const COMPONENT_PROP_ALIASES: Readonly<Record<string, string>> = {
@@ -654,6 +695,16 @@ const COMPONENT_PROP_ALIASES: Readonly<Record<string, string>> = {
   fontSize: 'font-size', fontWeight: 'font-weight', lineHeight: 'line-height', letterSpacing: 'letter-spacing',
   padding: 'padding', height: 'height', width: 'width', gap: 'gap',
 };
+
+/** The themed component family a design component name maps to (`button-primary-hover` → `buttons`). */
+export function resolveComponentFamily(name: string): string | undefined {
+  return splitComponentName(name)?.family;
+}
+
+/** Whether a design component property (`backgroundColor`, `rounded`, `typography`…) is applied by the theme. */
+export function isMappedComponentProp(prop: string): boolean {
+  return prop === 'typography' || COMPONENT_PROP_ALIASES[prop] !== undefined;
+}
 
 function splitComponentName(name: string): { family: string; variant?: string } | undefined {
   const exact = COMPONENT_FAMILIES[name];
@@ -725,4 +776,15 @@ function isDarkShellBackground(bg: string): boolean {
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) < 0.35;
 }
+export * from './core/provenance';
+export * from './core/responsive';
+export { extendTheme } from './core/extend';
+export { createThemeRegistry, type ThemeDefinition, type ThemeRegistry } from './core/registry';
+export { themeToCssText, type ThemeCssOptions } from './core/css';
+export { deriveStateVars } from './core/semantic';
+export * from './components/states';
+export * from './design';
+export * from './validate';
+export * from './export';
+export { diffThemeOverrides } from './core/diff';
 export { createSharedThemeClient, type SharedThemeClient, type ThemeRequest } from './shared-theme';

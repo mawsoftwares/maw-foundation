@@ -29,7 +29,7 @@ See [`docs/module-architecture.md`](./module-architecture.md) for the full class
 |---------|-----------|--------|-------------|
 | `packages/auth-core` | `@mawsoftwares/auth-core` | Stable | JWT, refresh tokens, password hashing, MFA/OTP, registration, email verification, password reset, social auth (Google + GitHub providers), PgSocialAccountStore |
 | `packages/rbac-core` | `@mawsoftwares/rbac-core` | Stable | Permission resolver, module registry, ABAC scoping, dynamic permission checks, MasterCache |
-| `packages/tenancy` | `@mawsoftwares/tenancy` | Stable | Tenant contracts, PgTenantRepository, resolvers (header, subdomain, JWT, composite), ALS context holder |
+| `packages/tenancy` | `@mawsoftwares/tenancy` | Stable | Tenant contracts, resolvers (header, subdomain, JWT, composite), ALS context holder (the Postgres repository is `PgTenantRepository` in `@mawsoftwares/postgres`) |
 | `packages/modules` | `@mawsoftwares/modules` | Stable | Module registry, lifecycle, dependency graph, event bus |
 | `packages/feature-flags` | `@mawsoftwares/feature-flags` | WIP | Tenant-aware feature flag service (has pre-existing type errors) |
 | `packages/communication` | `@mawsoftwares/communication` | Stable | NotificationService, email/SMS/in-app, SMTP provider, PgInAppNotificationStore, PgTemplateStore |
