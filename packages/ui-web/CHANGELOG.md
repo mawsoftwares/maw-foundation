@@ -1,5 +1,25 @@
 # @mawsoftwares/ui-web
 
+## 0.3.0
+
+### Minor Changes
+
+- bb4dc84: Design → Theme pipeline. `@mawsoftwares/theme` gains `designToTheme()` (adapter → normalized design → analysis → theme),
+  `validateTheme()` (accessibility, mismatches, confidence), `extendTheme()`/`createThemeRegistry()` for base + client overrides,
+  responsive and provenance tokens, component state tokens, and `theme.json`/`theme.css`/`theme.ts` export. `parseDesignMarkdown`
+  accepts `{ adapt: false }` (default unchanged). `@mawsoftwares/ui-web` themes Button (secondary/outline/link variants, per-variant
+  sizing), Input, Card (variants), Badge, Tabs, Modal, Table, Form controls; adds `ClientThemeProvider`, `BrandProvider`'s `themes`
+  prop, and `ThemeProbes`. Existing themes render as before unless they define the new tokens.
+
+### Patch Changes
+
+- Updated dependencies [bb4dc84]
+- Updated dependencies [bb4dc84]
+  - @mawsoftwares/theme@0.3.0
+  - @mawsoftwares/sdk@0.2.1
+  - @mawsoftwares/api-client@0.2.1
+  - @mawsoftwares/rbac-core@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @mawsoftwares/auth-core
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [bb4dc84]
+  - @mawsoftwares/sdk@0.2.1
+  - @mawsoftwares/database@0.2.1
+  - @mawsoftwares/platform@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
