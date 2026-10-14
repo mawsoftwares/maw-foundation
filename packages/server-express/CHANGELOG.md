@@ -1,5 +1,16 @@
 # @mawsoftwares/server-express
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [bb4dc84]
+  - @mawsoftwares/tenancy@0.2.0
+  - @mawsoftwares/sdk@0.2.1
+  - @mawsoftwares/api@0.1.3
+  - @mawsoftwares/auth-core@0.1.3
+  - @mawsoftwares/rbac-core@0.2.2
+
 ## 0.1.3
 
 ### Patch Changes
