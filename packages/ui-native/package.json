@@ -23,11 +23,11 @@
     "@react-native-community/netinfo": "*"
   },
   "dependencies": {
-    "@mawsoftwares/sdk": "*",
-    "@mawsoftwares/theme": "*",
-    "@mawsoftwares/api-client": "*",
-    "@mawsoftwares/rbac-core": "*",
-    "@mawsoftwares/platform": "*"
+    "@mawsoftwares/sdk": "workspace:*",
+    "@mawsoftwares/theme": "workspace:*",
+    "@mawsoftwares/api-client": "workspace:*",
+    "@mawsoftwares/rbac-core": "workspace:*",
+    "@mawsoftwares/platform": "workspace:*"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
