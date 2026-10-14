@@ -1,5 +1,12 @@
 # @mawsoftwares/testing
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [d5e7135]
+  - @mawsoftwares/database@0.3.0
+
 ## 1.0.1
 
 ### Patch Changes
