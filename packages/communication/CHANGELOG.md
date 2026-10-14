@@ -1,5 +1,12 @@
 # @mawsoftwares/communication
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [d5e7135]
+  - @mawsoftwares/database@0.3.0
+
 ## 0.2.1
 
 ### Patch Changes

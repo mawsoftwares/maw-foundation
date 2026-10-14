@@ -1,5 +1,12 @@
 # @mawsoftwares/reporting
 
+## 0.1.4
+
+### Patch Changes
+
+- @mawsoftwares/queue@0.1.4
+- @mawsoftwares/import-export@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
