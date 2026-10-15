@@ -1005,8 +1005,8 @@ app.use('/api/v1/tenants', createTenantRoutes({
 
 app.get('/api/v1/roles', auth.requireAuth, (req, res) => {
   const master = cache.getCache();
-  // Strict ladder: only roles strictly below the caller's (so super_admin is never listed, and
-  // an admin never sees admin/owner/super_admin). Replaces the old hard-coded super_admin exclusion.
+  // Strict ladder + apex peers: roles below the caller, and the apex role itself when the caller
+  // is super_admin (so only a superadmin can assign/manage other superadmins).
   const roles = filterVisibleRoles(master?.roles ?? [], (req as DynamicAuthedRequest).maw?.claims.role)
     .filter((r) => r.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder)

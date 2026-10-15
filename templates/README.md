@@ -33,7 +33,9 @@ modules/users
 ```bash
 # Copy the users template
 cp -r templates/users-module/server apps/my-server/src/modules/users
-cp -r templates/users-module/web    apps/my-web/src/modules/users
+cp -r templates/users-module/web/src/features/users apps/my-web/src/features/users   # RTK Query slice + UI
+cp templates/users-module/web/src/store/apiBaseQuery.ts apps/my-web/src/store/      # if not already present
+# then register usersApi in apps/my-web/src/store/index.ts (see web/src/store/index.ts)
 
 # Or copy the minimal CRUD template
 cp -r templates/crud-module/server apps/my-server/src/modules/orders

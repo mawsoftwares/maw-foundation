@@ -1,6 +1,6 @@
 import type { Request, RequestHandler } from 'express';
 import type { DynamicAuthedRequest } from '@mawsoftwares/server-express';
-import { getRoleLevel, outranks, type RbacRole } from '@mawsoftwares/rbac-core';
+import { canManageRole, filterVisibleRoles, getRoleLevel, type RbacRole } from '@mawsoftwares/rbac-core';
 import type { IUsersRepository } from './modules/users';
 
 /** Role list used for rank lookups. Reads a fresh list per request so level edits apply immediately. */
@@ -12,30 +12,29 @@ export function actorOf(req: Request): { userId: string; tenantId: string; role:
 }
 
 export interface UserHierarchyGuards {
-  /** For routes with `/:id`: hides and blocks users the actor does not outrank. */
+  /** For routes with `/:id`: hides and blocks users the actor cannot manage. */
   readonly guardTarget: RequestHandler;
-  /** For create/update: the role being assigned must be strictly below the actor's. */
+  /** For create/update: the role being assigned must be manageable by the actor. */
   readonly guardAssignedRole: RequestHandler;
   /** Role codes the actor may see or assign. */
   readonly visibleRoleCodes: (actorRole: string) => Promise<string[]>;
 }
 
 /**
- * Enforces the strict role ladder on the user-management API.
+ * Enforces the role ladder on the user-management API.
  *
- * - A target user is reachable only if their role is strictly below the actor's (404 otherwise, so a
+ * - A target user is reachable only if the actor can manage their role (404 otherwise, so a
  *   hidden user's existence isn't revealed). Users can always reach themselves.
- * - A role can be assigned only if it is strictly below the actor's (403 otherwise).
+ * - Apex peers (`super_admin` managing another `super_admin`) are allowed; mid-level peers are not.
+ * - A role can be assigned only if the actor can manage it (403 otherwise).
  */
 export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRepository): UserHierarchyGuards {
   /** Role codes the actor may see/assign. */
   async function visibleRoleCodes(actorRole: string): Promise<string[]> {
-    const roles = await roleSource();
-    const actorLevel = getRoleLevel(roles, actorRole);
-    return roles.filter((r) => outranks(actorLevel, r.level)).map((r) => r.code);
+    return filterVisibleRoles(await roleSource(), actorRole).map((r) => r.code);
   }
 
-  /** For routes with `/:id` — hide / block users the actor does not outrank. */
+  /** For routes with `/:id` — hide / block users the actor cannot manage. */
   const guardTarget: RequestHandler = async (req, res, next) => {
     try {
       const actor = actorOf(req);
@@ -46,7 +45,7 @@ export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRe
       const target = await repo.findById(id, actor.tenantId);
       if (!target || target.deletedAt) return next(); // let the controller produce its usual 404
       const roles = await roleSource();
-      if (!outranks(getRoleLevel(roles, actor.role), getRoleLevel(roles, target.role))) {
+      if (!canManageRole(roles, actor.role, target.role)) {
         return void res.status(404).json({ error: 'User not found' });
       }
       next();
@@ -55,7 +54,7 @@ export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRe
     }
   };
 
-  /** For create/update — the role being assigned must be strictly below the actor's. */
+  /** For create/update — the role being assigned must be manageable by the actor. */
   const guardAssignedRole: RequestHandler = async (req, res, next) => {
     try {
       const actor = actorOf(req);
@@ -67,7 +66,6 @@ export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRe
       if (body.roleId !== undefined && body.roleId !== null && body.roleId !== '') {
         requested.push(roles.find((r) => String(r.id) === String(body.roleId))?.code ?? '\u0000unknown');
       }
-      const actorLevel = getRoleLevel(roles, actor.role);
       // Re-sending a user's current role is not an assignment (lets someone edit their own profile).
       const id = req.params['id'];
       const current = id !== undefined ? (await repo.findById(String(id), actor.tenantId))?.role : undefined;
@@ -76,7 +74,7 @@ export function createUserHierarchyGuards(roleSource: RoleSource, repo: IUsersRe
         // An unknown / inactive role can't be assigned: it would carry no level now and could be
         // created later at a higher one.
         const level = getRoleLevel(roles, code);
-        if (level === undefined || !outranks(actorLevel, level)) {
+        if (level === undefined || !canManageRole(roles, actor.role, code)) {
           return void res.status(403).json({ error: 'You cannot assign a role at or above your own level.' });
         }
       }

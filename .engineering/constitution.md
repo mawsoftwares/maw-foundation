@@ -2,7 +2,7 @@
 
 The foundation is a **platform, not a product**. It exists so common concerns —
 authentication, RBAC, theming, API access, backend plumbing — are written **once** in
-`@mawsoftwares/*` and reused by every product (Restaurant OS, Sushmapet, and future apps), across
+`@mawsoftwares/*` and reused by every product across
 **React Native** mobile, **React/Next** web, and **Node** backends.
 
 This file is intentionally short. It points at the source of truth (the code and the

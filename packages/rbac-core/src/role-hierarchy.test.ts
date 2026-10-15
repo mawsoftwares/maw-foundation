@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { canManageRole, filterVisibleRoles, getRoleLevel, outranks } from './role-hierarchy';
+import {
+  canManageLevel,
+  canManageRole,
+  filterVisibleRoles,
+  getRoleLevel,
+  maxRoleLevel,
+  outranks,
+} from './role-hierarchy';
 
 const roles = [
   { code: 'super_admin', level: 100 },
@@ -10,16 +17,29 @@ const roles = [
   { code: 'viewer', level: 20 },
 ];
 
-describe('role hierarchy (strict ladder)', () => {
-  it('super_admin sees every role below it', () => {
-    expect(filterVisibleRoles(roles, 'super_admin').map((r) => r.code)).toEqual(['owner', 'admin', 'admin_b', 'manager', 'viewer']);
+describe('role hierarchy (strict ladder + apex peers)', () => {
+  it('super_admin sees every role below it and the apex role itself', () => {
+    expect(filterVisibleRoles(roles, 'super_admin').map((r) => r.code)).toEqual([
+      'super_admin',
+      'owner',
+      'admin',
+      'admin_b',
+      'manager',
+      'viewer',
+    ]);
+  });
+
+  it('only apex peers may manage each other — mid-level peers still cannot', () => {
+    expect(canManageRole(roles, 'super_admin', 'super_admin')).toBe(true);
+    expect(canManageLevel(roles, 100, 100)).toBe(true);
+    expect(canManageRole(roles, 'admin', 'admin_b')).toBe(false);
+    expect(canManageRole(roles, 'admin', 'admin')).toBe(false);
+    expect(canManageRole(roles, 'owner', 'super_admin')).toBe(false);
   });
 
   it('admin cannot see super_admin or owner, nor same-level roles', () => {
     expect(filterVisibleRoles(roles, 'admin').map((r) => r.code)).toEqual(['manager', 'viewer']);
     expect(canManageRole(roles, 'admin', 'super_admin')).toBe(false);
-    expect(canManageRole(roles, 'admin', 'admin_b')).toBe(false);
-    expect(canManageRole(roles, 'admin', 'admin')).toBe(false);
   });
 
   it('lowest role sees nothing', () => {
@@ -34,6 +54,7 @@ describe('role hierarchy (strict ladder)', () => {
 
   it('matches codes case-insensitively and exposes level lookups', () => {
     expect(getRoleLevel(roles, 'ADMIN')).toBe(80);
+    expect(maxRoleLevel(roles)).toBe(100);
     expect(outranks(80, 60)).toBe(true);
     expect(outranks(60, 60)).toBe(false);
   });

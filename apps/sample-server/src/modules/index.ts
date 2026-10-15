@@ -12,6 +12,7 @@ import { menusModule } from './menus';
 import { themeModule } from './theme';
 import { messagingModule } from './messaging';
 import { storageModule } from './storage/permissions';
+import { customersModule } from './customers/permissions';
 
 const log = createLogger('registry');
 
@@ -44,6 +45,7 @@ registry.register(
   inventoryModule,
   billingModule,
   auditLogsModule,
+  customersModule,
 
   featureFlagsModule,
   menusModule,

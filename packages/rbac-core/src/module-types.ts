@@ -62,7 +62,7 @@ export interface RbacRole {
   description?: string;
   isActive: boolean;
   sortOrder: number;
-  /** Hierarchy rank — higher outranks lower; same level cannot see each other. See role-hierarchy.ts. */
+  /** Hierarchy rank — higher outranks lower; same level cannot see each other except apex peers. See role-hierarchy.ts. */
   level: number;
 }
 

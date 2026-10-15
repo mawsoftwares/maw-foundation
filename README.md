@@ -7,14 +7,12 @@ re-implemented per project.
 
 ## Why
 
-Two existing products needed the same things built differently:
+MAW products kept re-implementing the same concerns — auth, RBAC, theming, API access,
+and backend plumbing — across React Native, React/Next web, and Node backends, often
+with different stacks (token vs session/CSRF, Express vs Hono) and copy-pasted design
+systems.
 
-- **Restaurant OS** — mature Expo RN + Next.js + Hono monorepo with token auth and a
-  configurable per-tenant RBAC matrix.
-- **Sushmapet** — Express + Vite React, session/CSRF auth, DB-backed RBAC, with its
-  design system copy-pasted between two apps.
-
-This foundation extracts the product-neutral core so both — and every future app — build
+This foundation extracts the product-neutral core so every current and future app builds
 on one shared base.
 
 ## Architecture
@@ -114,7 +112,7 @@ Put a GitHub PAT in `~/.npmrc` — see [docs/publishing.md](docs/publishing.md).
 ## Documentation
 
 - [Architecture](docs/architecture.md)
-- [Packages](docs/packages.md)
+- [Package guide](docs/packages.md) — what every `@mawsoftwares/*` package does and when to use it
 - [Development](docs/development.md)
 - [Publishing](docs/publishing.md)
 - [Constitution](.engineering/constitution.md)

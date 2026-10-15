@@ -1,0 +1,112 @@
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { apiBaseQuery } from '../../store/apiBaseQuery';
+import type { UserResponseDto, CreateUserDto, UpdateUserDto } from './ui';
+
+// Redux Toolkit (RTK Query) data layer for the Users module. Screens read
+// this through the generated hooks (`useListUsersQuery`, `useCreateUserMutation`,
+// and the rest). Do not dispatch `endpoint.initiate()` from a module singleton
+// or copy the result into `useCrud` — that drops the cache subscription.
+export interface UsersListResult {
+  items: UserResponseDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface UsersListParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+}
+
+/**
+ * The PHP backend returns `name` + `accountStatus`; the client DTO (and the Node module) use `firstName`/`lastName` +
+ * `status`. Fill the DTO fields from whichever the server sent.
+ */
+function normalizeUser(raw: UserResponseDto): UserResponseDto {
+  const r = raw as UserResponseDto & { name?: string | null; accountStatus?: UserResponseDto['status'] };
+  if (r.firstName !== undefined && r.status !== undefined) return raw;
+  const [first = '', ...rest] = (r.name ?? '').trim().split(/\s+/);
+  return {
+    ...raw,
+    firstName: r.firstName ?? first,
+    lastName: r.lastName ?? rest.join(' '),
+    status: r.status ?? r.accountStatus ?? ('ACTIVE' as UserResponseDto['status']),
+  };
+}
+
+export const usersApi = createApi({
+  reducerPath: 'usersApi',
+  baseQuery: apiBaseQuery,
+  tagTypes: ['User'],
+  endpoints: (build) => ({
+    listUsers: build.query<UsersListResult, UsersListParams>({
+      query: (params) => {
+        const q = new URLSearchParams();
+        if (params.page) q.set('page', String(params.page));
+        if (params.pageSize) q.set('limit', String(params.pageSize));
+        if (params.search) q.set('search', params.search);
+        if (params.status) q.set('status', params.status);
+        return { url: `/api/v1/users?${q.toString()}` };
+      },
+      // Node returns data: { items, total, page, pageSize }; the PHP backend returns data: [...] + meta.pagination.
+      transformResponse: (res: {
+        data: UsersListResult | UserResponseDto[];
+        meta?: { pagination?: { total?: number; page?: number; pageSize?: number } };
+      }): UsersListResult => {
+        if (!Array.isArray(res.data)) return { ...res.data, items: res.data.items.map(normalizeUser) };
+        const p = res.meta?.pagination;
+        return { items: res.data.map(normalizeUser), total: p?.total ?? res.data.length, page: p?.page ?? 1, pageSize: p?.pageSize ?? res.data.length };
+      },
+      providesTags: (result) =>
+        result
+          ? [...result.items.map((u) => ({ type: 'User' as const, id: u.id })), { type: 'User' as const, id: 'LIST' }]
+          : [{ type: 'User' as const, id: 'LIST' }],
+    }),
+    getUser: build.query<UserResponseDto, string>({
+      query: (id) => ({ url: `/api/v1/users/${id}` }),
+      transformResponse: (res: { data: UserResponseDto }) => normalizeUser(res.data),
+      providesTags: (_result, _error, id) => [{ type: 'User', id }],
+    }),
+    createUser: build.mutation<UserResponseDto, CreateUserDto>({
+      query: (body) => ({ url: '/api/v1/users', method: 'POST', body }),
+      transformResponse: (res: { data: UserResponseDto }) => normalizeUser(res.data),
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+    }),
+    updateUser: build.mutation<UserResponseDto, { id: string; data: UpdateUserDto }>({
+      query: ({ id, data }) => ({ url: `/api/v1/users/${id}`, method: 'PATCH', body: data }),
+      transformResponse: (res: { data: UserResponseDto }) => normalizeUser(res.data),
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'User', id }, { type: 'User', id: 'LIST' }],
+    }),
+    deleteUser: build.mutation<void, string>({
+      query: (id) => ({ url: `/api/v1/users/${id}`, method: 'DELETE' }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'User', id }, { type: 'User', id: 'LIST' }],
+    }),
+    activateUser: build.mutation<UserResponseDto, string>({
+      query: (id) => ({ url: `/api/v1/users/${id}/activate`, method: 'POST' }),
+      transformResponse: (res: { data: UserResponseDto }) => normalizeUser(res.data),
+      invalidatesTags: (_result, _error, id) => [{ type: 'User', id }, { type: 'User', id: 'LIST' }],
+    }),
+    deactivateUser: build.mutation<UserResponseDto, string>({
+      query: (id) => ({ url: `/api/v1/users/${id}/deactivate`, method: 'POST' }),
+      transformResponse: (res: { data: UserResponseDto }) => normalizeUser(res.data),
+      invalidatesTags: (_result, _error, id) => [{ type: 'User', id }, { type: 'User', id: 'LIST' }],
+    }),
+    listRoles: build.query<Array<{ code: string; name: string }>, void>({
+      query: () => ({ url: '/api/v1/roles' }),
+      transformResponse: (res: { data: Array<{ code: string; name: string }> }) => res.data,
+    }),
+  }),
+});
+
+export const {
+  useListUsersQuery,
+  useGetUserQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+  useActivateUserMutation,
+  useDeactivateUserMutation,
+  useListRolesQuery,
+} = usersApi;

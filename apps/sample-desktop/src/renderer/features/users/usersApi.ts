@@ -2,10 +2,10 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { apiBaseQuery } from '../../store/apiBaseQuery';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto } from './ui';
 
-// Redux Toolkit (RTK Query) data layer for the Users module — the reference
-// implementation the Module Generator's frontend templates follow. Each
-// generated module gets its own `createApi` slice like this one instead of
-// hand-rolled fetch/useState wiring.
+// Redux Toolkit (RTK Query) data layer for the Users module. Screens read
+// this through the generated hooks (`useListUsersQuery`, `useCreateUserMutation`,
+// and the rest). Do not dispatch `endpoint.initiate()` from a module singleton
+// or copy the result into `useCrud` — that drops the cache subscription.
 export interface UsersListResult {
   items: UserResponseDto[];
   total: number;

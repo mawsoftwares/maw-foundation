@@ -110,6 +110,8 @@ Every package:
 - Uses `exports` field in `package.json` to control access
 - Never lets consumers import internal implementation files
 
+**What each package does and when to use it:** [`docs/packages.md`](./packages.md).
+
 ## Adapter Pattern
 
 Framework-specific code lives in `adapters/`:

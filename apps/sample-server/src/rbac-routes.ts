@@ -5,7 +5,7 @@ import { eq, and, sql, count } from 'drizzle-orm';
 import type { MasterCache } from '@mawsoftwares/rbac-core';
 import type { IAuditStore } from '@mawsoftwares/audit';
 import type { DynamicAuthedRequest } from '@mawsoftwares/server-express';
-import { getRoleLevel, outranks } from '@mawsoftwares/rbac-core';
+import { canManageLevel, filterVisibleRoles, getRoleLevel, outranks } from '@mawsoftwares/rbac-core';
 import { actorOf } from './role-hierarchy-guard';
 import { buildRoleWorkspace, type PermissionRow, type ModuleRow } from './rbac-workspace';
 
@@ -92,8 +92,10 @@ export function createRbacRouter(
   // roles/permissions/modules/module-permission assignments, all equally sensitive.
   router.use(requirePermission('Manage_Rbac'));
 
-  // --- Role hierarchy (strict ladder) ---
-  // Callers only see / manage roles strictly below their own level. Hidden roles answer 404.
+  // --- Role hierarchy (strict ladder + apex peers) ---
+  // Callers see / manage roles strictly below their own level. The apex rank (super_admin)
+  // may also manage peers at that same top level — so only a superadmin can change another
+  // superadmin's permissions. Hidden roles answer 404.
   const loadRoleLevels = () =>
     db.select({ id: schema.masterRoles.id, code: schema.masterRoles.code, level: schema.masterRoles.level }).from(schema.masterRoles);
   const callerLevel = async (req: Request) => {
@@ -103,10 +105,11 @@ export function createRbacRouter(
 
   router.use('/roles/:id', async (req, res, next) => {
     try {
-      const level = await callerLevel(req);
+      const roles = await loadRoleLevels();
+      const level = getRoleLevel(roles, actorOf(req)?.role);
       const target = (await db.select({ level: schema.masterRoles.level }).from(schema.masterRoles)
         .where(eq(schema.masterRoles.id, Number(req.params['id']))))[0];
-      if (target && !outranks(level, target.level)) {
+      if (target && !canManageLevel(roles, level, target.level)) {
         return void res.status(404).json({ error: 'Role not found' });
       }
       next();
@@ -118,9 +121,10 @@ export function createRbacRouter(
   // --- Roles CRUD ---
   router.get('/roles', async (req, res) => {
     try {
-      const level = await callerLevel(req);
-      const rows = (await db.select().from(schema.masterRoles).orderBy(schema.masterRoles.sortOrder))
-        .filter((r) => outranks(level, r.level));
+      const rows = filterVisibleRoles(
+        await db.select().from(schema.masterRoles).orderBy(schema.masterRoles.sortOrder),
+        actorOf(req)?.role,
+      );
       res.json({ data: rows.map(toRoleDto) });
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
@@ -259,9 +263,10 @@ export function createRbacRouter(
         .from(schema.rolePermissions)
         .innerJoin(schema.masterRoles, eq(schema.masterRoles.id, schema.rolePermissions.roleId))
         .where(eq(schema.rolePermissions.permissionId, permissionId));
-      const level = await callerLevel(req);
+      const roles = await loadRoleLevels();
+      const level = getRoleLevel(roles, actorOf(req)?.role);
       const unique = new Map(
-        rows.filter((r) => outranks(level, r.level)).map(({ level: _l, ...r }) => [r.id, r]),
+        rows.filter((r) => canManageLevel(roles, level, r.level)).map(({ level: _l, ...r }) => [r.id, r]),
       );
       res.json({ data: { count: unique.size, roles: [...unique.values()] } });
     } catch (err) {

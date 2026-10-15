@@ -1,53 +1,95 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useCrud, Overlay, ConfirmationDialog } from '@mawsoftwares/ui-web';
-import type { UserResponseDto, CreateUserDto, UpdateUserDto } from './types';
-import type { IUserApiService, RoleOption } from './types';
+import { useEffect, useState } from 'react';
+import { Overlay, ConfirmationDialog } from '@mawsoftwares/ui-web';
+import type { SortState } from '@mawsoftwares/ui-web';
+import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
+import type { UserResponseDto, CreateUserDto, UpdateUserDto, RoleOption } from './types';
 import { UsersList } from './UsersList';
 import { UserForm } from './UserForm';
 import { UserDetails } from './UserDetails';
+import {
+  useListUsersQuery,
+  useGetUserQuery,
+  useListRolesQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+  useActivateUserMutation,
+  useDeactivateUserMutation,
+} from '../usersApi';
 
 export interface UsersManagerProps {
-  api: IUserApiService;
   formLayout?: 'page' | 'drawer' | 'modal';
+  uploadAvatar?: (file: File, onProgress: (percent: number) => void) => Promise<StoredFile>;
 }
 
 type ViewState = 'list' | 'create' | 'details';
 
-export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
+function useDebounced(value: string, ms: number): string {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(timer);
+  }, [value, ms]);
+  return debounced;
+}
+
+function errorMessage(error: unknown): string | undefined {
+  if (error == null || typeof error !== 'object') return undefined;
+  const message = 'message' in error ? error.message : undefined;
+  return typeof message === 'string' && message.length > 0 ? message : 'Request failed';
+}
+
+export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManagerProps) {
   const [view, setView] = useState<ViewState>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detailsUser, setDetailsUser] = useState<UserResponseDto | null>(null);
-  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortState | undefined>();
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [actionConfirm, setActionConfirm] = useState<{ type: 'activate' | 'deactivate'; id: string } | null>(null);
+  const debouncedSearch = useDebounced(search, 250);
 
-  useEffect(() => {
-    if (!api.listRoles) return;
-    void api.listRoles()
-      .then((items) => setRoles([...items]))
-      .catch(() => setRoles([]));
-  }, [api]);
+  const listQuery = useListUsersQuery(
+    {
+      page,
+      pageSize,
+      search: debouncedSearch.length > 0 ? debouncedSearch : undefined,
+      status: statusFilter === 'ALL' ? undefined : statusFilter,
+    },
+    { refetchOnMountOrArgChange: true },
+  );
+  const rolesQuery = useListRolesQuery();
+  const userQuery = useGetUserQuery(selectedId ?? '', {
+    skip: selectedId === null || view !== 'details',
+  });
 
-  const crudConfig = useMemo(() => ({
-    resourceName: 'Users',
-    columns: [],
-    keyField: 'id',
-    fetchList: (params: any) => api.list({ ...params, filters: { status: statusFilter === 'ALL' ? undefined : statusFilter } }),
-    create: (data: any) => api.create(data as CreateUserDto),
-    update: (id: string, data: any) => api.update(id, data as UpdateUserDto),
-    remove: (id: string) => api.delete(id),
-  }), [api, statusFilter]);
+  const [createUser] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+  const [activateUser] = useActivateUserMutation();
+  const [deactivateUser] = useDeactivateUserMutation();
 
-  const crud = useCrud<any>(crudConfig);
+  const items = listQuery.data?.items ?? [];
+  const roles: readonly RoleOption[] = rolesQuery.data ?? [];
+  const selectedFromList = selectedId === null ? null : items.find((user) => user.id === selectedId) ?? null;
+  const selectedUser: UserResponseDto | null = userQuery.data ?? selectedFromList;
 
-  const selectedFromList: UserResponseDto | null = selectedId
-    ? crud.items.find((u: UserResponseDto) => u.id === selectedId) ?? null
-    : null;
-  const selectedUser = detailsUser?.id === selectedId ? detailsUser : selectedFromList;
+  const formProps = { roles, uploadAvatar };
 
-  const formProps = {
-    roles,
-    uploadAvatar: api.uploadAvatar,
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
   };
 
   const handleCreateNew = () => {
@@ -56,58 +98,39 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
   };
 
   const handleViewDetails = (id: string) => {
-    const fromList = crud.items.find((u: UserResponseDto) => u.id === id) ?? null;
     setSelectedId(id);
-    setDetailsUser(fromList);
     setView('details');
   };
 
   const handleBackToList = () => {
     setView('list');
     setSelectedId(null);
-    setDetailsUser(null);
   };
 
   const handleCreate = async (data: CreateUserDto | UpdateUserDto) => {
-    await crud.createItem(data as CreateUserDto);
+    await createUser(data as CreateUserDto).unwrap();
     handleBackToList();
   };
 
   const handleUpdate = async (data: UpdateUserDto) => {
-    if (!selectedId) return;
-    const updated = await crud.updateItem(selectedId, data);
-    if (updated) setDetailsUser(updated);
+    if (selectedId === null) return;
+    await updateUser({ id: selectedId, data }).unwrap();
   };
 
   const handleDelete = async () => {
-    if (selectedId) {
-      const confirm = window.confirm('Are you sure you want to delete this user?');
-      if (confirm) {
-        await crud.deleteItem(selectedId);
-        handleBackToList();
-      }
-    }
-  };
-
-  const handleActivate = (id: string) => {
-    setActionConfirm({ type: 'activate', id });
-  };
-
-  const handleDeactivate = (id: string) => {
-    setActionConfirm({ type: 'deactivate', id });
+    if (selectedId === null) return;
+    const confirm = window.confirm('Are you sure you want to delete this user?');
+    if (!confirm) return;
+    await deleteUser(selectedId).unwrap();
+    handleBackToList();
   };
 
   const handleConfirmAction = async () => {
-    if (!actionConfirm) return;
+    if (actionConfirm === null) return;
     if (actionConfirm.type === 'activate') {
-      await api.activate(actionConfirm.id);
+      await activateUser(actionConfirm.id).unwrap();
     } else {
-      await api.deactivate(actionConfirm.id);
-    }
-    crud.refresh();
-    if (detailsUser && detailsUser.id === actionConfirm.id) {
-      const updated = await api.get(actionConfirm.id);
-      setDetailsUser(updated);
+      await deactivateUser(actionConfirm.id).unwrap();
     }
     setActionConfirm(null);
   };
@@ -119,62 +142,63 @@ export function UsersManager({ api, formLayout = 'page' }: UsersManagerProps) {
       user={selectedUser}
       onBack={handleBackToList}
       onDelete={handleDelete}
-      onActivate={() => handleActivate(selectedUser.id)}
-      onDeactivate={() => handleDeactivate(selectedUser.id)}
+      onActivate={() => setActionConfirm({ type: 'activate', id: selectedUser.id })}
+      onDeactivate={() => setActionConfirm({ type: 'deactivate', id: selectedUser.id })}
       onSave={handleUpdate}
       {...formProps}
     />
   ) : null;
 
-  if (!isOverlayLayout) {
-    if (view === 'create') {
-      return (
-        <UserForm
-          onSave={handleCreate}
-          onCancel={handleBackToList}
-          {...formProps}
-        />
-      );
-    }
-    if (view === 'details' && detailsNode) {
-      return detailsNode;
-    }
-  }
+  const listNode = (
+    <UsersList
+      items={items}
+      total={listQuery.data?.total ?? 0}
+      loading={listQuery.isFetching}
+      error={items.length === 0 ? errorMessage(listQuery.error) : undefined}
+      page={page}
+      pageSize={pageSize}
+      sort={sort}
+      filter={search}
+      onPageChange={setPage}
+      onPageSizeChange={handlePageSizeChange}
+      onSort={setSort}
+      onFilterChange={handleSearchChange}
+      onRetry={() => { void listQuery.refetch(); }}
+      onCreate={handleCreateNew}
+      onView={handleViewDetails}
+      statusFilter={statusFilter}
+      onStatusFilterChange={handleStatusFilterChange}
+      onActivate={(id) => setActionConfirm({ type: 'activate', id })}
+      onDeactivate={(id) => setActionConfirm({ type: 'deactivate', id })}
+    />
+  );
 
   return (
     <>
-      {(!isOverlayLayout && view !== 'list') ? null : (
-        <UsersList
-          crud={crud}
-          onCreate={handleCreateNew}
-          onView={handleViewDetails}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          onActivate={handleActivate}
-          onDeactivate={handleDeactivate}
-        />
+      {isOverlayLayout ? listNode : view === 'create' ? (
+        <UserForm onSave={handleCreate} onCancel={handleBackToList} {...formProps} />
+      ) : view === 'details' && detailsNode ? (
+        detailsNode
+      ) : (
+        listNode
       )}
 
       {isOverlayLayout && (
         <>
           <Overlay
-            layout={formLayout as 'drawer' | 'modal'}
+            layout={formLayout}
             open={view === 'create'}
             onClose={handleBackToList}
             width={600}
             title={formLayout === 'modal' ? 'Create User' : undefined}
           >
             {view === 'create' && (
-              <UserForm
-                onSave={handleCreate}
-                onCancel={handleBackToList}
-                {...formProps}
-              />
+              <UserForm onSave={handleCreate} onCancel={handleBackToList} {...formProps} />
             )}
           </Overlay>
 
           <Overlay
-            layout={formLayout as 'drawer' | 'modal'}
+            layout={formLayout}
             open={view === 'details' && selectedUser !== null}
             onClose={handleBackToList}
             width={720}

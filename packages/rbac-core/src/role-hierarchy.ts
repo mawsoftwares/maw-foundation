@@ -5,8 +5,10 @@
  *
  * Rules:
  *  - An actor may see / manage a role only if its level is STRICTLY LOWER than the actor's.
- *  - Roles on the same level cannot see or manage each other.
- *  - Nobody can see a role above them.
+ *  - Roles on the same level cannot see or manage each other — **except** the apex rank
+ *    (highest level in the master list, typically `super_admin`): peers at that top level
+ *    may manage each other so a superadmin can change another superadmin's permissions.
+ *  - Nobody below the apex can see or manage an apex role.
  *  - An unknown role (not in the master data) has no rank: it can see nothing, and anyone
  *    with a known role outranks it only if that role's level is above LEVEL_UNKNOWN_TARGET.
  */
@@ -24,10 +26,31 @@ export function getRoleLevel(roles: readonly RoleLike[], code: string | undefine
   return roles.find((r) => r.code.toLowerCase() === lower)?.level;
 }
 
+/** Highest level present in the master role list (0 when empty). */
+export function maxRoleLevel(roles: readonly RoleLike[]): number {
+  if (roles.length === 0) return LEVEL_UNKNOWN_TARGET;
+  return roles.reduce((max, r) => (r.level > max ? r.level : max), LEVEL_UNKNOWN_TARGET);
+}
+
 /** True when an actor at `actorLevel` strictly outranks `targetLevel`. Undefined actor never outranks. */
 export function outranks(actorLevel: number | undefined, targetLevel: number | undefined): boolean {
   if (actorLevel === undefined) return false;
   return actorLevel > (targetLevel ?? LEVEL_UNKNOWN_TARGET);
+}
+
+/**
+ * True when an actor at `actorLevel` may see / manage a target at `targetLevel`.
+ * Same as `outranks`, plus apex peers (both at the maximum role level).
+ */
+export function canManageLevel(
+  roles: readonly RoleLike[],
+  actorLevel: number | undefined,
+  targetLevel: number | undefined,
+): boolean {
+  if (outranks(actorLevel, targetLevel)) return true;
+  if (actorLevel === undefined || targetLevel === undefined) return false;
+  if (actorLevel !== targetLevel) return false;
+  return actorLevel === maxRoleLevel(roles);
 }
 
 /** Can an actor with `actorRoleCode` see / manage a role (or a user holding it) `targetRoleCode`? */
@@ -36,11 +59,15 @@ export function canManageRole(
   actorRoleCode: string | undefined,
   targetRoleCode: string | undefined,
 ): boolean {
-  return outranks(getRoleLevel(roles, actorRoleCode), getRoleLevel(roles, targetRoleCode));
+  return canManageLevel(
+    roles,
+    getRoleLevel(roles, actorRoleCode),
+    getRoleLevel(roles, targetRoleCode),
+  );
 }
 
-/** Roles strictly below the actor's. Empty for an unknown actor role. */
+/** Roles the actor may see / manage (strictly below them, plus apex peers when actor is at the top). */
 export function filterVisibleRoles<T extends RoleLike>(roles: readonly T[], actorRoleCode: string | undefined): T[] {
   const actorLevel = getRoleLevel(roles, actorRoleCode);
-  return roles.filter((r) => outranks(actorLevel, r.level));
+  return roles.filter((r) => canManageLevel(roles, actorLevel, r.level));
 }

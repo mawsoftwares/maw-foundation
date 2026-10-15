@@ -387,6 +387,8 @@ export function App(): ReactNode {
           'module.storage': true,
           'module.audit-logs': true,
           'module.account': true,
+          'module.customers': true,
+          'module.customer': true,
 
           'module.rbac': true,
           'module.menus': true

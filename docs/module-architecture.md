@@ -137,7 +137,9 @@ assets         reservations   tasks          cases
 ```bash
 # Full users management module
 cp -r templates/users-module/server  apps/my-server/src/modules/users
-cp -r templates/users-module/web     apps/my-web/src/modules/users
+cp -r templates/users-module/web/src/features/users apps/my-web/src/features/users   # RTK Query slice + UI
+cp templates/users-module/web/src/store/apiBaseQuery.ts apps/my-web/src/store/      # if not already present
+# then register usersApi in apps/my-web/src/store/index.ts (see web/src/store/index.ts)
 
 # Generic CRUD module (rename Entity → your noun)
 cp -r templates/crud-module/server   apps/my-server/src/modules/orders

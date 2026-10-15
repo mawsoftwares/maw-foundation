@@ -27,7 +27,9 @@ export { type PermissionCheckContext, type PermissionCheckResult, checkPermissio
 export {
   LEVEL_UNKNOWN_TARGET,
   getRoleLevel,
+  maxRoleLevel,
   outranks,
+  canManageLevel,
   canManageRole,
   filterVisibleRoles,
 } from './role-hierarchy';

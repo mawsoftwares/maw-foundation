@@ -9,13 +9,25 @@ import {
   useDynamicAccess,
   Select,
   type ColumnDef,
-  type UseCrudReturn,
+  type SortState,
 } from '@mawsoftwares/ui-web';
 import type { UserResponseDto } from './types';
 import type { AccountStatusValue } from '@mawsoftwares/sdk/security/AccountStatus';
 
 export interface UsersListProps {
-  crud: UseCrudReturn<UserResponseDto>;
+  items: readonly UserResponseDto[];
+  total: number;
+  loading: boolean;
+  error?: string;
+  page: number;
+  pageSize: number;
+  sort?: SortState;
+  filter: string;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  onSort: (sort: SortState) => void;
+  onFilterChange: (filter: string) => void;
+  onRetry: () => void;
   onCreate: () => void;
   onView: (id: string) => void;
   statusFilter: string;
@@ -44,7 +56,27 @@ function displayName(user: UserResponseDto): string {
   return name.length > 0 ? name : user.email;
 }
 
-export function UsersList({ crud, onCreate, onView, statusFilter, onStatusFilterChange, onActivate, onDeactivate }: UsersListProps): ReactNode {
+export function UsersList({
+  items,
+  total,
+  loading,
+  error,
+  page,
+  pageSize,
+  sort,
+  filter,
+  onPageChange,
+  onPageSizeChange,
+  onSort,
+  onFilterChange,
+  onRetry,
+  onCreate,
+  onView,
+  statusFilter,
+  onStatusFilterChange,
+  onActivate,
+  onDeactivate,
+}: UsersListProps): ReactNode {
   const { can } = useDynamicAccess();
   const canCreate = can('Create_Users');
   const canUpdate = can('Update_Users');
@@ -86,18 +118,18 @@ export function UsersList({ crud, onCreate, onView, statusFilter, onStatusFilter
     },
   ], []);
 
-  if (crud.error !== undefined) {
-    return <ErrorState title="Failed to load users" message={crud.error} retry={crud.refresh} />;
+  if (error !== undefined) {
+    return <ErrorState title="Failed to load users" message={error} retry={onRetry} />;
   }
 
   return (
     <ListPage
       title="Users"
-      description={`${crud.total} users`}
+      description={`${total} users`}
       createLabel="New User"
       onCreate={canCreate ? onCreate : undefined}
-      filter={crud.filter}
-      onFilterChange={crud.setFilter}
+      filter={filter}
+      onFilterChange={onFilterChange}
       searchPlaceholder="Search by name or email..."
       toolbar={
         <Select
@@ -116,14 +148,14 @@ export function UsersList({ crud, onCreate, onView, statusFilter, onStatusFilter
     >
       <DataTable
         columns={columns}
-        data={crud.items}
+        data={items}
         keyField="id"
-        sort={crud.sort}
-        onSort={crud.setSort}
-        pagination={{ page: crud.page, pageSize: crud.pageSize, total: crud.total }}
-        onPageChange={crud.setPage}
-        onPageSizeChange={crud.setPageSize}
-        loading={crud.loading}
+        sort={sort}
+        onSort={onSort}
+        pagination={{ page, pageSize, total }}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        loading={loading}
         emptyMessage="No users found"
         stickyHeader
         onRowClick={(row) => onView(row.id)}
