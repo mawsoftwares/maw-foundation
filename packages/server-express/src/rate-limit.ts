@@ -1,6 +1,8 @@
 import type { RequestHandler, Request, Response, NextFunction } from 'express';
 import type { IRateLimiter } from '@mawsoftwares/sdk/contracts/IRateLimiter';
 import type { RateLimitTier } from '@mawsoftwares/sdk/security/SecurityConfig';
+import { ErrorCode } from '@mawsoftwares/sdk/kernel/errors';
+import { ApiResponse } from '@mawsoftwares/api';
 
 export interface RateLimitTierMapping {
   readonly prefix: string;
@@ -14,10 +16,13 @@ export interface RateLimitMiddlewareOptions {
   readonly keyFn?: (req: Request) => string;
 }
 
+/**
+ * Keys on `req.ip`, never on the raw X-Forwarded-For header (the client controls that
+ * header). Behind a reverse proxy, set Express `trust proxy` so `req.ip` resolves to the
+ * address the proxy saw.
+ */
 function defaultKeyFn(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip = typeof forwarded === 'string' ? forwarded.split(',')[0]!.trim() : req.ip ?? 'unknown';
-  return ip;
+  return req.ip ?? req.socket?.remoteAddress ?? 'unknown';
 }
 
 export function createRateLimitMiddleware(options: RateLimitMiddlewareOptions): RequestHandler {
@@ -45,7 +50,17 @@ export function createRateLimitMiddleware(options: RateLimitMiddlewareOptions): 
 
     if (!result.allowed) {
       res.setHeader('Retry-After', Math.ceil((result.retryAfterMs ?? config.windowMs) / 1000));
-      res.status(429).json({ error: 'Too many requests', retryAfterMs: result.retryAfterMs });
+      const retryAfterMs = result.retryAfterMs ?? config.windowMs;
+      res
+        .status(429)
+        .json(
+          ApiResponse.error(
+            ErrorCode.RATE_LIMITED,
+            'Too many requests. Please try again later.',
+            { retryAfterMs },
+            req.headers['x-request-id'] as string | undefined,
+          ),
+        );
       return;
     }
 

@@ -90,6 +90,8 @@ export interface SecurityConfig {
   readonly passwordReset: PasswordResetConfig;
   readonly rateLimit: {
     readonly login: RateLimitTier;
+    /** Other credential endpoints under /auth/ (register, reset, MFA, refresh). */
+    readonly auth: RateLimitTier;
     readonly api: RateLimitTier;
     readonly global: RateLimitTier;
   };
@@ -135,6 +137,7 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   },
   rateLimit: {
     login: { windowMs: 60_000, maxRequests: 5 },
+    auth: { windowMs: 60_000, maxRequests: 20 },
     api: { windowMs: 60_000, maxRequests: 100 },
     global: { windowMs: 60_000, maxRequests: 300 },
   },

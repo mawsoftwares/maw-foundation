@@ -476,6 +476,10 @@ function corsAllowedOrigins(): string[] {
 
 const isDev = getEnv('NODE_ENV', 'development') === 'development';
 
+const loginRateLimitDefault = isDev
+  ? { windowMs: 60_000, maxRequests: 60 }
+  : DEFAULT_SECURITY_CONFIG.rateLimit.login;
+
 const securityConfig = {
   ...DEFAULT_SECURITY_CONFIG,
   cors: {
@@ -484,12 +488,18 @@ const securityConfig = {
   },
   csrf: DEFAULT_SECURITY_CONFIG.csrf,
   // Login is 5/min in production. Local retries (CORS, wrong password, Strict Mode)
-  // burn that budget immediately.
+  // burn that budget immediately. Override per environment with
+  // RATE_LIMIT_LOGIN_MAX / RATE_LIMIT_LOGIN_WINDOW_MS (e.g. a looser limit on staging).
   rateLimit: {
     ...DEFAULT_SECURITY_CONFIG.rateLimit,
-    login: isDev
-      ? { windowMs: 60_000, maxRequests: 60 }
-      : DEFAULT_SECURITY_CONFIG.rateLimit.login,
+    login: {
+      windowMs: getEnvInt('RATE_LIMIT_LOGIN_WINDOW_MS', loginRateLimitDefault.windowMs),
+      maxRequests: getEnvInt('RATE_LIMIT_LOGIN_MAX', loginRateLimitDefault.maxRequests),
+    },
+    auth: {
+      windowMs: DEFAULT_SECURITY_CONFIG.rateLimit.auth.windowMs,
+      maxRequests: getEnvInt('RATE_LIMIT_AUTH_MAX', DEFAULT_SECURITY_CONFIG.rateLimit.auth.maxRequests),
+    },
   },
 };
 
@@ -536,6 +546,9 @@ if (storageCleanupMinutes > 0) {
 }
 
 const app = express();
+// Hops of reverse proxy (nginx) in front of the app. Rate limiting keys on req.ip, so this
+// must match the deployment; 0 means "not behind a proxy" and X-Forwarded-For is ignored.
+app.set('trust proxy', getEnvInt('TRUST_PROXY_HOPS', 0));
 // The local storage gateway streams raw upload bodies, so the JSON parser must skip it
 // (a JSON file upload would otherwise be consumed before the gateway can stream it to disk).
 const jsonBody = express.json();

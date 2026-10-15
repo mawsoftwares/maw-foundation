@@ -41,6 +41,7 @@ export function createSecurityPipeline(
       limiter: deps.rateLimiter,
       tiers: [
         { prefix: '/auth/login', config: config.rateLimit.login },
+        { prefix: '/auth/', config: config.rateLimit.auth },
         { prefix: '/api/', config: config.rateLimit.api },
       ],
       defaultTier: config.rateLimit.global,

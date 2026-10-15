@@ -248,5 +248,33 @@
     "success": false,
     "completedAt": "2026-10-15T07:34:43.187Z",
     "error": "Command failed: ssh -i /Users/poonamdhomane/.ssh/mac_to_doserver -o StrictHostKeyChecking=no -o AddKeysToAgent=yes deploy@66.116.243.198 source ~/.nvm/nvm.sh && cd /home/deploy/staging/maw-foundation && node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env pnpm --filter @mawsoftwares/sample-server exec node --import=tsx src/db/test-connection.ts"
+  },
+  {
+    "id": "deploy-1792050650469",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-10-15T07:50:50.458Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/ecosystem.config.cjs",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://127.0.0.1:4101/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-10-15T07:51:34.090Z"
   }
 ]
