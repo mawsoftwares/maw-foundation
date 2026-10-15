@@ -45,7 +45,7 @@
   "runtime": {
     "startScript": "apps/sample-server/src/main.ts",
     "interpreter": "node",
-    "interpreterArgs": "--import=tsx",
+    "interpreterArgs": "--env-file=/home/deploy/prod/maw-foundation/deployment-config/.env --import=tsx",
     "instances": 1,
     "execMode": "fork",
     "maxMemoryRestart": "500M"
