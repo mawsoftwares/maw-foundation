@@ -1,5 +1,16 @@
 # @mawsoftwares/feature-flags
 
+## 1.0.0
+
+### Major Changes
+
+- aa2b249: test
+
+### Patch Changes
+
+- Updated dependencies [aa2b249]
+  - @mawsoftwares/core@1.0.0
+
 ## 0.1.3
 
 ### Patch Changes

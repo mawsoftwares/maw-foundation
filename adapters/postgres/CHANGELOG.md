@@ -1,5 +1,17 @@
 # @mawsoftwares/postgres
 
+## 1.0.0
+
+### Major Changes
+
+- aa2b249: test
+
+### Patch Changes
+
+- Updated dependencies [aa2b249]
+  - @mawsoftwares/database@1.0.0
+  - @mawsoftwares/tenancy@1.0.0
+
 ## 0.2.1
 
 ### Patch Changes

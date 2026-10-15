@@ -1,5 +1,11 @@
 # @mawsoftwares/deploy
 
+## 1.0.0
+
+### Major Changes
+
+- aa2b249: test
+
 ## 0.1.1
 
 ### Patch Changes

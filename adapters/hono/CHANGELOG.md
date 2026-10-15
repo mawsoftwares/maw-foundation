@@ -1,5 +1,17 @@
 # @mawsoftwares/hono
 
+## 1.0.0
+
+### Major Changes
+
+- aa2b249: test
+
+### Patch Changes
+
+- Updated dependencies [aa2b249]
+- Updated dependencies [e1374be]
+  - @mawsoftwares/server-hono@1.0.0
+
 ## 0.1.5
 
 ### Patch Changes

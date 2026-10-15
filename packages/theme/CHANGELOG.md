@@ -1,5 +1,11 @@
 # @mawsoftwares/theme
 
+## 1.0.0
+
+### Major Changes
+
+- aa2b249: test
+
 ## 0.3.0
 
 ### Minor Changes

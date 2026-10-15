@@ -1,5 +1,19 @@
 # @mawsoftwares/ui-auth
 
+## 1.0.0
+
+### Major Changes
+
+- aa2b249: test
+
+### Patch Changes
+
+- Updated dependencies [aa2b249]
+- Updated dependencies [e1374be]
+  - @mawsoftwares/api-client@1.0.0
+  - @mawsoftwares/sdk@1.0.0
+  - @mawsoftwares/ui-web@1.0.0
+
 ## 0.1.4
 
 ### Patch Changes
