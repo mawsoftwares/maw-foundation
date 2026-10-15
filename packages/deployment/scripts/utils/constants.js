@@ -70,7 +70,7 @@ function getEnvironmentsDir() {
 }
 
 const GENERATED_FILE_MAP = {
-  ecosystem: 'ecosystem.config.js',
+  ecosystem: 'ecosystem.config.cjs',
   nginx: 'nginx.conf',
   runtime: 'runtime.config.js',
   dockerCompose: 'docker-compose.yml',

@@ -92,5 +92,27 @@
       "snippetPath": "/home/deploy/nginx/snippets/apps.mawsoftwares.in/maw-foundation.conf"
     },
     "completedAt": "2026-08-24T12:12:22.463Z"
+  },
+  {
+    "id": "deploy-1792049855106",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-10-15T07:37:35.100Z",
+    "deployPath": "/home/deploy/staging/maw-foundation/web",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-web/deploy/generated/staging/runtime.config.js"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": false,
+      "kind": "snippet",
+      "snippetPath": "/home/deploy/nginx/snippets/apps.mawsoftwares.in/maw-foundation.conf",
+      "writeOk": true,
+      "reloadOk": true,
+      "template": "nginx-frontend-snippet.template.conf"
+    },
+    "completedAt": "2026-10-15T07:42:35.649Z"
   }
 ]

@@ -257,7 +257,7 @@ async function deploy(environment, options = {}) {
   })
   const deployRoot = manifest.deployPath
   const configOutputRoot = resolveConfigOutputRoot(manifest)
-  const ecosystemPath = path.posix.join(configOutputRoot, 'ecosystem.config.js')
+  const ecosystemPath = path.posix.join(configOutputRoot, 'ecosystem.config.cjs')
   let sudoAvailable = false
   const deploymentRecord = {
     id: `deploy-${Date.now()}`,
