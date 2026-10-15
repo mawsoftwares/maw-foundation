@@ -332,5 +332,89 @@
       "reason": "nginx.autoInstall not enabled"
     },
     "completedAt": "2026-10-15T08:04:14.791Z"
+  },
+  {
+    "id": "deploy-1792053601338",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-10-15T08:40:01.331Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/ecosystem.config.cjs",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://127.0.0.1:4101/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-10-15T08:40:43.546Z"
+  },
+  {
+    "id": "deploy-1792053771855",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-10-15T08:42:51.848Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/ecosystem.config.cjs",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://127.0.0.1:4101/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-10-15T08:43:33.581Z"
+  },
+  {
+    "id": "deploy-1792053944879",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": false,
+    "timestamp": "2026-10-15T08:45:44.865Z",
+    "branch": "main",
+    "deployPath": "/home/deploy/staging/maw-foundation",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/ecosystem.config.cjs",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/nginx.conf",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/runtime.config.js",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/docker-compose.yml",
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/apps/sample-server/deploy/generated/staging/Dockerfile"
+    ],
+    "success": true,
+    "healthCheck": {
+      "ok": true,
+      "statusCode": 200,
+      "url": "http://127.0.0.1:4101/health",
+      "attempts": 1
+    },
+    "nginx": {
+      "skipped": true,
+      "reason": "nginx.autoInstall not enabled"
+    },
+    "completedAt": "2026-10-15T08:46:26.688Z"
   }
 ]

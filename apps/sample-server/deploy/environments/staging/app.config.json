@@ -46,7 +46,9 @@
       "install": "corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install --frozen-lockfile --shamefully-hoist",
       "build": "pnpm --filter @mawsoftwares/sample-server typecheck",
       "dbTest": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env pnpm --filter @mawsoftwares/sample-server exec node --import=tsx src/db/test-connection.ts",
-      "migrate": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env pnpm --filter @mawsoftwares/sample-server exec node --import=tsx src/db/migrate.ts"
+      "migrate": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env pnpm --filter @mawsoftwares/sample-server exec node --import=tsx src/db/migrate.ts",
+      "seed": "node packages/deployment/scripts/run-with-deploy-env.js deployment-config/.env pnpm --filter @mawsoftwares/sample-server exec node --import=tsx src/db/seed.ts"
+
     }
   },
   "health": {
