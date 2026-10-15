@@ -553,7 +553,9 @@ async function deploy(environment, options = {}) {
         logger,
         manifest,
         title: 'Test database connectivity',
-        command: `node packages/deployment/scripts/run-with-deploy-env.js ${manifest.generatedSubPath}/.env npm run db:test`,
+        command:
+          manifest.deployment.commands.dbTest ||
+          `node packages/deployment/scripts/run-with-deploy-env.js ${manifest.generatedSubPath}/.env npm run db:test`,
       })
       executeStep({
         dryRun,
