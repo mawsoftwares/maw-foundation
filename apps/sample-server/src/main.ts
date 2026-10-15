@@ -74,6 +74,7 @@ import type { Session } from '@mawsoftwares/sdk/contracts/identity';
 import type { IUserRepository, UserRecord } from '@mawsoftwares/sdk/contracts/IUserRepository';
 import {
   getEnv,
+  getEnvBool,
   getEnvInt,
   getRequiredEnv,
   HttpStatus,
@@ -486,7 +487,13 @@ const securityConfig = {
     ...DEFAULT_SECURITY_CONFIG.cors,
     allowedOrigins: corsAllowedOrigins(),
   },
-  csrf: DEFAULT_SECURITY_CONFIG.csrf,
+  // CSRF guards cookie-authenticated sessions. This app authenticates with Authorization:
+  // Bearer tokens (nothing is auto-attached by the browser), and the web client does not
+  // send the CSRF header, so enforcing it breaks every same-origin POST (e.g. behind nginx).
+  csrf: {
+    ...DEFAULT_SECURITY_CONFIG.csrf,
+    enabled: getEnvBool('CSRF_ENABLED', DEFAULT_SECURITY_CONFIG.csrf.enabled),
+  },
   // Login is 5/min in production. Local retries (CORS, wrong password, Strict Mode)
   // burn that budget immediately. Override per environment with
   // RATE_LIMIT_LOGIN_MAX / RATE_LIMIT_LOGIN_WINDOW_MS (e.g. a looser limit on staging).
