@@ -1,12 +1,28 @@
 import { createDatabasePool, closeDatabasePool, runSeed } from '@mawsoftwares/database';
 import { hashPasswordForStorage } from '@mawsoftwares/auth-core';
 import { createLogger } from '@mawsoftwares/sdk';
+import { getEnv } from '@mawsoftwares/sdk/config/env';
 import { splitPermissionCode } from '@mawsoftwares/rbac-core';
 import { registry } from '../modules/index';
 
 const log = createLogger('seed');
 
 const TENANT = 'demo-tenant';
+// `password123` is a local-dev convenience only. Outside development the seed refuses to
+// run without an explicit SEED_USER_PASSWORD, so demo accounts (incl. super_admin) never
+// get a publicly known password on a reachable environment.
+const SEED_PASSWORD = resolveSeedPassword();
+
+function resolveSeedPassword(): string {
+  const explicit = getEnv('SEED_USER_PASSWORD');
+  if (explicit) return explicit;
+  const nodeEnv = getEnv('NODE_ENV', 'development');
+  if (nodeEnv === 'development') return 'password123';
+  throw new Error(
+    `SEED_USER_PASSWORD is required to seed when NODE_ENV=${nodeEnv}. ` +
+      'Refusing to create demo users with the default password.',
+  );
+}
 
 const users = [
   { id: 'u-superadmin', email: 'superadmin@demo.test', role: 'super_admin', audience: 'admin', scopeId: null as string | null, name: 'Super Admin' },
@@ -53,7 +69,7 @@ try {
       await client.query(
         `INSERT INTO users (id, tenant_id, email, role, audience, password_hash, scope_id, name, account_status, email_verified)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'ACTIVE', TRUE)`,
-        [u.id, TENANT, u.email, u.role, u.audience, hashPasswordForStorage('password123'), u.scopeId, u.name],
+        [u.id, TENANT, u.email, u.role, u.audience, hashPasswordForStorage(SEED_PASSWORD), u.scopeId, u.name],
       );
     }
     log.info('Users upserted', { count: users.length });
