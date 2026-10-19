@@ -49,8 +49,19 @@ export function parseApiErrorPayload(
   return { message: fallback };
 }
 
+/**
+ * RTK Query's `.unwrap()` rejects with the plain `{ status, message, body }` object a `baseQuery`
+ * returned, not an `ApiError` instance. Treat that shape the same way.
+ */
+function isApiErrorLike(error: unknown): error is { status: number; message: string; body?: unknown } {
+  return isRecord(error)
+    && !(error instanceof Error)
+    && typeof error['status'] === 'number'
+    && typeof error['message'] === 'string';
+}
+
 export function getApiErrorMessage(error: unknown, fallback = 'Request failed'): string {
-  if (error instanceof ApiError) {
+  if (error instanceof ApiError || isApiErrorLike(error)) {
     return error.message.length > 0 ? error.message : fallback;
   }
   if (error instanceof Error && error.message.length > 0) {
@@ -60,7 +71,7 @@ export function getApiErrorMessage(error: unknown, fallback = 'Request failed'):
 }
 
 export function getApiErrorFields(error: unknown): readonly ApiErrorField[] {
-  const body = error instanceof ApiError ? error.body : error;
+  const body = error instanceof ApiError || isApiErrorLike(error) ? error.body : error;
   const err = envelopeError(body);
   if (err === undefined) return [];
 

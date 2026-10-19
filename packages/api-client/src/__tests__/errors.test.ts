@@ -66,3 +66,30 @@ describe('getApiErrorFields', () => {
     ]);
   });
 });
+
+describe('RTK Query unwrap() errors ({ status, message, body })', () => {
+  const rtkError = {
+    status: 409,
+    message: 'An account with this email already exists',
+    body: {
+      success: false,
+      error: {
+        code: 'DUPLICATE_EMAIL',
+        message: 'An account with this email already exists',
+        details: { field: 'email' },
+      },
+    },
+  };
+
+  it('returns the server message instead of the fallback', () => {
+    expect(getApiErrorMessage(rtkError, 'Something went wrong')).toBe(
+      'An account with this email already exists',
+    );
+  });
+
+  it('extracts the field so the form can highlight it', () => {
+    expect(getApiErrorFields(rtkError)).toEqual([
+      { field: 'email', message: 'An account with this email already exists' },
+    ]);
+  });
+});

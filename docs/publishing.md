@@ -49,6 +49,43 @@ pnpm config set //npm.pkg.github.com/:_authToken ghp_xxxxxxxxxxxx
 
 Never commit the token.
 
+### 2b. Deploy servers and CI (every new product repo)
+
+A server that runs `pnpm install` for a product repo needs the **same token**, because the packages are private. Without it the install stops with
+`ERR_PNPM_FETCH_401 ... No authorization header was set for the request`. Do this once per server, for the user that runs the deploy (for example `deploy`):
+
+1. **Token.** Create a classic PAT with only `read:packages`. If the org uses SSO, click *Configure SSO* next to the token and authorize `mawsoftwares`
+   (without that, GitHub answers 401 even when the file is right). Prefer a machine/org account over a personal one, and use a different token per server so one can be revoked alone.
+2. **Repo `.npmrc`** (committed, no token): `@mawsoftwares:registry=https://npm.pkg.github.com`. Never put a token, or a "how to" line containing one, in that file.
+3. **Server `~/.npmrc`** (`/home/<deploy-user>/.npmrc`, mode 600), exactly one line, no quotes, no spaces:
+
+   ```
+   //npm.pkg.github.com/:_authToken=<TOKEN>
+   ```
+
+   Write it so the token never lands in shell history or on the clipboard next to a command. Run this on your own machine and paste the token at the prompt:
+
+   ```bash
+   read -rs -p "Paste GitHub token: " T; echo
+   printf '//npm.pkg.github.com/:_authToken=%s\n' "$(printf %s "$T" | tr -d '[:space:]')" \
+     | ssh -i <key> <deploy-user>@<server> 'umask 077; cat > ~/.npmrc; ls -l ~/.npmrc'
+   unset T
+   ```
+
+   Do not use `pbpaste` for this: you have to copy the command to run it, which replaces the token on the clipboard, and the command text gets saved as the "token".
+4. **Verify before deploying** (prints no secret). Both lookups must answer `200`:
+
+   ```bash
+   ssh -i <key> <deploy-user>@<server> 't=$(grep _authToken= ~/.npmrc | cut -d= -f2-); echo "length ${#t}, prefix ${t:0:4}";
+     for p in api audit; do curl -s -o /dev/null -w "$p %{http_code}\n" -H "Authorization: Bearer $t" https://npm.pkg.github.com/@mawsoftwares%2f$p; done'
+   ```
+
+   A classic token is 40 characters starting `ghp_`; the file is about 75 bytes. `401` means a wrong or SSO-unauthorized token, `404` means the token cannot see the package.
+5. **CI** (Bitbucket Pipelines, GitHub Actions): store the token as a *secured* repository variable and write the same one-line `.npmrc` in the first script step. Do not echo it.
+6. **Scope and rotation.** The file is readable by every process of that user, so keep the scope to `read:packages`, rotate the token if the server or the file is ever exposed, and revoke any token that was pasted into chat, a ticket or a committed file.
+
+Read-only check that nothing else changes: this one line only supplies a login for `npm.pkg.github.com`. It does not change any registry, so other projects on the same server are unaffected.
+
 ### 3. Install
 
 ```bash
