@@ -21,6 +21,26 @@ function toMenuDto(r: typeof schema.menuItems.$inferSelect) {
   };
 }
 
+/** Parenthesised, individually-bound list for `IN` (drizzle expands a bare JS array into a row, which `= ANY` rejects). */
+const codeList = (codes: readonly string[]) => sql`(${sql.join(codes.map((c) => sql`${c}`), sql`, `)})`;
+
+type MenuDb = Pick<DrizzleDb, 'execute'>;
+
+/**
+ * A menu's `permission` only works if it exists in master_permissions and a role holds it, otherwise
+ * nobody (super_admin included - access is purely data-driven) ever sees the item. Register it and grant
+ * it to the admin roles, as db:seed does for registry permissions. Idempotent.
+ */
+async function ensureMenuPermission(db: MenuDb, code: string | null | undefined): Promise<void> {
+  if (!code) return;
+  const action = code.split('_')[0] || code;
+  await db.execute(sql`INSERT INTO master_permissions (code, name, description) VALUES (${code}, ${action}, 'Added from Menu Management') ON CONFLICT (code) DO NOTHING`);
+  await db.execute(sql`
+    INSERT INTO role_permissions (role_id, permission_id)
+    SELECT r.id, p.id FROM master_roles r JOIN master_permissions p ON p.code = ${code}
+    WHERE r.code IN ('super_admin', 'owner', 'admin') ON CONFLICT DO NOTHING`);
+}
+
 type PgError = { code?: string; constraint?: string; detail?: string; message?: string };
 
 // Drizzle wraps driver errors as "Failed query: ..." and hides the real Postgres
@@ -160,11 +180,11 @@ export function createMenuRouter(
       await db.execute(sql`INSERT INTO master_modules (code, name) VALUES (${input.key}, ${input.label}) ON CONFLICT (code) DO NOTHING`);
       await db.execute(sql`
         INSERT INTO module_permissions (module_id, permission_id)
-        SELECT m.id, p.id FROM master_modules m JOIN master_permissions p ON p.code = ANY(${generated.permissions.map((p) => p.code)})
+        SELECT m.id, p.id FROM master_modules m JOIN master_permissions p ON p.code IN ${codeList(generated.permissions.map((p) => p.code))}
         WHERE m.code = ${input.key} ON CONFLICT (module_id, permission_id) DO NOTHING`);
       await db.execute(sql`
         INSERT INTO role_permissions (role_id, permission_id)
-        SELECT r.id, p.id FROM master_roles r JOIN master_permissions p ON p.code = ANY(${generated.permissions.map((p) => p.code)})
+        SELECT r.id, p.id FROM master_roles r JOIN master_permissions p ON p.code IN ${codeList(generated.permissions.map((p) => p.code))}
         WHERE r.code IN ('super_admin', 'owner', 'admin') ON CONFLICT DO NOTHING`);
       res.status(201).json({ data: toMenuDto(rows[0]!), restartRequired: true });
     } catch (err) {
@@ -219,6 +239,7 @@ export function createMenuRouter(
         );
         rows = await insert();
       }
+      await ensureMenuPermission(db, rows[0]!.permission);
       res.status(201).json({ data: toMenuDto(rows[0]!) });
     } catch (err) {
       const { status, error } = menuWriteError(err);
@@ -251,6 +272,7 @@ export function createMenuRouter(
       if (!rows[0]) {
         return void res.status(404).json({ error: 'Menu item not found' });
       }
+      await ensureMenuPermission(db, rows[0].permission);
       res.json({ data: toMenuDto(rows[0]) });
     } catch (err) {
       const { status, error } = menuWriteError(err);
@@ -277,7 +299,7 @@ export function createMenuRouter(
         const key = found[0].key;
         codeRemoved = removeModuleCode(scaffoldRoot(), key);
         if (codeRemoved) {
-          await db.execute(sql`DELETE FROM master_permissions WHERE code = ANY(${scaffoldPermissionCodes(key)})`);
+          await db.execute(sql`DELETE FROM master_permissions WHERE code IN ${codeList(scaffoldPermissionCodes(key))}`);
           await db.execute(sql`DELETE FROM master_modules WHERE code = ${key}`);
         }
       }

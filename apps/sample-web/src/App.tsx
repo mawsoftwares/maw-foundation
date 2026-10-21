@@ -293,7 +293,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const featureOverrides = useMemo(() => ({ offline: offlineEnabled }), [offlineEnabled]);
 
   const isSuperadmin = session !== null && SUPERADMIN_ROLES.has(session.role);
-  const { can: canDynamic, loading: accessLoading } = useDynamicAccess();
+  const { can: canDynamic, loading: accessLoading, reload: reloadAccess } = useDynamicAccess();
   const { isEnabled } = useFeatureFlags();
 
   // Menu Management drives the real nav tree from the DB (see /menus admin page);
@@ -303,10 +303,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
   const [menuVersion, setMenuVersion] = useState(0);
   useEffect(() => {
-    const bump = () => setMenuVersion((v) => v + 1);
+    // A menu change can also grant a permission, so refresh the permission snapshot along with the tree.
+    const bump = () => {
+      void reloadAccess();
+      setMenuVersion((v) => v + 1);
+    };
     window.addEventListener(MENUS_CHANGED_EVENT, bump);
     return () => window.removeEventListener(MENUS_CHANGED_EVENT, bump);
-  }, []);
+  }, [reloadAccess]);
   useEffect(() => {
     if (session === null) return;
     let cancelled = false;

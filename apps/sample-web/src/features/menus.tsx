@@ -188,6 +188,11 @@ export function MenusView(): ReactNode {
     },
   });
 
+  const closeCreate = () => {
+    setShowCreate(false);
+    createForm.reset();
+  };
+
   const editForm = useForm({
     initialValues: { label: '', path: '', icon: '', parentId: '', permission: '', sortOrder: 0, isActive: true },
     fields: { label: { required: true } },
@@ -310,7 +315,7 @@ export function MenusView(): ReactNode {
       <DataTable columns={columns} data={sorted} keyField="id" emptyMessage="No menu items found" />
 
       {/* Create Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create Menu Item">
+      <Modal open={showCreate} onClose={closeCreate} title="Create Menu Item">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
           <TextField label="Key" required error={createForm.errors.key} value={createForm.values.key}
             onChange={(e) => createForm.setValue('key', (e.target as HTMLInputElement).value)} placeholder="e.g. reports-custom" />
@@ -340,7 +345,7 @@ export function MenusView(): ReactNode {
             </label>
           )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={closeCreate}>Cancel</Button>
             <Button onClick={() => createForm.handleSubmit()} disabled={createForm.submitting}>Create</Button>
           </div>
         </div>
