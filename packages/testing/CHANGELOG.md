@@ -1,5 +1,13 @@
 # @mawsoftwares/testing
 
+## 2.0.1
+
+### Patch Changes
+
+- Updated dependencies [e1374be]
+  - @mawsoftwares/sdk@0.3.0
+  - @mawsoftwares/database@0.3.1
+
 ## 2.0.0
 
 ### Patch Changes

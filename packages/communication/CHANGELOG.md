@@ -1,5 +1,13 @@
 # @mawsoftwares/communication
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [e1374be]
+  - @mawsoftwares/sdk@0.3.0
+  - @mawsoftwares/database@0.3.1
+
 ## 0.2.2
 
 ### Patch Changes

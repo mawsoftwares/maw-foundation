@@ -1,5 +1,12 @@
 # @mawsoftwares/hono
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [e1374be]
+  - @mawsoftwares/server-hono@0.2.0
+
 ## 0.1.5
 
 ### Patch Changes
