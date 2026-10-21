@@ -1,5 +1,13 @@
 # @mawsoftwares/import-export
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [e1374be]
+  - @mawsoftwares/sdk@0.3.0
+  - @mawsoftwares/queue@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

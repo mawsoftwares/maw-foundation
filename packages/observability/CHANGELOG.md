@@ -1,5 +1,14 @@
 # @mawsoftwares/observability
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [e1374be]
+  - @mawsoftwares/sdk@0.3.0
+  - @mawsoftwares/platform@0.1.5
+  - @mawsoftwares/config@0.1.4
+
 ## 0.1.4
 
 ### Patch Changes

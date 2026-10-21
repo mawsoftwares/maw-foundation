@@ -1,5 +1,11 @@
 # @mawsoftwares/tenancy
 
+## 0.2.1
+
+### Patch Changes
+
+- @mawsoftwares/core@0.1.4
+
 ## 0.2.0
 
 ### Minor Changes

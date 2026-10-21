@@ -1,5 +1,15 @@
 # @mawsoftwares/ui-auth
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [98b0b03]
+- Updated dependencies [e1374be]
+  - @mawsoftwares/api-client@0.2.2
+  - @mawsoftwares/sdk@0.3.0
+  - @mawsoftwares/ui-web@0.3.1
+
 ## 0.1.4
 
 ### Patch Changes

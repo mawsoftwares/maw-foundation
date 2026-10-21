@@ -1,5 +1,12 @@
 # @mawsoftwares/postgres
 
+## 0.2.2
+
+### Patch Changes
+
+- @mawsoftwares/database@0.3.1
+- @mawsoftwares/tenancy@0.2.1
+
 ## 0.2.1
 
 ### Patch Changes

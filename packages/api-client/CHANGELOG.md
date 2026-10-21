@@ -1,5 +1,13 @@
 # @mawsoftwares/api-client
 
+## 0.2.2
+
+### Patch Changes
+
+- 98b0b03: `getApiErrorMessage` and `getApiErrorFields` now understand the plain `{ status, message, body }` error that RTK Query's `.unwrap()` rejects with, so server messages and `details.field` reach forms instead of the generic fallback.
+- Updated dependencies [e1374be]
+  - @mawsoftwares/sdk@0.3.0
+
 ## 0.2.1
 
 ### Patch Changes
