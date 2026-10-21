@@ -28,10 +28,16 @@ type MenuDb = Pick<DrizzleDb, 'execute'>;
 
 /**
  * A menu's `permission` only works if it exists in master_permissions and a role holds it, otherwise
- * nobody (super_admin included - access is purely data-driven) ever sees the item. Register it and grant
- * it to the admin roles, as db:seed does for registry permissions. Idempotent.
+ * nobody (super_admin included - access is purely data-driven) ever sees the item. Register it, grant
+ * it to the admin roles (as db:seed does for registry permissions), and attach it to a module named after
+ * the menu so RBAC Admin lists it there instead of under "Uncategorized". Idempotent; never renames or
+ * re-links an existing module.
  */
-async function ensureMenuPermission(db: MenuDb, code: string | null | undefined): Promise<void> {
+async function ensureMenuPermission(
+  db: MenuDb,
+  menu: { key: string; label: string; permission: string | null | undefined },
+): Promise<void> {
+  const code = menu.permission;
   if (!code) return;
   const action = code.split('_')[0] || code;
   await db.execute(sql`INSERT INTO master_permissions (code, name, description) VALUES (${code}, ${action}, 'Added from Menu Management') ON CONFLICT (code) DO NOTHING`);
@@ -39,6 +45,14 @@ async function ensureMenuPermission(db: MenuDb, code: string | null | undefined)
     INSERT INTO role_permissions (role_id, permission_id)
     SELECT r.id, p.id FROM master_roles r JOIN master_permissions p ON p.code = ${code}
     WHERE r.code IN ('super_admin', 'owner', 'admin') ON CONFLICT DO NOTHING`);
+  // Only attach when no module owns this permission yet (e.g. registry modules already link their own).
+  await db.execute(sql`INSERT INTO master_modules (code, name) VALUES (${menu.key}, ${menu.label}) ON CONFLICT (code) DO NOTHING`);
+  await db.execute(sql`
+    INSERT INTO module_permissions (module_id, permission_id)
+    SELECT m.id, p.id FROM master_modules m JOIN master_permissions p ON p.code = ${code}
+    WHERE m.code = ${menu.key}
+      AND NOT EXISTS (SELECT 1 FROM module_permissions mp WHERE mp.permission_id = p.id)
+    ON CONFLICT (module_id, permission_id) DO NOTHING`);
 }
 
 type PgError = { code?: string; constraint?: string; detail?: string; message?: string };
@@ -239,7 +253,7 @@ export function createMenuRouter(
         );
         rows = await insert();
       }
-      await ensureMenuPermission(db, rows[0]!.permission);
+      await ensureMenuPermission(db, rows[0]!);
       res.status(201).json({ data: toMenuDto(rows[0]!) });
     } catch (err) {
       const { status, error } = menuWriteError(err);
@@ -272,7 +286,7 @@ export function createMenuRouter(
       if (!rows[0]) {
         return void res.status(404).json({ error: 'Menu item not found' });
       }
-      await ensureMenuPermission(db, rows[0].permission);
+      await ensureMenuPermission(db, rows[0]);
       res.json({ data: toMenuDto(rows[0]) });
     } catch (err) {
       const { status, error } = menuWriteError(err);
