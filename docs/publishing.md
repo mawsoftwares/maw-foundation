@@ -101,6 +101,44 @@ pnpm add @mawsoftwares/sdk @mawsoftwares/theme @mawsoftwares/ui-web \
 
 Pin versions (`0.1.0`, not `*`). Do **not** use `workspace:*` outside this monorepo.
 
+### 3b. Updating to a newer version
+
+Do this in the **product** repo whenever the foundation team announces a release (the release notes are each package's `CHANGELOG.md`, also visible on the GitHub Packages page).
+
+1. **Check what is available** and what you have:
+
+   ```bash
+   pnpm outdated '@mawsoftwares/*'
+   ```
+
+2. **Read the changelogs** of every package you will bump, especially entries marked *minor* or *major* (while versions are `0.x`, a minor bump can contain breaking changes). Each changelog is at `node_modules/@mawsoftwares/<name>/CHANGELOG.md` after install, or on the package page.
+
+3. **Bump together.** Packages share types, so move related ones in one go (for example `sdk` with `server-express`, or `ui-web` with `theme`). Pin exact versions, no `^`, no `*`:
+
+   ```bash
+   pnpm add @mawsoftwares/sdk@0.3.0 @mawsoftwares/server-express@0.2.0 @mawsoftwares/api-client@0.2.2
+   # or move every foundation package to its latest published version:
+   pnpm up '@mawsoftwares/*' --latest
+   ```
+
+   Your `~/.npmrc` needs a token with `read:packages` (see section 2). `401` means the token is missing or not SSO-authorized.
+
+4. **Apply any breaking-change notes** from the changelogs, then verify:
+
+   ```bash
+   pnpm install
+   pnpm typecheck && pnpm lint && pnpm test
+   ```
+
+5. **Smoke-test the app** (sign in, one list page, one create), commit `package.json` **and** `pnpm-lock.yaml`, and deploy. CI and servers install with `--frozen-lockfile`, so a missing lockfile change fails the build.
+
+6. **Roll back** if something breaks: `pnpm add @mawsoftwares/<name>@<previous-version>` and commit the lockfile again.
+
+Things that are **not** delivered by a package update:
+
+- `apps/sample-*` features (Menu Management, the sample shell). They are reference apps and are never published. To adopt a change, copy it from the foundation repo into the product by hand.
+- `templates/*` (users module and other domain templates). Copy again if you want the new version, then re-apply your own edits.
+
 ### 4. TypeScript runtime
 
 Packages ship **TypeScript source** (`src/index.ts`) — the same format this repo uses.
@@ -180,5 +218,32 @@ The secret must be a PAT (or GitHub App token) with `read:packages`. `GITHUB_TOK
 |---|---|
 | `401 Unauthorized` from `npm.pkg.github.com` | Token missing from `~/.npmrc`, expired, or lacks `read:packages` |
 | `404 Not Found` for `@mawsoftwares/sdk` | Package not published yet, or the token cannot see org packages (SSO / package access) |
+| New version exists for you but a developer cannot install it (`404`, or `No matching version found`) | Their token cannot see the package (org membership, SSO not authorized, or package access not granted), or a stale metadata cache. See *Developer cannot see a published version* below |
 | `workspace:*` in a product `package.json` | That protocol only works inside this monorepo. Use a semver (`0.1.0`) |
 | `ERR_UNKNOWN_FILE_EXTENSION .ts` | Running plain `node` on a file that imports a Foundation package. Use `tsx` or a bundler |
+
+### Developer cannot see a published version
+
+You can publish and see `0.3.0`, but another developer gets `404` or `No matching version found`. The packages are **restricted**, so GitHub answers `404` for anything the caller's token cannot read. Check in this order.
+
+**Developer side**
+
+1. Registry mapping in the product repo `.npmrc`: `@mawsoftwares:registry=https://npm.pkg.github.com`.
+2. Token in their own `~/.npmrc` (one line, no quotes): `//npm.pkg.github.com/:_authToken=<token>`. It must be a **classic** PAT with `read:packages`. If the org uses SSO, open the token in GitHub and click *Configure SSO* -> *Authorize* `mawsoftwares`. Without that step GitHub reports `404`/`401` even though the token looks right.
+3. Ask the registry directly (prints no secret). `200` means access is fine, `401` a bad or unauthorized token, `404` no access to that package:
+
+   ```bash
+   t=$(grep _authToken= ~/.npmrc | cut -d= -f2-)
+   curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $t" https://npm.pkg.github.com/@mawsoftwares%2fsdk
+   npm view @mawsoftwares/sdk versions --registry=https://npm.pkg.github.com
+   ```
+
+4. Stale cache: `pnpm store prune`, delete the lockfile entry for the package (or run `pnpm up @mawsoftwares/sdk@0.3.0`), and retry with `pnpm install --force`.
+5. Wrong pin: `0.3.0` is a minor bump, so a range such as `~0.2.0` will never pick it up. Set the exact version.
+
+**Owner side (GitHub org admin)**
+
+1. The developer is in the `mawsoftwares` org, or has been added as an outside collaborator on the package.
+2. Each package page -> *Package settings* -> *Manage access*: add the team or person with at least **Read**, or enable inheriting access from the repository. New packages published by CI can start with no access beyond the publisher.
+3. Org *Settings* -> *Packages*: check that members are allowed to see private packages.
+4. Packages published from CI with `GITHUB_TOKEN` are linked to the repository; if they are not, link them so repo permissions apply.

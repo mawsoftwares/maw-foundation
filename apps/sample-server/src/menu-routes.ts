@@ -24,6 +24,8 @@ function toMenuDto(r: typeof schema.menuItems.$inferSelect) {
 /** Parenthesised, individually-bound list for `IN` (drizzle expands a bare JS array into a row, which `= ANY` rejects). */
 const codeList = (codes: readonly string[]) => sql`(${sql.join(codes.map((c) => sql`${c}`), sql`, `)})`;
 
+const MENU_PERMISSION_NOTE = 'Added from Menu Management';
+
 type MenuDb = Pick<DrizzleDb, 'execute'>;
 
 /**
@@ -40,7 +42,10 @@ async function ensureMenuPermission(
   const code = menu.permission;
   if (!code) return;
   const action = code.split('_')[0] || code;
-  await db.execute(sql`INSERT INTO master_permissions (code, name, description) VALUES (${code}, ${action}, 'Added from Menu Management') ON CONFLICT (code) DO NOTHING`);
+  // is_system defaults to true in the table; a permission made here is user-managed, so it must stay deletable in RBAC Admin.
+  await db.execute(sql`INSERT INTO master_permissions (code, name, description, is_system) VALUES (${code}, ${action}, ${MENU_PERMISSION_NOTE}, false) ON CONFLICT (code) DO NOTHING`);
+  // Repair rows this helper created before the flag was set explicitly.
+  await db.execute(sql`UPDATE master_permissions SET is_system = false WHERE code = ${code} AND description = ${MENU_PERMISSION_NOTE}`);
   await db.execute(sql`
     INSERT INTO role_permissions (role_id, permission_id)
     SELECT r.id, p.id FROM master_roles r JOIN master_permissions p ON p.code = ${code}
@@ -189,7 +194,7 @@ export function createMenuRouter(
       // Register the permissions now and grant them to the admin roles, as db:seed would,
       // so the menu works after one server restart (the registry only loads at boot).
       for (const p of generated.permissions) {
-        await db.execute(sql`INSERT INTO master_permissions (code, name, description) VALUES (${p.code}, ${p.name}, ${p.description}) ON CONFLICT (code) DO NOTHING`);
+        await db.execute(sql`INSERT INTO master_permissions (code, name, description, is_system) VALUES (${p.code}, ${p.name}, ${p.description}, false) ON CONFLICT (code) DO NOTHING`);
       }
       await db.execute(sql`INSERT INTO master_modules (code, name) VALUES (${input.key}, ${input.label}) ON CONFLICT (code) DO NOTHING`);
       await db.execute(sql`

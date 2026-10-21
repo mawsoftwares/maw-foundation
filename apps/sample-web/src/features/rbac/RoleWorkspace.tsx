@@ -217,6 +217,12 @@ export function RoleWorkspace({ role, onClose, onRoleUpdated }: {
                 onDeactivateModule={() => setConfirm({ type: 'deactivate-module', module: mod })}
                 onDeleteModule={() => setConfirm({ type: 'delete-module', module: mod })}
                 onManagePermissions={() => setDrawer({ type: 'manage', moduleId: mod.id })}
+                onEditPermission={(permission) => setDrawer({ type: 'permission', mode: 'edit', moduleId: mod.id, permission })}
+                onDeletePermission={(permission) => {
+                  void fetchPermissionAssignments(permission.id)
+                    .then((usage) => setConfirm({ type: 'delete-permission', permission, roleCount: usage.count }))
+                    .catch((e) => toast.error(rbacErrorMessage(e)));
+                }}
               />
             ))
           )}

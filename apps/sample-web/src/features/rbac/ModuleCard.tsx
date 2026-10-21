@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import {
   Badge, Divider, DropdownMenu, IconButton,
 } from '@mawsoftwares/ui-web';
-import type { WorkspaceModule } from './types';
+import type { WorkspaceModule, WorkspacePermission } from './types';
 import { moduleCheckboxState, permissionDisplayName } from './workspace-model';
 
 function TriCheckbox({
@@ -48,6 +48,8 @@ export function ModuleCard({
   onDeactivateModule,
   onDeleteModule,
   onManagePermissions,
+  onEditPermission,
+  onDeletePermission,
 }: {
   module: WorkspaceModule;
   expanded: boolean;
@@ -59,6 +61,8 @@ export function ModuleCard({
   onDeactivateModule: () => void;
   onDeleteModule: () => void;
   onManagePermissions: () => void;
+  onEditPermission: (permission: WorkspacePermission) => void;
+  onDeletePermission: (permission: WorkspacePermission) => void;
 }): ReactNode {
   const state = moduleCheckboxState(module);
   const indent = module.parentModuleId ? 16 : 0;
@@ -170,40 +174,58 @@ export function ModuleCard({
               {module.permissions.map((p) => {
                 const label = permissionDisplayName(p);
                 return (
-                  <label
-                    key={p.id}
-                    title={p.code}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      minWidth: 0,
-                      cursor: 'pointer',
-                      padding: '4px 6px',
-                      borderRadius: 'var(--maw-radius-sm)',
-                      background: p.assigned
-                        ? 'color-mix(in srgb, var(--maw-brand) 7%, transparent)'
-                        : 'transparent',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={p.assigned}
-                      onChange={(e) => onTogglePermission(p.id, e.target.checked)}
-                      aria-label={`Assign ${label} (${p.code}) to this role`}
-                      style={{ width: 13, height: 14, accentColor: 'var(--maw-brand)', cursor: 'pointer', flexShrink: 0, margin: 0 }}
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                    <label
+                      title={p.code}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        flex: 1,
+                        minWidth: 0,
+                        cursor: 'pointer',
+                        padding: '4px 6px',
+                        borderRadius: 'var(--maw-radius-sm)',
+                        background: p.assigned
+                          ? 'color-mix(in srgb, var(--maw-brand) 7%, transparent)'
+                          : 'transparent',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={p.assigned}
+                        onChange={(e) => onTogglePermission(p.id, e.target.checked)}
+                        aria-label={`Assign ${label} (${p.code}) to this role`}
+                        style={{ width: 13, height: 14, accentColor: 'var(--maw-brand)', cursor: 'pointer', flexShrink: 0, margin: 0 }}
+                      />
+                      <span style={{
+                        fontSize: 'var(--maw-text-sm)',
+                        fontWeight: 500,
+                        color: p.assigned ? 'var(--maw-fg)' : 'var(--maw-fgMuted)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {label}
+                      </span>
+                    </label>
+                    <DropdownMenu
+                      trigger={<IconButton label={`Manage permission ${p.code}`} style={{ width: 22, height: 22, flexShrink: 0 }}>⋮</IconButton>}
+                      items={[
+                        ...(canManage ? [{ key: 'edit', label: 'Edit Permission', onClick: () => onEditPermission(p) }] : []),
+                        p.isSystem
+                          ? {
+                              key: 'delete',
+                              label: 'Delete Permission',
+                              danger: true,
+                              disabled: true,
+                              disabledReason: 'System permissions cannot be deleted',
+                              onClick: () => undefined,
+                            }
+                          : { key: 'delete', label: 'Delete Permission', danger: true, onClick: () => onDeletePermission(p) },
+                      ]}
                     />
-                    <span style={{
-                      fontSize: 'var(--maw-text-sm)',
-                      fontWeight: 500,
-                      color: p.assigned ? 'var(--maw-fg)' : 'var(--maw-fgMuted)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {label}
-                    </span>
-                  </label>
+                  </div>
                 );
               })}
             </div>
