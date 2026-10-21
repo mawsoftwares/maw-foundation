@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { ApiError } from '@mawsoftwares/api-client';
 import {
-  ListPage, DataTable, Badge, Button, Modal, TextField, useForm,
+  ListPage, DataTable, Badge, Button, Modal, TextField, Select, ConfirmationDialog, useForm,
   useToast, ErrorState, PageLoader,
   type ColumnDef,
 } from '@mawsoftwares/ui-web';
 import { client } from '../api';
+import { notifyMenusChanged } from '../menu-tree';
 
 interface MenuItem {
   id: number;
@@ -20,6 +21,27 @@ interface MenuItem {
   isActive: boolean;
 }
 
+type MenuRow = MenuItem & { depth: number };
+
+/** Depth-first order (parent, then its children by sortOrder) so submenus sit under their parent. */
+function orderedTree(items: MenuItem[]): MenuRow[] {
+  const ids = new Set(items.map((i) => i.id));
+  const byParent = new Map<number | null, MenuItem[]>();
+  for (const i of items) {
+    const key = i.parentId !== null && ids.has(i.parentId) ? i.parentId : null;
+    byParent.set(key, [...(byParent.get(key) ?? []), i]);
+  }
+  const out: MenuRow[] = [];
+  const visit = (parent: number | null, depth: number) => {
+    for (const i of [...(byParent.get(parent) ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)) {
+      out.push({ ...i, depth });
+      visit(i.id, depth + 1);
+    }
+  };
+  visit(null, 0);
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Menu Management — DB-backed navigation tree. Flat table (sorted by
 // sortOrder, with the parent's label shown alongside a child row) plus
@@ -32,6 +54,10 @@ export function MenusView(): ReactNode {
   const [error, setError] = useState<string>();
   const [showCreate, setShowCreate] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  // Parents whose submenus are folded away in the list.
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
 
   const load = useCallback(() => {
     setLoading(true);
@@ -63,9 +89,47 @@ export function MenusView(): ReactNode {
       });
       toast.success(`Menu item ${item.isActive ? 'deactivated' : 'activated'}`);
       load();
+      notifyMenusChanged();
     } catch (e) {
       toast.error((e as Error).message);
     }
+  };
+
+  const deleteItem = async () => {
+    if (!deletingItem) return;
+    setDeleting(true);
+    try {
+      await client.request(`/api/v1/menus/${deletingItem.id}`, { method: 'DELETE' });
+      toast.success('Menu item deleted');
+      setDeletingItem(null);
+      load();
+      notifyMenusChanged();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Parent choices: any item except the one being edited and its own descendants.
+  const parentOptions = (excludeId?: number) => {
+    const blocked = new Set<number>();
+    if (excludeId !== undefined) {
+      blocked.add(excludeId);
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (const i of items) {
+          if (i.parentId !== null && blocked.has(i.parentId) && !blocked.has(i.id)) {
+            blocked.add(i.id);
+            grew = true;
+          }
+        }
+      }
+    }
+    return orderedTree(items)
+      .filter((i) => !blocked.has(i.id))
+      .map((i) => ({ value: String(i.id), label: `${'— '.repeat(i.depth)}${i.label}` }));
   };
 
   const labelForParent = (parentId: number | null) => {
@@ -94,6 +158,7 @@ export function MenusView(): ReactNode {
         setShowCreate(false);
         createForm.reset();
         load();
+        notifyMenusChanged();
       } catch (e) {
         toast.error((e as Error).message);
       }
@@ -121,6 +186,7 @@ export function MenusView(): ReactNode {
         toast.success('Menu item updated');
         setEditingItem(null);
         load();
+        notifyMenusChanged();
       } catch (e) {
         toast.error((e as Error).message);
       }
@@ -144,12 +210,40 @@ export function MenusView(): ReactNode {
   if (error) return <ErrorState title="Failed to load menu items" message={error} retry={load} />;
   if (loading && items.length === 0) return <PageLoader message="Loading menu items..." />;
 
-  const sorted = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+  const parentIds = new Set(items.filter((i) => i.parentId !== null).map((i) => i.parentId as number));
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const isHidden = (row: MenuItem): boolean => {
+    for (let p = row.parentId; p !== null; p = byId.get(p)?.parentId ?? null) {
+      if (collapsed.has(p)) return true;
+    }
+    return false;
+  };
+  const sorted = orderedTree(items).filter((row) => !isHidden(row));
+  const toggleCollapsed = (id: number) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
-  const columns: ColumnDef<MenuItem>[] = [
+  const columns: ColumnDef<MenuRow>[] = [
     { key: 'label', header: 'Label', sortable: true, render: (row) => (
-      <span style={{ fontWeight: 500 }}>
-        {row.parentId !== null && <span style={{ color: 'var(--maw-fgSubtle)', marginRight: 6 }}>↳</span>}
+      <span style={{ fontWeight: 500, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
+        <span style={{ display: 'inline-block', width: row.depth * 20 }} />
+        {parentIds.has(row.id) ? (
+          <button
+            type="button"
+            onClick={() => toggleCollapsed(row.id)}
+            aria-expanded={!collapsed.has(row.id)}
+            aria-label={`${collapsed.has(row.id) ? 'Expand' : 'Collapse'} ${row.label}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maw-fgMuted)', padding: 0, marginRight: 6, width: 14 }}
+          >
+            {collapsed.has(row.id) ? '▸' : '▾'}
+          </button>
+        ) : (
+          <span style={{ display: 'inline-block', width: 20 }} />
+        )}
         {row.label}
       </span>
     ) },
@@ -172,6 +266,7 @@ export function MenusView(): ReactNode {
           <Button variant="ghost" onClick={() => toggleActive(row)}>
             {row.isActive ? 'Deactivate' : 'Activate'}
           </Button>
+          <Button variant="ghost" onClick={() => setDeletingItem(row)}>Delete</Button>
         </div>
       ),
     },
@@ -183,6 +278,12 @@ export function MenusView(): ReactNode {
         Controls the app's navigation sidebar. Items with a permission are hidden from users who don't have it;
         inactive items are hidden entirely. Changes take effect on the next page load.
       </p>
+      {parentIds.size > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 'var(--maw-space-sm)' }}>
+          <Button variant="ghost" onClick={() => setCollapsed(new Set())}>Expand all</Button>
+          <Button variant="ghost" onClick={() => setCollapsed(new Set(parentIds))}>Collapse all</Button>
+        </div>
+      )}
       <DataTable columns={columns} data={sorted} keyField="id" emptyMessage="No menu items found" />
 
       {/* Create Modal */}
@@ -196,8 +297,9 @@ export function MenusView(): ReactNode {
             onChange={(e) => createForm.setValue('path', (e.target as HTMLInputElement).value)} placeholder="e.g. /reports-custom" />
           <TextField label="Icon" value={createForm.values.icon}
             onChange={(e) => createForm.setValue('icon', (e.target as HTMLInputElement).value)} placeholder="e.g. bar-chart" />
-          <TextField label="Parent Menu Item ID" value={createForm.values.parentId}
-            onChange={(e) => createForm.setValue('parentId', (e.target as HTMLInputElement).value)} placeholder="Optional — leave blank for a top-level item" />
+          <Select label="Parent Menu Item" value={createForm.values.parentId} options={parentOptions()}
+            placeholder="None — top-level item"
+            onChange={(e) => createForm.setValue('parentId', e.target.value)} />
           <TextField label="Required Permission" value={createForm.values.permission}
             onChange={(e) => createForm.setValue('permission', (e.target as HTMLInputElement).value)} placeholder="Optional — e.g. Read_Orders" />
           <TextField label="Sort Order" type="number" value={String(createForm.values.sortOrder)}
@@ -218,8 +320,9 @@ export function MenusView(): ReactNode {
             onChange={(e) => editForm.setValue('path', (e.target as HTMLInputElement).value)} />
           <TextField label="Icon" value={editForm.values.icon}
             onChange={(e) => editForm.setValue('icon', (e.target as HTMLInputElement).value)} />
-          <TextField label="Parent Menu Item ID" value={editForm.values.parentId}
-            onChange={(e) => editForm.setValue('parentId', (e.target as HTMLInputElement).value)} />
+          <Select label="Parent Menu Item" value={editForm.values.parentId} options={parentOptions(editingItem?.id)}
+            placeholder="None — top-level item"
+            onChange={(e) => editForm.setValue('parentId', e.target.value)} />
           <TextField label="Required Permission" value={editForm.values.permission}
             onChange={(e) => editForm.setValue('permission', (e.target as HTMLInputElement).value)} />
           <TextField label="Sort Order" type="number" value={String(editForm.values.sortOrder)}
@@ -233,6 +336,16 @@ export function MenusView(): ReactNode {
           </div>
         </div>
       </Modal>
+      <ConfirmationDialog
+        open={!!deletingItem}
+        title="Delete menu item"
+        message={`Delete "${deletingItem?.label}"? Any submenus under it will be deleted too. This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleting}
+        onConfirm={() => void deleteItem()}
+        onCancel={() => setDeletingItem(null)}
+      />
     </ListPage>
   );
 }

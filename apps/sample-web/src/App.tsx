@@ -11,6 +11,7 @@ import {
   NavigationProvider,
   AppShell,
   Sidebar,
+  EmptyState,
   Breadcrumbs,
   useI18n,
   Avatar,
@@ -46,7 +47,8 @@ import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
 import { StorageView } from './features/storage-page';
 import { StorageSettingsView } from './features/storage-settings';
-import { loadMenuTree, type MenuTreeNode } from './menu-tree';
+// @scaffold:imports
+import { loadMenuTree, flattenMenuTree, findMenuKeyByPath, MENUS_CHANGED_EVENT, type MenuTreeNode } from './menu-tree';
 import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
 import { TopBarActions } from './shell/TopBarActions';
 import { AppConfigProvider } from './config-context';
@@ -62,7 +64,7 @@ config.loadLayer('app', {
 setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings';
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -94,6 +96,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
+  // @scaffold:nav
 ];
 
 /** Maps a page key to the permission required to view it. */
@@ -112,6 +115,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   messaging: 'Read_Messaging',
   storage: 'Read_Storage',
   'storage-settings': 'Manage_StorageConfiguration',
+  // @scaffold:permissions
 };
 
 const SUPERADMIN_ONLY_KEYS = new Set(['superadmin', 'settings']);
@@ -124,16 +128,36 @@ const NAV_GROUPS: Record<string, string> = {
   superadmin: 'Admin', settings: 'Admin',
 };
 
+/** Hub nodes whose children are shown as cards on their own page, not as nested sidebar entries. */
+const HUB_KEYS = new Set(['superadmin']);
+
 function menuNodeToNavItem(node: MenuTreeNode): NavItem {
+  const children = HUB_KEYS.has(node.key) ? [] : node.children.map(menuNodeToNavItem);
   return {
     key: node.key,
     label: node.label,
     icon: node.icon ?? 'circle',
-    path: node.path ?? `/${node.key}`,
+    path: node.path ?? (children.length > 0 ? '' : `/${node.key}`),
     group: NAV_GROUPS[node.key],
     sortOrder: node.sortOrder,
     permission: node.permission ?? undefined,
+    children: children.length > 0 ? children : undefined,
   };
+}
+
+/** Keys of the built-in modules, which stay gated by the `module.<key>` feature flag. */
+const KNOWN_MODULE_KEYS = new Set(NAV_ITEMS.map((i) => i.key));
+
+/** Recursively keeps only the nav items `visible` allows; a path-less parent with no visible children is dropped. */
+function pruneNav(items: NavItem[], visible: (item: NavItem) => boolean): NavItem[] {
+  const out: NavItem[] = [];
+  for (const item of items) {
+    if (!visible(item)) continue;
+    const children = item.children ? pruneNav(item.children, visible) : undefined;
+    if (item.path === '' && (children === undefined || children.length === 0)) continue;
+    out.push({ ...item, children: children && children.length > 0 ? children : undefined });
+  }
+  return out;
 }
 
 function AccessDenied({ permission }: { permission: string }): ReactNode {
@@ -182,6 +206,8 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'settings': return <SettingsView onFeatureChange={onFeatureChange} featureOverrides={featureOverrides} />;
     case 'showcase': return <ShowcaseView />;
     case 'superadmin': return <SuperAdminView />;
+    // @scaffold:pages
+    default: return <EmptyState title="Page not available" message="This menu item has no page in this app yet." />;
   }
 }
 
@@ -255,10 +281,10 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     }
   }, []);
 
+  const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
   const navigate = useCallback((path: string) => {
-    const key = path.replace('/', '') as Page;
-    setPage(key);
-  }, []);
+    setPage(findMenuKeyByPath(navTree, path) as Page);
+  }, [navTree]);
 
   const handleFeatureChange = useCallback((key: string, enabled: boolean) => {
     if (key === 'offline') setOfflineEnabled(enabled);
@@ -275,6 +301,12 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   // fallback) if the fetch hasn't completed yet or fails, so the sidebar is never empty.
   const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
   const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
+  const [menuVersion, setMenuVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setMenuVersion((v) => v + 1);
+    window.addEventListener(MENUS_CHANGED_EVENT, bump);
+    return () => window.removeEventListener(MENUS_CHANGED_EVENT, bump);
+  }, []);
   useEffect(() => {
     if (session === null) return;
     let cancelled = false;
@@ -282,6 +314,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       .then((tree) => {
         if (cancelled) return;
         setMenuTree(tree);
+        setNavTree(tree);
         // Only root items become sidebar entries — a node with children (e.g. "Super
         // Admin") is a hub whose sub-pages are reached via cards on its own page,
         // not a nested sidebar submenu.
@@ -295,25 +328,24 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         }
       });
     return () => { cancelled = true; };
-  }, [session]);
+  }, [session, menuVersion]);
 
   const allNavItems = dynamicNavItems ?? NAV_ITEMS;
 
   const navConfig = useMemo<NavigationConfig>(() => {
-    const items = allNavItems.filter((item) => {
+    const flagByKey = new Map(flattenMenuTree(menuTree ?? []).map((n) => [n.key, n.featureFlag]));
+    const items = pruneNav(allNavItems, (item) => {
       // Hide dev/admin-only pages from non-superadmins
       if (SUPERADMIN_ONLY_KEYS.has(item.key) && !isSuperadmin) return false;
       // If the item requires a permission, check it against the live RBAC snapshot
       if (item.permission !== undefined && !accessLoading) {
         if (!canDynamic(item.permission)) return false;
       }
-      
-      // Feature flag gating for modules (except core dev ones)
-      if (!SUPERADMIN_ONLY_KEYS.has(item.key) && !isEnabled(`module.${item.key}`)) {
-        return false;
-      }
-
-      return true;
+      if (SUPERADMIN_ONLY_KEYS.has(item.key)) return true;
+      // Built-in modules: gated by `module.<key>`. Menus created in Menu Management: gated only by their own optional feature flag.
+      if (KNOWN_MODULE_KEYS.has(item.key)) return isEnabled(`module.${item.key}`);
+      const flag = flagByKey.get(item.key);
+      return flag ? isEnabled(flag) : true;
     });
     return {
       items,
@@ -381,7 +413,7 @@ export function App(): ReactNode {
           'module.dashboard': true,
           // 'module.orders': true,
           // 'module.reports': true,
-          // 'module.inventory': true,
+          'module.inventory': true,
           // 'module.billing': true,
           'module.users': true,
           'module.storage': true,
@@ -391,7 +423,8 @@ export function App(): ReactNode {
           'module.customer': true,
 
           'module.rbac': true,
-          'module.menus': true
+          'module.menus': true,
+          // @scaffold:flags
         })}>
           <OfflineProvider
             networkManager={offlineInfra.networkManager}

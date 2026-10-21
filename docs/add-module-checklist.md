@@ -2,6 +2,12 @@
 
 Use one **key** everywhere. Example below uses `customers`.
 
+> **Shortcut (development only):** **Super Admin → Menu Management → Create Menu Item**, leave
+> *"Also generate module code"* ticked. It does steps 1, 2, 4 (permission grants), 5, 6 (placeholder view)
+> and 7 for you. Restart the API server and sign in again. Deleting that menu item later (with confirmation)
+> removes the generated code too. API routes (step 3) and the real feature UI are still yours to write.
+> Hand-written modules are never touched: only code carrying `// @scaffold:<key>` tags is removed.
+
 | Place | Value |
 |---|---|
 | Module key | `customers` |

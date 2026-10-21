@@ -13,6 +13,7 @@ import { themeModule } from './theme';
 import { messagingModule } from './messaging';
 import { storageModule } from './storage/permissions';
 import { customersModule } from './customers/permissions';
+// @scaffold:imports
 
 const log = createLogger('registry');
 
@@ -52,4 +53,5 @@ registry.register(
   themeModule,
   messagingModule,
   storageModule,
+  // @scaffold:modules
 );

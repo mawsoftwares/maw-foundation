@@ -999,6 +999,7 @@ app.use('/api/v1/rbac', auth.requireAuth, createRbacRouter(data.db, cache, (perm
 app.use('/api/v1/menus', createMenuRouter(data.db, {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
+  scaffoldEnabled: getEnv('NODE_ENV', 'development') === 'development',
 }));
 // Application-wide theme: stored here, loaded by every client, instead of living in each browser's localStorage.
 app.use('/api/v1/theme', createThemeRouter(new PgThemeStore(data.db), {

@@ -39,3 +39,15 @@ export function findMenuPath(nodes: MenuTreeNode[], key: string): MenuTreeNode[]
   }
   return null;
 }
+
+/** Menu key whose DB path matches `path` (falls back to the path's last segment), so nested paths like /group/page resolve to a page key. */
+export function findMenuKeyByPath(nodes: MenuTreeNode[], path: string): string {
+  const hit = flattenMenuTree(nodes).find((n) => n.path === path);
+  return hit?.key ?? path.split('/').filter(Boolean).pop() ?? '';
+}
+
+/** Fired by Menu Management after any change so the sidebar re-fetches the tree without a page reload. */
+export const MENUS_CHANGED_EVENT = 'maw:menus-changed';
+export function notifyMenusChanged(): void {
+  window.dispatchEvent(new Event(MENUS_CHANGED_EVENT));
+}
