@@ -7,6 +7,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { breakpoints as themeBreakpoints } from '@mawsoftwares/theme';
+import type { ResponsiveProp } from '@mawsoftwares/ui-contract';
 
 // ---------------------------------------------------------------------------
 // Breakpoints — derived from theme (single source of truth)
@@ -150,14 +151,7 @@ export function useContainerWidth(ref: React.RefObject<HTMLElement | null>): num
 // useResponsiveProp — resolve a prop value based on the current breakpoint
 // ---------------------------------------------------------------------------
 
-export type ResponsiveProp<T> = T | {
-  readonly xs?: T;
-  readonly sm?: T;
-  readonly md?: T;
-  readonly lg?: T;
-  readonly xl?: T;
-  readonly '2xl'?: T;
-};
+export type { ResponsiveProp };
 
 export function useResponsiveProp<T>(prop: ResponsiveProp<T> | undefined, fallback: T): T {
   const breakpoint = useBreakpoint();

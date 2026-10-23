@@ -32,7 +32,9 @@ corresponding `packages/` implementations and are exempt from layering.
 | `@mawsoftwares/server-hono` | `sdk`, `platform`, `auth-core`, `rbac-core` | the other adapter, ui |
 | `@mawsoftwares/api-client` | `sdk`, `rbac-core` | adapters, ui |
 | `@mawsoftwares/theme` | `sdk` | everything else |
-| `@mawsoftwares/ui-web` | `sdk`, `rbac-core`, `theme`, `api-client` | adapters, `ui-native` |
+| `@mawsoftwares/ui-contract` | (types only; React as peer) | everything else |
+| `@mawsoftwares/ui-web` | `sdk`, `rbac-core`, `theme`, `api-client`, `ui-contract` | adapters, `ui-native` |
+| `@mawsoftwares/ui-web-tailwind` | `ui-contract`, `theme` | adapters, `ui-native`, `ui-web` |
 | `@mawsoftwares/ui-native` | `sdk`, `rbac-core`, `theme`, `api-client` | adapters, `ui-web` |
 | `apps/*` | anything | — (composition roots) |
 

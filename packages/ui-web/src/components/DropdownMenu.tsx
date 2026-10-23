@@ -9,6 +9,7 @@ import {
   type TextareaHTMLAttributes,
   type SelectHTMLAttributes,
 } from 'react';
+import type { DropdownMenuItem } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -16,14 +17,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // DropdownMenu
 // ---------------------------------------------------------------------------
 
-export interface DropdownMenuItem {
-  readonly key: string;
-  readonly label: string;
-  readonly danger?: boolean;
-  readonly disabled?: boolean;
-  readonly disabledReason?: string;
-  readonly onClick: () => void;
-}
+export type { DropdownMenuItem };
 
 export function DropdownMenu({
   trigger,

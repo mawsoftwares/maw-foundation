@@ -11,8 +11,7 @@ import {
 import type { INetworkManager, NetworkStatus } from '@mawsoftwares/sdk/contracts/INetworkManager';
 import type { ISyncEngine, SyncProgress, SyncState } from '@mawsoftwares/sdk/contracts/ISyncEngine';
 import type { ConflictDetail, ConflictResolution } from '@mawsoftwares/sdk/contracts/IConflictResolver';
-import { Button, Card, Badge } from './components';
-import { Spinner, Stack, Modal, Progress } from './components';
+import { Badge, Button, Card, Modal, Progress, Spinner, Stack } from './kit';
 
 // ---------------------------------------------------------------------------
 // Context

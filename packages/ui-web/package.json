@@ -27,7 +27,8 @@
     "@mawsoftwares/api-client": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
     "@mawsoftwares/sdk": "workspace:*",
-    "@mawsoftwares/theme": "workspace:*"
+    "@mawsoftwares/theme": "workspace:*",
+    "@mawsoftwares/ui-contract": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18 || ^19",

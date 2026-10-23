@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { DateRange, DateRangePickerProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -32,23 +33,7 @@ const inputBorder = (hasError: boolean) =>
 // DateRangePicker
 // ---------------------------------------------------------------------------
 
-export interface DateRange {
-  readonly start: string;
-  readonly end: string;
-}
-
-export interface DateRangePickerProps {
-  readonly label?: string;
-  readonly value: DateRange;
-  readonly onChange: (value: DateRange) => void;
-  readonly min?: string;
-  readonly max?: string;
-  readonly error?: string;
-  readonly disabled?: boolean;
-  readonly required?: boolean;
-  readonly placeholder?: string;
-  readonly style?: CSSProperties;
-}
+export type { DateRange, DateRangePickerProps };
 
 export function DateRangePicker({
   label,

@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { DatePickerProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -31,19 +32,7 @@ const inputBorder = (hasError: boolean) =>
 // DatePicker
 // ---------------------------------------------------------------------------
 
-export interface DatePickerProps {
-  readonly label?: string;
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-  readonly min?: string;
-  readonly max?: string;
-  readonly error?: string;
-  readonly disabled?: boolean;
-  readonly required?: boolean;
-  readonly placeholder?: string;
-  readonly locale?: string;
-  readonly style?: CSSProperties;
-}
+export type { DatePickerProps };
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();

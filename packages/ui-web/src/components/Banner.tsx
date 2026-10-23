@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { BannerProps, BannerVariant } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -14,15 +15,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Banner
 // ---------------------------------------------------------------------------
 
-export type BannerVariant = 'info' | 'success' | 'warning' | 'danger';
-
-export interface BannerProps {
-  readonly variant?: BannerVariant;
-  readonly children: ReactNode;
-  readonly onDismiss?: () => void;
-  readonly action?: ReactNode;
-  readonly style?: CSSProperties;
-}
+export type { BannerProps, BannerVariant };
 
 const bannerBg: Record<BannerVariant, string> = {
   info: 'var(--maw-info)',

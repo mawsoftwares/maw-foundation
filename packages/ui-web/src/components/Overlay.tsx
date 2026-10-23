@@ -1,15 +1,9 @@
 import { type ReactNode } from 'react';
-import { Modal } from './Modal';
-import { Drawer } from './Drawer';
+import { Modal } from '../kit';
+import { Drawer } from '../kit';
+import type { OverlayProps } from '@mawsoftwares/ui-contract';
 
-export interface OverlayProps {
-  open: boolean;
-  onClose: () => void;
-  title?: string;
-  children: ReactNode;
-  width?: number;
-  layout?: 'drawer' | 'modal';
-}
+export type { OverlayProps };
 
 export function Overlay({ layout = 'drawer', ...props }: OverlayProps): ReactNode {
   if (layout === 'modal') {

@@ -1,0 +1,9 @@
+/*
+ * Tailwind for the Tailwind kit WITHOUT preflight, so the app's remaining ui-web components
+ * (inline-styled) are not affected by a global CSS reset. Add `@import "tailwindcss/preflight.css" layer(base);`
+ * once every component has been migrated.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "@mawsoftwares/ui-web-tailwind/theme.css";

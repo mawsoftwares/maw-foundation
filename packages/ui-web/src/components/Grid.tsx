@@ -2,7 +2,8 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { useResponsiveProp, type ResponsiveProp } from '../responsive';
+import type { GridProps } from '@mawsoftwares/ui-contract';
+import { useResponsiveProp } from '../responsive';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -10,13 +11,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Grid
 // ---------------------------------------------------------------------------
 
-export interface GridProps {
-  readonly children: ReactNode;
-  readonly columns?: ResponsiveProp<number | string>;
-  readonly gap?: ResponsiveProp<string | number>;
-  readonly minChildWidth?: number;
-  readonly style?: CSSProperties;
-}
+export type { GridProps };
 
 export function Grid({
   children,

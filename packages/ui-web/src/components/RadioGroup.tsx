@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { RadioGroupProps, RadioOption } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -31,24 +32,7 @@ const inputBorder = (hasError: boolean) =>
 // RadioGroup
 // ---------------------------------------------------------------------------
 
-export interface RadioOption {
-  readonly value: string;
-  readonly label: string;
-  readonly disabled?: boolean;
-}
-
-export interface RadioGroupProps {
-  readonly label?: string;
-  readonly name: string;
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-  readonly options: readonly RadioOption[];
-  readonly error?: string;
-  readonly disabled?: boolean;
-  readonly direction?: 'row' | 'column';
-  readonly required?: boolean;
-  readonly style?: CSSProperties;
-}
+export type { RadioGroupProps, RadioOption };
 
 export function RadioGroup({
   label,

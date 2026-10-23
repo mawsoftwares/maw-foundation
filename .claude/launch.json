@@ -4,14 +4,50 @@
     {
       "name": "sample-server",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--env-file=apps/sample-server/.env", "--import=tsx", "apps/sample-server/src/main.ts"],
+      "runtimeArgs": [
+        "--env-file=apps/sample-server/.env",
+        "--import=tsx",
+        "apps/sample-server/src/main.ts"
+      ],
       "port": 4000
     },
     {
       "name": "sample-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "apps/sample-web/vite.config.ts", "--port", "5173"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "apps/sample-web/vite.config.ts",
+        "--port",
+        "5173"
+      ],
       "port": 5173
+    },
+    {
+      "name": "ui-web-tailwind-demo",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "packages/ui-web-tailwind/demo/vite.config.ts",
+        "--port",
+        "5180"
+      ],
+      "port": 5180
+    },
+    {
+      "name": "sample-web-tailwind",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "VITE_UI_KIT=tailwind",
+        "npx",
+        "vite",
+        "--config",
+        "apps/sample-web/vite.config.ts",
+        "--port",
+        "5185"
+      ],
+      "port": 5185
     }
   ]
 }

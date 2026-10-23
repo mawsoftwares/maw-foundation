@@ -3,6 +3,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { PanelProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -10,15 +11,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Panel
 // ---------------------------------------------------------------------------
 
-export interface PanelProps {
-  readonly title?: string;
-  readonly children: ReactNode;
-  readonly actions?: ReactNode;
-  readonly collapsible?: boolean;
-  readonly defaultCollapsed?: boolean;
-  readonly variant?: 'default' | 'outlined' | 'elevated';
-  readonly style?: CSSProperties;
-}
+export type { PanelProps };
 
 export function Panel({
   title,

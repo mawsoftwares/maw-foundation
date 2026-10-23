@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { AlertProps, AlertVariant } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -14,16 +15,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Alert
 // ---------------------------------------------------------------------------
 
-export type AlertVariant = 'info' | 'success' | 'warning' | 'danger';
-
-export interface AlertProps {
-  readonly variant?: AlertVariant;
-  readonly title?: string;
-  readonly children: ReactNode;
-  readonly onDismiss?: () => void;
-  readonly icon?: string;
-  readonly style?: CSSProperties;
-}
+export type { AlertProps, AlertVariant };
 
 const alertColors: Record<AlertVariant, { bg: string; border: string; fg: string; icon: string }> = {
   info: { bg: 'var(--maw-bgSubtle)', border: 'var(--maw-info)', fg: 'var(--maw-fg)', icon: 'ℹ️' },

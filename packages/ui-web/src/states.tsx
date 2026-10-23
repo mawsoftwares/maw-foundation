@@ -1,6 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode, type CSSProperties } from 'react';
-import { Button } from './components';
-import { Spinner } from './components';
+import { Button, ErrorState as KitErrorState, Skeleton as KitSkeleton, Spinner } from './kit';
 
 // ---------------------------------------------------------------------------
 // ErrorBoundary
@@ -37,7 +36,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback(this.state.error, this.reset);
       }
       if (this.props.fallback !== undefined) return this.props.fallback;
-      return <ErrorState title="Something went wrong" message={this.state.error.message} retry={this.reset} />;
+      // The kit's ErrorState, so an installed UI kit also styles the boundary's default fallback.
+      return <KitErrorState title="Something went wrong" message={this.state.error.message} retry={this.reset} />;
     }
     return this.props.children;
   }
@@ -135,6 +135,7 @@ export function Skeleton({
   );
 }
 
+// SkeletonText / SkeletonRows compose the KIT's Skeleton, so an installed UI kit restyles every loading placeholder.
 export function SkeletonText({
   lines = 3,
   lastLineWidth = '60%',
@@ -149,7 +150,7 @@ export function SkeletonText({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap, ...style }}>
       {Array.from({ length: lines }, (_, i) => (
-        <Skeleton key={i} width={i === lines - 1 ? lastLineWidth : '100%'} />
+        <KitSkeleton key={i} width={i === lines - 1 ? lastLineWidth : '100%'} />
       ))}
     </div>
   );
@@ -169,7 +170,7 @@ export function SkeletonRows({
       {Array.from({ length: rows }, (_, r) => (
         <div key={r} style={{ display: 'flex', gap: 'var(--maw-space-lg)' }}>
           {Array.from({ length: columns }, (_, c) => (
-            <Skeleton key={c} height={14} style={{ flex: c === 0 ? '0 0 24px' : 1 }} />
+            <KitSkeleton key={c} height={14} style={{ flex: c === 0 ? '0 0 24px' : 1 }} />
           ))}
         </div>
       ))}

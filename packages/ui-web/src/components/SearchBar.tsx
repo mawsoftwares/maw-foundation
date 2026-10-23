@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { SearchBarProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -13,15 +14,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // SearchBar
 // ---------------------------------------------------------------------------
 
-export interface SearchBarProps {
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-  readonly placeholder?: string;
-  readonly debounceMs?: number;
-  readonly onSearch?: (query: string) => void;
-  readonly loading?: boolean;
-  readonly style?: CSSProperties;
-}
+export type { SearchBarProps };
 
 export function SearchBar({
   value,
@@ -90,7 +83,12 @@ export function SearchBar({
       )}
       {value && (
         <button
-          onClick={() => { onChange(''); onSearch?.(''); }}
+          onClick={() => {
+            // Drop a pending debounced search, or onSearch(<old text>) would fire after the box was cleared.
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            onChange('');
+            onSearch?.('');
+          }}
           aria-label="Clear search"
           style={{
             ...base,

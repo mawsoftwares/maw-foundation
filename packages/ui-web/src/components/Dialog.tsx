@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { useIsMobile } from '../responsive';
+import type { DialogProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -16,16 +17,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Dialog
 // ---------------------------------------------------------------------------
 
-export interface DialogProps {
-  readonly open: boolean;
-  readonly onClose: () => void;
-  readonly title?: string;
-  readonly children: ReactNode;
-  readonly footer?: ReactNode;
-  readonly width?: number;
-  readonly closeOnOverlay?: boolean;
-  readonly style?: CSSProperties;
-}
+export type { DialogProps };
 
 export function Dialog({
   open,
@@ -44,9 +36,11 @@ export function Dialog({
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  if (!open) return null;
-
+  // Hooks must run on every render: calling this after the early return below changed the hook count when `open`
+  // flipped, which made React throw "Rendered more hooks than during the previous render" and unmount the whole tree.
   const isMobile = useIsMobile();
+
+  if (!open) return null;
 
   return (
     <div

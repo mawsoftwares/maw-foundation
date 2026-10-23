@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { TimePickerProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -31,20 +32,7 @@ const inputBorder = (hasError: boolean) =>
 // TimePicker
 // ---------------------------------------------------------------------------
 
-export interface TimePickerProps {
-  readonly label?: string;
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-  readonly error?: string;
-  readonly disabled?: boolean;
-  readonly required?: boolean;
-  readonly step?: number;
-  readonly use24Hour?: boolean;
-  readonly min?: string;
-  readonly max?: string;
-  readonly placeholder?: string;
-  readonly style?: CSSProperties;
-}
+export type { TimePickerProps };
 
 function generateTimeOptions(step: number, use24Hour: boolean, min?: string, max?: string): { value: string; label: string }[] {
   const opts: { value: string; label: string }[] = [];

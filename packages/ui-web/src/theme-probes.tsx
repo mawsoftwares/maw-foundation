@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { PROP_MEASURE, RENDER_PROBES, type Measurements, type RenderProbe } from '@mawsoftwares/theme';
-import { Badge, Button, Card, TextField } from './components';
 import { useTheme } from './theme';
+import { Badge, Button, Card, TextField } from './kit';
 
 const BADGE_VARIANTS = { 'badge-default': 'default', 'badge-success': 'success', 'badge-danger': 'danger', 'badge-warning': 'warning', 'badge-info': 'info' } as const;
 const BUTTON_VARIANTS = {

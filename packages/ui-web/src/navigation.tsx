@@ -8,29 +8,33 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { Button, Badge, Drawer, Icon, IconButton } from './components';
 import { useIsMobile } from './responsive';
+import {
+  AppShellView as KitAppShellView,
+  Badge,
+  BreadcrumbTrail as KitBreadcrumbTrail,
+  Button,
+  Drawer,
+  Icon,
+  IconButton,
+  SidebarView as KitSidebarView,
+} from './kit';
+import type {
+  AppShellViewProps,
+  BreadcrumbItem,
+  BreadcrumbTrailProps,
+  NavItem,
+  SidebarSlot,
+  SidebarViewProps,
+} from '@mawsoftwares/ui-contract';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export interface NavItem {
-  key: string;
-  label: string;
-  icon?: string;
-  path: string;
-  permission?: string;
-  badge?: string | number;
-  children?: NavItem[];
-  sortOrder?: number;
-  group?: string;
-}
+export type { NavItem };
 
-export interface BreadcrumbItem {
-  label: string;
-  path?: string;
-}
+export type { BreadcrumbItem };
 
 export interface NavigationConfig {
   items: NavItem[];
@@ -130,29 +134,26 @@ export function useNavigation(): NavigationContextValue {
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
-type SidebarSlot = ReactNode | ((collapsed: boolean) => ReactNode);
-
 function resolveSidebarSlot(slot: SidebarSlot | undefined, collapsed: boolean): ReactNode {
   if (slot === undefined) return undefined;
   if (typeof slot === 'function') return slot(collapsed);
   return slot;
 }
 
-export function Sidebar({
+export function SidebarView({
+  items,
+  activeKey,
+  collapsed,
+  isMobile,
+  onNavigate,
+  onToggleCollapsed,
+  onClose,
   header,
   logo,
   title,
   footer,
   style,
-}: {
-  header?: SidebarSlot;
-  logo?: ReactNode;
-  title?: ReactNode;
-  footer?: SidebarSlot;
-  style?: CSSProperties;
-}): ReactNode {
-  const { items, activeKey, collapsed, navigate, toggleSidebar, setCollapsed } = useNavigation();
-
+}: SidebarViewProps): ReactNode {
   const grouped = useMemo(() => {
     const groups = new Map<string, NavItem[]>();
     for (const item of items) {
@@ -163,16 +164,10 @@ export function Sidebar({
     return groups;
   }, [items]);
 
-  const isMobile = useIsMobile();
   const isRail = collapsed && !isMobile;
   const effectiveWidth = isMobile
     ? '100%'
     : (collapsed ? 'var(--maw-layout-shell-sidebar-collapsed, 64px)' : 'var(--maw-layout-shell-sidebar-expanded, 260px)');
-
-  const handleNavigate = (path: string) => {
-    navigate(path);
-    if (isMobile) setCollapsed(true);
-  };
 
   const resolvedHeader = resolveSidebarSlot(header, isRail);
   const brandHeader = logo !== undefined || title !== undefined
@@ -251,7 +246,7 @@ export function Sidebar({
           {isMobile && (
             <IconButton
               label="Close menu"
-              onClick={() => setCollapsed(true)}
+              onClick={onClose}
               style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
             >
               <Icon name="x" size={18} />
@@ -264,7 +259,7 @@ export function Sidebar({
         <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
           <IconButton
             label={collapsed ? 'Expand' : 'Collapse'}
-            onClick={toggleSidebar}
+            onClick={onToggleCollapsed}
             style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
           >
             <Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size={18} />
@@ -281,7 +276,7 @@ export function Sidebar({
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={collapsed && !isMobile} onNavigate={handleNavigate} />
+              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={collapsed && !isMobile} onNavigate={onNavigate} />
             ))}
           </div>
         ))}
@@ -300,6 +295,43 @@ export function Sidebar({
         </div>
       )}
     </aside>
+  );
+}
+
+/** The sidebar for the navigation context, rendered with the KIT's SidebarView (same props as before: slots + style). */
+export function Sidebar({
+  header,
+  logo,
+  title,
+  footer,
+  style,
+}: {
+  header?: SidebarSlot;
+  logo?: ReactNode;
+  title?: ReactNode;
+  footer?: SidebarSlot;
+  style?: CSSProperties;
+}): ReactNode {
+  const { items, activeKey, collapsed, navigate, toggleSidebar, setCollapsed } = useNavigation();
+  const isMobile = useIsMobile();
+  return (
+    <KitSidebarView
+      items={items}
+      activeKey={activeKey}
+      collapsed={collapsed}
+      isMobile={isMobile}
+      onNavigate={(path) => {
+        navigate(path);
+        if (isMobile) setCollapsed(true);
+      }}
+      onToggleCollapsed={toggleSidebar}
+      onClose={() => setCollapsed(true)}
+      header={header}
+      logo={logo}
+      title={title}
+      footer={footer}
+      style={style}
+    />
   );
 }
 
@@ -425,17 +457,16 @@ function SidebarItem({
 }
 
 // ---------------------------------------------------------------------------
-// Breadcrumbs — uses Button from components
+// BreadcrumbTrail — presentational (items + onNavigate); the UI-kit contract component
 // ---------------------------------------------------------------------------
 
-export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNode {
-  const { breadcrumbs, navigate } = useNavigation();
-  if (breadcrumbs.length === 0) return null;
+export function BreadcrumbTrail({ items, onNavigate, style }: BreadcrumbTrailProps): ReactNode {
+  if (items.length === 0) return null;
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))', ...style }}>
-      {breadcrumbs.map((crumb, i) => {
-        const isLast = i === breadcrumbs.length - 1;
+      {items.map((crumb, i) => {
+        const isLast = i === items.length - 1;
         return (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {i > 0 && <span style={{ color: 'var(--maw-fgSubtle)' }}>/</span>}
@@ -444,7 +475,7 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
             ) : (
               <Button
                 variant="ghost"
-                onClick={() => navigate(crumb.path!)}
+                onClick={() => onNavigate(crumb.path!)}
                 style={{ border: 'none', padding: 0, fontSize: 'inherit', color: 'var(--maw-brand)' }}
               >
                 {crumb.label}
@@ -458,40 +489,41 @@ export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNod
 }
 
 // ---------------------------------------------------------------------------
-// AppShell — standard app layout with sidebar + header + content
+// Breadcrumbs — the trail from the navigation context, rendered with the KIT's BreadcrumbTrail
 // ---------------------------------------------------------------------------
+
+export function Breadcrumbs({ style }: { style?: CSSProperties } = {}): ReactNode {
+  const { breadcrumbs, navigate } = useNavigation();
+  return <KitBreadcrumbTrail items={breadcrumbs} onNavigate={navigate} style={style} />;
+}
 
 // ---------------------------------------------------------------------------
 // AppShell — standard app layout with sidebar + header + content
 // ---------------------------------------------------------------------------
 
-export function AppShell({
+// ---------------------------------------------------------------------------
+// AppShell — standard app layout with sidebar + header + content
+// ---------------------------------------------------------------------------
+
+export function AppShellView({
   sidebar,
   header,
   actions,
   children,
+  isMobile,
+  menuOpen,
+  onMenuToggle,
+  onMenuClose,
+  pageTitle,
   style,
-}: {
-  sidebar: ReactNode;
-  header?: ReactNode;
-  actions?: ReactNode;
-  children: ReactNode;
-  style?: CSSProperties;
-}): ReactNode {
-  const isMobile = useIsMobile();
-  const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs } = useNavigation();
-  const pageTitle =
-    breadcrumbs[breadcrumbs.length - 1]?.label
-    ?? items.find((item) => item.key === activeKey)?.label
-    ?? '';
-
+}: AppShellViewProps): ReactNode {
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-canvas)', ...style }}>
       {!isMobile && sidebar}
       {isMobile && (
         <Drawer
-          open={!collapsed}
-          onClose={() => setCollapsed(true)}
+          open={menuOpen}
+          onClose={onMenuClose}
           side="left"
           width={280}
           style={{ padding: 0 }}
@@ -527,7 +559,7 @@ export function AppShell({
             {isMobile && (
             <IconButton
               label="Menu"
-              onClick={toggleSidebar}
+              onClick={onMenuToggle}
               style={{ color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}
             >
               <Icon name="menu" size={18} />
@@ -603,5 +635,42 @@ export function AppShell({
         )}
       </div>
     </div>
+  );
+}
+
+/** The application frame for the navigation context, rendered with the KIT's AppShellView (same props as before). */
+export function AppShell({
+  sidebar,
+  header,
+  actions,
+  children,
+  style,
+}: {
+  sidebar: ReactNode;
+  header?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+  style?: CSSProperties;
+}): ReactNode {
+  const isMobile = useIsMobile();
+  const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs } = useNavigation();
+  const pageTitle =
+    breadcrumbs[breadcrumbs.length - 1]?.label
+    ?? items.find((item) => item.key === activeKey)?.label
+    ?? '';
+  return (
+    <KitAppShellView
+      sidebar={sidebar}
+      header={header}
+      actions={actions}
+      isMobile={isMobile}
+      menuOpen={!collapsed}
+      onMenuToggle={toggleSidebar}
+      onMenuClose={() => setCollapsed(true)}
+      pageTitle={pageTitle}
+      style={style}
+    >
+      {children}
+    </KitAppShellView>
   );
 }

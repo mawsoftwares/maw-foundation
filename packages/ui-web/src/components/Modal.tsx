@@ -1,4 +1,4 @@
-import { IconButton } from './IconButton';
+import { IconButton } from '../kit';
 import {
   useState,
   useRef,

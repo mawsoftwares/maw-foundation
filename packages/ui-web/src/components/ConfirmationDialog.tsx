@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { Button } from './Button';
+import { Button } from '../kit';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 

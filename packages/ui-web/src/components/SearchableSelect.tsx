@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { SearchableSelectOption, SearchableSelectProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -31,27 +32,7 @@ const inputBorder = (hasError: boolean) =>
 // SearchableSelect
 // ---------------------------------------------------------------------------
 
-export interface SearchableSelectOption {
-  readonly value: string;
-  readonly label: string;
-  readonly disabled?: boolean;
-}
-
-export interface SearchableSelectProps {
-  readonly label?: string;
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-  readonly options?: readonly SearchableSelectOption[];
-  readonly loadOptions?: (query: string) => Promise<readonly SearchableSelectOption[]>;
-  readonly placeholder?: string;
-  readonly error?: string;
-  readonly disabled?: boolean;
-  readonly loading?: boolean;
-  readonly clearable?: boolean;
-  readonly debounceMs?: number;
-  readonly required?: boolean;
-  readonly style?: CSSProperties;
-}
+export type { SearchableSelectOption, SearchableSelectProps };
 
 export function SearchableSelect({
   label,

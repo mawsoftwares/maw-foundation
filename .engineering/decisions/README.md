@@ -15,3 +15,4 @@ This directory contains ADRs documenting key architectural decisions and their r
 
 - [ADR: Dual Backend Architecture (Node.js + PHP)](ADR-dual-backend.md)
 - [ADR: Laravel for PHP Backend](ADR-php-laravel.md)
+- [ADR: Swappable Web UI Kits via a Shared Contract](ADR-ui-kit-contract.md)

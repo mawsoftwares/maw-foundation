@@ -14,13 +14,10 @@ import type {
 } from '@mawsoftwares/sdk';
 import { getPhoneProfile } from '@mawsoftwares/sdk/kernel/validate';
 import { useDynamicForm, evaluateCondition, type UseDynamicFormReturn, type UseDynamicFormOptions, type DynamicFieldState } from './dynamic-form-engine';
-import { TextField } from './components';
-import { TextArea, Select, Checkbox, Toggle, Spinner } from './components';
-import { RadioGroup, MultiSelect, SearchableSelect, DatePicker, TimePicker } from './components';
 import { FormField } from './form';
-import { Tabs } from './components';
-import { Wizard, type WizardStep } from './components';
+import type { WizardStep } from './components';
 import { useResponsiveProp } from './responsive';
+import { Checkbox, DatePicker, MultiSelect, RadioGroup, SearchableSelect, Select, Spinner, Tabs, TextArea, TextField, TimePicker, Toggle, Wizard } from './kit';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 

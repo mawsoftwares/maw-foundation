@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { useIsMobile } from '../responsive';
+import type { DrawerProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -16,19 +17,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Drawer
 // ---------------------------------------------------------------------------
 
-export interface DrawerProps {
-  readonly open: boolean;
-  readonly onClose: () => void;
-  readonly title?: string;
-  readonly children: ReactNode;
-  readonly footer?: ReactNode;
-  readonly side?: 'left' | 'right';
-  readonly width?: number | string;
-  /** When true, the panel stretches to the viewport on small screens. Defaults to true for right-side drawers (forms) and false for left-side drawers (nav) so the page stays visible behind an overlay. */
-  readonly fullWidthOnMobile?: boolean;
-  readonly style?: CSSProperties;
-  readonly contentStyle?: CSSProperties;
-}
+export type { DrawerProps };
 
 export function Drawer({
   open,

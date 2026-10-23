@@ -1,61 +1,14 @@
 import { useCallback, useMemo, useState, type ReactNode, type CSSProperties } from 'react';
-import { Checkbox, Select, IconButton, Stack, Spinner, Card } from './components';
 import { useIsMobile } from './responsive';
 import { SkeletonRows } from './states';
+import { Card, Checkbox, IconButton, Select, Spinner, Stack } from './kit';
+import type { ColumnDef, DataTableProps, PaginationState, SortDirection, SortState } from '@mawsoftwares/ui-contract';
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — defined once in @mawsoftwares/ui-contract so every UI kit shares them
 // ---------------------------------------------------------------------------
 
-export interface ColumnDef<T> {
-  key: string;
-  header: string;
-  render?: (row: T, index: number) => ReactNode;
-  sortable?: boolean;
-  width?: string | number;
-  align?: 'left' | 'center' | 'right';
-}
-
-export type SortDirection = 'asc' | 'desc';
-
-export interface SortState {
-  column: string;
-  direction: SortDirection;
-}
-
-export interface PaginationState {
-  page: number;
-  pageSize: number;
-  total: number;
-}
-
-export interface DataTableProps<T> {
-  columns: readonly ColumnDef<T>[];
-  data: readonly T[];
-  keyField: keyof T;
-
-  sort?: SortState;
-  onSort?: (sort: SortState) => void;
-
-  pagination?: PaginationState;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
-  pageSizeOptions?: readonly number[];
-
-  selectable?: boolean;
-  selectedKeys?: ReadonlySet<string>;
-  onSelectionChange?: (keys: Set<string>) => void;
-
-  onRowClick?: (row: T) => void;
-  rowActions?: (row: T) => ReactNode;
-
-  loading?: boolean;
-  emptyMessage?: string;
-  compact?: boolean;
-  stickyHeader?: boolean;
-  responsive?: boolean;
-  style?: CSSProperties;
-}
+export type { ColumnDef, DataTableProps, PaginationState, SortDirection, SortState };
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 

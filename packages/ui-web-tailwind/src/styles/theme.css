@@ -1,0 +1,94 @@
+/*
+ * Maps Tailwind's design tokens onto the foundation's --maw-* CSS variables
+ * (emitted at runtime by ThemeProvider / @mawsoftwares/theme). Tailwind utilities
+ * such as `bg-brand`, `text-fg-muted`, `rounded-md` therefore follow tenant branding
+ * and dark mode with no Tailwind config of their own.
+ *
+ * Consumer app stylesheet:
+ *   @import "tailwindcss";
+ *   @import "@mawsoftwares/ui-web-tailwind/theme.css";
+ */
+@source "../";
+
+@theme inline {
+  --color-bg: var(--maw-bg);
+  --color-bg-muted: var(--maw-bgMuted);
+  --color-bg-subtle: var(--maw-bgSubtle);
+  --color-fg: var(--maw-fg);
+  --color-fg-muted: var(--maw-fgMuted);
+  --color-fg-subtle: var(--maw-fgSubtle);
+  --color-border: var(--maw-border);
+  --color-border-focus: var(--maw-borderFocus);
+  --color-brand: var(--maw-brand);
+  --color-brand-contrast: var(--maw-brandContrast);
+  --color-danger: var(--maw-danger);
+  --color-danger-bg: var(--maw-dangerBg);
+  --color-success: var(--maw-success);
+  --color-success-bg: var(--maw-successBg);
+  --color-warning: var(--maw-warning);
+  --color-warning-bg: var(--maw-warningBg);
+  --color-info: var(--maw-info);
+  --color-info-bg: var(--maw-infoBg);
+
+  --radius-sm: var(--maw-radius-sm);
+  --radius-md: var(--maw-radius-md);
+  --radius-lg: var(--maw-radius-lg);
+  --radius-pill: var(--maw-radius-pill);
+
+  --shadow-sm: var(--maw-shadow-sm);
+  --shadow-md: var(--maw-shadow-md);
+  --shadow-lg: var(--maw-shadow-lg);
+
+  --font-sans: var(--maw-font-family);
+
+  --animate-overlay-in: overlay-in 150ms ease-out;
+  --animate-dialog-in: dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-sheet-in: sheet-in 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-drawer-in-right: drawer-in-right 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-drawer-in-left: drawer-in-left 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-popover-in: popover-in 150ms ease-out;
+  --animate-shimmer: shimmer 1.4s ease infinite;
+  --animate-collapsible-down: collapsible-down 200ms ease-out;
+  --animate-collapsible-up: collapsible-up 200ms ease-out;
+  --animate-accordion-down: accordion-down 200ms ease-out;
+  --animate-accordion-up: accordion-up 200ms ease-out;
+
+  @keyframes overlay-in {
+    from { opacity: 0; }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; scale: 0.96; }
+  }
+  @keyframes sheet-in {
+    from { translate: 0 100%; }
+  }
+  @keyframes drawer-in-right {
+    from { translate: 100% 0; }
+  }
+  @keyframes drawer-in-left {
+    from { translate: -100% 0; }
+  }
+  @keyframes collapsible-down {
+    from { height: 0; }
+    to { height: var(--radix-collapsible-content-height); }
+  }
+  @keyframes collapsible-up {
+    from { height: var(--radix-collapsible-content-height); }
+    to { height: 0; }
+  }
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+  @keyframes shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+  @keyframes popover-in {
+    from { opacity: 0; translate: 0 -4px; }
+  }
+}

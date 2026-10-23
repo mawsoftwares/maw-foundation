@@ -3,6 +3,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { AccordionItem, AccordionProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -10,19 +11,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Accordion
 // ---------------------------------------------------------------------------
 
-export interface AccordionItem {
-  readonly key: string;
-  readonly title: string;
-  readonly content: ReactNode;
-  readonly disabled?: boolean;
-}
-
-export interface AccordionProps {
-  readonly items: readonly AccordionItem[];
-  readonly multiple?: boolean;
-  readonly defaultExpanded?: readonly string[];
-  readonly style?: CSSProperties;
-}
+export type { AccordionItem, AccordionProps };
 
 export function Accordion({
   items,

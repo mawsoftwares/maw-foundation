@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { MultiSelectOption, MultiSelectProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -31,26 +32,7 @@ const inputBorder = (hasError: boolean) =>
 // MultiSelect
 // ---------------------------------------------------------------------------
 
-export interface MultiSelectOption {
-  readonly value: string;
-  readonly label: string;
-  readonly disabled?: boolean;
-}
-
-export interface MultiSelectProps {
-  readonly label?: string;
-  readonly value: readonly string[];
-  readonly onChange: (value: readonly string[]) => void;
-  readonly options: readonly MultiSelectOption[];
-  readonly placeholder?: string;
-  readonly error?: string;
-  readonly disabled?: boolean;
-  readonly loading?: boolean;
-  readonly searchable?: boolean;
-  readonly maxSelections?: number;
-  readonly required?: boolean;
-  readonly style?: CSSProperties;
-}
+export type { MultiSelectOption, MultiSelectProps };
 
 export function MultiSelect({
   label,

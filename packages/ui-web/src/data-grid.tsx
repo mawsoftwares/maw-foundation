@@ -17,10 +17,8 @@ import type {
   ServerDataSourceConfig,
 } from '@mawsoftwares/sdk';
 import { useDataGrid, type UseDataGridReturn } from './data-grid-engine';
-import { Checkbox, Select, IconButton, Spinner, Stack } from './components';
-import { SearchBar } from './components';
-import { ConfirmationDialog } from './components';
 import { useIsMobile, useMediaQuery, BREAKPOINTS } from './responsive';
+import { Checkbox, ConfirmationDialog, IconButton, SearchBar, Select, Spinner, Stack } from './kit';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 

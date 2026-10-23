@@ -3,6 +3,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { SpacerProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -10,11 +11,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Spacer
 // ---------------------------------------------------------------------------
 
-export interface SpacerProps {
-  readonly size?: string;
-  readonly axis?: 'horizontal' | 'vertical';
-  readonly style?: CSSProperties;
-}
+export type { SpacerProps };
 
 export function Spacer({
   size = 'var(--maw-space-md)',

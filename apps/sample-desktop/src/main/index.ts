@@ -1,6 +1,5 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, shell, ipcMain, Menu } from 'electron';
-import { is } from 'electron-vite/node';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -13,7 +12,8 @@ function createWindow(): void {
     show: false,
     title: 'MAW Foundation',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      // The package is `"type": "module"`, so electron-vite emits the preload as .mjs (an ESM preload needs sandbox: false, set below).
+      preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,
       contextIsolation: true,
       nodeIntegration: false,
@@ -29,7 +29,8 @@ function createWindow(): void {
     return { action: 'deny' };
   });
 
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+  // `electron-vite dev` sets ELECTRON_RENDERER_URL to the renderer dev server; a packaged app always loads the built file.
+  if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));

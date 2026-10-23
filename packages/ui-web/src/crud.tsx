@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode, type CSSProperties } from 'react';
 import type { ColumnDef, SortState } from './data-table';
-import { Button, TextField, Card } from './components';
-import { IconButton, Stack } from './components';
+import { Button, Card, IconButton, Stack, TextField } from './kit';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { WizardProps, WizardStep } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -13,23 +14,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Wizard
 // ---------------------------------------------------------------------------
 
-export interface WizardStep {
-  readonly key: string;
-  readonly title: string;
-  readonly content: ReactNode;
-  readonly isValid?: boolean;
-}
-
-export interface WizardProps {
-  readonly steps: readonly WizardStep[];
-  readonly activeStep: number;
-  readonly onStepChange: (step: number) => void;
-  readonly onComplete?: () => void;
-  readonly completeLabel?: string;
-  readonly nextLabel?: string;
-  readonly backLabel?: string;
-  readonly style?: CSSProperties;
-}
+export type { WizardProps, WizardStep };
 
 export function Wizard({
   steps,

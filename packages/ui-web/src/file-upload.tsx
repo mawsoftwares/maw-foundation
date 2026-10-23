@@ -10,8 +10,7 @@ import {
 } from 'react';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import { formatFileSize, getMimeType, isImageFile, sanitizeFilename } from '@mawsoftwares/sdk/kernel/file';
-import { Button } from './components';
-import { IconButton, Stack, Progress, Spinner } from './components';
+import { Button, IconButton, Progress, Spinner, Stack } from './kit';
 
 // ---------------------------------------------------------------------------
 // Types

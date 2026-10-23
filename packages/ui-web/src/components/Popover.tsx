@@ -5,19 +5,12 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { PopoverProps } from '@mawsoftwares/ui-contract';
 import { createPortal } from 'react-dom';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
-export interface PopoverProps {
-  readonly open: boolean;
-  readonly onClose: () => void;
-  readonly anchorRef: React.RefObject<HTMLElement | null>;
-  readonly children: ReactNode;
-  readonly placement?: 'top' | 'bottom' | 'left' | 'right';
-  readonly align?: 'start' | 'center' | 'end';
-  readonly style?: CSSProperties;
-}
+export type { PopoverProps };
 
 export function Popover({
   open,

@@ -46,7 +46,9 @@ const ABOVE = {
   'server-hono': ['server-express', 'ui-web', 'ui-native', 'express'],
   'api-client': ['server-express', 'server-hono', 'ui-web', 'ui-native', 'express', 'hono', 'postgres'],
   theme: ['platform', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'ui-web', 'ui-native', 'express', 'hono', 'postgres'],
+  'ui-contract': ['platform', 'database', 'rbac-core', 'auth-core', 'server-express', 'server-hono', 'api-client', 'theme', 'ui-web', 'ui-web-tailwind', 'ui-native', 'express', 'hono', 'postgres'],
   'ui-web': ['server-express', 'server-hono', 'ui-native', 'express', 'hono', 'postgres'],
+  'ui-web-tailwind': ['server-express', 'server-hono', 'ui-native', 'ui-web', 'express', 'hono', 'postgres'],
   'ui-auth': ['server-express', 'server-hono', 'ui-native', 'express', 'hono', 'postgres'],
   'ui-native': ['server-express', 'server-hono', 'ui-web', 'express', 'hono', 'postgres'],
 };

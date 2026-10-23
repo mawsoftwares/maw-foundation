@@ -1,20 +1,13 @@
 import { useEffect, type ReactNode, type CSSProperties } from 'react';
-import { Card, Grid, Stack } from './components';
 import { useResponsiveProp, type ResponsiveProp } from './responsive';
+import { Card, Grid, KpiCard as KitKpiCard, Stack } from './kit';
+import type { KpiConfig } from '@mawsoftwares/ui-contract';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export interface KpiConfig {
-  label: string;
-  value: string | number;
-  previousValue?: string | number;
-  change?: number;
-  changeLabel?: string;
-  icon?: string;
-  color?: string;
-}
+export type { KpiConfig };
 
 export interface WidgetConfig {
   key: string;
@@ -67,7 +60,7 @@ export function KpiCard({
 }
 
 // ---------------------------------------------------------------------------
-// KpiGrid — row of KPI cards
+// KpiGrid — row of KPI cards (rendered with the KIT's KpiCard)
 // ---------------------------------------------------------------------------
 
 export function KpiGrid({
@@ -86,7 +79,7 @@ export function KpiGrid({
       style={{ marginBottom: 'var(--maw-space-xl)', ...style }}
     >
       {kpis.map((kpi, i) => (
-        <KpiCard key={i} {...kpi} />
+        <KitKpiCard key={i} {...kpi} />
       ))}
     </Grid>
   );

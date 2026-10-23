@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { SettingsGroup, SettingsLayoutProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -13,17 +14,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // SettingsLayout
 // ---------------------------------------------------------------------------
 
-export interface SettingsGroup {
-  readonly key: string;
-  readonly title: string;
-  readonly description?: string;
-  readonly children: ReactNode;
-}
-
-export interface SettingsLayoutProps {
-  readonly groups: readonly SettingsGroup[];
-  readonly style?: CSSProperties;
-}
+export type { SettingsGroup, SettingsLayoutProps };
 
 export function SettingsLayout({
   groups,

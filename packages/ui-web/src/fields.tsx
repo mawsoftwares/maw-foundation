@@ -12,21 +12,21 @@ import {
   phone as validatePhone,
   getPhoneProfile,
 } from '@mawsoftwares/sdk/kernel/validate';
+import { ProfileAvatarUpload } from './components';
 import {
-  TextField,
-  TextArea,
-  Select,
+  Checkbox,
+  DatePicker,
+  DateRangePicker,
+  IconButton,
   MultiSelect,
   RadioGroup,
-  Checkbox,
-  Toggle,
-  DatePicker,
-  TimePicker,
-  DateRangePicker,
   SearchableSelect,
-  ProfileAvatarUpload,
-  IconButton,
-} from './components';
+  Select,
+  TextArea,
+  TextField,
+  TimePicker,
+  Toggle,
+} from './kit';
 import type {
   RadioOption,
   MultiSelectOption,

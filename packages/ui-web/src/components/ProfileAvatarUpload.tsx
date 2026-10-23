@@ -1,8 +1,8 @@
 import { useRef, useState, type ChangeEvent, type CSSProperties, type ReactNode } from 'react';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
-import { Avatar } from './Avatar';
-import { IconButton } from './IconButton';
-import { Spinner } from './Spinner';
+import { Avatar } from '../kit';
+import { IconButton } from '../kit';
+import { Spinner } from '../kit';
 
 export interface ProfileAvatarUploadProps {
   readonly src?: string;

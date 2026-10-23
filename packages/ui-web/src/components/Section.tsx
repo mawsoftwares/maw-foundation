@@ -3,6 +3,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import type { SectionProps } from '@mawsoftwares/ui-contract';
 
 const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: 'border-box' };
 
@@ -10,13 +11,7 @@ const base: CSSProperties = { fontFamily: 'var(--maw-font-family)', boxSizing: '
 // Section
 // ---------------------------------------------------------------------------
 
-export interface SectionProps {
-  readonly title: string;
-  readonly description?: string;
-  readonly children: ReactNode;
-  readonly actions?: ReactNode;
-  readonly style?: CSSProperties;
-}
+export type { SectionProps };
 
 export function Section({
   title,
