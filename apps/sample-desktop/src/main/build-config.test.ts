@@ -22,7 +22,7 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe('sample-desktop electron-vite setup', () => {
-  const pkg = JSON.parse(read('package.json')) as { main: string; type?: string };
+  const pkg = JSON.parse(read('package.json')) as { main: string; type?: string; scripts: Record<string, string> };
   it("names the config the way electron-vite auto-discovers it (electron.vite.config.*, with a dot)", () => {
     expect(existsSync(join(root, 'electron.vite.config.ts'))).toBe(true);
     const strays = readdirSync(root).filter((f) => /^electron-vite\.config\./.test(f));
@@ -36,6 +36,18 @@ describe('sample-desktop electron-vite setup', () => {
     expect(config).toContain("outDir: 'dist/preload'");
     expect(config).toContain("'dist/renderer'");
     expect(read('electron-builder.yml')).toContain('dist/**/*');
+  });
+
+  it('wires the macOS afterSign hook, and the script it names exists', () => {
+    const builder = read('electron-builder.yml');
+    const hook = /^afterSign:\s*(\S+)\s*$/m.exec(builder)?.[1];
+    expect(hook, 'electron-builder.yml must set afterSign').toBeDefined();
+    expect(existsSync(join(root, hook!)), `afterSign script ${hook} must exist`).toBe(true);
+  });
+
+  it('offers a universal (arm64 + x64) macOS build alongside the fast host-arch one', () => {
+    expect(pkg.scripts['dist:mac:universal']).toBe('electron-builder --mac --universal');
+    expect(pkg.scripts['dist:mac'], 'the quick host-arch build should stay separate').toBe('electron-builder --mac');
   });
 
   it('loads the preload with the extension electron-vite emits for this package type', () => {

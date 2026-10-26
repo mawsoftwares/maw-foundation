@@ -7,6 +7,8 @@ files:
   - dist/**/*
   - "!node_modules/**/*"
 npmRebuild: false
+# macOS: repairs the signature electron-builder leaves invalid when no signing identity is set (see the script).
+afterSign: scripts/after-sign.cjs
 publish:
   provider: generic
   url: ""
