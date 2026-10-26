@@ -7,6 +7,9 @@ import {
   AuthProvider,
   DynamicAccessProvider,
   useDynamicAccess,
+  useUrlSyncedPage,
+  pageFromPathname,
+  type PagePathEntry,
   useAuth,
   NavigationProvider,
   AppShell,
@@ -160,6 +163,10 @@ function pruneNav(items: NavItem[], visible: (item: NavItem) => boolean): NavIte
   return out;
 }
 
+function flattenNavItems(items: NavItem[]): PagePathEntry[] {
+  return items.flatMap((i) => [{ key: i.key, path: i.path }, ...flattenNavItems(i.children ?? [])]);
+}
+
 function AccessDenied({ permission }: { permission: string }): ReactNode {
   return (
     <div style={{
@@ -219,7 +226,15 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const { session, loading } = useAuth();
   const { t } = useI18n();
   const { applyThemeOverrides } = useTheme();
-  const [page, setPage] = useState<Page>('dashboard');
+  const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
+  const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
+  const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
+  const urlBase = import.meta.env.BASE_URL;
+  const pagePaths = useMemo<PagePathEntry[]>(
+    () => (menuTree !== null ? flattenMenuTree(menuTree) : flattenNavItems(NAV_ITEMS)),
+    [menuTree],
+  );
+  const [page, setPage] = useState<Page>(() => pageFromPathname(window.location.pathname, urlBase, []));
 
   useEffect(() => {
     const stored = localStorage.getItem(DESIGN_MD_STORAGE_KEY);
@@ -281,10 +296,13 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     }
   }, []);
 
-  const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
   const navigate = useCallback((path: string) => {
     setPage(findMenuKeyByPath(navTree, path) as Page);
   }, [navTree]);
+
+  useUrlSyncedPage({
+    page, setPage: setPage as (p: string) => void, entries: pagePaths, base: urlBase, enabled: session !== null,
+  });
 
   const handleFeatureChange = useCallback((key: string, enabled: boolean) => {
     if (key === 'offline') setOfflineEnabled(enabled);
@@ -299,8 +317,6 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   // Menu Management drives the real nav tree from the DB (see /menus admin page);
   // fall back to the static NAV_ITEMS list (still kept in sync as a reference/offline
   // fallback) if the fetch hasn't completed yet or fails, so the sidebar is never empty.
-  const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
-  const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
   const [menuVersion, setMenuVersion] = useState(0);
   useEffect(() => {
     // A menu change can also grant a permission, so refresh the permission snapshot along with the tree.

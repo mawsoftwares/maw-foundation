@@ -214,6 +214,16 @@ export {
   type NavigationConfig,
 } from './navigation';
 
+// URL sync
+export {
+  useUrlSyncedPage,
+  pageFromPathname,
+  pathnameForPage,
+  stripBase,
+  type PagePathEntry,
+  type UseUrlSyncedPageOptions,
+} from './url-sync';
+
 // File Upload
 export {
   FileUpload,
