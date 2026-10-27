@@ -15,4 +15,10 @@ describe('tailwind Icon', () => {
     expect(names.length).toBeGreaterThan(20);
     expect(names.filter((n) => !isKnownIcon(n))).toEqual([]);
   });
+
+  it('knows the master-data icons and their menu-key aliases', () => {
+    for (const name of ['map-pin', 'share-2', 'sites', 'sources', 'building-2']) {
+      expect(isKnownIcon(name), name).toBe(true);
+    }
+  });
 });

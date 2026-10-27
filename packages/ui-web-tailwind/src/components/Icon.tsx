@@ -18,6 +18,7 @@ import {
   List,
   Lock,
   Mail,
+  MapPin,
   Menu,
   Package,
   Palette,
@@ -26,6 +27,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  Share2,
   ShoppingCart,
   TrendingUp,
   Users,
@@ -62,6 +64,8 @@ const ICONS = {
   folder: Folder,
   globe: Globe,
   mail: Mail,
+  'map-pin': MapPin,
+  'share-2': Share2,
   list: List,
   menu: Menu,
   x: X,
@@ -90,6 +94,8 @@ const ALIASES: Record<string, IconName> = {
   notifications: 'bell',
   showcase: 'palette',
   superadmin: 'shield',
+  sites: 'map-pin',
+  sources: 'share-2',
 };
 
 function resolveIconName(name: string): IconName | undefined {
