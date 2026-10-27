@@ -1,8 +1,19 @@
 {
   "name": "@mawsoftwares/ui-web-tailwind",
   "version": "0.0.1",
-  "description": "Tailwind + shadcn-style skin of @mawsoftwares/ui-web. Same component names and props, driven by the same --maw-* theme tokens. PROTOTYPE.",
-  "private": true,
+  "description": "Tailwind + shadcn-style UI kit for @mawsoftwares/ui-web. Same component names and props, driven by the same --maw-* theme tokens; install with setUIKit(tailwindKit).",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/ui-web-tailwind"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "license": "MIT",
+  "private": false,
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -54,5 +65,9 @@
   "scripts": {
     "dev": "vite --config demo/vite.config.ts --port 5180",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }
