@@ -1,5 +1,11 @@
 # @mawsoftwares/ui-web
 
+## 0.4.0
+
+### Minor Changes
+
+- d658aeb: Add `useUrlSyncedPage` (plus `pageFromPathname`, `pathnameForPage`, `stripBase`) to keep the browser address bar in step with the active page: pushes the page's URL on change, restores the page from the URL on load, and follows back/forward. Honours a deploy base path. Additive; existing exports are unchanged.
+
 ## 0.3.1
 
 ### Patch Changes
