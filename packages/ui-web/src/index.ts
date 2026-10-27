@@ -217,10 +217,18 @@ export {
 // URL sync
 export {
   useUrlSyncedPage,
+  usePageSubPath,
+  useSearchParams,
+  matchPagePath,
+  applySearchParams,
   pageFromPathname,
   pathnameForPage,
   stripBase,
   type PagePathEntry,
+  type PageMatch,
+  type PageSubPath,
+  type SearchParamUpdates,
+  type SetSubPathOptions,
   type UseUrlSyncedPageOptions,
 } from './url-sync';
 
