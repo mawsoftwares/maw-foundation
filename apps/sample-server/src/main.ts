@@ -102,7 +102,6 @@ import {
   WorkerRegistry,
   PgQueueProvider,
 } from '@mawsoftwares/queue';
-import { DynamicAccessProvider } from '@mawsoftwares/ui-web';
 import { schema } from '@mawsoftwares/database';
 import { inArray } from 'drizzle-orm';
 import {

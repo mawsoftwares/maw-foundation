@@ -238,9 +238,6 @@ importers:
       '@mawsoftwares/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
-      '@mawsoftwares/import-export':
-        specifier: workspace:*
-        version: link:../../packages/import-export
       '@mawsoftwares/platform':
         specifier: workspace:*
         version: link:../../packages/platform

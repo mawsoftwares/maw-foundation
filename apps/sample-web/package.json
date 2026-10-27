@@ -6,7 +6,6 @@
   "dependencies": {
     "@mawsoftwares/api": "workspace:*",
     "@mawsoftwares/api-client": "workspace:*",
-    "@mawsoftwares/import-export": "workspace:*",
     "@mawsoftwares/platform": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
     "@mawsoftwares/sdk": "workspace:*",
