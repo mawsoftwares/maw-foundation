@@ -69,6 +69,8 @@ const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
 type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
 
+import { PagePathsProvider } from './page-paths';
+
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
 function readAuthDeepLink(): { page: AuthPage; token: string } {
@@ -415,7 +417,9 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         actions={<TopBarActions />}
       >
         <OfflineBanner style={{ marginBottom: 'var(--maw-space-md)' }} />
-        <PageContent page={page} onFeatureChange={handleFeatureChange} featureOverrides={featureOverrides} />
+        <PagePathsProvider base={urlBase} entries={pagePaths}>
+          <PageContent page={page} onFeatureChange={handleFeatureChange} featureOverrides={featureOverrides} />
+        </PagePathsProvider>
       </AppShell>
     </NavigationProvider>
   );

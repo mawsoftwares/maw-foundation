@@ -92,3 +92,20 @@
     from { opacity: 0; translate: 0 -4px; }
   }
 }
+
+/*
+ * Minimal native-button reset. The kit's buttons (DataTable sort headers, Alert/Banner/picker clear
+ * buttons, Wizard steps, …) are styled with utilities only and assume Tailwind's preflight reset.
+ * Apps that load Tailwind WITHOUT preflight (to protect inline-styled ui-web components) would show
+ * the browser's default button border/background, so reset just buttons. Lives in the `base` layer,
+ * so any utility class or inline style still wins.
+ */
+@layer base {
+  button {
+    background-color: transparent;
+    border: 0 solid;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+  }
+}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Overlay, ConfirmationDialog } from '@mawsoftwares/ui-web';
+import { Overlay, ConfirmationDialog, useDynamicAccess } from '@mawsoftwares/ui-web';
 import type { SortState } from '@mawsoftwares/ui-web';
 import type { StoredFile } from '@mawsoftwares/sdk/contracts/IFileStorage';
 import type { UserResponseDto, CreateUserDto, UpdateUserDto, RoleOption } from './types';
+import { usePagePath } from '../../../page-paths';
 import { UsersList } from './UsersList';
 import { UserForm } from './UserForm';
 import { UserDetails } from './UserDetails';
@@ -40,8 +41,12 @@ function errorMessage(error: unknown): string | undefined {
 }
 
 export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManagerProps) {
-  const [view, setView] = useState<ViewState>('list');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The URL is the source of truth: /users (list), /users/new (create), /users/:id (details).
+  const { segments, setSegments } = usePagePath('users');
+  const { can } = useDynamicAccess();
+  const first = segments[0];
+  const view: ViewState = first === undefined ? 'list' : first === 'new' ? (can('Create_Users') ? 'create' : 'list') : 'details';
+  const selectedId = view === 'details' && first !== undefined ? first : null;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState('');
@@ -92,24 +97,15 @@ export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManager
     setPage(1);
   };
 
-  const handleCreateNew = () => {
-    setSelectedId(null);
-    setView('create');
-  };
+  const handleCreateNew = () => setSegments(['new']);
 
-  const handleViewDetails = (id: string) => {
-    setSelectedId(id);
-    setView('details');
-  };
+  const handleViewDetails = (id: string) => setSegments([id]);
 
-  const handleBackToList = () => {
-    setView('list');
-    setSelectedId(null);
-  };
+  const handleBackToList = (replace = false) => setSegments([], { replace });
 
   const handleCreate = async (data: CreateUserDto | UpdateUserDto) => {
     await createUser(data as CreateUserDto).unwrap();
-    handleBackToList();
+    handleBackToList(true);
   };
 
   const handleUpdate = async (data: UpdateUserDto) => {
@@ -122,7 +118,7 @@ export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManager
     const confirm = window.confirm('Are you sure you want to delete this user?');
     if (!confirm) return;
     await deleteUser(selectedId).unwrap();
-    handleBackToList();
+    handleBackToList(true);
   };
 
   const handleConfirmAction = async () => {
@@ -140,7 +136,7 @@ export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManager
   const detailsNode = selectedUser ? (
     <UserDetails
       user={selectedUser}
-      onBack={handleBackToList}
+      onBack={() => handleBackToList()}
       onDelete={handleDelete}
       onActivate={() => setActionConfirm({ type: 'activate', id: selectedUser.id })}
       onDeactivate={() => setActionConfirm({ type: 'deactivate', id: selectedUser.id })}
@@ -176,7 +172,7 @@ export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManager
   return (
     <>
       {isOverlayLayout ? listNode : view === 'create' ? (
-        <UserForm onSave={handleCreate} onCancel={handleBackToList} {...formProps} />
+        <UserForm onSave={handleCreate} onCancel={() => handleBackToList()} {...formProps} />
       ) : view === 'details' && detailsNode ? (
         detailsNode
       ) : (
@@ -188,19 +184,19 @@ export function UsersManager({ formLayout = 'page', uploadAvatar }: UsersManager
           <Overlay
             layout={formLayout}
             open={view === 'create'}
-            onClose={handleBackToList}
+            onClose={() => handleBackToList()}
             width={600}
             title={formLayout === 'modal' ? 'Create User' : undefined}
           >
             {view === 'create' && (
-              <UserForm onSave={handleCreate} onCancel={handleBackToList} {...formProps} />
+              <UserForm onSave={handleCreate} onCancel={() => handleBackToList()} {...formProps} />
             )}
           </Overlay>
 
           <Overlay
             layout={formLayout}
             open={view === 'details' && selectedUser !== null}
-            onClose={handleBackToList}
+            onClose={() => handleBackToList()}
             width={720}
             title={formLayout === 'modal' && selectedUser ? `Details: ${selectedUser.email}` : undefined}
           >

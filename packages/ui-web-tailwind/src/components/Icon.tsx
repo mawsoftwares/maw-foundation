@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell,
   Box,
+  Building2,
   ChartColumn,
   ChevronLeft,
   ChevronRight,
@@ -56,6 +57,7 @@ const ICONS = {
   palette: Palette,
   zap: Zap,
   box: Box,
+  'building-2': Building2,
   package: Package,
   folder: Folder,
   globe: Globe,
