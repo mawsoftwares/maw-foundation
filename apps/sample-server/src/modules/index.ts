@@ -10,6 +10,7 @@ import { auditLogsModule } from './audit-logs';
 import { featureFlagsModule } from './feature-flags';
 import { menusModule } from './menus';
 import { themeModule } from './theme';
+import { layoutModule } from './layout';
 import { messagingModule } from './messaging';
 import { storageModule } from './storage/permissions';
 import { customersModule } from './customers/permissions';
@@ -51,6 +52,7 @@ registry.register(
   featureFlagsModule,
   menusModule,
   themeModule,
+  layoutModule,
   messagingModule,
   storageModule,
   // @scaffold:modules

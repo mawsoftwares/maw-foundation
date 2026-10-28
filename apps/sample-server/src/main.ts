@@ -978,6 +978,8 @@ import { AuthSchemaUsersRepository } from './users-from-auth-pg';
 import { createRbacRouter } from './rbac-routes';
 import { createMenuRouter } from './menu-routes';
 import { createThemeRouter, PgThemeStore } from './theme-routes';
+import { createLayoutRouter } from './layout-routes';
+import { createLayoutStore, PgLayoutPersistence } from './layout-store';
 import { createMessagingRouter } from './messaging-routes';
 import { createDevSandboxRouter } from './dev-sandbox';
 
@@ -1006,6 +1008,13 @@ app.use('/api/v1/theme', createThemeRouter(new PgThemeStore(data.db), {
   requireAuth: auth.requireAuth,
   requirePermission: (perm) => auth.requirePermission(perm),
   defaultTenantId: DEMO_TENANT,
+}));
+// Project layout (draft / published / history). Live config is readable by any signed-in user; Studio access, editing and
+// publishing are separate permissions (Read_Layout / Update_Layout / Publish_Layout), enforced here on the server.
+app.use('/api/v1/layout', createLayoutRouter(createLayoutStore(new PgLayoutPersistence(data.db)), {
+  requireAuth: auth.requireAuth,
+  requirePermission: (perm) => auth.requirePermission(perm),
+  auditStore: data.auditStore,
 }));
 app.use('/api/v1/messaging', createMessagingRouter(data.db, {
   requireAuth: auth.requireAuth,

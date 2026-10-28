@@ -217,6 +217,7 @@ try {
       { key: 'theme', label: 'Theme Designer', path: '/theme', icon: 'palette', permission: 'Manage_Theme', sortOrder: 88, parentKey: 'superadmin' },
       { key: 'messaging', label: 'Messaging', path: '/messaging', icon: 'mail', permission: 'Read_Messaging', sortOrder: 89, parentKey: 'superadmin' },
       { key: 'storage-settings', label: 'Storage Settings', path: '/storage-settings', icon: 'folder', permission: 'Manage_StorageConfiguration', sortOrder: 91, parentKey: 'superadmin' },
+      { key: 'layout', label: 'Layout Studio', path: '/layout', icon: 'layout-dashboard', permission: 'Read_Layout', sortOrder: 92, parentKey: 'superadmin' },
       { key: 'settings', label: 'Settings', path: '/settings', icon: 'settings', sortOrder: 90 },
 
       { key: 'showcase', label: 'UI Showcase', path: '/showcase', icon: 'palette', sortOrder: 990, parentKey: 'superadmin' },
