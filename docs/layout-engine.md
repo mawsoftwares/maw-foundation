@@ -152,3 +152,7 @@ Classic Admin keeps exactly its previous behaviour (`fill`, `smooth`, `slide`, n
 - The Tailwind kit knows every icon name the seeded menu uses (`briefcase`, `file-text`, `calendar`, `building`, `alert-triangle`, `arrow-left-right`, …) plus a few common extras, so none is drawn as plain text.
 - The `inset` frame's gap around the app card is one step smaller (`--maw-space-md`).
 
+### Which UI kit the sample app runs
+
+The layout engine's full set of looks (right panel, tile bar, hover-expand, active-item markers, motion) is drawn by the Tailwind kit, so `pnpm sample:web` / `pnpm --filter @mawsoftwares/sample-web dev` now runs with `VITE_UI_KIT=tailwind`. The previous default is `pnpm --filter @mawsoftwares/sample-web dev:web`. Production `build` is unchanged (default kit; `build:tailwind` for the Tailwind kit).
+
