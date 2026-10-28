@@ -103,5 +103,74 @@ export const cleanLightTheme: ThemeDefinition = {
   },
 };
 
+/** Deep indigo sidebar with a translucent-white active item and a cyan accent: the "modern dark sidebar" SaaS look. */
+export const auroraTheme: ThemeDefinition = {
+  id: 'aurora',
+  overrides: {
+    palette: {
+      brand: '#5b5bf0', brandLight: '#8b8bf7', brandDark: '#4141c9', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#f6f7fd', bgSubtle: '#eff0fb',
+      fg: '#141633', fgMuted: '#555a7e', fgSubtle: '#868bab', border: '#e3e5f6', borderFocus: '#5b5bf0',
+    },
+    paletteDark: {
+      brand: '#8b8bf7', brandLight: '#adadfa', brandDark: '#6b6bf2', brandContrast: '#0a0b1f',
+      bg: '#12132b', bgMuted: '#191b38', bgSubtle: '#0c0d20', fg: '#eff0fc', fgMuted: '#a6aacb', border: '#272a4d',
+    },
+    radius: { sm: 8, md: 12, lg: 18, xl: 28 },
+    shadows: SOFT_SHADOWS,
+    shell: { bg: '#14163a', fg: '#ffffff', fgMuted: 'rgba(255, 255, 255, 0.82)', border: 'rgba(255, 255, 255, 0.10)', hover: 'rgba(255, 255, 255, 0.10)' },
+    components: {
+      'nav-item': { textColor: 'rgba(255, 255, 255, 0.9)' },
+      'nav-item-hover': { backgroundColor: 'rgba(255, 255, 255, 0.10)', textColor: '#ffffff' },
+      'nav-item-active': { backgroundColor: '#5b5bf0', textColor: '#ffffff' },
+    },
+    extraTokens: { 'shell-logo': '#9fe3ff', ...LIGHT_HEADER('#e3e5f6', '#141633') },
+  },
+};
+
+/** Flat, hairline and tight-radiused (Linear / Vercel style): neutral greys, no shadows, a near-black accent. */
+export const slateMinimalTheme: ThemeDefinition = {
+  id: 'slate-minimal',
+  overrides: {
+    palette: {
+      brand: '#18181b', brandLight: '#52525b', brandDark: '#09090b', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#fafafa', bgSubtle: '#f4f4f5',
+      fg: '#18181b', fgMuted: '#52525b', fgSubtle: '#71717a', border: '#e4e4e7', borderFocus: '#18181b',
+    },
+    paletteDark: {
+      brand: '#fafafa', brandLight: '#e4e4e7', brandDark: '#d4d4d8', brandContrast: '#09090b',
+      bg: '#0f0f11', bgMuted: '#18181b', bgSubtle: '#09090b', fg: '#fafafa', fgMuted: '#a1a1aa', border: '#27272a',
+    },
+    radius: { sm: 4, md: 6, lg: 8, xl: 12 },
+    shadows: { sm: 'none', md: '0 1px 2px rgba(0, 0, 0, 0.05)', lg: '0 8px 24px rgba(0, 0, 0, 0.08)' },
+    shell: { bg: '#fafafa', fg: '#18181b', fgMuted: '#52525b', border: '#e4e4e7', hover: '#f0f0f2' },
+    components: {
+      'nav-item-active': { backgroundColor: '#e9e9ec', textColor: '#18181b' },
+    },
+    extraTokens: { 'shell-logo': '#18181b' },
+  },
+};
+
+/** Deep green sidebar with a white active pill and a fresh emerald accent. */
+export const emeraldFreshTheme: ThemeDefinition = {
+  id: 'emerald-fresh',
+  overrides: {
+    palette: {
+      brand: '#087a5d', brandLight: '#3fc09c', brandDark: '#065c46', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#f4faf8', bgSubtle: '#ecf6f2',
+      fg: '#10241f', fgMuted: '#51655f', fgSubtle: '#80938d', border: '#dcebe6', borderFocus: '#087a5d',
+    },
+    paletteDark: {
+      brand: '#4fd1a9', brandLight: '#7fe0c1', brandDark: '#2fb58c', brandContrast: '#04140f',
+      bg: '#10201b', bgMuted: '#172a24', bgSubtle: '#0a1613', fg: '#ecf7f3', fgMuted: '#9fb8b0', border: '#223a32',
+    },
+    radius: SOFT_RADIUS,
+    shadows: SOFT_SHADOWS,
+    shell: { bg: '#0d3b30', fg: '#ffffff', fgMuted: 'rgba(255, 255, 255, 0.9)', border: 'rgba(255, 255, 255, 0.16)', hover: 'rgba(255, 255, 255, 0.12)' },
+    components: colouredSidebarItems('#0d3b30'),
+    extraTokens: { 'shell-logo': '#6ee7c0', ...LIGHT_HEADER('#dcebe6', '#10241f') },
+  },
+};
+
 /** All starter themes, in gallery order. */
-export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme];
+export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme];

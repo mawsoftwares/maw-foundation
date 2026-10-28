@@ -231,7 +231,7 @@ export function AppShellView({
   );
 
   return (
-    <div style={{ ...shapeVars, ...style }} className={cn('font-sans', inset ? 'box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]' : '')}>
+    <div style={{ ...shapeVars, ...style }} className={cn('font-sans', inset ? 'box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-md)]' : '')}>
       {content}
     </div>
   );

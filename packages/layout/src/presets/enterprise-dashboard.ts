@@ -5,6 +5,7 @@ export const enterpriseDashboardPreset: LayoutPreset = {
   id: 'enterprise-dashboard',
   label: 'Enterprise Dashboard',
   description: 'Full-width, compact workspace with a prominent header, search and an optional right-hand panel.',
+  suggestedThemeId: 'slate-minimal',
   settings: {
     density: 'compact',
     sidebar: {

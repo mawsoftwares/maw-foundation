@@ -5,7 +5,7 @@ export const communicationWorkspacePreset: LayoutPreset = {
   id: 'communication-workspace',
   label: 'Communication Workspace',
   description: 'Icon rail, search header and full-width panes with a details panel — for chat and inbox apps.',
-  suggestedThemeId: 'violet-studio',
+  suggestedThemeId: 'clean-light',
   settings: {
     density: 'compact',
     sidebar: { enabled: true, position: 'left', variant: 'rail', width: 'sm', collapsible: false, defaultCollapsed: true, labels: 'below', expandOnHover: false, top: ['brand'], bottom: ['user-menu'] },

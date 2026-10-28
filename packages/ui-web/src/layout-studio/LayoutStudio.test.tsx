@@ -95,8 +95,8 @@ describe('suggested themes', () => {
   it('every preset that suggests a theme names a starter theme that exists, and the suggestions differ so the gallery looks varied', () => {
     const known = new Set(starterThemes.map((t) => t.id));
     const suggested = defaultLayoutRegistry.listPresets().flatMap((p) => (p.suggestedThemeId === undefined ? [] : [p.suggestedThemeId]));
-    expect(suggested.length).toBeGreaterThanOrEqual(4);
+    expect(suggested.length).toBeGreaterThanOrEqual(6);
     for (const id of suggested) expect(known.has(id), id).toBe(true);
-    expect(new Set(suggested).size).toBeGreaterThanOrEqual(3);
+    expect(new Set(suggested).size).toBeGreaterThanOrEqual(6);
   });
 });

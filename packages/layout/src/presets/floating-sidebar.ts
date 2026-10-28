@@ -5,7 +5,7 @@ export const floatingSidebarPreset: LayoutPreset = {
   id: 'floating-sidebar',
   label: 'Floating Sidebar',
   description: 'A rounded, inset sidebar floating over the canvas with a minimal header.',
-  suggestedThemeId: 'clean-light',
+  suggestedThemeId: 'aurora',
   settings: {
     density: 'comfortable',
     sidebar: {

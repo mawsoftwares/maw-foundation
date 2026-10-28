@@ -146,3 +146,9 @@ Classic Admin keeps exactly its previous behaviour (`fill`, `smooth`, `slide`, n
 
 "Preview in the app" (Studio toolbar) applies the editor's working copy, saved or not, to the real application for the current viewer only: it is kept in `sessionStorage` for that tab, never sent to the server, and a floating bar offers "Back to Studio" and "Exit preview". Publishing ends the preview. Anyone who can open the Studio can preview; it changes nothing for other users.
 
+### Phase 10 — more themes, icons and a tighter inset frame
+
+- Three more starter themes (all WCAG AA tested, usable with any layout): `aurora` (deep indigo sidebar), `slate-minimal` (flat, hairline, tight radius — Linear/Vercel style) and `emerald-fresh` (green sidebar, white active pill). Presets now suggest seven different themes.
+- The Tailwind kit knows every icon name the seeded menu uses (`briefcase`, `file-text`, `calendar`, `building`, `alert-triangle`, `arrow-left-right`, …) plus a few common extras, so none is drawn as plain text.
+- The `inset` frame's gap around the app card is one step smaller (`--maw-space-md`).
+

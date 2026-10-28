@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`shell structure: analytics-dashboard > desktop 1`] = `
-"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-md)]">
   
 <div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
   
@@ -226,7 +226,7 @@ exports[`shell structure: classic-admin > mobile 1`] = `
 `;
 
 exports[`shell structure: communication-workspace > desktop 1`] = `
-"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-md)]">
   
 <div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
   
@@ -569,7 +569,7 @@ exports[`shell structure: floating-sidebar > mobile 1`] = `
 `;
 
 exports[`shell structure: listing-workspace > desktop 1`] = `
-"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-md)]">
   
 <div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
   
@@ -778,7 +778,7 @@ exports[`shell structure: project-workspace > mobile 1`] = `
 `;
 
 exports[`shell structure: split-workspace > desktop 1`] = `
-"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-md)]">
   
 <div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
   

@@ -5,6 +5,7 @@ export const projectWorkspacePreset: LayoutPreset = {
   id: 'project-workspace',
   label: 'Project Workspace',
   description: 'Compact docked sidebar, breadcrumb header with search and full-width, dense content for boards and timelines.',
+  suggestedThemeId: 'emerald-fresh',
   settings: {
     density: 'compact',
     sidebar: { enabled: true, position: 'left', variant: 'docked', width: 'sm', collapsible: true, defaultCollapsed: false, labels: 'beside', expandOnHover: false, top: ['brand'], bottom: ['user-menu'] },
