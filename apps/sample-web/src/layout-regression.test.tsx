@@ -26,11 +26,18 @@ function shell(presetId: string, isMobile: boolean): string {
   const frame = toShellFrame(settings, { rightPanel: 'RIGHT-PANEL', rightPanelLabel: 'Details', rightPanelFits: !isMobile, mobileNav: 'BOTTOM-NAV' });
   return signature(
     renderToStaticMarkup(
-      createElement(
-        AppShellView,
-        { sidebar: createElement('aside', null, 'SIDEBAR'), header: 'HEADER', actions: 'ACTIONS', isMobile, menuOpen: false, onMenuToggle: noop, onMenuClose: noop, pageTitle: 'Page', frame },
-        'CONTENT',
-      ),
+      createElement(AppShellView, {
+        sidebar: createElement('aside', null, 'SIDEBAR'),
+        header: 'HEADER',
+        actions: 'ACTIONS',
+        isMobile,
+        menuOpen: false,
+        onMenuToggle: noop,
+        onMenuClose: noop,
+        pageTitle: 'Page',
+        frame,
+        children: 'CONTENT',
+      }),
     ),
   );
 }

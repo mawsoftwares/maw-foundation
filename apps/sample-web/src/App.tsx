@@ -290,6 +290,13 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       // storage unavailable: apply the project default
     }
     setColorMode(publishedColorMode);
+    // setColorMode persists the mode as if the user had chosen it, which would make the project default sticky.
+    // Undo that: only a user's own toggle may write the key.
+    try {
+      window.localStorage.removeItem('maw-color-mode');
+    } catch {
+      // storage unavailable: nothing was persisted
+    }
   }, [publishedColorMode, setColorMode]);
   const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
   const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
