@@ -156,3 +156,9 @@ Classic Admin keeps exactly its previous behaviour (`fill`, `smooth`, `slide`, n
 
 The layout engine's full set of looks (right panel, tile bar, hover-expand, active-item markers, motion) is drawn by the Tailwind kit, so `pnpm sample:web` / `pnpm --filter @mawsoftwares/sample-web dev` now runs with `VITE_UI_KIT=tailwind`. The previous default is `pnpm --filter @mawsoftwares/sample-web dev:web`. Production `build` is unchanged (default kit; `build:tailwind` for the Tailwind kit).
 
+### Phase 11 — more motion, twelve themes, direct theme selection
+
+- **Motion options** (all additive; all off under `prefers-reduced-motion`): `motion.sidebar` `none · snappy · smooth · gentle · spring`; `motion.items` `none · slide · lift · scale · glow`; `motion.page` `none · fade · rise · slide · zoom · blur`; new `motion.nav` `none · stagger` (menu items enter one after another).
+- **Twelve starter themes**, each with a `label` and `description` (new optional fields on `ThemeDefinition`; `registry.get(id)` returns them): medical-blue, violet-studio, midnight-rose, clean-light, aurora, slate-minimal, emerald-fresh, ocean-teal, sunset-coral, graphite, lavender-soft, royal-navy. All pass the WCAG AA checks in `starter-themes.test.ts`.
+- **Direct theme selection:** `ThemeGallery` shows one card per theme drawn in that theme's own colours; clicking it selects the theme (the preview updates at once). It appears on the Layout tab (compact) and the Theme tab (with descriptions). Colour mode, typography and spacing remain separate controls.
+

@@ -150,6 +150,7 @@ describe('page entrance motion', () => {
   it('fade and rise animate the content wrapper (with reduced-motion off); none adds nothing', () => {
     expect(render({ frame: frame({ motion: { page: 'fade' } }) })).toContain('animate-page-fade motion-reduce:animate-none');
     expect(render({ frame: frame({ motion: { page: 'rise' } }) })).toContain('animate-page-rise motion-reduce:animate-none');
+    for (const page of ['slide', 'zoom', 'blur'] as const) expect(render({ frame: frame({ motion: { page } }) })).toContain(`animate-page-${page} motion-reduce:animate-none`);
     expect(render({ frame: frame() })).not.toContain('animate-page');
   });
 });

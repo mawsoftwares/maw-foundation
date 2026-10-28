@@ -53,7 +53,7 @@ export function sidebarBehavior(settings: LayoutSettings): SidebarBehavior {
       labels: sidebar.labels,
       expandOnHover: sidebar.expandOnHover,
       indicator: settings.shape.indicator,
-      motion: { sidebar: settings.motion.sidebar, items: settings.motion.items },
+      motion: { sidebar: settings.motion.sidebar, items: settings.motion.items, nav: settings.motion.nav },
     },
   };
 }

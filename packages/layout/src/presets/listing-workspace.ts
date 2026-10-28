@@ -15,6 +15,6 @@ export const listingWorkspacePreset: LayoutPreset = {
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'lg', mobileNavigation: 'bottom-bar' },
     shape: { frame: 'inset', corners: 'soft', nav: 'pill', indicator: 'dot' },
-    motion: { sidebar: 'spring', items: 'slide', page: 'rise' },
+    motion: { sidebar: 'spring', items: 'scale', page: 'rise', nav: 'stagger' },
   },
 };

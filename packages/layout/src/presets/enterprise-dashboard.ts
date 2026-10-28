@@ -32,6 +32,6 @@ export const enterpriseDashboardPreset: LayoutPreset = {
     content: { width: 'full' },
     responsive: { sidebarCollapseBelow: 'lg', rightPanelHideBelow: 'xl', mobileNavigation: 'drawer' },
     shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'bar' },
-    motion: { sidebar: 'smooth', items: 'slide', page: 'none' },
+    motion: { sidebar: 'smooth', items: 'glow', page: 'none', nav: 'none' },
   },
 };

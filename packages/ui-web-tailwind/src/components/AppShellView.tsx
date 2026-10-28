@@ -117,6 +117,9 @@ export function AppShellView({
           frame?.contentWidth === 'full' ? 'max-w-none' : 'max-w-[var(--maw-layout-container-max,none)]',
           frame?.motion.page === 'fade' && 'animate-page-fade motion-reduce:animate-none',
           frame?.motion.page === 'rise' && 'animate-page-rise motion-reduce:animate-none',
+          frame?.motion.page === 'slide' && 'animate-page-slide motion-reduce:animate-none',
+          frame?.motion.page === 'zoom' && 'animate-page-zoom motion-reduce:animate-none',
+          frame?.motion.page === 'blur' && 'animate-page-blur motion-reduce:animate-none',
         )}
       >
         {children}

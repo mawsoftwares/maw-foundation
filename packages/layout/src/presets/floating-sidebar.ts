@@ -26,6 +26,6 @@ export const floatingSidebarPreset: LayoutPreset = {
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'lg', mobileNavigation: 'drawer' },
     shape: { frame: 'full-bleed', corners: 'round', nav: 'rounded', indicator: 'dot' },
-    motion: { sidebar: 'spring', items: 'lift', page: 'fade' },
+    motion: { sidebar: 'spring', items: 'lift', page: 'blur', nav: 'stagger' },
   },
 };

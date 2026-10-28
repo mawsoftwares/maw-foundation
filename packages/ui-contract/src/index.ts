@@ -419,7 +419,11 @@ export interface SidebarLook {
   readonly labels: 'beside' | 'below';
   readonly expandOnHover: boolean;
   readonly indicator: 'fill' | 'bar' | 'dot';
-  readonly motion: { readonly sidebar: 'none' | 'smooth' | 'spring'; readonly items: 'none' | 'slide' | 'lift' };
+  readonly motion: {
+    readonly sidebar: 'none' | 'snappy' | 'smooth' | 'gentle' | 'spring';
+    readonly items: 'none' | 'slide' | 'lift' | 'scale' | 'glow';
+    readonly nav: 'none' | 'stagger';
+  };
 }
 
 export interface SidebarViewProps {
@@ -494,7 +498,7 @@ export interface ShellFrame {
     readonly indicator: 'fill' | 'bar' | 'dot';
   };
   /** Entrance animation of the page content; changes of `pageKey` replay it. */
-  readonly motion: { readonly page: 'none' | 'fade' | 'rise' };
+  readonly motion: { readonly page: 'none' | 'fade' | 'rise' | 'slide' | 'zoom' | 'blur' };
   readonly pageKey?: string;
   /** Mobile bottom navigation bar (rendered below the content on mobile only). */
   readonly mobileNav?: ReactNode;

@@ -15,6 +15,6 @@ export const splitWorkspacePreset: LayoutPreset = {
     content: { width: 'full' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'lg', mobileNavigation: 'drawer' },
     shape: { frame: 'inset', corners: 'round', nav: 'pill', indicator: 'fill' },
-    motion: { sidebar: 'smooth', items: 'lift', page: 'rise' },
+    motion: { sidebar: 'smooth', items: 'lift', page: 'rise', nav: 'stagger' },
   },
 };

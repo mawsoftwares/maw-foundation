@@ -72,7 +72,7 @@ describe('SidebarView', () => {
 });
 
 describe('SidebarView look (from a layout)', () => {
-  const look = (extra: Record<string, unknown> = {}) => ({ labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide' }, ...extra }) as const;
+  const look = (extra: Record<string, unknown> = {}) => ({ labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide', nav: 'none' }, ...extra }) as const;
 
   it('without a look it is the classic sidebar: filled active item, sliding hover', () => {
     const html = sidebar();
@@ -102,6 +102,25 @@ describe('SidebarView look (from a layout)', () => {
     expect(none).not.toContain('hover:translate-x-1');
     expect(none).not.toContain('hover:-translate-y-0.5');
     expect(none).toContain('transition:none');
+  });
+
+  it('more hover feedback: grow scales the item, glow draws a soft ring', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'scale', nav: 'none' } }) })).toContain('hover:scale-[1.04]');
+    expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'glow', nav: 'none' } }) })).toContain('hover:shadow-[0_0_0_3px_color-mix');
+  });
+
+  it('sidebar speeds: snappy is quick, gentle is slow', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'snappy', items: 'slide', nav: 'none' } }) })).toContain('transition-duration:120ms');
+    expect(sidebar({ look: look({ motion: { sidebar: 'gentle', items: 'slide', nav: 'none' } }) })).toContain('transition-duration:600ms');
+  });
+
+  it('menu entrance: stagger gives each top-level item a growing delay, none adds no animation', () => {
+    const html = sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'slide', nav: 'stagger' } }) });
+    expect(html).toContain('animate-nav-in motion-reduce:animate-none');
+    expect(html).toContain('animation-delay:0ms');
+    expect(html).toContain('animation-delay:45ms');
+    expect(html).toContain('animation-delay:90ms');
+    expect(sidebar({ look: look() })).not.toContain('animate-nav-in');
   });
 
   it('springy sidebar motion sets a longer, overshooting transition', () => {

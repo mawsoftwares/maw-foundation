@@ -15,6 +15,6 @@ export const communicationWorkspacePreset: LayoutPreset = {
     content: { width: 'full' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'xl', mobileNavigation: 'drawer' },
     shape: { frame: 'inset', corners: 'round', nav: 'rounded', indicator: 'fill' },
-    motion: { sidebar: 'spring', items: 'lift', page: 'fade' },
+    motion: { sidebar: 'spring', items: 'lift', page: 'zoom', nav: 'none' },
   },
 };

@@ -780,7 +780,7 @@ export * from './core/provenance';
 export * from './core/responsive';
 export { extendTheme } from './core/extend';
 export { createThemeRegistry, type ThemeDefinition, type ThemeRegistry } from './core/registry';
-export { auroraTheme, cleanLightTheme, emeraldFreshTheme, medicalBlueTheme, midnightRoseTheme, slateMinimalTheme, starterThemes, violetStudioTheme } from './starter';
+export { auroraTheme, cleanLightTheme, emeraldFreshTheme, graphiteTheme, lavenderSoftTheme, medicalBlueTheme, midnightRoseTheme, oceanTealTheme, royalNavyTheme, sunsetCoralTheme, slateMinimalTheme, starterThemes, violetStudioTheme } from './starter';
 export { themeToCssText, type ThemeCssOptions } from './core/css';
 export { deriveStateVars } from './core/semantic';
 export * from './components/states';

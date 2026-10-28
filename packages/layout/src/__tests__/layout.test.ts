@@ -99,7 +99,7 @@ describe('sidebar look and motion', () => {
 
   it('classic admin keeps its existing behaviour: filled item, smooth width, sliding hover, no page animation', () => {
     const { sidebar, shape, motion } = defaultLayoutRegistry.getPreset('classic-admin')!.settings;
-    expect([sidebar.labels, sidebar.expandOnHover, shape.indicator, motion]).toEqual(['beside', false, 'fill', { sidebar: 'smooth', items: 'slide', page: 'none' }]);
+    expect([sidebar.labels, sidebar.expandOnHover, shape.indicator, motion]).toEqual(['beside', false, 'fill', { sidebar: 'smooth', items: 'slide', page: 'none', nav: 'none' }]);
   });
 
   it('presets are visibly different: no two share the same combination of sidebar look, indicator, motion and shape', () => {
@@ -114,10 +114,15 @@ describe('sidebar look and motion', () => {
     for (const i of ['fill', 'bar', 'dot']) expect(s.some((x) => x.shape.indicator === i), i).toBe(true);
     expect(s.some((x) => x.motion.sidebar === 'spring')).toBe(true);
     expect(s.some((x) => x.motion.page === 'rise')).toBe(true);
+    for (const page of ['fade', 'rise', 'zoom', 'blur']) expect(s.some((x) => x.motion.page === page), page).toBe(true);
+    for (const items of ['slide', 'lift', 'scale', 'glow']) expect(s.some((x) => x.motion.items === items), items).toBe(true);
+    expect(s.some((x) => x.motion.nav === 'stagger')).toBe(true);
   });
 
   it('accepts the new overrides and rejects values outside the closed sets', () => {
     expect(validateLayoutOverrides({ sidebar: { labels: 'below', expandOnHover: true }, shape: { indicator: 'bar' }, motion: { sidebar: 'spring', items: 'lift', page: 'rise' } }, components).ok).toBe(true);
+    expect(validateLayoutOverrides({ motion: { sidebar: 'snappy', items: 'glow', page: 'blur', nav: 'stagger' } }, components).ok).toBe(true);
+    expect(validateLayoutOverrides({ motion: { nav: 'cascade' } }, components).ok).toBe(false);
     expect(validateLayoutOverrides({ motion: { sidebar: 'bouncy' } }, components).ok).toBe(false);
     expect(validateLayoutOverrides({ shape: { indicator: 'glow' } }, components).ok).toBe(false);
     expect(validateLayoutOverrides({ motion: { duration: 900 } }, components).ok).toBe(false);

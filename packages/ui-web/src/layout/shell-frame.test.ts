@@ -53,7 +53,7 @@ describe('sidebarBehavior', () => {
     expect(sidebarBehavior(classicAdminPreset.settings)).toEqual({
       forceRail: false, collapsible: true, widthPx: 260, showBrand: true, showFooter: true, topExtras: [], bottomExtras: [], labelsBelow: false,
       // the pre-existing look: filled active item, smooth width, sliding hover, no hover-expand
-      look: { labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide' } },
+      look: { labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide', nav: 'none' } },
     });
   });
 

@@ -22,6 +22,7 @@ function SidebarItem({
   depth = 0,
   look,
   below = false,
+  index = 0,
 }: {
   item: NavItem;
   activeKey: string;
@@ -31,6 +32,8 @@ function SidebarItem({
   look?: SidebarLook;
   /** Icon tile with the label underneath. */
   below?: boolean;
+  /** Position among the items, for the staggered entrance. */
+  index?: number;
 }): ReactNode {
   const indicator = look?.indicator ?? 'fill';
   const itemMotion = look?.motion.items ?? 'slide';
@@ -52,9 +55,13 @@ function SidebarItem({
         title={collapsed ? item.label : undefined}
         aria-current={active ? 'page' : undefined}
         aria-expanded={hasChildren ? expanded : undefined}
-        style={!collapsed && depth > 0 ? { paddingLeft: 16 + depth * 16 } : undefined}
+        style={{
+          ...(!collapsed && depth > 0 ? { paddingLeft: 16 + depth * 16 } : {}),
+          ...(look?.motion.nav === 'stagger' && depth === 0 ? { animationDelay: `${Math.min(index, 12) * 45}ms` } : {}),
+        }}
         className={cn(
           'group relative mb-1 box-border flex w-full cursor-pointer items-center border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
+          look?.motion.nav === 'stagger' && depth === 0 && 'animate-nav-in motion-reduce:animate-none',
           below ? 'flex-col justify-center gap-1 px-1 py-2 text-center text-[11px] leading-tight' : cn('gap-3', collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'),
           active
             ? cn(
@@ -70,6 +77,8 @@ function SidebarItem({
                 'hover:bg-[var(--maw-comp-nav-item-hover-background,var(--maw-shell-hover,var(--maw-bgSubtle)))] hover:text-[var(--maw-comp-nav-item-hover-text-color,var(--maw-brand))]',
                 itemMotion === 'slide' && !collapsed && !below && 'hover:translate-x-1',
                 itemMotion === 'lift' && 'hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgb(0_0_0/0.12)]',
+                itemMotion === 'scale' && 'hover:scale-[1.04]',
+                itemMotion === 'glow' && 'hover:shadow-[0_0_0_3px_color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_20%,transparent)]',
               ),
         )}
       >
@@ -175,7 +184,11 @@ export function SidebarView({
       ? { transition: 'none' }
       : sidebarMotion === 'spring'
         ? { transitionDuration: '450ms', transitionTimingFunction: 'cubic-bezier(0.34, 1.4, 0.64, 1)' }
-        : {};
+        : sidebarMotion === 'snappy'
+          ? { transitionDuration: '120ms', transitionTimingFunction: 'cubic-bezier(0.2, 0, 0, 1)' }
+          : sidebarMotion === 'gentle'
+            ? { transitionDuration: '600ms', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }
+            : {};
 
   const brand =
     logo !== undefined || title !== undefined ? (
@@ -192,6 +205,7 @@ export function SidebarView({
   const footerContent = resolveSlot(footer, isRail || below);
   const railPad = isRail ? 'px-2 py-3' : 'p-[var(--maw-space-lg)]';
 
+  let navIndex = 0;
   const aside = (
     <aside
       className={cn(
@@ -242,7 +256,7 @@ export function SidebarView({
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={shownCollapsed && !isMobile} onNavigate={onNavigate} look={look} below={below} />
+              <SidebarItem key={item.key} index={navIndex++} item={item} activeKey={activeKey} collapsed={shownCollapsed && !isMobile} onNavigate={onNavigate} look={look} below={below} />
             ))}
           </div>
         ))}

@@ -49,9 +49,10 @@ const SETTINGS_SHAPE = obj({
     indicator: oneOf('fill', 'bar', 'dot'),
   }),
   motion: obj({
-    sidebar: oneOf('none', 'smooth', 'spring'),
-    items: oneOf('none', 'slide', 'lift'),
-    page: oneOf('none', 'fade', 'rise'),
+    sidebar: oneOf('none', 'snappy', 'smooth', 'gentle', 'spring'),
+    items: oneOf('none', 'slide', 'lift', 'scale', 'glow'),
+    page: oneOf('none', 'fade', 'rise', 'slide', 'zoom', 'blur'),
+    nav: oneOf('none', 'stagger'),
   }),
   responsive: obj({
     sidebarCollapseBelow: oneOf(...BREAKPOINTS),

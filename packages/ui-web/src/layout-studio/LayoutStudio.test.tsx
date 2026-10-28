@@ -2,9 +2,9 @@ import { setUIKit } from '@mawsoftwares/ui-contract';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { classicAdminPreset, enterpriseDashboardPreset, listingWorkspacePreset, splitWorkspacePreset, createMemoryProjectUiStore } from '@mawsoftwares/layout';
-import { defaultLayoutRegistry } from '@mawsoftwares/layout';
-import { starterThemes } from '@mawsoftwares/theme';
+import { classicAdminPreset, defaultLayoutRegistry, enterpriseDashboardPreset, listingWorkspacePreset, splitWorkspacePreset, createMemoryProjectUiStore } from '@mawsoftwares/layout';
+import { createThemeRegistry, starterThemes } from '@mawsoftwares/theme';
+import { ThemeGallery } from './ThemeGallery';
 import { LayoutStudio } from './LayoutStudio';
 import { ShellPreview } from './ShellPreview';
 
@@ -112,5 +112,32 @@ describe('suggested themes', () => {
     expect(suggested.length).toBeGreaterThanOrEqual(6);
     for (const id of suggested) expect(known.has(id), id).toBe(true);
     expect(new Set(suggested).size).toBeGreaterThanOrEqual(6);
+  });
+});
+
+describe('ThemeGallery (direct theme selection)', () => {
+  const themes = createThemeRegistry(starterThemes);
+  const selection = { themeId: null, colorMode: 'light', typography: 'default', spacing: 'default' } as const;
+  const html = (value: string | null, extra: { disabled?: boolean; compact?: boolean } = {}): string =>
+    renderToStaticMarkup(createElement(ThemeGallery, { themes, value, onSelect: () => undefined, selection, prefersDark: false, ...extra }));
+
+  it('shows the application default and one named card per theme, each as a radio', () => {
+    const out = html(null);
+    expect(out).toContain('role="radiogroup"');
+    expect((out.match(/role="radio"/g) ?? []).length).toBe(starterThemes.length + 1);
+    for (const t of starterThemes) expect(out, t.id).toContain(t.label!);
+    expect(out).toContain('Application default');
+  });
+
+  it('marks only the chosen theme, and each card is drawn with that theme\'s own colours', () => {
+    const out = html('aurora');
+    expect((out.match(/aria-checked="true"/g) ?? []).length).toBe(1);
+    expect(out).toMatch(/Aurora ✓/);
+    expect(out).toContain('--maw-shell-bg:#14163a'); // the Aurora sidebar colour, scoped to its card
+  });
+
+  it('can be disabled (read-only viewers) and compact (no descriptions)', () => {
+    expect(html(null, { disabled: true })).toMatch(/<button[^>]*role="radio"[^>]*disabled/);
+    expect(html(null, { compact: true })).not.toContain(starterThemes[0]!.description!);
   });
 });

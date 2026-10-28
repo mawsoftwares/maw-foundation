@@ -26,6 +26,7 @@ import {
 import type { ThemeRegistry } from '@mawsoftwares/theme';
 import { Badge, Banner, Button, Card, Checkbox, Grid, Select, Stack, Tabs } from '../kit';
 import { ShellPreview } from './ShellPreview';
+import { ThemeGallery } from './ThemeGallery';
 import { previewCssVars } from './theme-selection';
 import { PREVIEW_VIEWPORTS, type PreviewViewport } from './viewport';
 
@@ -212,6 +213,12 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
                 })}
               </Grid>
             </div>
+            {themes !== undefined && (
+              <div>
+                <h3 style={{ margin: '0 0 var(--maw-space-sm)', fontSize: 'var(--maw-text-md)', color: 'var(--maw-fg)' }}>Theme</h3>
+                <ThemeGallery compact themes={themes} value={working.theme.themeId} onSelect={(themeId) => setTheme({ themeId })} selection={working.theme} prefersDark={prefersDark} disabled={!canEdit} />
+              </div>
+            )}
             {matchingTheme !== undefined && working.theme.themeId !== matchingTheme && (
               <Banner variant="info">
                 {resolved.label} was designed around the “{matchingTheme}” theme.{' '}
@@ -283,27 +290,30 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
               Motion. Switched off automatically for people who prefer reduced motion. Shown in the live app and the Tailwind kit.
             </p>
             <Grid minChildWidth={200} gap="var(--maw-space-md)">
-              {select('Sidebar animation', ['motion', 'sidebar'], [{ value: 'none', label: 'None' }, { value: 'smooth', label: 'Smooth' }, { value: 'spring', label: 'Springy' }])}
-              {select('Navigation hover', ['motion', 'items'], [{ value: 'none', label: 'None' }, { value: 'slide', label: 'Slide' }, { value: 'lift', label: 'Lift' }])}
-              {select('Page entrance', ['motion', 'page'], [{ value: 'none', label: 'None' }, { value: 'fade', label: 'Fade' }, { value: 'rise', label: 'Rise' }])}
+              {select('Sidebar animation', ['motion', 'sidebar'], [{ value: 'none', label: 'None' }, { value: 'snappy', label: 'Snappy' }, { value: 'smooth', label: 'Smooth' }, { value: 'gentle', label: 'Gentle (slow)' }, { value: 'spring', label: 'Springy' }])}
+              {select('Navigation hover', ['motion', 'items'], [{ value: 'none', label: 'None' }, { value: 'slide', label: 'Slide' }, { value: 'lift', label: 'Lift' }, { value: 'scale', label: 'Grow' }, { value: 'glow', label: 'Glow' }])}
+              {select('Menu entrance', ['motion', 'nav'], [{ value: 'none', label: 'All at once' }, { value: 'stagger', label: 'One after another' }])}
+              {select('Page entrance', ['motion', 'page'], [{ value: 'none', label: 'None' }, { value: 'fade', label: 'Fade' }, { value: 'rise', label: 'Rise' }, { value: 'slide', label: 'Slide in' }, { value: 'zoom', label: 'Zoom' }, { value: 'blur', label: 'Focus (blur in)' }])}
             </Grid>
           </Stack>
         );
       case 'theme':
         return (
+          <Stack direction="column" gap="var(--maw-space-lg)">
+            {themes !== undefined ? (
+              <ThemeGallery themes={themes} value={working.theme.themeId} onSelect={(themeId) => setTheme({ themeId })} selection={working.theme} prefersDark={prefersDark} disabled={!canEdit} />
+            ) : (
+              <Banner variant="info">No themes are registered for this project.</Banner>
+            )}
+            <p style={{ margin: 0, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
+              Theme tokens come from the Theme Engine; Layout Studio only chooses between them. Any theme works with any layout.
+            </p>
           <Grid minChildWidth={200} gap="var(--maw-space-md)">
-            <Select
-              label="Theme"
-              value={working.theme.themeId ?? ''}
-              disabled={!canEdit}
-              options={[{ value: '', label: 'Application default' }, ...(themes?.ids() ?? []).map((id) => ({ value: id, label: id }))]}
-              onChange={(e) => setTheme({ themeId: e.target.value === '' ? null : e.target.value })}
-              helperText="Theme tokens come from the Theme Engine; Layout Studio only chooses between them."
-            />
             <Select label="Colour mode" value={working.theme.colorMode} disabled={!canEdit} options={opts(...COLOR_MODES)} onChange={(e) => setTheme({ colorMode: e.target.value as ThemeSelection['colorMode'] })} />
             <Select label="Typography" value={working.theme.typography} disabled={!canEdit} options={opts(...TYPOGRAPHY_PRESETS)} onChange={(e) => setTheme({ typography: e.target.value as ThemeSelection['typography'] })} />
             <Select label="Spacing" value={working.theme.spacing} disabled={!canEdit} options={opts(...SPACING_PRESETS)} onChange={(e) => setTheme({ spacing: e.target.value as ThemeSelection['spacing'] })} />
           </Grid>
+          </Stack>
         );
       case 'history':
         return (

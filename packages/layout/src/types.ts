@@ -82,12 +82,14 @@ export interface ShapeSettings {
 
 /** Movement only; every kit turns it off for people who prefer reduced motion. */
 export interface MotionSettings {
-  /** How the sidebar changes width: instantly, a smooth ease, or a springy overshoot. */
-  readonly sidebar: 'none' | 'smooth' | 'spring';
+  /** How the sidebar changes width: instantly, a quick snap, a smooth ease, a slow gentle ease, or a springy overshoot. */
+  readonly sidebar: 'none' | 'snappy' | 'smooth' | 'gentle' | 'spring';
   /** Hover feedback on navigation items. */
-  readonly items: 'none' | 'slide' | 'lift';
+  readonly items: 'none' | 'slide' | 'lift' | 'scale' | 'glow';
   /** Entrance of the page content when the page changes. */
-  readonly page: 'none' | 'fade' | 'rise';
+  readonly page: 'none' | 'fade' | 'rise' | 'slide' | 'zoom' | 'blur';
+  /** Entrance of the navigation items when the sidebar first appears: all at once, or one after another. */
+  readonly nav: 'none' | 'stagger';
 }
 
 /** The complete, resolved layout description. */

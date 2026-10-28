@@ -15,6 +15,6 @@ export const projectWorkspacePreset: LayoutPreset = {
     content: { width: 'full' },
     responsive: { sidebarCollapseBelow: 'lg', rightPanelHideBelow: 'xl', mobileNavigation: 'drawer' },
     shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'bar' },
-    motion: { sidebar: 'none', items: 'none', page: 'none' },
+    motion: { sidebar: 'none', items: 'none', page: 'none', nav: 'none' },
   },
 };

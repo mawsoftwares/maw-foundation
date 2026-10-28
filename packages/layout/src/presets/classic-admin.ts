@@ -25,6 +25,6 @@ export const classicAdminPreset: LayoutPreset = {
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'lg', mobileNavigation: 'drawer' },
     shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'fill' },
-    motion: { sidebar: 'smooth', items: 'slide', page: 'none' },
+    motion: { sidebar: 'smooth', items: 'slide', page: 'none', nav: 'none' },
   },
 };

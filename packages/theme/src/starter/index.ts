@@ -28,6 +28,8 @@ const LIGHT_HEADER = (border: string, fg: string): Record<string, string> => ({
 
 export const medicalBlueTheme: ThemeDefinition = {
   id: 'medical-blue',
+  label: 'Medical Blue',
+  description: 'Calm trust-blue sidebar. Clinics, health and service apps.',
   overrides: {
     palette: {
       brand: '#2f5bd9', brandLight: '#6b8ff5', brandDark: '#2447b0', brandContrast: '#ffffff',
@@ -48,6 +50,8 @@ export const medicalBlueTheme: ThemeDefinition = {
 
 export const violetStudioTheme: ThemeDefinition = {
   id: 'violet-studio',
+  label: 'Violet Studio',
+  description: 'Rich violet with soft cards. Creative and listing products.',
   overrides: {
     palette: {
       brand: '#5b4bd6', brandLight: '#8e82ea', brandDark: '#4536b8', brandContrast: '#ffffff',
@@ -68,6 +72,8 @@ export const violetStudioTheme: ThemeDefinition = {
 
 export const midnightRoseTheme: ThemeDefinition = {
   id: 'midnight-rose',
+  label: 'Midnight Rose',
+  description: 'Dark navy rail with a rose accent. Social and chat apps.',
   overrides: {
     palette: {
       brand: '#c8456b', brandLight: '#e0809b', brandDark: '#a3345a', brandContrast: '#ffffff',
@@ -87,6 +93,8 @@ export const midnightRoseTheme: ThemeDefinition = {
 
 export const cleanLightTheme: ThemeDefinition = {
   id: 'clean-light',
+  label: 'Clean Light',
+  description: 'Airy white chrome. Neutral, content-first.',
   overrides: {
     palette: {
       brand: '#3f5fe0', brandLight: '#7088ee', brandDark: '#2f49b8', brandContrast: '#ffffff',
@@ -106,6 +114,8 @@ export const cleanLightTheme: ThemeDefinition = {
 /** Deep indigo sidebar with a translucent-white active item and a cyan accent: the "modern dark sidebar" SaaS look. */
 export const auroraTheme: ThemeDefinition = {
   id: 'aurora',
+  label: 'Aurora',
+  description: 'Deep indigo sidebar with a cyan glow. Modern SaaS.',
   overrides: {
     palette: {
       brand: '#5b5bf0', brandLight: '#8b8bf7', brandDark: '#4141c9', brandContrast: '#ffffff',
@@ -131,6 +141,8 @@ export const auroraTheme: ThemeDefinition = {
 /** Flat, hairline and tight-radiused (Linear / Vercel style): neutral greys, no shadows, a near-black accent. */
 export const slateMinimalTheme: ThemeDefinition = {
   id: 'slate-minimal',
+  label: 'Slate Minimal',
+  description: 'Flat, hairline and precise. Developer tools.',
   overrides: {
     palette: {
       brand: '#18181b', brandLight: '#52525b', brandDark: '#09090b', brandContrast: '#ffffff',
@@ -154,6 +166,8 @@ export const slateMinimalTheme: ThemeDefinition = {
 /** Deep green sidebar with a white active pill and a fresh emerald accent. */
 export const emeraldFreshTheme: ThemeDefinition = {
   id: 'emerald-fresh',
+  label: 'Emerald Fresh',
+  description: 'Deep green with a fresh accent. Finance and growth.',
   overrides: {
     palette: {
       brand: '#087a5d', brandLight: '#3fc09c', brandDark: '#065c46', brandContrast: '#ffffff',
@@ -172,5 +186,138 @@ export const emeraldFreshTheme: ThemeDefinition = {
   },
 };
 
+/** Deep teal sidebar with a bright cyan highlight: oceanic, calm, data-friendly. */
+export const oceanTealTheme: ThemeDefinition = {
+  id: 'ocean-teal',
+  label: 'Ocean Teal',
+  description: 'Deep teal with a cyan highlight. Analytics and logistics.',
+  overrides: {
+    palette: {
+      brand: '#0e7490', brandLight: '#38b6d2', brandDark: '#0a5870', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#f3fafc', bgSubtle: '#eaf6f9',
+      fg: '#0c2630', fgMuted: '#4a6670', fgSubtle: '#7b979f', border: '#d8ebf0', borderFocus: '#0e7490',
+    },
+    paletteDark: {
+      brand: '#4fd1e8', brandLight: '#7fe0f0', brandDark: '#22b8d3', brandContrast: '#031a21',
+      bg: '#0e2229', bgMuted: '#142d36', bgSubtle: '#091a1f', fg: '#e8f7fa', fgMuted: '#9dbcc5', border: '#1f3d47',
+    },
+    radius: SOFT_RADIUS,
+    shadows: SOFT_SHADOWS,
+    shell: { bg: '#083344', fg: '#ffffff', fgMuted: 'rgba(255, 255, 255, 0.88)', border: 'rgba(255, 255, 255, 0.14)', hover: 'rgba(255, 255, 255, 0.12)' },
+    components: {
+      'nav-item': { textColor: 'rgba(255, 255, 255, 0.92)' },
+      'nav-item-hover': { backgroundColor: 'rgba(255, 255, 255, 0.12)', textColor: '#ffffff' },
+      'nav-item-active': { backgroundColor: '#22d3ee', textColor: '#042f3b' },
+    },
+    extraTokens: { 'shell-logo': '#67e8f9', ...LIGHT_HEADER('#d8ebf0', '#0c2630') },
+  },
+};
+
+/** Warm orange sidebar with a white active pill: friendly, energetic, retail and food. */
+export const sunsetCoralTheme: ThemeDefinition = {
+  id: 'sunset-coral',
+  label: 'Sunset Coral',
+  description: 'Warm coral-orange and cream. Retail, food and lifestyle.',
+  overrides: {
+    palette: {
+      brand: '#c2410c', brandLight: '#ee7a45', brandDark: '#9a3412', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#fffaf5', bgSubtle: '#fdf3ea',
+      fg: '#2a1a12', fgMuted: '#6b5547', fgSubtle: '#9c8576', border: '#f4e4d6', borderFocus: '#c2410c',
+    },
+    paletteDark: {
+      brand: '#fb923c', brandLight: '#fdba74', brandDark: '#ea7a1f', brandContrast: '#1c0d03',
+      bg: '#231812', bgMuted: '#2d1f17', bgSubtle: '#160f0b', fg: '#fbf1e8', fgMuted: '#bda899', border: '#3d2c21',
+    },
+    radius: { sm: 10, md: 14, lg: 20, xl: 28 },
+    shadows: SOFT_SHADOWS,
+    shell: { bg: '#c2410c', fg: '#ffffff', fgMuted: 'rgba(255, 255, 255, 0.92)', border: 'rgba(255, 255, 255, 0.2)', hover: 'rgba(255, 255, 255, 0.14)' },
+    components: colouredSidebarItems('#c2410c'),
+    extraTokens: { 'shell-logo': '#ffffff', ...LIGHT_HEADER('#f4e4d6', '#2a1a12') },
+  },
+};
+
+/** Near-black graphite sidebar with a lime accent: the focused "developer tool" look. */
+export const graphiteTheme: ThemeDefinition = {
+  id: 'graphite',
+  label: 'Graphite',
+  description: 'Near-black chrome with a lime accent. Dev and ops tools.',
+  overrides: {
+    palette: {
+      brand: '#4d7c0f', brandLight: '#84cc16', brandDark: '#3f6212', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#fafaf9', bgSubtle: '#f4f4f2',
+      fg: '#1c1c1a', fgMuted: '#54544f', fgSubtle: '#80807a', border: '#e5e5e1', borderFocus: '#4d7c0f',
+    },
+    paletteDark: {
+      brand: '#a3e635', brandLight: '#bef264', brandDark: '#84cc16', brandContrast: '#0a0f02',
+      bg: '#131311', bgMuted: '#1b1b18', bgSubtle: '#0c0c0b', fg: '#f5f5f2', fgMuted: '#a8a8a0', border: '#2a2a26',
+    },
+    radius: { sm: 5, md: 8, lg: 12, xl: 16 },
+    shadows: { sm: 'none', md: '0 1px 3px rgba(0, 0, 0, 0.08)', lg: '0 10px 30px rgba(0, 0, 0, 0.16)' },
+    shell: { bg: '#141412', fg: '#f5f5f2', fgMuted: 'rgba(245, 245, 242, 0.78)', border: 'rgba(255, 255, 255, 0.09)', hover: 'rgba(255, 255, 255, 0.08)' },
+    components: {
+      'nav-item': { textColor: 'rgba(245, 245, 242, 0.9)' },
+      'nav-item-hover': { backgroundColor: 'rgba(255, 255, 255, 0.08)', textColor: '#ffffff' },
+      'nav-item-active': { backgroundColor: '#2a2a26', textColor: '#bef264' },
+    },
+    extraTokens: { 'shell-logo': '#a3e635', ...LIGHT_HEADER('#e5e5e1', '#1c1c1a') },
+  },
+};
+
+/** Pale lavender sidebar, big rounded corners and a solid violet active item: soft, friendly, consumer-facing. */
+export const lavenderSoftTheme: ThemeDefinition = {
+  id: 'lavender-soft',
+  label: 'Lavender Soft',
+  description: 'Pastel lavender with generous curves. Consumer and wellness.',
+  overrides: {
+    palette: {
+      brand: '#6d4fd8', brandLight: '#9f86ee', brandDark: '#5638b5', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#faf8ff', bgSubtle: '#f4f0fd',
+      fg: '#251c4a', fgMuted: '#5f5886', fgSubtle: '#8f89b0', border: '#e9e3f8', borderFocus: '#6d4fd8',
+    },
+    paletteDark: {
+      brand: '#a78bfa', brandLight: '#c4b5fd', brandDark: '#8b6df0', brandContrast: '#120a30',
+      bg: '#1a1530', bgMuted: '#221c3d', bgSubtle: '#110d22', fg: '#f3f0fd', fgMuted: '#b2abd2', border: '#30295a',
+    },
+    radius: { sm: 12, md: 16, lg: 22, xl: 32 },
+    shadows: {
+      sm: '0 1px 2px rgba(80, 60, 160, 0.06)',
+      md: '0 6px 18px rgba(80, 60, 160, 0.10)',
+      lg: '0 18px 40px rgba(80, 60, 160, 0.16)',
+    },
+    shell: { bg: '#f1edfd', fg: '#251c4a', fgMuted: '#5f5886', border: '#e1daf6', hover: '#e7e0fa' },
+    components: {
+      'nav-item-active': { backgroundColor: '#6d4fd8', textColor: '#ffffff' },
+    },
+    extraTokens: { 'shell-logo': '#6d4fd8', ...LIGHT_HEADER('#e9e3f8', '#251c4a') },
+  },
+};
+
+/** Navy sidebar with a gold active item and tight corners: premium, trustworthy, finance and legal. */
+export const royalNavyTheme: ThemeDefinition = {
+  id: 'royal-navy',
+  label: 'Royal Navy',
+  description: 'Navy and gold with crisp corners. Banking, legal, enterprise.',
+  overrides: {
+    palette: {
+      brand: '#1e3a8a', brandLight: '#4d6ac4', brandDark: '#162c6b', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#f8f9fc', bgSubtle: '#f1f3f9',
+      fg: '#10182f', fgMuted: '#4e5877', fgSubtle: '#7d86a3', border: '#e1e5f0', borderFocus: '#1e3a8a',
+    },
+    paletteDark: {
+      brand: '#e8b84a', brandLight: '#f2cf7d', brandDark: '#d49f2c', brandContrast: '#1a1202',
+      bg: '#101730', bgMuted: '#162040', bgSubtle: '#0a0f22', fg: '#eef1fa', fgMuted: '#a1abcb', border: '#26325c',
+    },
+    radius: { sm: 3, md: 6, lg: 10, xl: 14 },
+    shadows: { sm: '0 1px 2px rgba(16, 24, 47, 0.08)', md: '0 4px 12px rgba(16, 24, 47, 0.10)', lg: '0 14px 32px rgba(16, 24, 47, 0.16)' },
+    shell: { bg: '#0f1d3a', fg: '#ffffff', fgMuted: 'rgba(255, 255, 255, 0.84)', border: 'rgba(255, 255, 255, 0.12)', hover: 'rgba(255, 255, 255, 0.10)' },
+    components: {
+      'nav-item': { textColor: 'rgba(255, 255, 255, 0.92)' },
+      'nav-item-hover': { backgroundColor: 'rgba(255, 255, 255, 0.10)', textColor: '#ffffff' },
+      'nav-item-active': { backgroundColor: '#e8b84a', textColor: '#0f1d3a' },
+    },
+    extraTokens: { 'shell-logo': '#e8b84a', ...LIGHT_HEADER('#e1e5f0', '#10182f') },
+  },
+};
+
 /** All starter themes, in gallery order. */
-export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme];
+export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme];

@@ -15,6 +15,6 @@ export const analyticsDashboardPreset: LayoutPreset = {
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'xl', mobileNavigation: 'drawer' },
     shape: { frame: 'inset', corners: 'round', nav: 'pill', indicator: 'fill' },
-    motion: { sidebar: 'spring', items: 'lift', page: 'fade' },
+    motion: { sidebar: 'spring', items: 'lift', page: 'fade', nav: 'stagger' },
   },
 };

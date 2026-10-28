@@ -12,9 +12,17 @@ const AA = 4.5;
 describe('starter themes', () => {
   const registry = createThemeRegistry(starterThemes);
 
-  it('ships seven themes with unique ids that all resolve', () => {
-    expect(registry.ids()).toEqual(['medical-blue', 'violet-studio', 'midnight-rose', 'clean-light', 'aurora', 'slate-minimal', 'emerald-fresh']);
+  it('ships twelve themes with unique ids that all resolve', () => {
+    expect(registry.ids()).toEqual(['medical-blue', 'violet-studio', 'midnight-rose', 'clean-light', 'aurora', 'slate-minimal', 'emerald-fresh', 'ocean-teal', 'sunset-coral', 'graphite', 'lavender-soft', 'royal-navy']);
     for (const id of registry.ids()) expect(() => registry.resolve(id)).not.toThrow();
+  });
+
+  it('every theme has a display name and a one-line description for pickers', () => {
+    for (const def of starterThemes) {
+      expect(def.label, def.id).toBeTruthy();
+      expect((def.description ?? '').length, def.id).toBeGreaterThan(10);
+      expect(registry.get(def.id)?.label).toBe(def.label);
+    }
   });
 
   describe.each(starterThemes.map((t) => t.id))('%s', (id) => {
