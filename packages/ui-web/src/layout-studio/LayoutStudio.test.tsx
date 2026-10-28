@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { classicAdminPreset, defaultLayoutRegistry, enterpriseDashboardPreset, listingWorkspacePreset, splitWorkspacePreset, createMemoryProjectUiStore } from '@mawsoftwares/layout';
 import { createThemeRegistry, starterThemes } from '@mawsoftwares/theme';
 import { ThemeGallery } from './ThemeGallery';
+import { HeroBanner, ProfileCard } from '../showcase';
 import { LayoutStudio } from './LayoutStudio';
 import { ShellPreview } from './ShellPreview';
 
@@ -139,5 +140,20 @@ describe('ThemeGallery (direct theme selection)', () => {
   it('can be disabled (read-only viewers) and compact (no descriptions)', () => {
     expect(html(null, { disabled: true })).toMatch(/<button[^>]*role="radio"[^>]*disabled/);
     expect(html(null, { compact: true })).not.toContain(starterThemes[0]!.description!);
+  });
+});
+
+describe('HeroBanner and ProfileCard (reference-style widgets)', () => {
+  it('hero banner shows greeting, subtitle, action and decorative art that assistive technology skips', () => {
+    const html = renderToStaticMarkup(createElement(HeroBanner, { title: 'Welcome back', subtitle: 'Have a nice day', action: 'GO', art: 'ART' }));
+    for (const t of ['Welcome back', 'Have a nice day', 'GO', 'ART']) expect(html, t).toContain(t);
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('linear-gradient');
+    expect(renderToStaticMarkup(createElement(HeroBanner, { title: 'T', tone: 'soft' }))).not.toContain('linear-gradient');
+  });
+
+  it('profile card shows name, role, stats and a labelled progress bar', () => {
+    const html = renderToStaticMarkup(createElement(ProfileCard, { name: 'Dr K', role: 'Surgeon', stats: [{ label: 'Patients', value: '3,567' }], progress: { label: 'Limit', value: 112, max: 200 } }));
+    for (const t of ['Dr K', 'Surgeon', 'Patients', '3,567', 'Limit', '112 / 200']) expect(html, t).toContain(t);
   });
 });

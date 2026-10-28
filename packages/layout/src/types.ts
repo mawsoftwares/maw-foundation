@@ -76,8 +76,8 @@ export interface ShapeSettings {
   readonly corners: 'sharp' | 'soft' | 'round';
   /** `pill`: navigation items are fully rounded; `rounded` keeps the theme's own radius. */
   readonly nav: 'rounded' | 'pill';
-  /** How the active navigation item is marked: a filled item, a side bar, or a dot. */
-  readonly indicator: 'fill' | 'bar' | 'dot';
+  /** How the active navigation item is marked: a filled item, a side bar, a dot, or a "tab" that curves into the page. */
+  readonly indicator: 'fill' | 'bar' | 'dot' | 'tab';
 }
 
 /** Movement only; every kit turns it off for people who prefer reduced motion. */

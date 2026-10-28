@@ -3,6 +3,7 @@ import type { LayoutSettings, ResolvedLayout } from '@mawsoftwares/layout';
 import { Avatar } from '../components/Avatar';
 import { ActivityFeed, KpiGrid, MiniBarChart, Widget, WidgetGrid, type KpiConfig } from '../dashboard';
 import { Icon, IconButton, SearchBar } from '../kit';
+import { HeroBanner, ProfileCard } from '../showcase';
 import { AppShell, Breadcrumbs, NavigationProvider, Sidebar, type NavItem } from '../navigation';
 import { useContainerWidth } from '../responsive';
 import { describePreview, previewState, PREVIEW_VIEWPORTS, type PreviewViewport } from './viewport';
@@ -38,10 +39,7 @@ function SampleDashboard({ width }: { width: number }): ReactNode {
   const columns = width >= 1100 ? 4 : width >= 700 ? 2 : 1;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-lg)' }}>
-      <div>
-        <h1 style={{ margin: 0, fontSize: 'var(--maw-text-xl)', fontWeight: 700, color: 'var(--maw-fg)' }}>Welcome back</h1>
-        <p style={{ margin: '4px 0 0', fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>Here&apos;s what&apos;s happening today</p>
-      </div>
+      <HeroBanner title="Welcome back" subtitle="Here's what's happening today" art="🩺" />
       <KpiGrid kpis={SAMPLE_KPIS} columns={columns} style={{ marginBottom: 0 }} />
       <WidgetGrid columns={width >= 700 ? 2 : 1}>
         <Widget title="Orders (12 months)" height={200}>
@@ -122,8 +120,8 @@ export function ShellPreview({ presetId, label, settings, viewport, cssVars, sca
             viewportWidth={width}
             slots={slots}
             rightPanel={
-              <div>
-                <h3 style={{ margin: '0 0 var(--maw-space-md)', fontSize: 'var(--maw-text-md)' }}>Profile</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-lg)' }}>
+                <ProfileCard name="Dr Kennedy" role="Surgery doctor" stats={[{ label: 'Appointments', value: '2,543' }, { label: 'Patients', value: '3,567' }]} progress={{ label: 'Appointments limit', value: 112, max: 200 }} />
                 <ActivityFeed items={SAMPLE_ACTIVITY} />
               </div>
             }

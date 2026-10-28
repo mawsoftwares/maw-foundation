@@ -284,7 +284,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
               {select('App frame', ['shape', 'frame'], [{ value: 'full-bleed', label: 'Full bleed' }, { value: 'inset', label: 'Rounded card on canvas' }])}
               {select('Corners', ['shape', 'corners'], opts('sharp', 'soft', 'round'))}
               {select('Navigation items', ['shape', 'nav'], [{ value: 'rounded', label: 'Rounded (theme default)' }, { value: 'pill', label: 'Pill' }])}
-              {select('Active item', ['shape', 'indicator'], [{ value: 'fill', label: 'Filled' }, { value: 'bar', label: 'Side bar' }, { value: 'dot', label: 'Dot' }])}
+              {select('Active item', ['shape', 'indicator'], [{ value: 'fill', label: 'Filled' }, { value: 'bar', label: 'Side bar' }, { value: 'dot', label: 'Dot' }, { value: 'tab', label: 'Tab (curves into the page)' }])}
             </Grid>
             <p style={{ margin: 0, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
               Motion. Switched off automatically for people who prefer reduced motion. Shown in the live app and the Tailwind kit.

@@ -418,7 +418,7 @@ export type SidebarSlot = ReactNode | ((collapsed: boolean) => ReactNode);
 export interface SidebarLook {
   readonly labels: 'beside' | 'below';
   readonly expandOnHover: boolean;
-  readonly indicator: 'fill' | 'bar' | 'dot';
+  readonly indicator: 'fill' | 'bar' | 'dot' | 'tab';
   readonly motion: {
     readonly sidebar: 'none' | 'snappy' | 'smooth' | 'gentle' | 'spring';
     readonly items: 'none' | 'slide' | 'lift' | 'scale' | 'glow';
@@ -495,7 +495,7 @@ export interface ShellFrame {
     readonly frame: 'full-bleed' | 'inset';
     readonly corners: 'sharp' | 'soft' | 'round';
     readonly nav: 'rounded' | 'pill';
-    readonly indicator: 'fill' | 'bar' | 'dot';
+    readonly indicator: 'fill' | 'bar' | 'dot' | 'tab';
   };
   /** Entrance animation of the page content; changes of `pageKey` replay it. */
   readonly motion: { readonly page: 'none' | 'fade' | 'rise' | 'slide' | 'zoom' | 'blur' };

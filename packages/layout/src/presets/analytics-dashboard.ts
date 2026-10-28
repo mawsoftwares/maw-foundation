@@ -14,7 +14,7 @@ export const analyticsDashboardPreset: LayoutPreset = {
     footer: { enabled: false },
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'xl', mobileNavigation: 'drawer' },
-    shape: { frame: 'inset', corners: 'round', nav: 'pill', indicator: 'fill' },
+    shape: { frame: 'inset', corners: 'round', nav: 'pill', indicator: 'tab' },
     motion: { sidebar: 'spring', items: 'lift', page: 'fade', nav: 'stagger' },
   },
 };

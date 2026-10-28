@@ -399,5 +399,6 @@ export { ThemeProbes, type ThemeProbesProps } from './theme-probes';
 export { ClientThemeProvider, useClientTheme, type ClientThemeProviderProps, type ClientThemeContextValue } from './client-theme';
 
 export { composeSlot, layoutBreakpointPx, layoutMinWidthQuery, toShellFrame, type FrameOptions } from './layout/shell-frame';
+export { HeroBanner, ProfileCard, type HeroBannerProps, type ProfileCardProps } from './showcase';
 export * from './page-templates';
 export * from './layout-studio';

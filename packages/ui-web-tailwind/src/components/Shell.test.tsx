@@ -96,6 +96,15 @@ describe('SidebarView look (from a layout)', () => {
     expect(dot).not.toContain('text-[var(--maw-comp-nav-item-active-text-color');
   });
 
+  it('indicator: tab makes the active item a page-coloured tab that reaches the sidebar edge and curves into the page', () => {
+    const html = sidebar({ look: look({ indicator: 'tab' }) });
+    expect(html).toContain('bg-[var(--maw-canvas)]');
+    expect(html).toContain('rounded-r-none');
+    expect(html).toContain('before:bg-[radial-gradient(circle_at_0_0');
+    expect(html).toContain('after:bg-[radial-gradient(circle_at_0_100%');
+    expect(html).not.toContain('text-[var(--maw-comp-nav-item-active-text-color');
+  });
+
   it('item motion: lift raises the item, none adds no hover movement', () => {
     expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'lift' } }) })).toContain('hover:-translate-y-0.5');
     const none = sidebar({ look: look({ motion: { sidebar: 'none', items: 'none' } }) });

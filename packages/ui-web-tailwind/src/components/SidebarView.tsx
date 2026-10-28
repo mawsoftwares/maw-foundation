@@ -71,6 +71,8 @@ function SidebarItem({
                 indicator === 'bar' &&
                   'bg-[color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_12%,transparent)] text-[var(--maw-shell-fg,var(--maw-fg))] shadow-[inset_3px_0_0_var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'dot' && 'bg-transparent text-[var(--maw-shell-fg,var(--maw-fg))]',
+                indicator === 'tab' &&
+                  "-mr-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))] rounded-r-none bg-[var(--maw-canvas)] text-[var(--maw-brand)] before:absolute before:-top-4 before:right-0 before:size-4 before:bg-[radial-gradient(circle_at_0_0,transparent_16px,var(--maw-canvas)_16.5px)] before:content-[''] after:absolute after:-bottom-4 after:right-0 after:size-4 after:bg-[radial-gradient(circle_at_0_100%,transparent_16px,var(--maw-canvas)_16.5px)] after:content-['']",
               )
             : cn(
                 'rounded-[var(--maw-comp-nav-item-border-radius,var(--maw-radius-md))] bg-[var(--maw-comp-nav-item-background,transparent)] font-medium text-[var(--maw-comp-nav-item-text-color,var(--maw-shell-fg,var(--maw-fg)))]',

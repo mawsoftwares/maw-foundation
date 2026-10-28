@@ -46,7 +46,7 @@ const SETTINGS_SHAPE = obj({
     frame: oneOf('full-bleed', 'inset'),
     corners: oneOf('sharp', 'soft', 'round'),
     nav: oneOf('rounded', 'pill'),
-    indicator: oneOf('fill', 'bar', 'dot'),
+    indicator: oneOf('fill', 'bar', 'dot', 'tab'),
   }),
   motion: obj({
     sidebar: oneOf('none', 'snappy', 'smooth', 'gentle', 'spring'),

@@ -111,7 +111,7 @@ describe('sidebar look and motion', () => {
     const s = all().map((p) => p.settings);
     expect(s.some((x) => x.sidebar.labels === 'below')).toBe(true);
     expect(s.some((x) => x.sidebar.expandOnHover)).toBe(true);
-    for (const i of ['fill', 'bar', 'dot']) expect(s.some((x) => x.shape.indicator === i), i).toBe(true);
+    for (const i of ['fill', 'bar', 'dot', 'tab']) expect(s.some((x) => x.shape.indicator === i), i).toBe(true);
     expect(s.some((x) => x.motion.sidebar === 'spring')).toBe(true);
     expect(s.some((x) => x.motion.page === 'rise')).toBe(true);
     for (const page of ['fade', 'rise', 'zoom', 'blur']) expect(s.some((x) => x.motion.page === page), page).toBe(true);
@@ -125,6 +125,7 @@ describe('sidebar look and motion', () => {
     expect(validateLayoutOverrides({ motion: { nav: 'cascade' } }, components).ok).toBe(false);
     expect(validateLayoutOverrides({ motion: { sidebar: 'bouncy' } }, components).ok).toBe(false);
     expect(validateLayoutOverrides({ shape: { indicator: 'glow' } }, components).ok).toBe(false);
+    expect(validateLayoutOverrides({ shape: { indicator: 'tab' } }, components).ok).toBe(true);
     expect(validateLayoutOverrides({ motion: { duration: 900 } }, components).ok).toBe(false);
   });
 

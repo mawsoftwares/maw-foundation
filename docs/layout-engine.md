@@ -162,3 +162,9 @@ The layout engine's full set of looks (right panel, tile bar, hover-expand, acti
 - **Twelve starter themes**, each with a `label` and `description` (new optional fields on `ThemeDefinition`; `registry.get(id)` returns them): medical-blue, violet-studio, midnight-rose, clean-light, aurora, slate-minimal, emerald-fresh, ocean-teal, sunset-coral, graphite, lavender-soft, royal-navy. All pass the WCAG AA checks in `starter-themes.test.ts`.
 - **Direct theme selection:** `ThemeGallery` shows one card per theme drawn in that theme's own colours; clicking it selects the theme (the preview updates at once). It appears on the Layout tab (compact) and the Theme tab (with descriptions). Colour mode, typography and spacing remain separate controls.
 
+### Phase 12 — closer to the reference designs
+
+- **`shape.indicator: 'tab'`:** the active item becomes a page-coloured tab that reaches the sidebar's edge and curves into the content (GoDoc / Jobie style). Used by Analytics and Listing.
+- **`HeroBanner`** (welcome / promo banner with gradient or soft tint, action and decorative art) and **`ProfileCard`** (avatar, role, stats, progress) are exported from `@mawsoftwares/ui-web`. They use theme tokens only, so they follow the active theme. The Studio preview now shows them, so presets look like real products instead of grey boxes.
+- Still page content rather than layout, not built: illustrations, calendars/Gantt, kanban boards, chat UI and category tile grids.
+
