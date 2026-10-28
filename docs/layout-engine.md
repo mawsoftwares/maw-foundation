@@ -1,0 +1,124 @@
+# Layout engine (`@mawsoftwares/layout`)
+
+Pure data + logic (no React, Tailwind or kit dependency). Describes *structure* only; look is the Theme Engine
+(`@mawsoftwares/theme`, `--maw-*`), page composition is the Page Template Engine (later phase).
+
+```ts
+import { resolveLayout, defaultLayoutRegistry } from '@mawsoftwares/layout';
+
+const layout = resolveLayout(storedConfigOrNull); // never throws; always renderable
+layout.presetId; layout.settings.sidebar.variant; layout.source; // 'default' | 'config' | 'fallback'
+```
+
+- **Stored shape:** `{ version, presetId, overrides? }` — only differences from the preset. Draft and published copies live in `tenant_layout`; history in `tenant_layout_revision` (append-only; rollback = re-publish an old revision).
+- **Fallback:** nothing stored, unknown preset, invalid or newer-than-supported config → `classic-admin` (today's shell). `issues` explains why.
+- **Safety:** strict validation (unknown keys rejected, closed enums, component ids only from the approved registry). No code or class names in config.
+- **New preset:** `defaultLayoutRegistry.registerPreset({ id, label, description, settings })` — core untouched. New slot component: `registerComponent(id)` plus a renderer in the kit.
+- **Versioning:** bump `CURRENT_LAYOUT_VERSION`, add a step to `LAYOUT_MIGRATIONS` (keyed by the version it migrates from).
+- **Permissions:** `Read_Layout`, `Update_Layout`, `Publish_Layout` (module `layout` in sample-server). Enforcement arrives with the routes in Phase 7.
+- **Tailwind:** this package contains no classes. The renderer (Phase 3) will live in `ui-web`/`ui-web-tailwind`; any new package with classes needs its own `@source` in the app's CSS.
+
+## Rendering (Phase 3)
+
+```tsx
+const layout = resolveLayout(storedConfig);
+<AppShell layout={layout} slots={{ search: <Search/>, notifications: <Bell/> }} rightPanel={<Filters/>} sidebar={...} actions={...}>
+  {/* business content — identical under every layout */}
+</AppShell>
+```
+
+- No `layout` prop = the classic shell, unchanged. `ui-web` maps settings → `ShellFrame` (`toShellFrame`); the kit renders it.
+- Header ids: built-in `breadcrumbs`, `page-title`, `actions`; any other approved id renders only if the app passes it in `slots`.
+- Tailwind kit renders: floating/docked sidebar, left/right position, header variants + sticky, density, full/contained content, footer toggle, collapsible right panel, skip link. The default kit honours header on/off, sticky, footer and content width.
+- Sidebar behaviour from config (Phase 6): `variant: 'rail'` forces the icon rail with no expand button; `collapsible: false` pins it open; `width` (sm 200 / md 260 / lg 300 px; md is the classic width); `defaultCollapsed` is applied on desktop whenever the layout changes (both directions). `sidebar.top` / `sidebar.bottom`: `brand` keeps the app's `<Sidebar logo/title>`, `user-menu` keeps its `footer`; any other approved id renders from `slots` (hidden in the rail). The navigation items themselves always come from the app.
+- `responsive.mobileNavigation: 'bottom-bar'` adds a bottom tab bar of the top-level destinations (max 5) on mobile; the header menu still opens the full drawer. The right panel is hidden on small screens (drawer planned).
+- Try it: `pnpm --filter @mawsoftwares/ui-web-tailwind dev`, open `/?kit=tailwind&layout=floating-sidebar#shell`.
+
+## Layout Studio (Phase 5)
+
+`<LayoutStudio store themes can onPublished />` from `@mawsoftwares/ui-web`.
+
+- **Draft vs live:** Studio edits a working copy and writes only the DRAFT (`store.saveDraft`). End users render `published` only; `publish()` is a separate step needing `Publish_Layout`, and rollback re-publishes an earlier revision as a new one. Editing needs `Update_Layout`; viewing needs `Read_Layout` (page guard) and without `Update_Layout` every control is disabled.
+- **Preview** (`ShellPreview`) is the REAL application shell — the same `AppShell`, `Sidebar` and kit components as the app — with sample content, evaluated at 1280 / 820 / 390 px (`AppShell viewportWidth`, so the window's width doesn't decide), scaled into its frame. It has its own navigation context, is `inert` (nothing clickable or focusable), exposes a text alternative, and theme choices apply as CSS variables on the frame only. The gallery thumbnails are the same component at thumbnail scale. It follows whichever UI kit the app installed.
+- **Theme choices** are names from the Theme Engine registry plus closed colour-mode / typography / spacing presets (`ThemeSelection`); they never contain token values. Presets scale the chosen theme's own spacing and type sizes.
+- **Persistence port:** `ProjectUiStore` (`load / saveDraft / discardDraft / publish / rollback`) in `@mawsoftwares/layout`, with `createMemoryProjectUiStore` and `createStorageProjectUiStore` (localStorage). The server implementation (tenant_layout, Phase 7) implements the same interface.
+- **Editing model** (pure, reusable): `setLayoutPreset`, `setLayoutSetting` (removes an override equal to the preset default), `restorePresetDefaults`, `layoutConfigsEqual`, `countLayoutOverrides`.
+- **Try it:** `pnpm --filter @mawsoftwares/ui-web-tailwind dev` → `/?kit=tailwind#studio` (add `&readonly=1` for the view-only state). In sample-web: Super Admin → Layout Studio (`Read_Layout`).
+- **sample-web wiring:** the shell applies the published layout (none published = unchanged classic shell) and the published theme selection (see Persistence below).
+
+## Presets (Phase 6)
+
+| id | sidebar | header | right panel | content | notes |
+|---|---|---|---|---|---|
+| `classic-admin` (default/fallback) | docked, md | default, sticky | – | contained | today's shell |
+| `floating-sidebar` | floating card | minimal | – | contained | no footer |
+| `enterprise-dashboard` | docked, sm | prominent + search | open | full, compact | collapses below `lg` |
+| `split-workspace` | rail | minimal | – | full | launcher / picker apps |
+| `communication-workspace` | rail | prominent + search | open | full, compact | pair with the `communication` page template |
+| `analytics-dashboard` | rail | minimal + title | open | contained | pair with the `dashboard` template |
+| `project-workspace` | docked, sm | breadcrumbs + search | – | full, compact | boards / timelines; collapses below `lg` |
+| `listing-workspace` | docked, md | prominent + search | – | contained | bottom tab bar on phones |
+
+Every built-in preset keeps `actions` in the header (the app's user menu / logout live there) and a reachable sidebar — enforced by tests.
+
+**Regression net:** `apps/sample-web/src/layout-regression.test.tsx` snapshots the Tailwind shell's element tree and classes for all presets at desktop and mobile, plus cross-preset invariants (same business content, main landmark and skip link everywhere; no right panel/footer on mobile; bottom bar only where requested). These are structural snapshots, not pixel comparisons — review a snapshot diff like a code change (`pnpm vitest run -u` to accept).
+
+## Persistence, publishing and migration (Phase 7)
+
+### API (`/api/v1/layout`, sample-server)
+
+| Route | Permission | Purpose |
+|---|---|---|
+| `GET /` | signed-in | The **live** config only: `{ published, publishedRevision }`. No draft, history or authors. Every user needs it to render the app. |
+| `GET /studio` | `Read_Layout` | Draft, live config and history. |
+| `PUT /draft` / `DELETE /draft` | `Update_Layout` | Save / discard the draft. Never changes what users see. |
+| `POST /publish` | `Publish_Layout` | Make the saved draft live (new revision, draft cleared). |
+| `POST /rollback` `{ revision }` | `Publish_Layout` | Re-publish an earlier revision as a **new** revision; history is append-only. |
+
+Editing and publishing are separate: `Update_Layout` cannot publish and `Publish_Layout` cannot edit. Every write is validated server-side by the same `validateProjectUiConfig` used in the browser (strict keys, closed enums, approved component ids, ≤32 KB), returns the standard `{ success:false, error:{ code, message, details.fields } }` envelope, and is recorded in the audit log (`layout.draft.save`, `layout.draft.discard`, `layout.publish`, `layout.rollback`).
+
+Storage is `tenant_layout` (draft + denormalised live copy) and `tenant_layout_revision` (append-only history) — migration `033`. Each call runs in one transaction holding a row lock on the tenant's row, so two admins can't interleave and revision numbers stay gap-free. Rows are keyed `(tenant_id, scope, scope_id)`; only `scope='tenant'` is used today. `project` and `user` scopes (project-level overrides, per-user preferences) are reserved and need no schema change, but **are not implemented**.
+
+### What users get
+- The shell reads only the published config, fetched after sign-in and on window focus / publish, with a per-tenant `localStorage` copy as a first-paint cache only.
+- Theme: `shared theme (Theme Designer) < project's published theme selection`. A chosen registry theme and the typography/spacing presets are layered over the shared theme; the published colour mode is a project *default* and never overrides a user's own light/dark choice.
+- Nothing configured (or fetch fails offline with no cache) → the classic shell and the existing theme, exactly as before.
+
+### Migration strategy
+**Existing projects need no data migration.** No row = no published config = Classic Admin, unchanged. Adopting the feature in a project is:
+1. Deploy code and run migration `033` (`pnpm --filter @mawsoftwares/sample-server db:migrate`). It is additive (two new tables) and reversible (`033…down.sql`).
+2. Re-run the seed / boot-time permission sync so `Read_Layout`, `Update_Layout`, `Publish_Layout` exist and are assigned to admin roles (also adds the *Layout Studio* menu item). Grant them to other roles via RBAC admin as needed.
+3. An admin opens Layout Studio, saves a draft and publishes.
+
+**Independent client deployments / databases:** every deployment owns its tables; there are no cross-database references. A client that has not upgraded simply has no layout feature. A client upgraded later starts at "nothing published".
+
+**Schema evolution:** stored configs carry `version` at two levels (project UI envelope and nested layout). When the shape changes, bump `CURRENT_PROJECT_UI_VERSION` or `CURRENT_LAYOUT_VERSION` and add a step to `PROJECT_UI_MIGRATIONS` / `LAYOUT_MIGRATIONS`. Rows are upgraded **on read** (`upgradeProjectUiConfig`) and written back in the new shape on their next save, so rollout needs no bulk job. A row that cannot be upgraded (corrupt, or written by a *newer* release after a rollback of the code) is skipped and logged rather than failing the request; the previous valid revision stays live.
+
+**Rollback of the feature:** removing the routes leaves the app on the classic shell; the tables can be dropped with the `down` migration.
+
+### Testing
+- `layout-routes.test.ts`: permission matrix for every route, draft/live separation, publish/rollback, validation, tenant isolation, audit, concurrency (in-memory persistence).
+- `layout-store.pg.integration.test.ts`: the same store on real Postgres — migration up/down, row locking under parallel publishes/rollbacks, JSONB round-trips, unreadable rows. Opt-in: `LAYOUT_TEST_DATABASE_URL=postgres:///<scratch-db> pnpm vitest run apps/sample-server/src/__tests__/layout-store.pg.integration.test.ts`.
+
+## Look = theme + shape (Phase 8)
+
+Your references differ in colour and in geometry. The two are separate settings, so any theme works with any layout.
+
+**Theme (colour, radius, shadow):** `starterThemes` in `@mawsoftwares/theme` — `medical-blue`, `violet-studio`, `midnight-rose`, `clean-light` — are ordinary Theme Engine definitions (`createThemeRegistry(starterThemes)`). Coloured sidebars use `shell.*` tokens plus `components['nav-item'|'nav-item-hover'|'nav-item-active']` for the white active pill. All pass WCAG AA checks in the test suite (body/muted/brand text and sidebar text, light and dark). New optional tokens, with today's tokens as fallbacks so existing themes are unchanged: `shell-header-bg|fg|border` (header can differ from the sidebar) and `shell-logo` (logo colour on a coloured sidebar). sample-web offers `starterThemes` + its generated client themes in Layout Studio (`project-themes.ts`).
+
+**Shape (geometry only):** `LayoutSettings.shape` = `{ frame: 'full-bleed' | 'inset', corners: 'sharp' | 'soft' | 'round', nav: 'rounded' | 'pill' }`. `inset` puts the app in a rounded card on a brand-tinted canvas (desktop only); `corners` sets the radius of that card and the floating sidebar (`--maw-shell-radius`); `pill` makes navigation items fully rounded. Adding the field needs no data migration: stored configs hold only overrides, and presets supply the rest.
+
+| preset | shape | reference it follows |
+|---|---|---|
+| `classic-admin` | full-bleed, soft, rounded | today's shell |
+| `floating-sidebar` | full-bleed, round, rounded | floating rail |
+| `enterprise-dashboard` | full-bleed, soft, rounded | – |
+| `split-workspace` | inset, round, pill | dark pill rail |
+| `communication-workspace` | inset, round, rounded | purple chat shell |
+| `analytics-dashboard` | inset, round, pill | GoDoc / primary dashboard |
+| `project-workspace` | full-bleed, soft, rounded | ClickUp / Jiron |
+| `listing-workspace` | inset, soft, pill | Jobie |
+
+Good starting pairs: `analytics-dashboard` + `medical-blue`, `listing-workspace` + `violet-studio`, `split-workspace` + `midnight-rose`, `project-workspace` + `clean-light`.
+
+Kit notes: the shell height is `--maw-shell-height` (default `100vh`) so the shell can live in a sized frame; the sidebar fills its parent instead of `min-height: 100vh`. The Tailwind kit renders all of the above; the default kit renders shape, header/footer/content width and the bottom bar, but not the right panel.
