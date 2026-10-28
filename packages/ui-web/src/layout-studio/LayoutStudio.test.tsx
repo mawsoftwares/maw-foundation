@@ -68,6 +68,13 @@ describe('LayoutStudio (initial render)', () => {
     expect(html).toContain('Nothing here changes the live application until you publish');
   });
 
+  it('offers "Preview in the app" only when the host can show it, and to read-only viewers too (it changes nothing)', () => {
+    const withPreview = (can: (p: string) => boolean): string => renderToStaticMarkup(createElement(LayoutStudio, { store, can, onPreview: () => undefined }));
+    expect(render(() => true)).not.toContain('Preview in the app');
+    expect(withPreview(() => true)).toContain('Preview in the app');
+    expect(withPreview((p) => p === 'Read_Layout')).toMatch(/<button(?![^>]*disabled)[^>]*>Preview in the app/);
+  });
+
   it('is read-only without Update_Layout and says why', () => {
     const html = render((p) => p === 'Read_Layout');
     expect(html).toContain('requires Update_Layout');

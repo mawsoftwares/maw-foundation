@@ -19,6 +19,7 @@ import {
   Breadcrumbs,
   useI18n,
   Avatar,
+  Button,
   Icon,
   OfflineProvider,
   OfflineBanner,
@@ -52,9 +53,9 @@ import { MessagingView } from './features/messaging';
 import { StorageView } from './features/storage-page';
 import { StorageSettingsView } from './features/storage-settings';
 import { LayoutStudioView } from './features/layout-studio';
-import { PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, readCachedPublishedUi, resolvePublishedUi, writeCachedPublishedUi } from './layout-config';
+import { PROJECT_UI_PREVIEW_EVENT, PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, readPreviewUi, stopPreviewUi, readCachedPublishedUi, resolvePublishedUi, writeCachedPublishedUi } from './layout-config';
 import { projectThemeRegistry } from './project-themes';
-import type { ResolvedProjectUi } from '@mawsoftwares/layout';
+import type { ProjectUiConfig, ResolvedProjectUi } from '@mawsoftwares/layout';
 import type { ThemeOverrides } from '@mawsoftwares/theme';
 // @scaffold:imports
 import { loadMenuTree, flattenMenuTree, findMenuKeyByPath, MENUS_CHANGED_EVENT, type MenuTreeNode } from './menu-tree';
@@ -242,6 +243,19 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   // End users render the PUBLISHED config only; Layout Studio edits a draft until it is published. The server is the
   // source of truth; the cached copy only avoids a flash of the classic shell while the request is in flight.
   const [liveUi, setLiveUi] = useState<ResolvedProjectUi | null>(null);
+  // A not-yet-published config the signed-in author is previewing (this tab only). It wins over the live one while set.
+  const [previewUi, setPreviewUi] = useState<ResolvedProjectUi | null>(() => {
+    const stored = readPreviewUi();
+    return stored === null ? null : resolvePublishedUi(stored);
+  });
+  useEffect(() => {
+    const onPreview = (event: Event): void => {
+      const config = (event as CustomEvent<ProjectUiConfig | null>).detail;
+      setPreviewUi(config === null ? null : resolvePublishedUi(config));
+    };
+    window.addEventListener(PROJECT_UI_PREVIEW_EVENT, onPreview);
+    return () => window.removeEventListener(PROJECT_UI_PREVIEW_EVENT, onPreview);
+  }, []);
   const tenantId = session?.tenantId;
   useEffect(() => {
     if (tenantId === undefined) {
@@ -272,16 +286,17 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 
   // Theme = shared theme + the project's published selection. Nothing is applied until something is configured, so
   // an app with no layout config renders exactly as before.
+  const effectiveUi = session === null ? liveUi : (previewUi ?? liveUi);
   const themeTouched = useRef(false);
   useEffect(() => {
-    const composed = composeProjectTheme(sharedOverrides, liveUi?.theme, projectThemeRegistry);
+    const composed = composeProjectTheme(sharedOverrides, effectiveUi?.theme, projectThemeRegistry);
     if (composed === undefined && !themeTouched.current) return;
     themeTouched.current = true;
     applyThemeOverrides(composed ?? {});
-  }, [sharedOverrides, liveUi, applyThemeOverrides]);
+  }, [sharedOverrides, effectiveUi, applyThemeOverrides]);
 
   // The published colour mode is a project default: a user's own light/dark choice always wins.
-  const publishedColorMode = liveUi?.theme.colorMode;
+  const publishedColorMode = effectiveUi?.theme.colorMode;
   useEffect(() => {
     if (publishedColorMode === undefined || publishedColorMode === 'system') return;
     try {
@@ -467,7 +482,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   return (
     <NavigationProvider config={navConfig}>
       <AppShell
-        layout={liveUi === null || liveUi.layout.source === 'default' ? undefined : liveUi.layout}
+        layout={effectiveUi === null || effectiveUi.layout.source === 'default' ? undefined : effectiveUi.layout}
         sidebar={
           <Sidebar
             logo={<Icon name="zap" size={22} />}
@@ -492,6 +507,32 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
           <PageContent page={page} onFeatureChange={handleFeatureChange} featureOverrides={featureOverrides} />
         </PagePathsProvider>
       </AppShell>
+      {previewUi !== null && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            bottom: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--maw-space-md)',
+            padding: 'var(--maw-space-sm) var(--maw-space-md)',
+            borderRadius: 9999,
+            background: 'var(--maw-surface)',
+            color: 'var(--maw-fg)',
+            border: '1px solid var(--maw-border)',
+            boxShadow: '0 8px 24px rgb(0 0 0 / 0.2)',
+            maxWidth: 'calc(100vw - 32px)',
+          }}
+        >
+          <span style={{ fontSize: 'var(--maw-text-sm)' }}>Previewing an unpublished layout — only you see this.</span>
+          <Button onClick={() => setPage('layout')}>Back to Studio</Button>
+          <Button variant="outline" onClick={stopPreviewUi}>Exit preview</Button>
+        </div>
+      )}
     </NavigationProvider>
   );
 }

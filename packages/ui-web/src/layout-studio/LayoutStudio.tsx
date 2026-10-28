@@ -38,6 +38,8 @@ export interface LayoutStudioProps {
   readonly can: (permission: string) => boolean;
   /** Called after a successful publish or rollback so the host can apply the new live config. */
   readonly onPublished?: (state: ProjectUiState) => void;
+  /** Show the Studio's working copy (saved or not) in the real application, for this viewer only, before anything is published. */
+  readonly onPreview?: (config: ProjectUiConfig) => void;
   /** Whether the OS prefers dark mode (for the `system` colour mode preview). */
   readonly prefersDark?: boolean;
 }
@@ -71,7 +73,7 @@ const sameConfig = (a: ProjectUiConfig, b: ProjectUiConfig): boolean => layoutCo
  * draft and (separately, with permission) publish. The preview is a self-contained wireframe, so nothing the user
  * does here changes the running application until `publish`.
  */
-export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, prefersDark = false }: LayoutStudioProps): ReactNode {
+export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, onPreview, prefersDark = false }: LayoutStudioProps): ReactNode {
   const canEdit = can(LAYOUT_PERMISSIONS.update);
   const canPublish = can(LAYOUT_PERMISSIONS.publish);
 
@@ -347,6 +349,9 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
         <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
           <Button variant="ghost" disabled={!canEdit || busy} onClick={() => { setWorking(createDefaultProjectUi(registry.fallbackPresetId)); setMessage({ kind: 'info', text: 'Defaults restored in the editor. Save the draft to keep them.' }); }}>Restore defaults</Button>
           <Button variant="outline" disabled={!dirty || busy} onClick={() => { setWorking(baseline); setMessage(null); }}>Discard changes</Button>
+          {onPreview !== undefined && (
+            <Button variant="outline" disabled={busy} onClick={() => { onPreview(working); setMessage({ kind: 'info', text: 'Previewing in the app, for you only. Nothing is saved or published. Use “Exit preview” in the app to go back.' }); }}>Preview in the app</Button>
+          )}
           <Button variant="secondary" disabled={!canEdit || !dirty || busy} loading={busy} onClick={() => run(() => store.saveDraft(working), 'Draft saved. Users still see the live layout.')}>Save draft</Button>
           <Button disabled={!canPublish || dirty || !hasUnpublishedDraft || busy} onClick={() => run(() => store.publish(), 'Published. Users now see this layout.', true)}>Publish</Button>
         </Stack>

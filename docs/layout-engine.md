@@ -141,3 +141,8 @@ All motion is switched off by `prefers-reduced-motion`. These are honoured by th
 Classic Admin keeps exactly its previous behaviour (`fill`, `smooth`, `slide`, no page animation). A test asserts that no two presets share the same combination of look, so the presets stay visibly distinct.
 
 `LayoutPreset.suggestedThemeId` is an optional hint (layout and theme remain independent). Until a theme is chosen, the Studio gallery shows each preset in the look it was designed around, and the Layout tab offers "Use the matching theme".
+
+### Preview before publishing
+
+"Preview in the app" (Studio toolbar) applies the editor's working copy, saved or not, to the real application for the current viewer only: it is kept in `sessionStorage` for that tab, never sent to the server, and a floating bar offers "Back to Studio" and "Exit preview". Publishing ends the preview. Anyone who can open the Studio can preview; it changes nothing for other users.
+

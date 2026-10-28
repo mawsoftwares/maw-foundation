@@ -64,3 +64,32 @@ export function writeCachedPublishedUi(tenantId: string, config: ProjectUiConfig
 
 /** Never throws; unusable stored config degrades to the classic shell (see resolveProjectUi). */
 export const resolvePublishedUi = (config: ProjectUiConfig | null) => resolveProjectUi(config, undefined, knownThemeIds);
+
+/**
+ * Preview before publishing: the Studio's working copy (saved or not) is applied to the real application for THIS tab only.
+ * Nothing is sent to the server, so no one else sees it; closing the tab or exiting the preview ends it.
+ */
+export const PROJECT_UI_PREVIEW_EVENT = 'maw:project-ui-preview';
+const PREVIEW_KEY = 'maw-project-ui-preview';
+
+export function readPreviewUi(): ProjectUiConfig | null {
+  try {
+    const raw = window.sessionStorage.getItem(PREVIEW_KEY);
+    return raw === null ? null : (JSON.parse(raw) as ProjectUiConfig);
+  } catch {
+    return null;
+  }
+}
+
+function setPreviewUi(config: ProjectUiConfig | null): void {
+  try {
+    if (config === null) window.sessionStorage.removeItem(PREVIEW_KEY);
+    else window.sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(config));
+  } catch {
+    // Storage unavailable: the preview still applies through the event below, it just won't survive a reload.
+  }
+  window.dispatchEvent(new CustomEvent(PROJECT_UI_PREVIEW_EVENT, { detail: config }));
+}
+
+export const startPreviewUi = (config: ProjectUiConfig): void => setPreviewUi(config);
+export const stopPreviewUi = (): void => setPreviewUi(null);
