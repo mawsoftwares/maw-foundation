@@ -552,7 +552,7 @@ function StudioDemo(): ReactNode {
   const can = (p: string): boolean => new URLSearchParams(location.search).get('readonly') === '1' ? p === 'Read_Layout' : true;
   return (
     <div style={{ padding: 24, background: 'var(--maw-canvas)', minHeight: '100vh' }}>
-      <Web.LayoutStudio store={studioStore} themes={studioThemes} can={can} />
+      <Web.LayoutStudio store={studioStore} themes={studioThemes} can={can} onPreview={() => undefined} />
     </div>
   );
 }

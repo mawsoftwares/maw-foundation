@@ -370,9 +370,6 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
         <Stack direction="row" gap="var(--maw-space-sm)" style={{ flexWrap: 'wrap' }}>
           <Button variant="ghost" disabled={!canEdit || busy} onClick={() => { setWorking(createDefaultProjectUi(registry.fallbackPresetId)); setMessage({ kind: 'info', text: 'Defaults restored in the editor. Save the draft to keep them.' }); }}>Restore defaults</Button>
           <Button variant="outline" disabled={!dirty || busy} onClick={() => { setWorking(baseline); setMessage(null); }}>Discard changes</Button>
-          {onPreview !== undefined && (
-            <Button variant="outline" disabled={busy} onClick={() => { onPreview(working); setMessage({ kind: 'info', text: 'Previewing in the app, for you only. Nothing is saved or published. Use “Exit preview” in the app to go back.' }); }}>Preview in the app</Button>
-          )}
           <Button variant="secondary" disabled={!canEdit || !dirty || busy} loading={busy} onClick={() => run(() => store.saveDraft(working), 'Draft saved. Users still see the live layout.')}>Save draft</Button>
           <Button disabled={!canPublish || dirty || !hasUnpublishedDraft || busy} onClick={() => run(() => store.publish(), 'Published. Users now see this layout.', true)}>Publish</Button>
         </Stack>
@@ -400,6 +397,29 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
           </p>
         </Card>
       </Grid>
+
+      {onPreview !== undefined && (
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 'var(--maw-space-md)',
+            flexWrap: 'wrap',
+            padding: 'var(--maw-space-sm) var(--maw-space-md)',
+            borderRadius: 'var(--maw-radius-lg)',
+            border: '1px solid var(--maw-border)',
+            background: 'var(--maw-surface)',
+            boxShadow: '0 -4px 16px rgb(0 0 0 / 0.08)',
+          }}
+        >
+          <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>See these choices across the whole app before publishing. Only you see it.</span>
+          <Button disabled={busy} onClick={() => { onPreview(working); setMessage({ kind: 'info', text: 'Previewing in the app, for you only. Nothing is saved or published. Use “Exit preview” in the app to go back.' }); }}>Preview in the app</Button>
+        </div>
+      )}
     </Stack>
   );
 }
