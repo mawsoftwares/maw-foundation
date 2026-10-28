@@ -12,6 +12,7 @@ import { describePreview, previewState, PREVIEW_VIEWPORTS, type PreviewViewport 
 const FRAME_HEIGHT: Readonly<Record<PreviewViewport, number>> = { desktop: 720, tablet: 920, mobile: 780 };
 
 const SAMPLE_NAV: NavItem[] = [
+  { key: 'home', label: 'Home', icon: 'home', path: '/home', group: 'Main' },
   { key: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', path: '/dashboard', group: 'Main' },
   { key: 'orders', label: 'Orders', icon: 'shopping-cart', path: '/orders', group: 'Main' },
   { key: 'customers', label: 'Customers', icon: 'users', path: '/customers', group: 'Main' },

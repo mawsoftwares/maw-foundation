@@ -164,7 +164,7 @@ The layout engine's full set of looks (right panel, tile bar, hover-expand, acti
 
 ### Phase 12 — closer to the reference designs
 
-- **`shape.indicator: 'tab'`:** the active item becomes a page-coloured tab that reaches the sidebar's edge and curves into the content (GoDoc / Jobie style). Used by Analytics and Listing.
+- **`shape.indicator: 'tab'`:** the active item becomes a tall, page-coloured tab, fully rounded on its content side, that reaches the sidebar's edge and curves into the content with 28px concave corners above and below (Jobie / GoDoc style); items get airier spacing. Used by Analytics and Listing. The `deep-violet` theme (suggested for Listing) matches the Jobie sidebar colour.
 - **`HeroBanner`** (welcome / promo banner with gradient or soft tint, action and decorative art) and **`ProfileCard`** (avatar, role, stats, progress) are exported from `@mawsoftwares/ui-web`. They use theme tokens only, so they follow the active theme. The Studio preview now shows them, so presets look like real products instead of grey boxes.
 - Still page content rather than layout, not built: illustrations, calendars/Gantt, kanban boards, chat UI and category tile grids.
 

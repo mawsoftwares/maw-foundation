@@ -5,7 +5,7 @@ export const listingWorkspacePreset: LayoutPreset = {
   id: 'listing-workspace',
   label: 'Listing Workspace',
   description: 'Docked sidebar and a search-first header around contained listings; a bottom tab bar on phones.',
-  suggestedThemeId: 'violet-studio',
+  suggestedThemeId: 'deep-violet',
   settings: {
     density: 'comfortable',
     sidebar: { enabled: true, position: 'left', variant: 'docked', width: 'md', collapsible: true, defaultCollapsed: false, labels: 'beside', expandOnHover: false, top: ['brand'], bottom: ['user-menu'] },

@@ -319,5 +319,32 @@ export const royalNavyTheme: ThemeDefinition = {
   },
 };
 
+/** Deep indigo-violet sidebar with white text; pairs with the `tab` active item (job boards, marketplaces). */
+export const deepVioletTheme: ThemeDefinition = {
+  id: 'deep-violet',
+  label: 'Deep Violet',
+  description: 'Rich indigo-violet with a white tab. Job boards and marketplaces.',
+  overrides: {
+    palette: {
+      brand: '#4a2cc2', brandLight: '#8468ec', brandDark: '#37209a', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#f8f7fd', bgSubtle: '#f4f2fc',
+      fg: '#1d1740', fgMuted: '#5a5580', fgSubtle: '#8c88ad', border: '#e8e5f6', borderFocus: '#4a2cc2',
+    },
+    paletteDark: {
+      brand: '#9a84f5', brandLight: '#b7a7f8', brandDark: '#7a5fe8', brandContrast: '#0f0a29',
+      bg: '#17122f', bgMuted: '#1f1940', bgSubtle: '#0f0b22', fg: '#f1eefc', fgMuted: '#aca6d0', border: '#2c2557',
+    },
+    radius: { sm: 8, md: 12, lg: 16, xl: 22 },
+    shadows: SOFT_SHADOWS,
+    shell: { bg: '#3b1ea1', fg: '#ffffff', fgMuted: 'rgba(255, 255, 255, 0.88)', border: 'rgba(255, 255, 255, 0.14)', hover: 'rgba(255, 255, 255, 0.10)' },
+    components: {
+      'nav-item': { textColor: 'rgba(255, 255, 255, 0.92)' },
+      'nav-item-hover': { backgroundColor: 'rgba(255, 255, 255, 0.10)', textColor: '#ffffff' },
+      'nav-item-active': { backgroundColor: '#ffffff', textColor: '#1d1740' },
+    },
+    extraTokens: { 'shell-logo': '#ffffff', ...LIGHT_HEADER('#e8e5f6', '#1d1740') },
+  },
+};
+
 /** All starter themes, in gallery order. */
-export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme];
+export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme, deepVioletTheme];

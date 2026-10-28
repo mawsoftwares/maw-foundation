@@ -63,6 +63,7 @@ function SidebarItem({
           'group relative mb-1 box-border flex w-full cursor-pointer items-center border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
           look?.motion.nav === 'stagger' && depth === 0 && 'animate-nav-in motion-reduce:animate-none',
           below ? 'flex-col justify-center gap-1 px-1 py-2 text-center text-[11px] leading-tight' : cn('gap-3', collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'),
+          indicator === 'tab' && !collapsed && !below && 'gap-4 py-3.5 pl-6',
           active
             ? cn(
                 'rounded-[var(--maw-comp-nav-item-active-border-radius,var(--maw-comp-nav-item-border-radius,var(--maw-radius-md)))] font-semibold',
@@ -72,7 +73,7 @@ function SidebarItem({
                   'bg-[color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_12%,transparent)] text-[var(--maw-shell-fg,var(--maw-fg))] shadow-[inset_3px_0_0_var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'dot' && 'bg-transparent text-[var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'tab' &&
-                  "-mr-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))] rounded-r-none bg-[var(--maw-canvas)] text-[var(--maw-brand)] before:absolute before:-top-4 before:right-0 before:size-4 before:bg-[radial-gradient(circle_at_0_0,transparent_16px,var(--maw-canvas)_16.5px)] before:content-[''] after:absolute after:-bottom-4 after:right-0 after:size-4 after:bg-[radial-gradient(circle_at_0_100%,transparent_16px,var(--maw-canvas)_16.5px)] after:content-['']",
+                  "-mr-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))] rounded-l-full rounded-r-none bg-[var(--maw-canvas)] text-[var(--maw-fg)] before:absolute before:-top-7 before:right-0 before:size-7 before:bg-[radial-gradient(circle_at_0_0,transparent_28px,var(--maw-canvas)_28.5px)] before:content-[''] after:absolute after:-bottom-7 after:right-0 after:size-7 after:bg-[radial-gradient(circle_at_0_100%,transparent_28px,var(--maw-canvas)_28.5px)] after:content-['']",
               )
             : cn(
                 'rounded-[var(--maw-comp-nav-item-border-radius,var(--maw-radius-md))] bg-[var(--maw-comp-nav-item-background,transparent)] font-medium text-[var(--maw-comp-nav-item-text-color,var(--maw-shell-fg,var(--maw-fg)))]',
@@ -249,7 +250,7 @@ export function SidebarView({
         </div>
       )}
 
-      <nav aria-label="Main" className="flex-1 overflow-y-auto p-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))]">
+      <nav aria-label="Main" className={cn('flex-1 overflow-y-auto p-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))]', look?.indicator === 'tab' && !below && 'py-7')}>
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && !below && (!shownCollapsed || isMobile) && (

@@ -99,7 +99,10 @@ describe('SidebarView look (from a layout)', () => {
   it('indicator: tab makes the active item a page-coloured tab that reaches the sidebar edge and curves into the page', () => {
     const html = sidebar({ look: look({ indicator: 'tab' }) });
     expect(html).toContain('bg-[var(--maw-canvas)]');
+    expect(html).toContain('rounded-l-full'); // fully rounded on the content side, like a tab
     expect(html).toContain('rounded-r-none');
+    expect(html).toContain('transparent_28px'); // deep 28px curves above and below
+    expect(html).toContain('pl-6'); // airier items
     expect(html).toContain('before:bg-[radial-gradient(circle_at_0_0');
     expect(html).toContain('after:bg-[radial-gradient(circle_at_0_100%');
     expect(html).not.toContain('text-[var(--maw-comp-nav-item-active-text-color');
