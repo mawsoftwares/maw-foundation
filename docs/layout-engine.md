@@ -122,3 +122,22 @@ Your references differ in colour and in geometry. The two are separate settings,
 Good starting pairs: `analytics-dashboard` + `medical-blue`, `listing-workspace` + `violet-studio`, `split-workspace` + `midnight-rose`, `project-workspace` + `clean-light`.
 
 Kit notes: the shell height is `--maw-shell-height` (default `100vh`) so the shell can live in a sized frame; the sidebar fills its parent instead of `min-height: 100vh`. The Tailwind kit renders all of the above; the default kit renders shape, header/footer/content width and the bottom bar, but not the right panel.
+
+## Phase 9 — sidebar styles, motion and suggested themes
+
+Layouts now differ in more than structure. All of it is configuration (additive: stored configs without these keys keep resolving, using the preset's values).
+
+| Setting | Values | Effect |
+|---|---|---|
+| `sidebar.labels` | `beside` · `below` | `below` = a fixed 88px tile bar, icon with a small label under it (never collapsed) |
+| `sidebar.expandOnHover` | boolean | a rail opens over the content while hovered/focused and folds back; the layout keeps the rail's width |
+| `shape.indicator` | `fill` · `bar` · `dot` | how the active item is marked. `bar`/`dot` use the sidebar's text colour, so they contrast on any sidebar |
+| `motion.sidebar` | `none` · `smooth` · `spring` | width animation (`smooth` is the existing 200ms ease) |
+| `motion.items` | `none` · `slide` · `lift` | hover feedback on nav items |
+| `motion.page` | `none` · `fade` · `rise` | page entrance, replayed when the active page changes |
+
+All motion is switched off by `prefers-reduced-motion`. These are honoured by the Tailwind kit; the default (inline-style) kit ignores them and renders the classic sidebar.
+
+Classic Admin keeps exactly its previous behaviour (`fill`, `smooth`, `slide`, no page animation). A test asserts that no two presets share the same combination of look, so the presets stay visibly distinct.
+
+`LayoutPreset.suggestedThemeId` is an optional hint (layout and theme remain independent). Until a theme is chosen, the Studio gallery shows each preset in the look it was designed around, and the Layout tab offers "Use the matching theme".

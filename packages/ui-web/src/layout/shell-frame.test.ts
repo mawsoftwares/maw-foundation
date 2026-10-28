@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classicAdminPreset, enterpriseDashboardPreset, floatingSidebarPreset, listingWorkspacePreset, projectWorkspacePreset, resolveLayout, splitWorkspacePreset } from '@mawsoftwares/layout';
+import { classicAdminPreset, enterpriseDashboardPreset, floatingSidebarPreset, communicationWorkspacePreset, listingWorkspacePreset, projectWorkspacePreset, resolveLayout, splitWorkspacePreset } from '@mawsoftwares/layout';
 import { composeSlot, layoutBreakpointPx, layoutMinWidthQuery, sidebarBehavior, toShellFrame } from './shell-frame';
 
 describe('toShellFrame', () => {
@@ -51,8 +51,19 @@ describe('breakpoints', () => {
 describe('sidebarBehavior', () => {
   it('classic admin: collapsible, 260px (the existing shell width), keeps the app brand and footer', () => {
     expect(sidebarBehavior(classicAdminPreset.settings)).toEqual({
-      forceRail: false, collapsible: true, widthPx: 260, showBrand: true, showFooter: true, topExtras: [], bottomExtras: [],
+      forceRail: false, collapsible: true, widthPx: 260, showBrand: true, showFooter: true, topExtras: [], bottomExtras: [], labelsBelow: false,
+      // the pre-existing look: filled active item, smooth width, sliding hover, no hover-expand
+      look: { labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide' } },
     });
+  });
+
+  it('a tile bar (labels below) is fixed, never a collapsed rail and has no expand button', () => {
+    expect(sidebarBehavior(communicationWorkspacePreset.settings)).toMatchObject({ labelsBelow: true, forceRail: false, collapsible: false });
+  });
+
+  it('a hover-expand rail is still a forced rail', () => {
+    expect(sidebarBehavior(splitWorkspacePreset.settings)).toMatchObject({ forceRail: true });
+    expect(sidebarBehavior(splitWorkspacePreset.settings).look.expandOnHover).toBe(true);
   });
 
   it('rail layouts are forced to the rail with no expand button', () => {

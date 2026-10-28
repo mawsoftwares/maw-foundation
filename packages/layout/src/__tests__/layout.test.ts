@@ -94,11 +94,47 @@ describe('preset safety (every built-in preset)', () => {
   });
 });
 
+describe('sidebar look and motion', () => {
+  const all = () => defaultLayoutRegistry.listPresets();
+
+  it('classic admin keeps its existing behaviour: filled item, smooth width, sliding hover, no page animation', () => {
+    const { sidebar, shape, motion } = defaultLayoutRegistry.getPreset('classic-admin')!.settings;
+    expect([sidebar.labels, sidebar.expandOnHover, shape.indicator, motion]).toEqual(['beside', false, 'fill', { sidebar: 'smooth', items: 'slide', page: 'none' }]);
+  });
+
+  it('presets are visibly different: no two share the same combination of sidebar look, indicator, motion and shape', () => {
+    const keys = all().map((p) => JSON.stringify([p.settings.sidebar.variant, p.settings.sidebar.labels, p.settings.sidebar.expandOnHover, p.settings.shape, p.settings.motion]));
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('exercises every sidebar style across the presets: tile labels, hover-expand, bar and dot indicators, springy motion', () => {
+    const s = all().map((p) => p.settings);
+    expect(s.some((x) => x.sidebar.labels === 'below')).toBe(true);
+    expect(s.some((x) => x.sidebar.expandOnHover)).toBe(true);
+    for (const i of ['fill', 'bar', 'dot']) expect(s.some((x) => x.shape.indicator === i), i).toBe(true);
+    expect(s.some((x) => x.motion.sidebar === 'spring')).toBe(true);
+    expect(s.some((x) => x.motion.page === 'rise')).toBe(true);
+  });
+
+  it('accepts the new overrides and rejects values outside the closed sets', () => {
+    expect(validateLayoutOverrides({ sidebar: { labels: 'below', expandOnHover: true }, shape: { indicator: 'bar' }, motion: { sidebar: 'spring', items: 'lift', page: 'rise' } }, components).ok).toBe(true);
+    expect(validateLayoutOverrides({ motion: { sidebar: 'bouncy' } }, components).ok).toBe(false);
+    expect(validateLayoutOverrides({ shape: { indicator: 'glow' } }, components).ok).toBe(false);
+    expect(validateLayoutOverrides({ motion: { duration: 900 } }, components).ok).toBe(false);
+  });
+
+  it('a stored config from before these settings still resolves to its preset, with the preset defaults', () => {
+    const r = resolveLayout({ version: 1, presetId: 'split-workspace', overrides: { sidebar: { width: 'md' } } });
+    expect(r.source).toBe('config');
+    expect(r.settings.sidebar.expandOnHover).toBe(true);
+  });
+});
+
 describe('shape (geometry only)', () => {
   const byId = (id: string) => defaultLayoutRegistry.getPreset(id)!.settings.shape;
 
   it('classic admin stays full-bleed; the card-style presets are inset', () => {
-    expect(byId('classic-admin')).toEqual({ frame: 'full-bleed', corners: 'soft', nav: 'rounded' });
+    expect(byId('classic-admin')).toEqual({ frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'fill' });
     for (const id of ['split-workspace', 'communication-workspace', 'analytics-dashboard', 'listing-workspace']) {
       expect(byId(id).frame, id).toBe('inset');
     }

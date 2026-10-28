@@ -110,7 +110,15 @@ export function AppShellView({
         isMobile ? 'p-[var(--maw-space-md)]' : CONTENT_PADDING[frame?.density ?? 'comfortable'],
       )}
     >
-      <div className={cn('mx-auto w-full', frame?.contentWidth === 'full' ? 'max-w-none' : 'max-w-[var(--maw-layout-container-max,none)]')}>
+      <div
+        key={frame?.pageKey}
+        className={cn(
+          'mx-auto w-full',
+          frame?.contentWidth === 'full' ? 'max-w-none' : 'max-w-[var(--maw-layout-container-max,none)]',
+          frame?.motion.page === 'fade' && 'animate-page-fade motion-reduce:animate-none',
+          frame?.motion.page === 'rise' && 'animate-page-rise motion-reduce:animate-none',
+        )}
+      >
         {children}
       </div>
     </main>

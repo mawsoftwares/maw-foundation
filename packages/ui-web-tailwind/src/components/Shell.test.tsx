@@ -71,6 +71,56 @@ describe('SidebarView', () => {
   });
 });
 
+describe('SidebarView look (from a layout)', () => {
+  const look = (extra: Record<string, unknown> = {}) => ({ labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide' }, ...extra }) as const;
+
+  it('without a look it is the classic sidebar: filled active item, sliding hover', () => {
+    const html = sidebar();
+    expect(html).toContain('hover:translate-x-1');
+    expect(html).not.toContain('rounded-full bg-'); // no dot
+  });
+
+  it('labels below: a fixed 88px tile bar that keeps every label visible and has no collapse button', () => {
+    const html = sidebar({ look: look({ labels: 'below' }), collapsible: false });
+    expect(html).toContain('width:88px');
+    expect(html).toContain('flex-col');
+    expect(html).toContain('>Dashboard<');
+    expect(html).not.toContain('aria-label="Collapse"');
+  });
+
+  it('indicator: bar tints the item and draws a side bar; dot draws a dot and no fill (both in the sidebar text colour, so they contrast on any sidebar)', () => {
+    const bar = sidebar({ look: look({ indicator: 'bar' }) });
+    expect(bar).toContain('shadow-[inset_3px_0_0_');
+    const dot = sidebar({ look: look({ indicator: 'dot' }) });
+    expect(dot).toContain('rounded-full bg-[var(--maw-shell-fg');
+    expect(dot).not.toContain('text-[var(--maw-comp-nav-item-active-text-color');
+  });
+
+  it('item motion: lift raises the item, none adds no hover movement', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'lift' } }) })).toContain('hover:-translate-y-0.5');
+    const none = sidebar({ look: look({ motion: { sidebar: 'none', items: 'none' } }) });
+    expect(none).not.toContain('hover:translate-x-1');
+    expect(none).not.toContain('hover:-translate-y-0.5');
+    expect(none).toContain('transition:none');
+  });
+
+  it('springy sidebar motion sets a longer, overshooting transition', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'spring', items: 'slide' } }) })).toContain('cubic-bezier(0.34, 1.4, 0.64, 1)');
+  });
+
+  it('a hover-expand rail takes only the rail width in the layout and floats the sidebar over the content', () => {
+    const html = sidebar({ collapsed: true, look: look({ expandOnHover: true }), collapsible: false });
+    expect(html).toContain('absolute inset-y-0 left-0 z-30');
+    expect(html).not.toContain('aria-label="Expand"');
+    expect(sidebar({ collapsed: false, look: look({ expandOnHover: true }) })).not.toContain('absolute inset-y-0');
+  });
+
+  it('every moving part is switched off for reduced motion', () => {
+    const html = sidebar({ look: look() });
+    expect(html).toContain('motion-reduce:transition-none');
+  });
+});
+
 describe('AppShellView', () => {
   const props = { isMobile: false, menuOpen: false, onMenuToggle: noop, onMenuClose: noop, pageTitle: 'Orders', sidebar: 'SIDEBAR', children: 'CONTENT' };
   const shell = (extra: Record<string, unknown> = {}): string => renderToStaticMarkup(createElement(AppShellView, { ...props, ...extra }));

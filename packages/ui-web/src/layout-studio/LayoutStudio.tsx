@@ -103,6 +103,16 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   const hasUnpublishedDraft = state?.draft != null;
   const cssVars = useMemo(() => previewCssVars(working.theme, themes, prefersDark), [working.theme, themes, prefersDark]);
   const customisations = countLayoutOverrides(working.layout);
+  // Until a theme is chosen the gallery shows each preset in the look it was designed around; a chosen theme applies to all.
+  const suggestedThemeFor = (id: string): string | undefined => {
+    const suggested = registry.getPreset(id)?.suggestedThemeId;
+    return suggested !== undefined && themes?.ids().includes(suggested) ? suggested : undefined;
+  };
+  const thumbVars = (id: string): Record<string, string> => {
+    const suggested = working.theme.themeId === null ? suggestedThemeFor(id) : undefined;
+    return suggested === undefined ? cssVars : previewCssVars({ ...working.theme, themeId: suggested }, themes, prefersDark);
+  };
+  const matchingTheme = suggestedThemeFor(resolved.presetId);
 
   const run = useCallback(async (action: () => Promise<ProjectUiState>, success: string, published = false): Promise<void> => {
     setBusy(true);
@@ -191,7 +201,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
                         display: 'block',
                       }}
                     >
-                      <ShellPreview presetId={p.id} label={p.label} settings={p.settings} viewport="desktop" cssVars={cssVars} scale={0.23} />
+                      <ShellPreview presetId={p.id} label={p.label} settings={p.settings} viewport="desktop" cssVars={thumbVars(p.id)} scale={0.23} />
                       <div style={{ marginTop: 'var(--maw-space-sm)', fontWeight: 600, color: 'var(--maw-fg)' }}>{p.label}{selected ? ' ✓' : ''}</div>
                       <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>{p.description}</div>
                     </button>
@@ -199,6 +209,12 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
                 })}
               </Grid>
             </div>
+            {matchingTheme !== undefined && working.theme.themeId !== matchingTheme && (
+              <Banner variant="info">
+                {resolved.label} was designed around the “{matchingTheme}” theme.{' '}
+                <Button variant="ghost" disabled={!canEdit} onClick={() => setTheme({ themeId: matchingTheme })}>Use the matching theme</Button>
+              </Banner>
+            )}
             <Stack direction="row" gap="var(--maw-space-sm)" align="center">
               <Badge variant={customisations > 0 ? 'info' : 'neutral'}>{customisations} customisation{customisations === 1 ? '' : 's'}</Badge>
               <Button variant="ghost" disabled={!canEdit || customisations === 0} onClick={() => setWorking((w) => ({ ...w, layout: restorePresetDefaults(w.layout) }))}>
@@ -216,6 +232,8 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
             {select('Width', ['sidebar', 'width'], opts('sm', 'md', 'lg'))}
             {check('Collapsible', ['sidebar', 'collapsible'])}
             {check('Start collapsed', ['sidebar', 'defaultCollapsed'])}
+            {select('Labels', ['sidebar', 'labels'], [{ value: 'beside', label: 'Beside the icon' }, { value: 'below', label: 'Below the icon (tile bar)' }])}
+            {check('Expand on hover (rail)', ['sidebar', 'expandOnHover'])}
             {select('Mobile navigation below', ['responsive', 'sidebarCollapseBelow'], BREAKPOINT_OPTIONS)}
             {select('Mobile navigation style', ['responsive', 'mobileNavigation'], opts('drawer', 'bottom-bar'))}
             <div style={{ gridColumn: '1 / -1' }}>{componentList('Top of sidebar', ['sidebar', 'top'])}</div>
@@ -256,6 +274,15 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
               {select('App frame', ['shape', 'frame'], [{ value: 'full-bleed', label: 'Full bleed' }, { value: 'inset', label: 'Rounded card on canvas' }])}
               {select('Corners', ['shape', 'corners'], opts('sharp', 'soft', 'round'))}
               {select('Navigation items', ['shape', 'nav'], [{ value: 'rounded', label: 'Rounded (theme default)' }, { value: 'pill', label: 'Pill' }])}
+              {select('Active item', ['shape', 'indicator'], [{ value: 'fill', label: 'Filled' }, { value: 'bar', label: 'Side bar' }, { value: 'dot', label: 'Dot' }])}
+            </Grid>
+            <p style={{ margin: 0, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
+              Motion. Switched off automatically for people who prefer reduced motion. Shown in the live app and the Tailwind kit.
+            </p>
+            <Grid minChildWidth={200} gap="var(--maw-space-md)">
+              {select('Sidebar animation', ['motion', 'sidebar'], [{ value: 'none', label: 'None' }, { value: 'smooth', label: 'Smooth' }, { value: 'spring', label: 'Springy' }])}
+              {select('Navigation hover', ['motion', 'items'], [{ value: 'none', label: 'None' }, { value: 'slide', label: 'Slide' }, { value: 'lift', label: 'Lift' }])}
+              {select('Page entrance', ['motion', 'page'], [{ value: 'none', label: 'None' }, { value: 'fade', label: 'Fade' }, { value: 'rise', label: 'Rise' }])}
             </Grid>
           </Stack>
         );

@@ -27,6 +27,8 @@ const SETTINGS_SHAPE = obj({
     width: oneOf(...SIZES),
     collapsible: bool,
     defaultCollapsed: bool,
+    labels: oneOf('beside', 'below'),
+    expandOnHover: bool,
     top: { kind: 'components' },
     bottom: { kind: 'components' },
   }),
@@ -44,6 +46,12 @@ const SETTINGS_SHAPE = obj({
     frame: oneOf('full-bleed', 'inset'),
     corners: oneOf('sharp', 'soft', 'round'),
     nav: oneOf('rounded', 'pill'),
+    indicator: oneOf('fill', 'bar', 'dot'),
+  }),
+  motion: obj({
+    sidebar: oneOf('none', 'smooth', 'spring'),
+    items: oneOf('none', 'slide', 'lift'),
+    page: oneOf('none', 'fade', 'rise'),
   }),
   responsive: obj({
     sidebarCollapseBelow: oneOf(...BREAKPOINTS),

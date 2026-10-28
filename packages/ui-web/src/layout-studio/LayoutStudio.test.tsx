@@ -2,6 +2,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { classicAdminPreset, enterpriseDashboardPreset, listingWorkspacePreset, splitWorkspacePreset, createMemoryProjectUiStore } from '@mawsoftwares/layout';
+import { defaultLayoutRegistry } from '@mawsoftwares/layout';
+import { starterThemes } from '@mawsoftwares/theme';
 import { LayoutStudio } from './LayoutStudio';
 import { ShellPreview } from './ShellPreview';
 
@@ -79,5 +81,15 @@ describe('LayoutStudio (initial render)', () => {
 
   it('does not offer the read-only notice to editors', () => {
     expect(render(() => true)).not.toContain('requires Update_Layout');
+  });
+});
+
+describe('suggested themes', () => {
+  it('every preset that suggests a theme names a starter theme that exists, and the suggestions differ so the gallery looks varied', () => {
+    const known = new Set(starterThemes.map((t) => t.id));
+    const suggested = defaultLayoutRegistry.listPresets().flatMap((p) => (p.suggestedThemeId === undefined ? [] : [p.suggestedThemeId]));
+    expect(suggested.length).toBeGreaterThanOrEqual(4);
+    for (const id of suggested) expect(known.has(id), id).toBe(true);
+    expect(new Set(suggested).size).toBeGreaterThanOrEqual(3);
   });
 });

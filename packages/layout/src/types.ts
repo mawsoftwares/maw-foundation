@@ -24,6 +24,10 @@ export interface SidebarSettings {
   readonly width: LayoutSize;
   readonly collapsible: boolean;
   readonly defaultCollapsed: boolean;
+  /** `beside`: label next to the icon. `below`: icon tiles with a small label under each (a fixed, narrow bar). */
+  readonly labels: 'beside' | 'below';
+  /** A rail expands over the content while hovered or focused, then folds back. */
+  readonly expandOnHover: boolean;
   /** Approved component ids rendered above/below the navigation (e.g. brand, user-menu). */
   readonly top: readonly string[];
   readonly bottom: readonly string[];
@@ -72,6 +76,18 @@ export interface ShapeSettings {
   readonly corners: 'sharp' | 'soft' | 'round';
   /** `pill`: navigation items are fully rounded; `rounded` keeps the theme's own radius. */
   readonly nav: 'rounded' | 'pill';
+  /** How the active navigation item is marked: a filled item, a side bar, or a dot. */
+  readonly indicator: 'fill' | 'bar' | 'dot';
+}
+
+/** Movement only; every kit turns it off for people who prefer reduced motion. */
+export interface MotionSettings {
+  /** How the sidebar changes width: instantly, a smooth ease, or a springy overshoot. */
+  readonly sidebar: 'none' | 'smooth' | 'spring';
+  /** Hover feedback on navigation items. */
+  readonly items: 'none' | 'slide' | 'lift';
+  /** Entrance of the page content when the page changes. */
+  readonly page: 'none' | 'fade' | 'rise';
 }
 
 /** The complete, resolved layout description. */
@@ -84,6 +100,7 @@ export interface LayoutSettings {
   readonly content: ContentSettings;
   readonly responsive: ResponsiveSettings;
   readonly shape: ShapeSettings;
+  readonly motion: MotionSettings;
 }
 
 type DeepPartial<T> = T extends readonly unknown[] ? T : T extends object ? { readonly [K in keyof T]?: DeepPartial<T[K]> } : T;
@@ -114,6 +131,11 @@ export interface LayoutPreset {
   readonly description: string;
   /** Complete defaults. Overrides are merged on top and re-validated. */
   readonly settings: LayoutSettings;
+  /**
+   * A theme id this preset looks best with (e.g. the one it was designed around). A hint for pickers only: layout and theme stay
+   * independent, any theme works with any layout, and the id is ignored when the app has no such theme.
+   */
+  readonly suggestedThemeId?: string;
 }
 
 export type LayoutSource = 'default' | 'config' | 'fallback';

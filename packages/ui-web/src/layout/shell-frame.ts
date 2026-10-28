@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { LayoutBreakpoint, LayoutSettings } from '@mawsoftwares/layout';
 import { breakpoints } from '@mawsoftwares/theme';
-import type { ShellFrame } from '@mawsoftwares/ui-contract';
+import type { ShellFrame, SidebarLook } from '@mawsoftwares/ui-contract';
 
 /** Pixel width at which a layout breakpoint begins (`md` → 768). Same numbers as the theme and `useBreakpoint`. */
 export function layoutBreakpointPx(bp: LayoutBreakpoint): number {
@@ -31,19 +31,30 @@ export interface SidebarBehavior {
   /** Other approved ids to render above / below the navigation, via the app's `slots`. */
   readonly topExtras: readonly string[];
   readonly bottomExtras: readonly string[];
+  /** Icon tiles with labels underneath: a fixed narrow bar that is never collapsed. */
+  readonly labelsBelow: boolean;
+  readonly look: SidebarLook;
 }
 
 export function sidebarBehavior(settings: LayoutSettings): SidebarBehavior {
   const { sidebar } = settings;
-  const forceRail = sidebar.variant === 'rail';
+  const labelsBelow = sidebar.labels === 'below';
+  const forceRail = sidebar.variant === 'rail' && !labelsBelow;
   return {
     forceRail,
-    collapsible: sidebar.collapsible && !forceRail,
+    collapsible: sidebar.collapsible && !forceRail && !labelsBelow,
     widthPx: SIDEBAR_WIDTH_PX[sidebar.width],
     showBrand: sidebar.top.includes('brand'),
     showFooter: sidebar.bottom.includes('user-menu'),
     topExtras: sidebar.top.filter((id) => id !== 'brand'),
     bottomExtras: sidebar.bottom.filter((id) => id !== 'user-menu'),
+    labelsBelow,
+    look: {
+      labels: sidebar.labels,
+      expandOnHover: sidebar.expandOnHover,
+      indicator: settings.shape.indicator,
+      motion: { sidebar: settings.motion.sidebar, items: settings.motion.items },
+    },
   };
 }
 
@@ -56,6 +67,8 @@ export interface FrameOptions {
   readonly rightPanelLabel?: string;
   /** Whether the viewport is at/above `responsive.rightPanelHideBelow`. */
   readonly rightPanelFits: boolean;
+  /** Changing it replays the page entrance animation (the active page key). */
+  readonly pageKey?: string;
 }
 
 /** Map resolved layout settings onto the plain structure kits render. Pure. */
@@ -68,7 +81,9 @@ export function toShellFrame(settings: LayoutSettings, options: FrameOptions): S
     header: { enabled: header.enabled, variant: header.variant, sticky: header.sticky },
     footer: footer.enabled,
     contentWidth: content.width,
-    shape: { frame: settings.shape.frame, corners: settings.shape.corners, nav: settings.shape.nav },
+    shape: { frame: settings.shape.frame, corners: settings.shape.corners, nav: settings.shape.nav, indicator: settings.shape.indicator },
+    motion: { page: settings.motion.page },
+    ...(options.pageKey !== undefined ? { pageKey: options.pageKey } : {}),
     ...(settings.responsive.mobileNavigation === 'bottom-bar' && options.mobileNav !== undefined ? { mobileNav: options.mobileNav } : {}),
     ...(rightPanel.enabled && options.rightPanelFits && panelContent !== undefined && panelContent !== null
       ? {

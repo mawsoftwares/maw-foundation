@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { NavItem, SidebarSlot, SidebarViewProps } from '@mawsoftwares/ui-contract';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import type { NavItem, SidebarLook, SidebarSlot, SidebarViewProps } from '@mawsoftwares/ui-contract';
 import { cn } from '../lib/cn';
 import { Badge } from './Badge';
 import { Icon } from './Icon';
@@ -20,13 +20,20 @@ function SidebarItem({
   collapsed,
   onNavigate,
   depth = 0,
+  look,
+  below = false,
 }: {
   item: NavItem;
   activeKey: string;
   collapsed: boolean;
   onNavigate: (path: string) => void;
   depth?: number;
+  look?: SidebarLook;
+  /** Icon tile with the label underneath. */
+  below?: boolean;
 }): ReactNode {
+  const indicator = look?.indicator ?? 'fill';
+  const itemMotion = look?.motion.items ?? 'slide';
   const active = item.key === activeKey;
   const childActive = !active && itemContainsKey(item, activeKey);
   const [expanded, setExpanded] = useState(childActive);
@@ -47,23 +54,41 @@ function SidebarItem({
         aria-expanded={hasChildren ? expanded : undefined}
         style={!collapsed && depth > 0 ? { paddingLeft: 16 + depth * 16 } : undefined}
         className={cn(
-          'group mb-1 box-border flex w-full cursor-pointer items-center gap-3 border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand',
-          collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5',
+          'group relative mb-1 box-border flex w-full cursor-pointer items-center border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
+          below ? 'flex-col justify-center gap-1 px-1 py-2 text-center text-[11px] leading-tight' : cn('gap-3', collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'),
           active
-            ? 'rounded-[var(--maw-comp-nav-item-active-border-radius,var(--maw-comp-nav-item-border-radius,var(--maw-radius-md)))] bg-[var(--maw-comp-nav-item-active-background,var(--maw-shell-nav-active-bg,var(--maw-brand)))] font-semibold text-[var(--maw-comp-nav-item-active-text-color,var(--maw-shell-nav-active-fg,var(--maw-brandContrast)))] shadow-[var(--maw-shell-nav-active-shadow,none),var(--maw-shell-nav-active-indicator,none)]'
+            ? cn(
+                'rounded-[var(--maw-comp-nav-item-active-border-radius,var(--maw-comp-nav-item-border-radius,var(--maw-radius-md)))] font-semibold',
+                indicator === 'fill' &&
+                  'bg-[var(--maw-comp-nav-item-active-background,var(--maw-shell-nav-active-bg,var(--maw-brand)))] text-[var(--maw-comp-nav-item-active-text-color,var(--maw-shell-nav-active-fg,var(--maw-brandContrast)))] shadow-[var(--maw-shell-nav-active-shadow,none),var(--maw-shell-nav-active-indicator,none)]',
+                indicator === 'bar' &&
+                  'bg-[color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_12%,transparent)] text-[var(--maw-shell-fg,var(--maw-fg))] shadow-[inset_3px_0_0_var(--maw-shell-fg,var(--maw-fg))]',
+                indicator === 'dot' && 'bg-transparent text-[var(--maw-shell-fg,var(--maw-fg))]',
+              )
             : cn(
                 'rounded-[var(--maw-comp-nav-item-border-radius,var(--maw-radius-md))] bg-[var(--maw-comp-nav-item-background,transparent)] font-medium text-[var(--maw-comp-nav-item-text-color,var(--maw-shell-fg,var(--maw-fg)))]',
                 'hover:bg-[var(--maw-comp-nav-item-hover-background,var(--maw-shell-hover,var(--maw-bgSubtle)))] hover:text-[var(--maw-comp-nav-item-hover-text-color,var(--maw-brand))]',
-                !collapsed && 'hover:translate-x-1',
+                itemMotion === 'slide' && !collapsed && !below && 'hover:translate-x-1',
+                itemMotion === 'lift' && 'hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgb(0_0_0/0.12)]',
               ),
         )}
       >
         {item.icon !== undefined && (
-          <span className="inline-flex size-[22px] shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-110">
+          <span className="inline-flex size-[22px] shrink-0 items-center justify-center transition-transform duration-200 group-hover:scale-110 motion-reduce:transform-none">
             <Icon name={item.icon} size={18} />
           </span>
         )}
-        {!collapsed && (
+        {below && <span className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{item.label}</span>}
+        {active && indicator === 'dot' && (
+          <span
+            aria-hidden
+            className={cn(
+              'absolute size-1.5 rounded-full bg-[var(--maw-shell-fg,var(--maw-fg))]',
+              below || collapsed ? 'bottom-1 left-1/2 -translate-x-1/2' : 'right-3 top-1/2 -translate-y-1/2',
+            )}
+          />
+        )}
+        {!collapsed && !below && (
           <>
             <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{item.label}</span>
             {item.badge !== undefined && (
@@ -88,10 +113,10 @@ function SidebarItem({
           </>
         )}
       </button>
-      {hasChildren && expanded && !collapsed && (
+      {hasChildren && expanded && !collapsed && !below && (
         <div className="py-1">
           {item.children!.map((child) => (
-            <SidebarItem key={child.key} item={child} activeKey={activeKey} collapsed={false} onNavigate={onNavigate} depth={depth + 1} />
+            <SidebarItem key={child.key} item={child} activeKey={activeKey} collapsed={false} onNavigate={onNavigate} depth={depth + 1} look={look} />
           ))}
         </div>
       )}
@@ -118,7 +143,9 @@ export function SidebarView({
   title,
   footer,
   style,
+  look,
 }: SidebarViewProps): ReactNode {
+  const [hovered, setHovered] = useState(false);
   const grouped = useMemo(() => {
     const groups = new Map<string, NavItem[]>();
     for (const item of items) {
@@ -129,37 +156,53 @@ export function SidebarView({
     return groups;
   }, [items]);
 
-  const isRail = collapsed && !isMobile;
+  // A rail that expands over the content while hovered/focused (the space it takes in the layout stays the rail's).
+  const hoverExpand = look?.expandOnHover === true && collapsed && !isMobile;
+  const railWidth = 'var(--maw-layout-shell-sidebar-collapsed, 64px)';
+  const below = look?.labels === 'below' && !isMobile;
+  const shownCollapsed = hoverExpand && hovered ? false : collapsed && !below;
+  const isRail = shownCollapsed && !isMobile;
   const width = isMobile
     ? '100%'
-    : collapsed
-      ? 'var(--maw-layout-shell-sidebar-collapsed, 64px)'
-      : 'var(--maw-layout-shell-sidebar-expanded, 260px)';
+    : below
+      ? '88px'
+      : shownCollapsed
+        ? railWidth
+        : 'var(--maw-layout-shell-sidebar-expanded, 260px)';
+  const sidebarMotion = look?.motion.sidebar ?? 'smooth';
+  const motionStyle: CSSProperties =
+    sidebarMotion === 'none'
+      ? { transition: 'none' }
+      : sidebarMotion === 'spring'
+        ? { transitionDuration: '450ms', transitionTimingFunction: 'cubic-bezier(0.34, 1.4, 0.64, 1)' }
+        : {};
 
   const brand =
     logo !== undefined || title !== undefined ? (
       <div className={cn('flex w-full min-w-0 items-center gap-2.5', isRail && 'justify-center')}>
         {logo !== undefined && <span className="inline-flex shrink-0 text-[var(--maw-shell-logo,var(--maw-brand))]">{logo}</span>}
-        {!isRail && title !== undefined && (
+        {!isRail && !below && title !== undefined && (
           <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-bold text-[var(--maw-shell-fg,var(--maw-fg))]">
             {title}
           </span>
         )}
       </div>
     ) : undefined;
-  const headerContent = resolveSlot(header, isRail) ?? brand;
-  const footerContent = resolveSlot(footer, isRail);
+  const headerContent = resolveSlot(header, isRail || below) ?? brand;
+  const footerContent = resolveSlot(footer, isRail || below);
   const railPad = isRail ? 'px-2 py-3' : 'p-[var(--maw-space-lg)]';
 
-  return (
+  const aside = (
     <aside
       className={cn(
-        'maw-shell-chrome box-border flex shrink-0 flex-col overflow-hidden font-sans text-[var(--maw-shell-fg,var(--maw-fg))] transition-[width] duration-200 ease-out',
+        'maw-shell-chrome box-border flex shrink-0 flex-col overflow-hidden font-sans text-[var(--maw-shell-fg,var(--maw-fg))] transition-[width] duration-200 ease-out motion-reduce:transition-none',
+        hoverExpand && 'absolute inset-y-0 left-0 z-30',
+        hoverExpand && hovered && 'shadow-[0_12px_32px_rgb(0_0_0/0.25)]',
         isMobile
           ? 'min-h-full bg-transparent'
           : 'min-h-full border-r border-[var(--maw-shell-border,var(--maw-border))] bg-[var(--maw-shell-bg,var(--maw-surface))]',
       )}
-      style={{ width, backdropFilter: 'blur(var(--maw-shell-blur, 0px))', WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))', ...style }}
+      style={{ width, backdropFilter: 'blur(var(--maw-shell-blur, 0px))', WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))', ...motionStyle, ...style }}
     >
       {(headerContent !== undefined || isMobile) && (
         <div
@@ -178,7 +221,7 @@ export function SidebarView({
         </div>
       )}
 
-      {!isMobile && collapsible && (
+      {!isMobile && collapsible && !hoverExpand && (
         <div className={cn('flex p-[var(--maw-space-sm)]', collapsed ? 'justify-center' : 'justify-end')}>
           <IconButton
             label={collapsed ? 'Expand' : 'Collapse'}
@@ -193,13 +236,13 @@ export function SidebarView({
       <nav aria-label="Main" className="flex-1 overflow-y-auto p-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))]">
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
-            {group !== '' && (!collapsed || isMobile) && (
+            {group !== '' && !below && (!shownCollapsed || isMobile) && (
               <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--maw-shell-fg-muted,var(--maw-fgSubtle))]">
                 {group}
               </div>
             )}
             {groupItems.map((item) => (
-              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={collapsed && !isMobile} onNavigate={onNavigate} />
+              <SidebarItem key={item.key} item={item} activeKey={activeKey} collapsed={shownCollapsed && !isMobile} onNavigate={onNavigate} look={look} below={below} />
             ))}
           </div>
         ))}
@@ -217,5 +260,21 @@ export function SidebarView({
         </div>
       )}
     </aside>
+  );
+
+  if (!hoverExpand) return aside;
+  return (
+    <div
+      className="relative min-h-full shrink-0"
+      style={{ width: railWidth }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setHovered(false);
+      }}
+    >
+      {aside}
+    </div>
   );
 }

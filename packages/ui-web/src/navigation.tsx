@@ -347,7 +347,7 @@ export function Sidebar({
   const isMobile = shell?.isMobile ?? defaultIsMobile;
   const behavior = shell?.behavior;
   // Desktop only (on mobile `collapsed` means "drawer closed"): a rail layout is always a rail, a pinned one always open.
-  const shownCollapsed = isMobile || behavior === undefined ? collapsed : behavior.forceRail ? true : behavior.collapsible ? collapsed : false;
+  const shownCollapsed = isMobile || behavior === undefined ? collapsed : behavior.labelsBelow ? false : behavior.forceRail ? true : behavior.collapsible ? collapsed : false;
   const hasExtras = (shell?.top.length ?? 0) > 0;
   const showBrand = behavior?.showBrand ?? true;
   const brand = showBrand ? (logo !== undefined || title !== undefined ? (
@@ -368,6 +368,7 @@ export function Sidebar({
       collapsed={shownCollapsed}
       isMobile={isMobile}
       collapsible={behavior?.collapsible ?? true}
+      {...(behavior !== undefined && !isMobile ? { look: behavior.look } : {})}
       onNavigate={(path) => {
         navigate(path);
         if (isMobile) setCollapsed(true);
@@ -378,7 +379,7 @@ export function Sidebar({
       logo={showBrand && headerSlot === header ? logo : undefined}
       title={showBrand && headerSlot === header ? title : undefined}
       footer={footerSlot}
-      style={behavior !== undefined && !isMobile && !shownCollapsed ? { width: behavior.widthPx, ...style } : style}
+      style={behavior !== undefined && !isMobile && !shownCollapsed && !behavior.labelsBelow ? { width: behavior.widthPx, ...style } : style}
     />
   );
 }
@@ -851,6 +852,7 @@ export function AppShell({
       rightPanel,
       rightPanelLabel,
       rightPanelFits,
+      pageKey: activeKey,
       mobileNav: <MobileBottomNav items={items} activeKey={activeKey} onNavigate={navigate} />,
     });
   }

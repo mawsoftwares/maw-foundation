@@ -5,6 +5,7 @@ export const floatingSidebarPreset: LayoutPreset = {
   id: 'floating-sidebar',
   label: 'Floating Sidebar',
   description: 'A rounded, inset sidebar floating over the canvas with a minimal header.',
+  suggestedThemeId: 'clean-light',
   settings: {
     density: 'comfortable',
     sidebar: {
@@ -14,6 +15,8 @@ export const floatingSidebarPreset: LayoutPreset = {
       width: 'md',
       collapsible: true,
       defaultCollapsed: false,
+      labels: 'beside',
+      expandOnHover: false,
       top: ['brand'],
       bottom: ['user-menu'],
     },
@@ -22,6 +25,7 @@ export const floatingSidebarPreset: LayoutPreset = {
     footer: { enabled: false },
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'lg', mobileNavigation: 'drawer' },
-    shape: { frame: 'full-bleed', corners: 'round', nav: 'rounded' },
+    shape: { frame: 'full-bleed', corners: 'round', nav: 'rounded', indicator: 'dot' },
+    motion: { sidebar: 'spring', items: 'lift', page: 'fade' },
   },
 };

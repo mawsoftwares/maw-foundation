@@ -14,6 +14,8 @@ export const enterpriseDashboardPreset: LayoutPreset = {
       width: 'sm',
       collapsible: true,
       defaultCollapsed: false,
+      labels: 'beside',
+      expandOnHover: false,
       top: ['brand'],
       bottom: ['user-menu'],
     },
@@ -28,6 +30,7 @@ export const enterpriseDashboardPreset: LayoutPreset = {
     footer: { enabled: true },
     content: { width: 'full' },
     responsive: { sidebarCollapseBelow: 'lg', rightPanelHideBelow: 'xl', mobileNavigation: 'drawer' },
-    shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded' },
+    shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'bar' },
+    motion: { sidebar: 'smooth', items: 'slide', page: 'none' },
   },
 };

@@ -14,6 +14,8 @@ export const classicAdminPreset: LayoutPreset = {
       width: 'md',
       collapsible: true,
       defaultCollapsed: false,
+      labels: 'beside',
+      expandOnHover: false,
       top: ['brand'],
       bottom: ['user-menu'],
     },
@@ -22,6 +24,7 @@ export const classicAdminPreset: LayoutPreset = {
     footer: { enabled: true },
     content: { width: 'contained' },
     responsive: { sidebarCollapseBelow: 'md', rightPanelHideBelow: 'lg', mobileNavigation: 'drawer' },
-    shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded' },
+    shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'fill' },
+    motion: { sidebar: 'smooth', items: 'slide', page: 'none' },
   },
 };

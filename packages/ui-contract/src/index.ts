@@ -414,6 +414,14 @@ export type SidebarSlot = ReactNode | ((collapsed: boolean) => ReactNode);
  * The navigation sidebar, presentational: all state arrives as props. `ui-web`'s `Sidebar` reads its navigation context and renders
  * this, so a kit never needs that context. On mobile it is shown inside a drawer (see AppShellView) rather than as a rail.
  */
+/** Optional sidebar styling from a layout (geometry and motion only). A kit may honour only part of it. */
+export interface SidebarLook {
+  readonly labels: 'beside' | 'below';
+  readonly expandOnHover: boolean;
+  readonly indicator: 'fill' | 'bar' | 'dot';
+  readonly motion: { readonly sidebar: 'none' | 'smooth' | 'spring'; readonly items: 'none' | 'slide' | 'lift' };
+}
+
 export interface SidebarViewProps {
   readonly items: readonly NavItem[];
   readonly activeKey: string;
@@ -433,6 +441,8 @@ export interface SidebarViewProps {
   readonly title?: ReactNode;
   readonly footer?: SidebarSlot;
   readonly style?: CSSProperties;
+  /** From a layout. Omitted = the classic sidebar, unchanged. */
+  readonly look?: SidebarLook;
 }
 
 /**
@@ -481,7 +491,11 @@ export interface ShellFrame {
     readonly frame: 'full-bleed' | 'inset';
     readonly corners: 'sharp' | 'soft' | 'round';
     readonly nav: 'rounded' | 'pill';
+    readonly indicator: 'fill' | 'bar' | 'dot';
   };
+  /** Entrance animation of the page content; changes of `pageKey` replay it. */
+  readonly motion: { readonly page: 'none' | 'fade' | 'rise' };
+  readonly pageKey?: string;
   /** Mobile bottom navigation bar (rendered below the content on mobile only). */
   readonly mobileNav?: ReactNode;
   /** Present only when the layout enables it, the viewport is wide enough, and the app supplied content. */

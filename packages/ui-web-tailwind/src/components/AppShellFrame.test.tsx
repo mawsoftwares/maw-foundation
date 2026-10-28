@@ -23,7 +23,8 @@ const frame = (patch: Partial<ShellFrame> = {}): ShellFrame => ({
   header: { enabled: true, variant: 'default', sticky: true },
   footer: true,
   contentWidth: 'contained',
-  shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded' },
+  shape: { frame: 'full-bleed', corners: 'soft', nav: 'rounded', indicator: 'fill' },
+  motion: { page: 'none' },
   ...patch,
 });
 const render = (p: Partial<AppShellViewProps> = {}): string => renderToStaticMarkup(createElement(AppShellView, { ...props, ...p }));
@@ -119,16 +120,16 @@ describe('SidebarView collapsible', () => {
 
 describe('shape', () => {
   it('inset frame draws a rounded card on a tinted canvas on desktop, and is full-bleed on mobile', () => {
-    const desktop = render({ frame: frame({ shape: { frame: 'inset', corners: 'round', nav: 'rounded' } }) });
+    const desktop = render({ frame: frame({ shape: { frame: 'inset', corners: 'round', nav: 'rounded', indicator: 'fill' } }) });
     expect(desktop).toContain('rounded-[var(--maw-shell-radius)]');
     expect(desktop).toContain('--maw-shell-radius:24px');
-    const mobile = render({ isMobile: true, frame: frame({ shape: { frame: 'inset', corners: 'round', nav: 'rounded' } }) });
+    const mobile = render({ isMobile: true, frame: frame({ shape: { frame: 'inset', corners: 'round', nav: 'rounded', indicator: 'fill' } }) });
     expect(mobile).not.toContain('rounded-[var(--maw-shell-radius)]');
   });
 
   it('corners map to radii; pill navigation sets the nav item radius; rounded leaves the theme alone', () => {
-    expect(render({ frame: frame({ shape: { frame: 'full-bleed', corners: 'sharp', nav: 'rounded' } }) })).toContain('--maw-shell-radius:0px');
-    const pill = render({ frame: frame({ shape: { frame: 'full-bleed', corners: 'soft', nav: 'pill' } }) });
+    expect(render({ frame: frame({ shape: { frame: 'full-bleed', corners: 'sharp', nav: 'rounded', indicator: 'fill' } }) })).toContain('--maw-shell-radius:0px');
+    const pill = render({ frame: frame({ shape: { frame: 'full-bleed', corners: 'soft', nav: 'pill', indicator: 'fill' } }) });
     expect(pill).toContain('--maw-comp-nav-item-border-radius:9999px');
     expect(pill).toContain('--maw-comp-nav-item-active-border-radius:9999px');
     expect(render({ frame: frame() })).not.toContain('--maw-comp-nav-item-border-radius');
@@ -142,5 +143,13 @@ describe('shape', () => {
     const html = render();
     expect(html).toContain('--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface))');
     expect(html).toContain('h-[var(--maw-shell-height,100vh)]');
+  });
+});
+
+describe('page entrance motion', () => {
+  it('fade and rise animate the content wrapper (with reduced-motion off); none adds nothing', () => {
+    expect(render({ frame: frame({ motion: { page: 'fade' } }) })).toContain('animate-page-fade motion-reduce:animate-none');
+    expect(render({ frame: frame({ motion: { page: 'rise' } }) })).toContain('animate-page-rise motion-reduce:animate-none');
+    expect(render({ frame: frame() })).not.toContain('animate-page');
   });
 });
