@@ -1,3 +1,4 @@
+import { getUIKitOverride } from '@mawsoftwares/ui-contract';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   LAYOUT_PERMISSIONS,
@@ -326,8 +327,18 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
     }
   })();
 
+  // The default kit draws only part of a layout (sidebar variant, corner shape); the full set needs a kit with its own shell.
+  const fullShellKit = getUIKitOverride().AppShellView !== undefined;
+
   return (
     <Stack direction="column" gap="var(--maw-space-lg)">
+      {!fullShellKit && (
+        <Banner variant="warning">
+          This app is using the default UI kit, which shows only part of a layout (sidebar style and corner shape). The right panel, tile
+          bar, hover-expand, active-item markers and motion need the Tailwind UI kit, so presets can look alike here. The preview below
+          always shows the complete layout.
+        </Banner>
+      )}
       <div aria-live="polite">
         {message !== null && (
           <Banner variant={message.kind} onDismiss={() => setMessage(null)}>

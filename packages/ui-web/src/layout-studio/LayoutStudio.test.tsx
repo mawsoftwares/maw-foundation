@@ -1,3 +1,4 @@
+import { setUIKit } from '@mawsoftwares/ui-contract';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -88,6 +89,19 @@ describe('LayoutStudio (initial render)', () => {
 
   it('does not offer the read-only notice to editors', () => {
     expect(render(() => true)).not.toContain('requires Update_Layout');
+  });
+});
+
+describe('kit notice', () => {
+  const store = createMemoryProjectUiStore();
+  const html = (): string => renderToStaticMarkup(createElement(LayoutStudio, { store, can: () => true }));
+
+  it('warns when the active UI kit has no shell of its own, and stays quiet when it has', () => {
+    setUIKit({});
+    expect(html()).toContain('using the default UI kit');
+    setUIKit({ AppShellView: () => null });
+    expect(html()).not.toContain('using the default UI kit');
+    setUIKit({});
   });
 });
 
