@@ -111,6 +111,7 @@ export function SidebarView({
   isMobile,
   onNavigate,
   onToggleCollapsed,
+  collapsible = true,
   onClose,
   header,
   logo,
@@ -138,7 +139,7 @@ export function SidebarView({
   const brand =
     logo !== undefined || title !== undefined ? (
       <div className={cn('flex w-full min-w-0 items-center gap-2.5', isRail && 'justify-center')}>
-        {logo !== undefined && <span className="inline-flex shrink-0 text-brand">{logo}</span>}
+        {logo !== undefined && <span className="inline-flex shrink-0 text-[var(--maw-shell-logo,var(--maw-brand))]">{logo}</span>}
         {!isRail && title !== undefined && (
           <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-bold text-[var(--maw-shell-fg,var(--maw-fg))]">
             {title}
@@ -156,7 +157,7 @@ export function SidebarView({
         'maw-shell-chrome box-border flex shrink-0 flex-col overflow-hidden font-sans text-[var(--maw-shell-fg,var(--maw-fg))] transition-[width] duration-200 ease-out',
         isMobile
           ? 'min-h-full bg-transparent'
-          : 'min-h-screen border-r border-[var(--maw-shell-border,var(--maw-border))] bg-[var(--maw-shell-bg,var(--maw-surface))]',
+          : 'min-h-full border-r border-[var(--maw-shell-border,var(--maw-border))] bg-[var(--maw-shell-bg,var(--maw-surface))]',
       )}
       style={{ width, backdropFilter: 'blur(var(--maw-shell-blur, 0px))', WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))', ...style }}
     >
@@ -177,7 +178,7 @@ export function SidebarView({
         </div>
       )}
 
-      {!isMobile && (
+      {!isMobile && collapsible && (
         <div className={cn('flex p-[var(--maw-space-sm)]', collapsed ? 'justify-center' : 'justify-end')}>
           <IconButton
             label={collapsed ? 'Expand' : 'Collapse'}

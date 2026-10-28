@@ -426,6 +426,8 @@ export interface SidebarViewProps {
   readonly onToggleCollapsed: () => void;
   /** The mobile close button. */
   readonly onClose: () => void;
+  /** Show the desktop expand/collapse button (default true). A layout can pin the sidebar open or as a rail. */
+  readonly collapsible?: boolean;
   readonly header?: SidebarSlot;
   readonly logo?: ReactNode;
   readonly title?: ReactNode;
@@ -452,6 +454,44 @@ export interface AppShellViewProps {
   /** Mobile header title (current page). */
   readonly pageTitle: string;
   readonly style?: CSSProperties;
+  /** Optional structural variant (from @mawsoftwares/layout, mapped by ui-web). Omitted = the classic shell, unchanged. */
+  readonly frame?: ShellFrame;
+}
+
+/**
+ * Structure of the application frame as plain values, so a kit can render layout variants without knowing the layout engine.
+ * A kit may honour only part of it (unsupported variants fall back to the classic look).
+ */
+export interface ShellFrame {
+  readonly density: 'compact' | 'comfortable' | 'spacious';
+  readonly sidebar: {
+    readonly position: 'left' | 'right';
+    /** `floating` is an inset rounded card; `docked` and `rail` render as the classic edge sidebar. */
+    readonly variant: 'docked' | 'floating' | 'rail';
+  };
+  readonly header: {
+    readonly enabled: boolean;
+    readonly variant: 'default' | 'minimal' | 'prominent';
+    readonly sticky: boolean;
+  };
+  readonly footer: boolean;
+  readonly contentWidth: 'contained' | 'full';
+  /** Geometry of the chrome (never colour). Kits may honour only part of it. */
+  readonly shape: {
+    readonly frame: 'full-bleed' | 'inset';
+    readonly corners: 'sharp' | 'soft' | 'round';
+    readonly nav: 'rounded' | 'pill';
+  };
+  /** Mobile bottom navigation bar (rendered below the content on mobile only). */
+  readonly mobileNav?: ReactNode;
+  /** Present only when the layout enables it, the viewport is wide enough, and the app supplied content. */
+  readonly rightPanel?: {
+    readonly content: ReactNode;
+    readonly label: string;
+    readonly width: 'sm' | 'md' | 'lg';
+    readonly collapsible: boolean;
+    readonly defaultOpen: boolean;
+  };
 }
 
 export interface KpiConfig {

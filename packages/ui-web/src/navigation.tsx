@@ -1,5 +1,6 @@
 import {
   createContext,
+  Fragment,
   useCallback,
   useContext,
   useEffect,
@@ -8,7 +9,9 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { useIsMobile } from './responsive';
+import type { ResolvedLayout } from '@mawsoftwares/layout';
+import { useIsMobile, useMediaQuery } from './responsive';
+import { composeSlot, layoutBreakpointPx, layoutMinWidthQuery, sidebarBehavior, toShellFrame, type SidebarBehavior } from './layout/shell-frame';
 import {
   AppShellView as KitAppShellView,
   Badge,
@@ -147,6 +150,7 @@ export function SidebarView({
   isMobile,
   onNavigate,
   onToggleCollapsed,
+  collapsible = true,
   onClose,
   header,
   logo,
@@ -181,7 +185,7 @@ export function SidebarView({
           justifyContent: isRail ? 'center' : undefined,
         }}>
           {logo !== undefined && (
-            <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--maw-brand)' }}>{logo}</span>
+            <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--maw-shell-logo, var(--maw-brand))' }}>{logo}</span>
           )}
           {!isRail && title !== undefined && (
             <span style={{
@@ -209,7 +213,7 @@ export function SidebarView({
       style={{
         ...base,
         width: effectiveWidth,
-        minHeight: isMobile ? '100%' : '100vh',
+        minHeight: '100%',
         background: isMobile ? 'transparent' : 'var(--maw-shell-bg, var(--maw-surface))',
         borderRight: isMobile ? 'none' : '1px solid var(--maw-shell-border, var(--maw-border))',
         color: 'var(--maw-shell-fg, var(--maw-fg))',
@@ -255,7 +259,7 @@ export function SidebarView({
         </div>
       )}
 
-      {!isMobile && (
+      {!isMobile && collapsible && (
         <div style={{ padding: 'var(--maw-space-sm)', display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
           <IconButton
             label={collapsed ? 'Expand' : 'Collapse'}
@@ -298,6 +302,30 @@ export function SidebarView({
   );
 }
 
+/**
+ * Set by AppShell so the sidebar agrees with the shell: whether it is in the mobile drawer, and how the layout
+ * changes it (forced rail, pinned open, width, which app-provided parts to keep, extra approved components).
+ * Absent = the sidebar behaves exactly as it always did.
+ */
+interface ShellSidebarValue {
+  readonly isMobile: boolean;
+  readonly behavior?: SidebarBehavior;
+  readonly top: readonly ReactNode[];
+  readonly bottom: readonly ReactNode[];
+}
+const ShellSidebarContext = createContext<ShellSidebarValue | undefined>(undefined);
+
+function stackSlot(slot: SidebarSlot | undefined, extras: readonly ReactNode[], collapsed: boolean, fallback?: ReactNode): ReactNode {
+  const main = resolveSidebarSlot(slot, collapsed) ?? fallback;
+  if (extras.length === 0 || collapsed) return main;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-sm)', width: '100%', minWidth: 0 }}>
+      {main}
+      {extras.map((node, i) => <Fragment key={i}>{node}</Fragment>)}
+    </div>
+  );
+}
+
 /** The sidebar for the navigation context, rendered with the KIT's SidebarView (same props as before: slots + style). */
 export function Sidebar({
   header,
@@ -313,24 +341,44 @@ export function Sidebar({
   style?: CSSProperties;
 }): ReactNode {
   const { items, activeKey, collapsed, navigate, toggleSidebar, setCollapsed } = useNavigation();
-  const isMobile = useIsMobile();
+  const defaultIsMobile = useIsMobile();
+  const shell = useContext(ShellSidebarContext);
+  // A layout can move the mobile breakpoint (AppShell publishes it); otherwise the standard one applies.
+  const isMobile = shell?.isMobile ?? defaultIsMobile;
+  const behavior = shell?.behavior;
+  // Desktop only (on mobile `collapsed` means "drawer closed"): a rail layout is always a rail, a pinned one always open.
+  const shownCollapsed = isMobile || behavior === undefined ? collapsed : behavior.forceRail ? true : behavior.collapsible ? collapsed : false;
+  const hasExtras = (shell?.top.length ?? 0) > 0;
+  const showBrand = behavior?.showBrand ?? true;
+  const brand = showBrand ? (logo !== undefined || title !== undefined ? (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>{logo}{!shownCollapsed && title}</span>
+  ) : undefined) : undefined;
+  const headerSlot: SidebarSlot | undefined = showBrand
+    ? (hasExtras ? (c: boolean) => stackSlot(header, shell?.top ?? [], c, brand) : header)
+    : (hasExtras ? (c: boolean) => stackSlot(undefined, shell?.top ?? [], c) : undefined);
+  const hasBottom = (shell?.bottom.length ?? 0) > 0;
+  const showFooter = behavior?.showFooter ?? true;
+  const footerSlot: SidebarSlot | undefined = showFooter
+    ? (hasBottom ? (c: boolean) => stackSlot(footer, shell?.bottom ?? [], c) : footer)
+    : (hasBottom ? (c: boolean) => stackSlot(undefined, shell?.bottom ?? [], c) : undefined);
   return (
     <KitSidebarView
       items={items}
       activeKey={activeKey}
-      collapsed={collapsed}
+      collapsed={shownCollapsed}
       isMobile={isMobile}
+      collapsible={behavior?.collapsible ?? true}
       onNavigate={(path) => {
         navigate(path);
         if (isMobile) setCollapsed(true);
       }}
       onToggleCollapsed={toggleSidebar}
       onClose={() => setCollapsed(true)}
-      header={header}
-      logo={logo}
-      title={title}
-      footer={footer}
-      style={style}
+      header={headerSlot}
+      logo={showBrand && headerSlot === header ? logo : undefined}
+      title={showBrand && headerSlot === header ? title : undefined}
+      footer={footerSlot}
+      style={behavior !== undefined && !isMobile && !shownCollapsed ? { width: behavior.widthPx, ...style } : style}
     />
   );
 }
@@ -516,9 +564,31 @@ export function AppShellView({
   onMenuClose,
   pageTitle,
   style,
+  frame,
 }: AppShellViewProps): ReactNode {
-  return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--maw-canvas)', ...style }}>
+  // The default kit renders the classic frame; from `frame` it honours header on/off, sticky, footer, content width and shape.
+  const showHeader = (header !== undefined || actions !== undefined || isMobile) && (frame?.header.enabled ?? true);
+  const inset = frame?.shape.frame === 'inset' && !isMobile;
+  const shapeVars: CSSProperties | undefined =
+    frame === undefined
+      ? undefined
+      : ({
+          '--maw-shell-radius': { sharp: '0px', soft: '12px', round: '24px' }[frame.shape.corners],
+          ...(frame.shape.nav === 'pill'
+            ? { '--maw-comp-nav-item-border-radius': '9999px', '--maw-comp-nav-item-active-border-radius': '9999px' }
+            : {}),
+        } as CSSProperties);
+  const content = (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: frame?.sidebar.position === 'right' ? 'row-reverse' : 'row',
+        height: inset ? '100%' : 'var(--maw-shell-height, 100vh)',
+        overflow: 'hidden',
+        background: 'var(--maw-canvas)',
+        ...(inset ? { borderRadius: 'var(--maw-shell-radius)', border: '1px solid var(--maw-border)', boxShadow: 'var(--maw-shadow-lg)' } : {}),
+      }}
+    >
       {!isMobile && sidebar}
       {isMobile && (
         <Drawer
@@ -533,23 +603,23 @@ export function AppShellView({
         </Drawer>
       )}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
-        {(header !== undefined || actions !== undefined || isMobile) && (
+        {showHeader && (
           <header
             className="maw-shell-chrome"
             style={{
               ...base,
               minHeight: isMobile ? 48 : 'var(--maw-layout-shell-header-height, auto)',
               padding: isMobile ? '6px 8px 6px 4px' : 'var(--maw-comp-shell-header-padding, 12px var(--maw-space-xl))',
-              background: 'var(--maw-shell-bg, var(--maw-surface))',
-              borderBottom: '1px solid var(--maw-shell-border, var(--maw-border))',
-              color: 'var(--maw-shell-fg, var(--maw-fg))',
+              background: 'var(--maw-shell-header-bg, var(--maw-shell-bg, var(--maw-surface)))',
+              borderBottom: '1px solid var(--maw-shell-header-border, var(--maw-shell-border, var(--maw-border)))',
+              color: 'var(--maw-shell-header-fg, var(--maw-shell-fg, var(--maw-fg)))',
               backdropFilter: 'blur(var(--maw-shell-blur, 0px))',
               WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))',
               boxShadow: isMobile ? 'none' : '0 4px 24px -6px color-mix(in srgb, #000 8%, transparent)',
               overflow: 'visible',
               display: 'flex',
               alignItems: 'center',
-              position: 'sticky',
+              position: frame?.header.sticky === false ? 'relative' : 'sticky',
               top: 0,
               zIndex: 'var(--maw-z-sticky)' as unknown as number,
               flexShrink: 0,
@@ -599,9 +669,12 @@ export function AppShellView({
           </header>
         )}
         <main style={{ flex: 1, padding: isMobile ? 'var(--maw-space-md)' : 'var(--maw-space-container-padding, var(--maw-space-xl))', overflowY: 'auto', overflowX: 'hidden' }}>
-          <div style={{ width: '100%', maxWidth: 'var(--maw-layout-container-max, none)', margin: '0 auto' }}>{children}</div>
+          <div style={{ width: '100%', maxWidth: frame?.contentWidth === 'full' ? 'none' : 'var(--maw-layout-container-max, none)', margin: '0 auto' }}>{children}</div>
         </main>
-        {isMobile ? null : (
+        {isMobile && frame?.mobileNav !== undefined && (
+          <div style={{ flexShrink: 0, borderTop: '1px solid var(--maw-border)', background: 'var(--maw-surface)' }}>{frame.mobileNav}</div>
+        )}
+        {isMobile || frame?.footer === false ? null : (
           <footer style={{
             padding: 'var(--maw-space-lg) var(--maw-space-xl)',
             borderTop: '1px solid var(--maw-border)',
@@ -636,41 +709,168 @@ export function AppShellView({
       </div>
     </div>
   );
+  return (
+    <div
+      style={{
+        ...shapeVars,
+        ...(inset ? { boxSizing: 'border-box', height: 'var(--maw-shell-height, 100vh)', padding: 'var(--maw-space-lg)', background: 'color-mix(in srgb, var(--maw-brand) 9%, var(--maw-bgSubtle))' } : {}),
+        ...style,
+      }}
+    >
+      {content}
+    </div>
+  );
 }
 
-/** The application frame for the navigation context, rendered with the KIT's AppShellView (same props as before). */
+/** Primary destinations as a bottom bar (layouts with `mobileNavigation: 'bottom-bar'`). The drawer stays reachable from the header menu. */
+function MobileBottomNav({ items, activeKey, onNavigate }: { items: readonly NavItem[]; activeKey: string; onNavigate: (path: string) => void }): ReactNode {
+  const destinations = items.filter((i) => i.path !== '').slice(0, 5);
+  if (destinations.length === 0) return null;
+  return (
+    <nav aria-label="Primary" style={{ display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      {destinations.map((item) => {
+        const active = itemContainsKey(item, activeKey);
+        return (
+          <button
+            key={item.key}
+            type="button"
+            aria-current={active ? 'page' : undefined}
+            onClick={() => onNavigate(item.path)}
+            style={{
+              all: 'unset',
+              boxSizing: 'border-box',
+              flex: 1,
+              minWidth: 0,
+              minHeight: 48,
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+              padding: '6px 4px',
+              fontSize: 'var(--maw-text-xs)',
+              fontFamily: 'var(--maw-font-family)',
+              color: active ? 'var(--maw-brand)' : 'var(--maw-fgMuted)',
+              fontWeight: active ? 600 : 400,
+            }}
+          >
+            {item.icon !== undefined && <Icon name={item.icon} size={20} />}
+            <span style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+/**
+ * The application frame for the navigation context, rendered with the KIT's AppShellView.
+ *
+ * Without `layout` it behaves exactly as before (`header` / `actions` props, classic frame). With a resolved `layout`
+ * (from @mawsoftwares/layout) the structure follows the config: header slots are composed from approved component ids,
+ * breakpoints come from `layout.settings.responsive`, and the kit renders the variant. Business content (`children`)
+ * never changes.
+ *
+ * Built-in header ids: `breadcrumbs`, `page-title`, `actions` (the `actions` prop). Other ids (`search`, `notifications`,
+ * `theme-toggle`, `user-menu`, …) render only if the app passes them in `slots`.
+ */
 export function AppShell({
   sidebar,
   header,
   actions,
   children,
   style,
+  layout,
+  slots,
+  rightPanel,
+  rightPanelLabel,
+  viewportWidth,
 }: {
   sidebar: ReactNode;
   header?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   style?: CSSProperties;
+  layout?: ResolvedLayout;
+  slots?: Readonly<Record<string, ReactNode>>;
+  rightPanel?: ReactNode;
+  rightPanelLabel?: string;
+  /** Evaluate responsive rules at this width instead of the window's (used by Layout Studio's previews). */
+  viewportWidth?: number;
 }): ReactNode {
-  const isMobile = useIsMobile();
-  const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs } = useNavigation();
+  const responsive = layout?.settings.responsive;
+  // `md` / `lg` are what useIsMobile and the classic shell always used, so no layout = no change.
+  const windowWide = useMediaQuery(layoutMinWidthQuery(responsive?.sidebarCollapseBelow ?? 'md'));
+  const windowFits = useMediaQuery(layoutMinWidthQuery(responsive?.rightPanelHideBelow ?? 'lg'));
+  const isMobile = viewportWidth !== undefined ? viewportWidth < layoutBreakpointPx(responsive?.sidebarCollapseBelow ?? 'md') : !windowWide;
+  const rightPanelFits = viewportWidth !== undefined ? viewportWidth >= layoutBreakpointPx(responsive?.rightPanelHideBelow ?? 'lg') : windowFits;
+  const { collapsed, toggleSidebar, setCollapsed, items, activeKey, breadcrumbs, navigate } = useNavigation();
   const pageTitle =
     breadcrumbs[breadcrumbs.length - 1]?.label
     ?? items.find((item) => item.key === activeKey)?.label
     ?? '';
+
+  // Apply the layout's starting state (desktop only) whenever the layout changes — in both directions, so leaving a
+  // rail layout re-opens the sidebar. Not on every render, so the user's own toggling is never fought.
+  const startCollapsed = layout?.settings.sidebar.defaultCollapsed === true;
+  const hasLayout = layout !== undefined;
+  const presetId = layout?.presetId;
+  useEffect(() => {
+    if (hasLayout && !isMobile) setCollapsed(startCollapsed);
+  }, [presetId, startCollapsed, hasLayout]);
+
+  let sidebarContext: ShellSidebarValue | undefined;
+  let headerNode = header;
+  let actionsNode = actions;
+  let frame;
+  if (layout !== undefined) {
+    const renderers: Record<string, ReactNode> = {
+      breadcrumbs: <Breadcrumbs />,
+      'page-title': <h1 style={{ margin: 0, fontSize: 'var(--maw-text-lg)', fontWeight: 600 }}>{pageTitle}</h1>,
+      actions,
+      ...slots,
+    };
+    // Header groups lay their components out in a row, whatever each one renders (block search box, icon button, avatar…).
+    const toRow = (nodes: ReactNode[]): ReactNode =>
+      nodes.length === 0 ? undefined : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-sm)', minWidth: 0 }}>
+          {nodes.map((node, i) => <Fragment key={i}>{node}</Fragment>)}
+        </div>
+      );
+    headerNode = toRow(composeSlot(layout.settings.header.start, renderers));
+    actionsNode = toRow(composeSlot(layout.settings.header.end, renderers));
+    const behavior = sidebarBehavior(layout.settings);
+    sidebarContext = {
+      isMobile,
+      behavior,
+      top: composeSlot(behavior.topExtras, renderers),
+      bottom: composeSlot(behavior.bottomExtras, renderers),
+    };
+    frame = toShellFrame(layout.settings, {
+      rightPanel,
+      rightPanelLabel,
+      rightPanelFits,
+      mobileNav: <MobileBottomNav items={items} activeKey={activeKey} onNavigate={navigate} />,
+    });
+  }
+
   return (
-    <KitAppShellView
-      sidebar={sidebar}
-      header={header}
-      actions={actions}
-      isMobile={isMobile}
-      menuOpen={!collapsed}
-      onMenuToggle={toggleSidebar}
-      onMenuClose={() => setCollapsed(true)}
-      pageTitle={pageTitle}
-      style={style}
-    >
-      {children}
-    </KitAppShellView>
+    <ShellSidebarContext.Provider value={sidebarContext ?? { isMobile, top: [], bottom: [] }}>
+      <KitAppShellView
+        sidebar={layout?.settings.sidebar.enabled === false ? null : sidebar}
+        header={headerNode}
+        actions={actionsNode}
+        isMobile={isMobile}
+        menuOpen={!collapsed}
+        onMenuToggle={toggleSidebar}
+        onMenuClose={() => setCollapsed(true)}
+        pageTitle={pageTitle}
+        style={style}
+        frame={frame}
+      >
+        {children}
+      </KitAppShellView>
+    </ShellSidebarContext.Provider>
   );
 }
