@@ -1,10 +1,11 @@
-import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useMemo, useRef, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { createConfigEngine, APP_CONFIG_DEFAULTS } from '@mawsoftwares/sdk/config/config-engine';
 import { setDefaultPhoneRegion } from '@mawsoftwares/sdk/kernel/validate';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 import { storedDesignToOverrides, normalizeDesignMarkdown } from '@mawsoftwares/theme';
 import {
   AuthProvider,
+  composeProjectTheme,
   DynamicAccessProvider,
   useDynamicAccess,
   useUrlSyncedPage,
@@ -50,6 +51,11 @@ import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
 import { StorageView } from './features/storage-page';
 import { StorageSettingsView } from './features/storage-settings';
+import { LayoutStudioView } from './features/layout-studio';
+import { PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, readCachedPublishedUi, resolvePublishedUi, writeCachedPublishedUi } from './layout-config';
+import { projectThemeRegistry } from './project-themes';
+import type { ResolvedProjectUi } from '@mawsoftwares/layout';
+import type { ThemeOverrides } from '@mawsoftwares/theme';
 // @scaffold:imports
 import { loadMenuTree, flattenMenuTree, findMenuKeyByPath, MENUS_CHANGED_EVENT, type MenuTreeNode } from './menu-tree';
 import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
@@ -67,7 +73,7 @@ config.loadLayer('app', {
 setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'layout' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
 
 import { PagePathsProvider } from './page-paths';
 
@@ -99,6 +105,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'storage', label: 'Files', icon: 'folder', path: '/storage', group: 'Main', sortOrder: 3.5, permission: 'Read_Storage' },
   { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
+  { key: 'layout', label: 'Layout Studio', icon: 'layout-dashboard', path: '/layout', group: 'Admin', sortOrder: 8.5, permission: 'Read_Layout' },
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
   // @scaffold:nav
@@ -117,6 +124,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   'feature-flags': 'Read_FeatureFlags',
   menus: 'Manage_Menus',
   theme: 'Manage_Theme',
+  layout: 'Read_Layout',
   messaging: 'Read_Messaging',
   storage: 'Read_Storage',
   'storage-settings': 'Manage_StorageConfiguration',
@@ -209,6 +217,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'feature-flags': return <FeatureFlagsView />;
     case 'menus': return <MenusView />;
     case 'theme': return <ThemeSettingsView />;
+    case 'layout': return <LayoutStudioView />;
     case 'messaging': return <MessagingView />;
     case 'storage': return <StorageView />;
     case 'storage-settings': return <StorageSettingsView />;
@@ -227,7 +236,61 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const { applyThemeOverrides } = useTheme();
+  const { applyThemeOverrides, setColorMode } = useTheme();
+  // The tenant's shared theme (Theme Designer). The project's published theme selection is layered over it below.
+  const [sharedOverrides, setSharedOverrides] = useState<ThemeOverrides | undefined>(undefined);
+  // End users render the PUBLISHED config only; Layout Studio edits a draft until it is published. The server is the
+  // source of truth; the cached copy only avoids a flash of the classic shell while the request is in flight.
+  const [liveUi, setLiveUi] = useState<ResolvedProjectUi | null>(null);
+  const tenantId = session?.tenantId;
+  useEffect(() => {
+    if (tenantId === undefined) {
+      setLiveUi(null);
+      return;
+    }
+    let cancelled = false;
+    setLiveUi(resolvePublishedUi(readCachedPublishedUi(tenantId)));
+    const refresh = (): void => {
+      loadPublishedUi().then(
+        (published) => {
+          if (cancelled) return;
+          writeCachedPublishedUi(tenantId, published);
+          setLiveUi(resolvePublishedUi(published));
+        },
+        () => undefined, // offline / request failed: keep what is applied
+      );
+    };
+    refresh();
+    window.addEventListener('focus', refresh);
+    window.addEventListener(PROJECT_UI_PUBLISHED_EVENT, refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener(PROJECT_UI_PUBLISHED_EVENT, refresh);
+    };
+  }, [tenantId]);
+
+  // Theme = shared theme + the project's published selection. Nothing is applied until something is configured, so
+  // an app with no layout config renders exactly as before.
+  const themeTouched = useRef(false);
+  useEffect(() => {
+    const composed = composeProjectTheme(sharedOverrides, liveUi?.theme, projectThemeRegistry);
+    if (composed === undefined && !themeTouched.current) return;
+    themeTouched.current = true;
+    applyThemeOverrides(composed ?? {});
+  }, [sharedOverrides, liveUi, applyThemeOverrides]);
+
+  // The published colour mode is a project default: a user's own light/dark choice always wins.
+  const publishedColorMode = liveUi?.theme.colorMode;
+  useEffect(() => {
+    if (publishedColorMode === undefined || publishedColorMode === 'system') return;
+    try {
+      if (window.localStorage.getItem('maw-color-mode') !== null) return;
+    } catch {
+      // storage unavailable: apply the project default
+    }
+    setColorMode(publishedColorMode);
+  }, [publishedColorMode, setColorMode]);
   const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
   const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
   const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
@@ -243,12 +306,12 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     if (stored === null) return;
     try {
       const overrides = storedDesignToOverrides(JSON.parse(stored) as unknown);
-      if (overrides !== null) applyThemeOverrides(overrides);
+      if (overrides !== null) setSharedOverrides(overrides);
       else localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     } catch {
       localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     }
-  }, [applyThemeOverrides]);
+  }, []);
 
   // The theme is application-wide: load the shared one from the server (and re-check when the window regains focus),
   // so a change made by an admin reaches everyone. Signed in -> the authenticated read; signed out (the login page)
@@ -272,7 +335,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         }
         const normalized = normalizeDesignMarkdown(designMd);
         if (normalized.recognized.length === 0) return;
-        applyThemeOverrides(normalized.overrides);
+        setSharedOverrides(normalized.overrides);
         localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(normalized.overrides));
         localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, normalized.canonical);
       } catch {
@@ -397,6 +460,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   return (
     <NavigationProvider config={navConfig}>
       <AppShell
+        layout={liveUi === null || liveUi.layout.source === 'default' ? undefined : liveUi.layout}
         sidebar={
           <Sidebar
             logo={<Icon name="zap" size={22} />}

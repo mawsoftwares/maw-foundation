@@ -1,0 +1,873 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`shell structure: analytics-dashboard > desktop 1`] = `
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] relative bg-transparent gap-[var(--maw-space-md)] min-h-[var(--maw-layout-shell-header-height,auto)] p-[var(--maw-comp-shell-header-padding,12px_var(--maw-space-xl))]">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<div class="relative flex min-h-0 flex-1">
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+<button type="button" aria-expanded="true" aria-controls="_R_4k_" aria-label="Hide Details" title="Hide Details" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent absolute right-2 top-2 z-10 text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true">
+  
+<path d="m9 18 6-6-6-6">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<aside id="_R_4k_" aria-label="Details" class="box-border shrink-0 overflow-y-auto border-l border-border bg-[var(--maw-surface)] p-[var(--maw-space-lg)] w-80">
+  RIGHT-PANEL</aside>
+  
+</div>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: analytics-dashboard > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] relative bg-transparent min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: classic-admin > desktop 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] gap-[var(--maw-space-md)] min-h-[var(--maw-layout-shell-header-height,auto)] p-[var(--maw-comp-shell-header-padding,12px_var(--maw-space-xl))] shadow-[0_4px_24px_-6px_color-mix(in_srgb,#000_8%,transparent)]">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+<footer class="box-border flex shrink-0 items-center justify-center gap-2 border-t border-border bg-[var(--maw-surface)] px-[var(--maw-space-xl)] py-[var(--maw-space-lg)] font-sans text-sm text-fg-muted">
+  Powered by<div class="flex items-center gap-1 font-sans font-extrabold tracking-[0.02em]">
+  
+<span class="text-base">
+  MINDS</span>
+  
+<span class="flex size-5 items-center justify-center rounded-full text-[9px] font-bold text-white">
+  AT</span>
+  
+<span class="text-base">
+  WORK</span>
+  
+</div>
+  
+</footer>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: classic-admin > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: communication-workspace > desktop 1`] = `
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+  
+<div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] gap-[var(--maw-space-md)] min-h-16 px-[var(--maw-space-xl)] shadow-md">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<div class="relative flex min-h-0 flex-1">
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+<button type="button" aria-expanded="true" aria-controls="_R_4k_" aria-label="Hide Details" title="Hide Details" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent absolute right-2 top-2 z-10 text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true">
+  
+<path d="m9 18 6-6-6-6">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<aside id="_R_4k_" aria-label="Details" class="box-border shrink-0 overflow-y-auto border-l border-border bg-[var(--maw-surface)] p-[var(--maw-space-lg)] w-80">
+  RIGHT-PANEL</aside>
+  
+</div>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: communication-workspace > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: enterprise-dashboard > desktop 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] gap-[var(--maw-space-md)] min-h-16 px-[var(--maw-space-xl)] shadow-md">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<div class="relative flex min-h-0 flex-1">
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+<button type="button" aria-expanded="true" aria-controls="_R_4k_" aria-label="Hide Details" title="Hide Details" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent absolute right-2 top-2 z-10 text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true">
+  
+<path d="m9 18 6-6-6-6">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<aside id="_R_4k_" aria-label="Details" class="box-border shrink-0 overflow-y-auto border-l border-border bg-[var(--maw-surface)] p-[var(--maw-space-lg)] w-80">
+  RIGHT-PANEL</aside>
+  
+</div>
+  
+<footer class="box-border flex shrink-0 items-center justify-center gap-2 border-t border-border bg-[var(--maw-surface)] px-[var(--maw-space-xl)] py-[var(--maw-space-lg)] font-sans text-sm text-fg-muted">
+  Powered by<div class="flex items-center gap-1 font-sans font-extrabold tracking-[0.02em]">
+  
+<span class="text-base">
+  MINDS</span>
+  
+<span class="flex size-5 items-center justify-center rounded-full text-[9px] font-bold text-white">
+  AT</span>
+  
+<span class="text-base">
+  WORK</span>
+  
+</div>
+  
+</footer>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: enterprise-dashboard > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: floating-sidebar > desktop 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="box-border flex h-full shrink-0 p-[var(--maw-space-md)] pr-0 [&amp;&gt;aside]:h-full [&amp;&gt;aside]:min-h-0 [&amp;&gt;aside]:rounded-[var(--maw-shell-radius,12px)] [&amp;&gt;aside]:border [&amp;&gt;aside]:shadow-md">
+  
+<aside>
+  SIDEBAR</aside>
+  
+</div>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] relative bg-transparent gap-[var(--maw-space-md)] min-h-[var(--maw-layout-shell-header-height,auto)] p-[var(--maw-comp-shell-header-padding,12px_var(--maw-space-xl))]">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: floating-sidebar > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] relative bg-transparent min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: listing-workspace > desktop 1`] = `
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] gap-[var(--maw-space-md)] min-h-16 px-[var(--maw-space-xl)] shadow-md">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+<footer class="box-border flex shrink-0 items-center justify-center gap-2 border-t border-border bg-[var(--maw-surface)] px-[var(--maw-space-xl)] py-[var(--maw-space-lg)] font-sans text-sm text-fg-muted">
+  Powered by<div class="flex items-center gap-1 font-sans font-extrabold tracking-[0.02em]">
+  
+<span class="text-base">
+  MINDS</span>
+  
+<span class="flex size-5 items-center justify-center rounded-full text-[9px] font-bold text-white">
+  AT</span>
+  
+<span class="text-base">
+  WORK</span>
+  
+</div>
+  
+</footer>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: listing-workspace > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+  CONTENT</div>
+  
+</main>
+  
+<div class="shrink-0 border-t border-border bg-[var(--maw-surface)] pb-[env(safe-area-inset-bottom)]">
+  BOTTOM-NAV</div>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: project-workspace > desktop 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] gap-[var(--maw-space-md)] min-h-[var(--maw-layout-shell-header-height,auto)] p-[var(--maw-comp-shell-header-padding,12px_var(--maw-space-xl))] shadow-[0_4px_24px_-6px_color-mix(in_srgb,#000_8%,transparent)]">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: project-workspace > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="compact" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] sticky border-b border-[var(--maw-shell-header-border,var(--maw-shell-border,var(--maw-border)))] bg-[var(--maw-shell-header-bg,var(--maw-shell-bg,var(--maw-surface)))] min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: split-workspace > desktop 1`] = `
+"<div class="font-sans box-border h-[var(--maw-shell-height,100vh)] bg-[color-mix(in_srgb,var(--maw-brand)_9%,var(--maw-bgSubtle))] p-[var(--maw-space-lg)]">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-full rounded-[var(--maw-shell-radius)] border border-border bg-[var(--maw-canvas)] shadow-lg">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<aside>
+  SIDEBAR</aside>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] relative bg-transparent gap-[var(--maw-space-md)] min-h-[var(--maw-layout-shell-header-height,auto)] p-[var(--maw-comp-shell-header-padding,12px_var(--maw-space-xl))]">
+  
+<div class="flex min-w-0 flex-1 items-center justify-between gap-[var(--maw-space-md)]">
+  
+<div class="min-w-0 flex-1">
+  HEADER</div>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
+
+exports[`shell structure: split-workspace > mobile 1`] = `
+"<div class="font-sans">
+  
+<div data-layout-density="comfortable" class="box-border flex overflow-hidden font-sans h-[var(--maw-shell-height,100vh)] bg-[var(--maw-canvas)]">
+  
+<a href="#maw-main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-brand focus:px-3 focus:py-2 focus:text-brand-contrast">
+  Skip to content</a>
+  
+<div class="flex h-full min-w-0 flex-1 flex-col">
+  
+<header class="maw-shell-chrome top-0 z-[var(--maw-z-sticky)] box-border flex shrink-0 items-center overflow-visible text-[var(--maw-shell-header-fg,var(--maw-shell-fg,var(--maw-fg)))] relative bg-transparent min-h-12 gap-1 py-1.5 pl-1 pr-2">
+  
+<button type="button" aria-label="Menu" title="Menu" class="box-border inline-flex size-9 cursor-pointer items-center justify-center rounded-md p-0 transition-colors hover:bg-bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]">
+  
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true">
+  
+<path d="M4 5h16">
+  
+</path>
+  
+<path d="M4 12h16">
+  
+</path>
+  
+<path d="M4 19h16">
+  
+</path>
+  
+</svg>
+  
+</button>
+  
+<h1 class="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-base font-semibold text-[var(--maw-shell-fg,var(--maw-fg))]">
+  Page</h1>
+  
+<div class="shrink-0">
+  ACTIONS</div>
+  
+</header>
+  
+<main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
+  
+<div class="mx-auto w-full max-w-none">
+  CONTENT</div>
+  
+</main>
+  
+</div>
+  
+</div>
+  
+</div>"
+`;
