@@ -401,9 +401,6 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
       {onPreview !== undefined && (
         <div
           style={{
-            position: 'sticky',
-            bottom: 0,
-            zIndex: 5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -413,7 +410,6 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
             borderRadius: 'var(--maw-radius-lg)',
             border: '1px solid var(--maw-border)',
             background: 'var(--maw-surface)',
-            boxShadow: '0 -4px 16px rgb(0 0 0 / 0.08)',
           }}
         >
           <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>See these choices across the whole app before publishing. Only you see it.</span>
