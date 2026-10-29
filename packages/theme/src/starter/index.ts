@@ -615,12 +615,13 @@ export const mawConsoleTheme: ThemeDefinition = {
     },
     extraTokens: {
       // As in the Hub: blue at the top that fades to an almost-white middle, then a light-blue tint again at the bottom; a brand glow behind the top and a light-blue glow bottom-right.
-      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #1565c0 16%, transparent) 0%, transparent 38%, transparent 72%, color-mix(in srgb, #42a5f5 9%, transparent) 100%)',
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #1565c0 9%, transparent) 0%, transparent 34%, transparent 78%, color-mix(in srgb, #42a5f5 4%, transparent) 100%)',
       'shell-glow': '#1565c0',
       'shell-glow-2': '#42a5f5',
       'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
       // Group labels as in the Hub: small, bold, widely spaced caps with more room above.
-      'shell-group-size': '10.5px',
+      'shell-item-size': '0.9375rem',
+      'shell-group-size': '11.5px',
       'shell-group-weight': '700',
       'shell-group-tracking': '0.14em',
       'shell-group-pt': '1.25rem',
@@ -643,7 +644,7 @@ export const mawConsoleTheme: ThemeDefinition = {
       ...LIGHT_HEADER('#e3e9f3', '#1b2a41'),
     },
     extraTokensDark: {
-      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 16%, transparent) 0%, transparent 38%, transparent 72%, color-mix(in srgb, #8ec5f7 9%, transparent) 100%)',
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 9%, transparent) 0%, transparent 34%, transparent 78%, color-mix(in srgb, #8ec5f7 4%, transparent) 100%)',
       'shell-glow': '#5aa9f0',
       'shell-glow-2': '#8ec5f7',
       'shell-group-rule': 'rgba(234, 241, 251, 0.16)',

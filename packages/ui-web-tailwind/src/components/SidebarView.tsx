@@ -60,7 +60,7 @@ function SidebarItem({
           ...(look?.motion.nav === 'stagger' && depth === 0 ? { animationDelay: `${Math.min(index, 12) * 45}ms` } : {}),
         }}
         className={cn(
-          'group relative mb-1 box-border flex cursor-pointer items-center border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
+          'group relative mb-1 box-border flex cursor-pointer items-center border-0 text-left text-[length:var(--maw-shell-item-size,0.875rem)] outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
           !(active && indicator === 'tab') && 'w-full',
           look?.motion.nav === 'stagger' && depth === 0 && 'animate-nav-in motion-reduce:animate-none',
           below ? 'flex-col justify-center gap-1 px-1 py-2 text-center text-[11px] leading-tight' : cn('gap-3', collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'),
@@ -225,13 +225,13 @@ export function SidebarView({
       {!isMobile && (
         <span
           aria-hidden
-          className="pointer-events-none absolute -inset-x-20 -top-28 -z-10 h-[340px] animate-[maw-fx-breathe_9s_ease-in-out_infinite] opacity-55 blur-[20px] motion-reduce:animate-none [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow,transparent)_38%,transparent),transparent)]"
+          className="pointer-events-none absolute -inset-x-20 -top-28 -z-10 h-[340px] animate-[maw-fx-breathe_9s_ease-in-out_infinite] opacity-40 blur-[20px] motion-reduce:animate-none [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow,transparent)_38%,transparent),transparent)]"
         />
       )}
       {!isMobile && (
         <span
           aria-hidden
-          className="pointer-events-none absolute -bottom-36 -right-14 -z-10 size-64 blur-[24px] [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow-2,transparent)_22%,transparent),transparent)]"
+          className="pointer-events-none absolute -bottom-36 -right-14 -z-10 size-64 blur-[24px] [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow-2,transparent)_14%,transparent),transparent)]"
         />
       )}
       {(headerContent !== undefined || isMobile) && (
