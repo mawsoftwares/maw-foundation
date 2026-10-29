@@ -19,6 +19,7 @@ export const SUPERADMIN_TOOLS: SuperAdminTool[] = [
   { key: 'menus', label: 'Menu Management', description: "Control the app's navigation sidebar", icon: 'menu', permission: 'Manage_Menus' },
   { key: 'feature-flags', label: 'Feature Flags', description: 'Enable or disable features per environment', icon: 'flag', permission: 'Read_FeatureFlags' },
   { key: 'theme', label: 'Theme Designer', description: 'Apply a live theme from a YAML or list design.md file', icon: 'palette', permission: 'Manage_Theme' },
+  { key: 'layout', label: 'Layout Studio', description: 'Choose, preview and publish the application layout', icon: 'layout-dashboard', permission: 'Read_Layout' },
   { key: 'messaging', label: 'Messaging', description: 'Manage Email, SMS, and WhatsApp templates, credentials, and send logs', icon: 'mail', permission: 'Read_Messaging' },
   { key: 'storage-settings', label: 'Storage Settings', description: 'Configure S3 or local file storage, credentials and the default location', icon: 'folder', permission: 'Manage_StorageConfiguration' },
   { key: 'audit-logs', label: 'Audit Logs', description: 'View system activity and security events', icon: 'scroll-text', permission: 'Read_AuditLogs' },

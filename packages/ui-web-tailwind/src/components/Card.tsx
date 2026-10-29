@@ -37,7 +37,7 @@ export function Card({ children, variant = 'default', padding, style, className 
   }
   return (
     <div
-      className={cn(cardStyles({ variant }), resolved === undefined ? 'p-4 md:p-6' : PADDING_CLASSES, className)}
+      className={cn('maw-card', cardStyles({ variant }), resolved === undefined ? 'p-4 md:p-6' : PADDING_CLASSES, className)}
       style={{ ...vars, ...style } as CSSProperties}
     >
       {children}

@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode, type CSSProperties } from 'react';
+import { useCountUp } from './motion';
 import { useResponsiveProp, type ResponsiveProp } from './responsive';
 import { Card, Grid, KpiCard as KitKpiCard, Stack } from './kit';
 import type { KpiConfig } from '@mawsoftwares/ui-contract';
@@ -29,6 +30,7 @@ export function KpiCard({
   changeLabel,
   icon,
   color,
+  trend,
   style,
 }: KpiConfig & { style?: CSSProperties }): ReactNode {
   const isPositive = change !== undefined && change >= 0;
@@ -54,6 +56,11 @@ export function KpiCard({
             {changeLabel !== undefined && <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>{changeLabel}</span>}
           </Stack>
         )}
+        {trend !== undefined && trend.length >= 2 && (
+          <div aria-hidden style={{ marginTop: 'var(--maw-space-sm)' }}>
+            <MiniLineChart data={trend} width={120} height={28} color={color ?? (isPositive || change === undefined ? 'var(--maw-brand)' : 'var(--maw-danger)')} />
+          </div>
+        )}
       </Stack>
     </Card>
   );
@@ -67,11 +74,15 @@ export function KpiGrid({
   kpis,
   columns = { xs: 1, sm: 2, lg: 4 },
   style,
+  countUp = false,
 }: {
   kpis: readonly KpiConfig[];
   columns?: ResponsiveProp<number>;
   style?: CSSProperties;
+  /** Numeric values count up from 0 when the grid appears. Text values (e.g. "₹9,20,000") are shown as given. */
+  countUp?: boolean;
 }): ReactNode {
+  const counted = useCountUp(kpis.map((k) => (typeof k.value === 'number' ? k.value : 0)), countUp);
   return (
     <Grid
       columns={columns}
@@ -79,7 +90,7 @@ export function KpiGrid({
       style={{ marginBottom: 'var(--maw-space-xl)', ...style }}
     >
       {kpis.map((kpi, i) => (
-        <KitKpiCard key={i} {...kpi} />
+        <KitKpiCard key={i} {...kpi} value={countUp && typeof kpi.value === 'number' ? (counted[i] ?? kpi.value) : kpi.value} />
       ))}
     </Grid>
   );
@@ -192,26 +203,38 @@ export function DashboardPage({
 // MiniChart — simple inline bar/line visual (no charting library dependency)
 // ---------------------------------------------------------------------------
 
+/** Inline so it works in either UI kit. Reduced motion shows the finished chart at once. */
+const CHART_KEYFRAMES =
+  '@keyframes maw-bar-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}' +
+  '@keyframes maw-line-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}' +
+  '@media (prefers-reduced-motion:reduce){[data-maw-chart]{animation:none!important}}';
+
 export function MiniBarChart({
   data,
   height = 60,
   barColor = 'var(--maw-brand)',
   style,
+  animate = true,
 }: {
   data: readonly number[];
   height?: number;
   barColor?: string;
   style?: CSSProperties;
+  /** Bars grow up from the baseline, one after another. */
+  animate?: boolean;
 }): ReactNode {
   if (data.length === 0) return null;
   const max = Math.max(...data, 1);
 
   return (
     <Stack direction="row" align="flex-end" gap="2px" style={{ height, ...style }}>
+      {animate && <style>{CHART_KEYFRAMES}</style>}
       {data.map((v, i) => (
         <div
           key={i}
+          data-maw-chart={animate ? '' : undefined}
           style={{
+            ...(animate ? { transformOrigin: 'bottom', animation: `maw-bar-grow 700ms cubic-bezier(0.22, 1, 0.36, 1) ${Math.min(i, 24) * 40}ms backwards` } : {}),
             flex: 1,
             height: `${(v / max) * 100}%`,
             background: barColor,
@@ -232,12 +255,15 @@ export function MiniLineChart({
   height = 40,
   color = 'var(--maw-brand)',
   style,
+  animate = true,
 }: {
   data: readonly number[];
   width?: number;
   height?: number;
   color?: string;
   style?: CSSProperties;
+  /** The line is drawn from left to right. */
+  animate?: boolean;
 }): ReactNode {
   if (data.length < 2) return null;
   const max = Math.max(...data, 1);
@@ -253,8 +279,13 @@ export function MiniLineChart({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} style={style}>
+      {animate && <style>{CHART_KEYFRAMES}</style>}
       <polyline
         points={points}
+        pathLength={animate ? 1 : undefined}
+        data-maw-chart={animate ? '' : undefined}
+        strokeDasharray={animate ? 1 : undefined}
+        style={animate ? { animation: 'maw-line-draw 1200ms cubic-bezier(0.22, 1, 0.36, 1) 250ms backwards' } : undefined}
         fill="none"
         stroke={color}
         strokeWidth="2"

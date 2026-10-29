@@ -10,7 +10,7 @@ const UI_KIT = process.env.VITE_UI_KIT === 'tailwind' ? 'tailwind' : 'web';
 
 const src = (rel: string): string => fileURLToPath(new URL(rel, import.meta.url));
 
-const pkgs = ['ui-contract', 'sdk', 'rbac-core', 'api-client', 'theme', 'ui-auth', 'api', 'platform', 'ui-web-tailwind'];
+const pkgs = ['ui-contract', 'sdk', 'rbac-core', 'api-client', 'theme', 'layout', 'page-templates', 'ui-auth', 'api', 'platform', 'ui-web-tailwind'];
 const alias = [
   // package.json "exports" maps ./theme.css to src/styles/theme.css; mirror that before the generic rules.
   { find: '@mawsoftwares/ui-web-tailwind/theme.css', replacement: src('../../packages/ui-web-tailwind/src/styles/theme.css') },

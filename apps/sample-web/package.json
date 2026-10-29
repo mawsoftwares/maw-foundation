@@ -30,8 +30,9 @@
     "vite": "^6.0.0"
   },
   "scripts": {
-    "dev": "vite --port 5173",
+    "dev": "VITE_UI_KIT=tailwind vite --port 5173",
     "dev:tailwind": "VITE_UI_KIT=tailwind vite --port 5173",
+    "dev:web": "vite --port 5173",
     "build:tailwind": "VITE_UI_KIT=tailwind vite build",
     "build": "vite build",
     "preview": "vite preview",

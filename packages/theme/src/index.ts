@@ -540,6 +540,8 @@ export {
   storedDesignToOverrides,
   injectWebFonts,
   isLoadableFont,
+  mixHex,
+  contrastOn,
   googleFontUrl,
   type DesignMdParseOptions,
   type DesignMdParseResult,
@@ -652,6 +654,11 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
     vars['--maw-shell-nav-active-fg'] = p.brand;
     vars['--maw-shell-nav-active-shadow'] = 'none';
     vars['--maw-shell-nav-active-indicator'] = `inset 3px 0 0 0 ${p.brand}`;
+  }
+  // A theme that sets these itself (extraTokens `shell-nav-active-*`) wins over the derived defaults above.
+  for (const key of ['shell-nav-active-bg', 'shell-nav-active-fg', 'shell-nav-active-shadow', 'shell-nav-active-indicator']) {
+    const explicit = (dark ? t.extraTokensDark?.[key] : undefined) ?? t.extraTokens?.[key];
+    if (explicit !== undefined) vars[`--maw-${key}`] = explicit;
   }
 
   return vars;
@@ -780,6 +787,7 @@ export * from './core/provenance';
 export * from './core/responsive';
 export { extendTheme } from './core/extend';
 export { createThemeRegistry, type ThemeDefinition, type ThemeRegistry } from './core/registry';
+export { auroraTheme, cleanLightTheme, deepVioletTheme, emeraldFreshTheme, graphiteTheme, lavenderSoftTheme, mawConsoleTheme, mawHubTheme, medicalBlueTheme, midnightRoseTheme, oceanTealTheme, royalNavyTheme, sunsetCoralTheme, slateMinimalTheme, starterThemes, violetStudioTheme } from './starter';
 export { themeToCssText, type ThemeCssOptions } from './core/css';
 export { deriveStateVars } from './core/semantic';
 export * from './components/states';

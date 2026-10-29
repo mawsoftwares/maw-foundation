@@ -21,4 +21,14 @@ describe('tailwind Icon', () => {
       expect(isKnownIcon(name), name).toBe(true);
     }
   });
+
+  it('knows the light/dark toggle icons', () => {
+    for (const name of ['sun', 'moon']) expect(isKnownIcon(name), name).toBe(true);
+  });
+
+  it('knows every icon name the seeded menu uses, so none is drawn as plain text', () => {
+    for (const name of ['briefcase', 'file-text', 'calendar', 'building', 'alert-triangle', 'arrow-left-right', 'receipt', 'trending-up', 'box', 'package']) {
+      expect(isKnownIcon(name), name).toBe(true);
+    }
+  });
 });

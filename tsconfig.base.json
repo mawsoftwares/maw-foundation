@@ -37,6 +37,8 @@
       "@mawsoftwares/server-hono/*": ["packages/server-hono/src/*"],
       "@mawsoftwares/api-client": ["packages/api-client/src/index.ts"],
       "@mawsoftwares/api-client/*": ["packages/api-client/src/*"],
+      "@mawsoftwares/layout": ["packages/layout/src/index.ts"],
+      "@mawsoftwares/page-templates": ["packages/page-templates/src/index.ts"],
       "@mawsoftwares/theme": ["packages/theme/src/index.ts"],
       "@mawsoftwares/theme/*": ["packages/theme/src/*"],
       "@mawsoftwares/ui-web": ["packages/ui-web/src/index.ts"],

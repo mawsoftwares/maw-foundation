@@ -414,6 +414,18 @@ export type SidebarSlot = ReactNode | ((collapsed: boolean) => ReactNode);
  * The navigation sidebar, presentational: all state arrives as props. `ui-web`'s `Sidebar` reads its navigation context and renders
  * this, so a kit never needs that context. On mobile it is shown inside a drawer (see AppShellView) rather than as a rail.
  */
+/** Optional sidebar styling from a layout (geometry and motion only). A kit may honour only part of it. */
+export interface SidebarLook {
+  readonly labels: 'beside' | 'below';
+  readonly expandOnHover: boolean;
+  readonly indicator: 'fill' | 'bar' | 'dot' | 'tab';
+  readonly motion: {
+    readonly sidebar: 'none' | 'snappy' | 'smooth' | 'gentle' | 'spring';
+    readonly items: 'none' | 'slide' | 'lift' | 'scale' | 'glow';
+    readonly nav: 'none' | 'stagger';
+  };
+}
+
 export interface SidebarViewProps {
   readonly items: readonly NavItem[];
   readonly activeKey: string;
@@ -426,11 +438,15 @@ export interface SidebarViewProps {
   readonly onToggleCollapsed: () => void;
   /** The mobile close button. */
   readonly onClose: () => void;
+  /** Show the desktop expand/collapse button (default true). A layout can pin the sidebar open or as a rail. */
+  readonly collapsible?: boolean;
   readonly header?: SidebarSlot;
   readonly logo?: ReactNode;
   readonly title?: ReactNode;
   readonly footer?: SidebarSlot;
   readonly style?: CSSProperties;
+  /** From a layout. Omitted = the classic sidebar, unchanged. */
+  readonly look?: SidebarLook;
 }
 
 /**
@@ -452,6 +468,48 @@ export interface AppShellViewProps {
   /** Mobile header title (current page). */
   readonly pageTitle: string;
   readonly style?: CSSProperties;
+  /** Optional structural variant (from @mawsoftwares/layout, mapped by ui-web). Omitted = the classic shell, unchanged. */
+  readonly frame?: ShellFrame;
+}
+
+/**
+ * Structure of the application frame as plain values, so a kit can render layout variants without knowing the layout engine.
+ * A kit may honour only part of it (unsupported variants fall back to the classic look).
+ */
+export interface ShellFrame {
+  readonly density: 'compact' | 'comfortable' | 'spacious';
+  readonly sidebar: {
+    readonly position: 'left' | 'right';
+    /** `floating` is an inset rounded card; `docked` and `rail` render as the classic edge sidebar. */
+    readonly variant: 'docked' | 'floating' | 'rail';
+  };
+  readonly header: {
+    readonly enabled: boolean;
+    readonly variant: 'default' | 'minimal' | 'prominent';
+    readonly sticky: boolean;
+  };
+  readonly footer: boolean;
+  readonly contentWidth: 'contained' | 'full';
+  /** Geometry of the chrome (never colour). Kits may honour only part of it. */
+  readonly shape: {
+    readonly frame: 'full-bleed' | 'inset';
+    readonly corners: 'sharp' | 'soft' | 'round';
+    readonly nav: 'rounded' | 'pill';
+    readonly indicator: 'fill' | 'bar' | 'dot' | 'tab';
+  };
+  /** Entrance animation of the page content; changes of `pageKey` replay it. */
+  readonly motion: { readonly page: 'none' | 'fade' | 'rise' | 'slide' | 'zoom' | 'blur' };
+  readonly pageKey?: string;
+  /** Mobile bottom navigation bar (rendered below the content on mobile only). */
+  readonly mobileNav?: ReactNode;
+  /** Present only when the layout enables it, the viewport is wide enough, and the app supplied content. */
+  readonly rightPanel?: {
+    readonly content: ReactNode;
+    readonly label: string;
+    readonly width: 'sm' | 'md' | 'lg';
+    readonly collapsible: boolean;
+    readonly defaultOpen: boolean;
+  };
 }
 
 export interface KpiConfig {
@@ -465,6 +523,8 @@ export interface KpiConfig {
   icon?: string;
   /** CSS colour for the value and icon. */
   color?: string;
+  /** Recent values, oldest first. Drawn as a small trend line under the figure when there are at least two. */
+  trend?: readonly number[];
 }
 
 export type KpiCardProps = KpiConfig & { readonly style?: CSSProperties };

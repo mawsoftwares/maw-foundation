@@ -17,5 +17,47 @@
       "vhostPath": "/home/deploy/nginx/vhosts-enabled/api-php.staging.mawsoftwares.in.conf"
     },
     "completedAt": "2026-10-03T12:28:25.809Z"
+  },
+  {
+    "id": "deploy-1793247885799",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-10-29T04:24:45.796Z",
+    "branch": "main",
+    "version": "1.2.3",
+    "commit": "666903f",
+    "deployPath": "/home/deploy/staging/maw-php",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/backend-php/deploy/generated/staging/nginx.conf"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/api-php.staging.mawsoftwares.in.conf"
+    },
+    "completedAt": "2026-10-29T04:24:45.800Z"
+  },
+  {
+    "id": "deploy-1793247887677",
+    "type": "deployment",
+    "environment": "staging",
+    "dryRun": true,
+    "timestamp": "2026-10-29T04:24:47.675Z",
+    "branch": "main",
+    "version": "1.2.3",
+    "commit": "666903f",
+    "deployPath": "/home/deploy/staging/maw-php",
+    "generatedFiles": [
+      "/Users/poonamdhomane/PROJECTS/maw-foundation/backend-php/deploy/generated/staging/nginx.conf"
+    ],
+    "success": true,
+    "nginx": {
+      "skipped": true,
+      "reason": "not confirmed",
+      "vhostPath": "/home/deploy/nginx/vhosts-enabled/api-php.staging.mawsoftwares.in.conf"
+    },
+    "completedAt": "2026-10-29T04:24:47.679Z"
   }
 ]

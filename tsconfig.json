@@ -22,6 +22,8 @@
     "packages/observability/src",
     "packages/api-client/src",
     "packages/theme/src",
+    "packages/layout/src",
+    "packages/page-templates/src",
     "packages/ui-contract/src",
     "packages/ui-web/src",
     "packages/ui-web-tailwind/src",

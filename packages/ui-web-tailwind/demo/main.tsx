@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client';
 import * as Web from '@mawsoftwares/ui-web';
 import * as Tw from '../src';
 import { setUIKit } from '@mawsoftwares/ui-contract';
+import { defaultLayoutRegistry, resolveLayout } from '@mawsoftwares/layout';
+import { createPageTemplateRegistry, resolvePageTemplate } from '@mawsoftwares/page-templates';
+import { createMemoryProjectUiStore } from '@mawsoftwares/layout';
+import { createThemeRegistry, starterThemes } from '@mawsoftwares/theme';
 import './styles.css';
 
 const { ThemeProvider, useColorMode } = Web;
@@ -386,10 +390,62 @@ const NAV_ITEMS = [
 ];
 const flatNav = NAV_ITEMS.flatMap((i) => [i, ...(i.children ?? [])]);
 
+const demoPages = createPageTemplateRegistry({ widgets: ['revenue', 'orders-chart', 'activity'] });
+const demoWidgets: Web.WidgetRegistry = {
+  revenue: { title: 'Revenue', render: () => <Web.KpiCard label="Revenue" value="$12,400" change={12.5} changeLabel="vs last month" icon="billing" /> },
+  'orders-chart': { title: 'Orders (12 months)', height: 160, render: () => 'Chart area' },
+  activity: { title: 'Activity', render: () => 'Feed' },
+};
+const demoPageConfigs: Record<string, unknown> = {
+  dashboard: {
+    version: 1,
+    templateId: 'dashboard',
+    settings: { columns: 3, aside: true },
+    widgets: [
+      { slot: 'kpis', widget: 'revenue' },
+      { slot: 'kpis', widget: 'revenue', title: 'Revenue 2' },
+      { slot: 'kpis', widget: 'revenue', title: 'Revenue 3' },
+      { slot: 'widgets', widget: 'orders-chart', span: 2 },
+      { slot: 'widgets', widget: 'activity' },
+      { slot: 'aside', widget: 'activity', title: 'Recent' },
+    ],
+  },
+  listing: { version: 1, templateId: 'listing' },
+  details: { version: 1, templateId: 'details' },
+  form: { version: 1, templateId: 'form' },
+  kanban: { version: 1, templateId: 'kanban' },
+  calendar: { version: 1, templateId: 'calendar' },
+  communication: { version: 1, templateId: 'communication' },
+};
+const box = (label: string, h = 120): ReactNode => (
+  <div style={{ height: h, border: '1px dashed var(--maw-border)', borderRadius: 8, padding: 12, color: 'var(--maw-fgMuted)', background: 'var(--maw-surface)' }}>{label}</div>
+);
+const demoSlots = (t: string): Web.PageSlots => ({
+  header: <h2 style={{ margin: 0, color: 'var(--maw-fg)' }}>{t} page</h2>,
+  summary: box('Summary', 60),
+  filters: box('Filters', 48),
+  toolbar: box('Toolbar', 48),
+  content: box('Main content', 200),
+  aside: box('Side column', 160),
+  footer: box('Form actions', 48),
+  board: (
+    <div style={{ display: 'flex', gap: 12 }}>
+      {['Draft', 'In progress', 'Done', 'Archived'].map((c) => <div key={c} style={{ width: 280, flexShrink: 0 }}>{box(c, 220)}</div>)}
+    </div>
+  ),
+  calendar: box('Calendar surface', 280),
+  list: box('Conversations', 360),
+  thread: box('Thread', 360),
+  details: box('Details', 360),
+});
+
 /** The real ui-web shell composites (NavigationProvider, AppShell, Sidebar, Breadcrumbs, KpiGrid) under a runtime kit switch. */
 function ShellDemo(): ReactNode {
   const [useTw, setUseTw] = useState(() => new URLSearchParams(location.search).get('kit') === 'tailwind');
   const [active, setActive] = useState('dash');
+  const [pageId, setPageId] = useState(() => new URLSearchParams(location.search).get('page') ?? '');
+  const [presetId, setPresetId] = useState(() => new URLSearchParams(location.search).get('layout') ?? '');
+  const layout = resolveLayout(presetId === '' ? null : { version: 1, presetId });
   setUIKit(useTw ? Tw.tailwindKit : {});
   const K = useTw ? Tw : Web; // what an app gets from `import { Widget } from '@mawsoftwares/ui-web'` under each build
   const current = flatNav.find((i) => i.key === active)!;
@@ -403,10 +459,39 @@ function ShellDemo(): ReactNode {
       }}
     >
       <Web.AppShell
+        layout={layout}
+        slots={{
+          search: <K.SearchBar value="" onChange={() => undefined} placeholder="Search" />,
+          'theme-toggle': <K.Badge>theme</K.Badge>,
+          notifications: <K.Badge>3</K.Badge>,
+        }}
+        rightPanel={<div data-testid="right-panel"><h3 style={{ margin: 0 }}>Activity</h3><p>Panel content supplied by the app.</p></div>}
+        rightPanelLabel="Activity"
         sidebar={<Web.Sidebar title="Acme" logo={<span data-testid="logo">◆</span>} footer={(rail) => <span data-testid="sb-footer">{rail ? 'v1' : 'Version 1.0'}</span>} />}
         header={<Web.Breadcrumbs />}
-        actions={<K.Checkbox label="Tailwind kit" checked={useTw} onChange={setUseTw} />}
+        actions={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+            <select aria-label="Layout preset" value={presetId} onChange={(e) => setPresetId(e.target.value)}>
+              <option value="">(none → default)</option>
+              {defaultLayoutRegistry.listPresets().map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+            <select aria-label="Page template" value={pageId} onChange={(e) => setPageId(e.target.value)}>
+              <option value="">(classic content)</option>
+              {Object.keys(demoPageConfigs).map((id) => <option key={id} value={id}>{id}</option>)}
+            </select>
+            <K.Checkbox label="Tailwind kit" checked={useTw} onChange={setUseTw} />
+          </span>
+        }
       >
+        {pageId !== '' ? (
+          <Web.PageTemplate
+            template={resolvePageTemplate(demoPageConfigs[pageId], demoPages)}
+            slots={demoSlots(pageId)}
+            widgets={demoWidgets}
+          />
+        ) : (
         <div data-testid="shell-page">
           <h2 style={{ margin: '0 0 12px', fontFamily: 'var(--maw-font-family)', color: 'var(--maw-fg)' }}>{current.label}</h2>
           <Web.KpiGrid
@@ -423,6 +508,7 @@ function ShellDemo(): ReactNode {
             <K.Widget title="Activity" span={{ xs: 1, xl: 2 }} actions={<K.Badge>live</K.Badge>}>Feed</K.Widget>
           </Web.WidgetGrid>
         </div>
+        )}
       </Web.AppShell>
     </Web.NavigationProvider>
   );
@@ -458,10 +544,23 @@ function Page(): ReactNode {
   );
 }
 
+const studioStore = createMemoryProjectUiStore({ actor: 'demo' });
+const studioThemes = createThemeRegistry(starterThemes);
+function StudioDemo(): ReactNode {
+  // Same as the real app: `?kit=tailwind` installs the Tailwind kit before anything renders.
+  setUIKit(new URLSearchParams(location.search).get('kit') === 'tailwind' ? Tw.tailwindKit : {});
+  const can = (p: string): boolean => new URLSearchParams(location.search).get('readonly') === '1' ? p === 'Read_Layout' : true;
+  return (
+    <div style={{ padding: 24, background: 'var(--maw-canvas)', minHeight: '100vh' }}>
+      <Web.LayoutStudio store={studioStore} themes={studioThemes} can={can} onPreview={() => undefined} />
+    </div>
+  );
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider defaultColorMode="light">
-      {location.hash === '#shell' ? <ShellDemo /> : <Page />}
+      {location.hash === '#shell' ? <ShellDemo /> : location.hash === '#studio' ? <StudioDemo /> : <Page />}
     </ThemeProvider>
   </StrictMode>,
 );

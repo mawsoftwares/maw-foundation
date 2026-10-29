@@ -397,3 +397,10 @@ export {
 
 export { ThemeProbes, type ThemeProbesProps } from './theme-probes';
 export { ClientThemeProvider, useClientTheme, type ClientThemeProviderProps, type ClientThemeContextValue } from './client-theme';
+
+export { composeSlot, layoutBreakpointPx, layoutMinWidthQuery, toShellFrame, type FrameOptions } from './layout/shell-frame';
+export { HeroBanner, LiveDot, ProfileCard, FilterChips, ListingCard, type HeroBannerProps, type ProfileCardProps, type FilterChipsProps, type ListingCardProps } from './showcase';
+export { useCountUp } from './motion';
+export { SidebarBrand, SidebarUser } from './sidebar-chrome';
+export * from './page-templates';
+export * from './layout-studio';

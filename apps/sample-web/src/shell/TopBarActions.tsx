@@ -6,6 +6,8 @@ import {
   useToast,
   Button,
   Avatar,
+  Icon,
+  IconButton,
   Popover,
 } from '@mawsoftwares/ui-web';
 import { AVAILABLE_TENANTS } from '../brand-setup';
@@ -150,6 +152,9 @@ export function TopBarActions(): ReactNode {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <IconButton label={isDark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleColorMode}>
+        <Icon name={isDark ? 'sun' : 'moon'} size={18} />
+      </IconButton>
       <div ref={menuAnchor}>
         <button
           type="button"

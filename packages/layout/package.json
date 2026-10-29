@@ -1,0 +1,34 @@
+{
+  "name": "@mawsoftwares/layout",
+  "version": "0.0.0",
+  "description": "Config-driven application layout engine: typed layout schema, preset registry, resolver, validation and versioned migrations. Pure data and logic — no React, Tailwind or UI-kit dependency.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mawsoftwares/maw-foundation.git",
+    "directory": "packages/layout"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.spec.ts"
+  ],
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  }
+}

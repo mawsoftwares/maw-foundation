@@ -19,3 +19,4 @@ export { emailTemplates, emailTemplateVersions } from './email-templates';
 export { serviceRequestLogs } from './gateway-logs';
 export { messagingEmailTemplates, messagingTemplates, messagingCredentials, messagingSendLogs } from './messaging';
 export { tenantTheme } from './theme';
+export { tenantLayout, tenantLayoutRevisions } from './layout';

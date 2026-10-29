@@ -20,7 +20,7 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary:
-          'bg-[var(--maw-comp-buttons-primary-background,var(--maw-brand))] text-[var(--maw-comp-buttons-primary-text-color,var(--maw-brandContrast))] shadow-sm hover:brightness-110',
+          'maw-btn--primary relative overflow-hidden bg-[var(--maw-comp-buttons-primary-background,var(--maw-brand))] text-[var(--maw-comp-buttons-primary-text-color,var(--maw-brandContrast))] shadow-sm hover:brightness-110',
         secondary:
           'bg-[var(--maw-comp-buttons-secondary-background,var(--maw-bgMuted))] text-[var(--maw-comp-buttons-secondary-text-color,var(--maw-fg))] hover:brightness-95',
         outline:

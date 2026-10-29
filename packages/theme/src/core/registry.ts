@@ -3,6 +3,9 @@ import { extendTheme } from './extend';
 
 export interface ThemeDefinition {
   readonly id: string;
+  /** Display name and one-line mood for pickers (optional; the id is shown when absent). */
+  readonly label?: string;
+  readonly description?: string;
   /** Id of the theme this one builds on; omit for a root theme (which extends the built-in defaults). */
   readonly extends?: string;
   /** Only the tokens that differ from the parent. */
@@ -12,6 +15,8 @@ export interface ThemeDefinition {
 export interface ThemeRegistry {
   register(definition: ThemeDefinition): void;
   has(id: string): boolean;
+  /** The registered definition (for its label and description). */
+  get(id: string): ThemeDefinition | undefined;
   ids(): readonly string[];
   /** The fully inherited overrides for `id` (parent chain applied root-first). */
   resolveOverrides(id: string): ThemeOverrides;
@@ -45,6 +50,7 @@ export function createThemeRegistry(initial: readonly ThemeDefinition[] = []): T
       definitions.set(definition.id, definition);
     },
     has: (id) => definitions.has(id),
+    get: (id) => definitions.get(id),
     ids: () => [...definitions.keys()],
     resolveOverrides(id) {
       const [root, ...rest] = chain(id);

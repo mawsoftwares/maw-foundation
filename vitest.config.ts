@@ -24,8 +24,11 @@ const pkgs = [
   'api-client',
   // UI
   'theme',
+  'layout',
+  'page-templates',
   'ui-contract',
   'ui-web',
+  'ui-web-tailwind',
   'ui-auth',
   'ui-native',
   'audit',

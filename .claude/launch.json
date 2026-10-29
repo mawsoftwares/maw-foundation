@@ -13,8 +13,10 @@
     },
     {
       "name": "sample-web",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "env",
       "runtimeArgs": [
+        "VITE_UI_KIT=tailwind",
+        "npx",
         "vite",
         "--config",
         "apps/sample-web/vite.config.ts",

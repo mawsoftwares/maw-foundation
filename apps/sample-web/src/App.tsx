@@ -1,10 +1,11 @@
-import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useMemo, useRef, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { createConfigEngine, APP_CONFIG_DEFAULTS } from '@mawsoftwares/sdk/config/config-engine';
 import { setDefaultPhoneRegion } from '@mawsoftwares/sdk/kernel/validate';
 import { EXAMPLE_RBAC } from '@mawsoftwares/rbac-core';
 import { storedDesignToOverrides, normalizeDesignMarkdown } from '@mawsoftwares/theme';
 import {
   AuthProvider,
+  composeProjectTheme,
   DynamicAccessProvider,
   useDynamicAccess,
   useUrlSyncedPage,
@@ -17,8 +18,9 @@ import {
   EmptyState,
   Breadcrumbs,
   useI18n,
-  Avatar,
-  Icon,
+  SidebarBrand,
+  SidebarUser,
+  Button,
   OfflineProvider,
   OfflineBanner,
   FeatureFlagProvider,
@@ -50,6 +52,13 @@ import { SuperAdminView } from './features/superadmin';
 import { MessagingView } from './features/messaging';
 import { StorageView } from './features/storage-page';
 import { StorageSettingsView } from './features/storage-settings';
+import { LayoutStudioView } from './features/layout-studio';
+import { SharedThemeContext } from './shared-theme';
+import { appBaseTheme } from './app-theme';
+import { PROJECT_UI_PREVIEW_EVENT, PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, readPreviewUi, stopPreviewUi, readCachedPublishedUi, resolvePublishedUi, writeCachedPublishedUi } from './layout-config';
+import { projectThemeRegistry } from './project-themes';
+import type { ProjectUiConfig, ResolvedProjectUi } from '@mawsoftwares/layout';
+import type { ThemeOverrides } from '@mawsoftwares/theme';
 // @scaffold:imports
 import { loadMenuTree, flattenMenuTree, findMenuKeyByPath, MENUS_CHANGED_EVENT, type MenuTreeNode } from './menu-tree';
 import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
@@ -67,7 +76,7 @@ config.loadLayer('app', {
 setDefaultPhoneRegion(config.getString('phoneRegion', 'IN') ?? 'IN');
 const offlineInfra = setupOffline(config, client, 'demo-tenant');
 
-type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
+type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'layout' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
 
 import { PagePathsProvider } from './page-paths';
 
@@ -99,6 +108,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'storage', label: 'Files', icon: 'folder', path: '/storage', group: 'Main', sortOrder: 3.5, permission: 'Read_Storage' },
   { key: 'users', label: 'Users', icon: 'users', path: '/users', group: 'Admin', sortOrder: 5, permission: 'Read_Users' },
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
+  { key: 'layout', label: 'Layout Studio', icon: 'layout-dashboard', path: '/layout', group: 'Admin', sortOrder: 8.5, permission: 'Read_Layout' },
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
   { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
   // @scaffold:nav
@@ -117,6 +127,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   'feature-flags': 'Read_FeatureFlags',
   menus: 'Manage_Menus',
   theme: 'Manage_Theme',
+  layout: 'Read_Layout',
   messaging: 'Read_Messaging',
   storage: 'Read_Storage',
   'storage-settings': 'Manage_StorageConfiguration',
@@ -209,6 +220,7 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
     case 'feature-flags': return <FeatureFlagsView />;
     case 'menus': return <MenusView />;
     case 'theme': return <ThemeSettingsView />;
+    case 'layout': return <LayoutStudioView />;
     case 'messaging': return <MessagingView />;
     case 'storage': return <StorageView />;
     case 'storage-settings': return <StorageSettingsView />;
@@ -227,7 +239,83 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const { applyThemeOverrides } = useTheme();
+  const { applyThemeOverrides, setColorMode, isDark } = useTheme();
+  // The tenant's shared theme (Theme Designer). The project's published theme selection is layered over it below.
+  const [sharedOverrides, setSharedOverrides] = useState<ThemeOverrides | undefined>(undefined);
+  // End users render the PUBLISHED config only; Layout Studio edits a draft until it is published. The server is the
+  // source of truth; the cached copy only avoids a flash of the classic shell while the request is in flight.
+  const [liveUi, setLiveUi] = useState<ResolvedProjectUi | null>(null);
+  // A not-yet-published config the signed-in author is previewing (this tab only). It wins over the live one while set.
+  const [previewUi, setPreviewUi] = useState<ResolvedProjectUi | null>(() => {
+    const stored = readPreviewUi();
+    return stored === null ? null : resolvePublishedUi(stored);
+  });
+  useEffect(() => {
+    const onPreview = (event: Event): void => {
+      const config = (event as CustomEvent<ProjectUiConfig | null>).detail;
+      setPreviewUi(config === null ? null : resolvePublishedUi(config));
+    };
+    window.addEventListener(PROJECT_UI_PREVIEW_EVENT, onPreview);
+    return () => window.removeEventListener(PROJECT_UI_PREVIEW_EVENT, onPreview);
+  }, []);
+  const tenantId = session?.tenantId;
+  useEffect(() => {
+    if (tenantId === undefined) {
+      setLiveUi(null);
+      return;
+    }
+    let cancelled = false;
+    setLiveUi(resolvePublishedUi(readCachedPublishedUi(tenantId)));
+    const refresh = (): void => {
+      loadPublishedUi().then(
+        (published) => {
+          if (cancelled) return;
+          writeCachedPublishedUi(tenantId, published);
+          setLiveUi(resolvePublishedUi(published));
+        },
+        () => undefined, // offline / request failed: keep what is applied
+      );
+    };
+    refresh();
+    window.addEventListener('focus', refresh);
+    window.addEventListener(PROJECT_UI_PUBLISHED_EVENT, refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener(PROJECT_UI_PUBLISHED_EVENT, refresh);
+    };
+  }, [tenantId]);
+
+  // Theme = shared theme + the project's published selection. Nothing is applied until something is configured, so
+  // an app with no layout config renders exactly as before.
+  const effectiveUi = session === null ? liveUi : (previewUi ?? liveUi);
+  const baseThemeFor = useCallback((themeId: string | null) => appBaseTheme(sharedOverrides, themeId, projectThemeRegistry), [sharedOverrides]);
+  const themeTouched = useRef(false);
+  useEffect(() => {
+    const composed = composeProjectTheme(baseThemeFor(effectiveUi?.theme.themeId ?? null), effectiveUi?.theme, projectThemeRegistry);
+    if (composed === undefined && !themeTouched.current) return;
+    themeTouched.current = true;
+    applyThemeOverrides(composed ?? {});
+  }, [baseThemeFor, effectiveUi, applyThemeOverrides]);
+
+  // The published colour mode is a project default: a user's own light/dark choice always wins.
+  const publishedColorMode = effectiveUi?.theme.colorMode;
+  useEffect(() => {
+    if (publishedColorMode === undefined || publishedColorMode === 'system') return;
+    try {
+      if (window.localStorage.getItem('maw-color-mode') !== null) return;
+    } catch {
+      // storage unavailable: apply the project default
+    }
+    setColorMode(publishedColorMode);
+    // setColorMode persists the mode as if the user had chosen it, which would make the project default sticky.
+    // Undo that: only a user's own toggle may write the key.
+    try {
+      window.localStorage.removeItem('maw-color-mode');
+    } catch {
+      // storage unavailable: nothing was persisted
+    }
+  }, [publishedColorMode, setColorMode]);
   const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
   const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
   const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
@@ -243,12 +331,12 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
     if (stored === null) return;
     try {
       const overrides = storedDesignToOverrides(JSON.parse(stored) as unknown);
-      if (overrides !== null) applyThemeOverrides(overrides);
+      if (overrides !== null) setSharedOverrides(overrides);
       else localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     } catch {
       localStorage.removeItem(DESIGN_MD_STORAGE_KEY);
     }
-  }, [applyThemeOverrides]);
+  }, []);
 
   // The theme is application-wide: load the shared one from the server (and re-check when the window regains focus),
   // so a change made by an admin reaches everyone. Signed in -> the authenticated read; signed out (the login page)
@@ -272,7 +360,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         }
         const normalized = normalizeDesignMarkdown(designMd);
         if (normalized.recognized.length === 0) return;
-        applyThemeOverrides(normalized.overrides);
+        setSharedOverrides(normalized.overrides);
         localStorage.setItem(DESIGN_MD_STORAGE_KEY, JSON.stringify(normalized.overrides));
         localStorage.setItem(DESIGN_MD_CONTENT_STORAGE_KEY, normalized.canonical);
       } catch {
@@ -395,22 +483,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   }
 
   return (
+    <SharedThemeContext.Provider value={baseThemeFor}>
     <NavigationProvider config={navConfig}>
       <AppShell
+        layout={effectiveUi === null || effectiveUi.layout.source === 'default' ? undefined : effectiveUi.layout}
         sidebar={
           <Sidebar
-            logo={<Icon name="zap" size={22} />}
-            title="MAW Foundation Admin"
-            footer={(collapsed) => (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, justifyContent: collapsed ? 'center' : undefined, width: '100%' }}>
-                <Avatar name={session.userId} size={28} />
-                {!collapsed && (
-                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}>
-                    {session.userId}
-                  </div>
-                )}
-              </div>
-            )}
+            header={(collapsed) => <SidebarBrand collapsed={collapsed} title="MAW Foundation" subtitle="Admin Console" />}
+            footer={(collapsed) => <SidebarUser collapsed={collapsed} name={session.userId} role={session.role} />}
           />
         }
         header={<Breadcrumbs />}
@@ -421,7 +501,43 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
           <PageContent page={page} onFeatureChange={handleFeatureChange} featureOverrides={featureOverrides} />
         </PagePathsProvider>
       </AppShell>
+      {previewUi !== null && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            bottom: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--maw-space-md)',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            padding: 'var(--maw-space-sm) var(--maw-space-md)',
+            borderRadius: 24,
+            background: 'var(--maw-surface)',
+            color: 'var(--maw-fg)',
+            border: '1px solid var(--maw-border)',
+            boxShadow: '0 8px 24px rgb(0 0 0 / 0.2)',
+            maxWidth: 'calc(100vw - 32px)',
+          }}
+        >
+          <span style={{ fontSize: 'var(--maw-text-sm)' }}>Previewing an unpublished layout — only you see this.</span>
+          <div role="group" aria-label="Colour mode" style={{ display: 'flex', gap: 'var(--maw-space-xs)' }}>
+            {(['light', 'dark'] as const).map((mode) => (
+              <Button key={mode} variant={isDark === (mode === 'dark') ? 'primary' : 'outline'} aria-pressed={isDark === (mode === 'dark')} onClick={() => setColorMode(mode)}>
+                {mode === 'light' ? 'Light' : 'Dark'}
+              </Button>
+            ))}
+          </div>
+          <Button onClick={() => setPage('layout')}>Back to Studio</Button>
+          <Button variant="outline" onClick={stopPreviewUi}>Exit preview</Button>
+        </div>
+      )}
     </NavigationProvider>
+    </SharedThemeContext.Provider>
   );
 }
 

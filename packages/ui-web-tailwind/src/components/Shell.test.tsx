@@ -71,6 +71,119 @@ describe('SidebarView', () => {
   });
 });
 
+describe('SidebarView theme-driven polish (tokens)', () => {
+  it('the menu scrolls but shows no scrollbar', () => {
+    const html = sidebar();
+    expect(html).toContain('overflow-y-auto');
+    expect(html).toContain('[scrollbar-width:none]');
+    expect(html).toContain('[&amp;::-webkit-scrollbar]:hidden');
+  });
+
+  it('the collapse button takes its shape from tokens', () => {
+    expect(sidebar({ collapsible: true })).toContain('--maw-fx-collapse-radius');
+  });
+
+  it('layers the theme\'s wash and glow behind the sidebar, with a rule after each group label, all from tokens', () => {
+    const html = sidebar();
+    expect(html).toContain('background-image:var(--maw-shell-gradient, none)');
+    expect(html).toContain('--maw-shell-glow,transparent');
+    expect(html).toContain('--maw-shell-glow-2,transparent');
+    expect(html).toContain('maw-fx-breathe');
+    expect(html).toContain('--maw-shell-shadow,none');
+    expect(html).toContain('--maw-shell-group-rule,transparent');
+    expect(html).toContain('aria-hidden');
+  });
+
+  it('the active fill accepts a gradient as well as a colour', () => {
+    expect(sidebar({ activeKey: 'invoices' })).toContain('[background:var(--maw-comp-nav-item-active-background');
+  });
+
+  it('draws no decoration inside the mobile drawer', () => {
+    expect(sidebar({ isMobile: true })).not.toContain('--maw-shell-glow');
+  });
+});
+
+describe('SidebarView look (from a layout)', () => {
+  const look = (extra: Record<string, unknown> = {}) => ({ labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide', nav: 'none' }, ...extra }) as const;
+
+  it('without a look it is the classic sidebar: filled active item, sliding hover', () => {
+    const html = sidebar();
+    expect(html).toContain('hover:translate-x-1');
+    expect(html).not.toContain('rounded-full bg-'); // no dot
+  });
+
+  it('labels below: a fixed 88px tile bar that keeps every label visible and has no collapse button', () => {
+    const html = sidebar({ look: look({ labels: 'below' }), collapsible: false });
+    expect(html).toContain('width:88px');
+    expect(html).toContain('flex-col');
+    expect(html).toContain('>Dashboard<');
+    expect(html).not.toContain('aria-label="Collapse"');
+  });
+
+  it('indicator: bar tints the item and draws a side bar; dot draws a dot and no fill (both in the sidebar text colour, so they contrast on any sidebar)', () => {
+    const bar = sidebar({ look: look({ indicator: 'bar' }) });
+    expect(bar).toContain('shadow-[inset_3px_0_0_');
+    const dot = sidebar({ look: look({ indicator: 'dot' }) });
+    expect(dot).toContain('rounded-full bg-[var(--maw-shell-fg');
+    expect(dot).not.toContain('text-[var(--maw-comp-nav-item-active-text-color');
+  });
+
+  it('indicator: tab makes the active item a page-coloured tab that reaches the sidebar edge and curves into the page', () => {
+    const html = sidebar({ look: look({ indicator: 'tab' }) });
+    expect(html).toContain('bg-[var(--maw-canvas)]');
+    expect(html).toContain('rounded-l-full'); // fully rounded on the content side, like a tab
+    expect(html).toContain('rounded-r-none');
+    expect(html).toContain('transparent_28px'); // deep 28px curves above and below
+    expect(html).toContain('pl-6'); // airier items
+    expect(html).toContain('before:bg-[radial-gradient(circle_at_0_0');
+    expect(html).toContain('after:bg-[radial-gradient(circle_at_0_100%');
+    expect(html).not.toContain('text-[var(--maw-comp-nav-item-active-text-color');
+  });
+
+  it('item motion: lift raises the item, none adds no hover movement', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'lift' } }) })).toContain('hover:-translate-y-0.5');
+    const none = sidebar({ look: look({ motion: { sidebar: 'none', items: 'none' } }) });
+    expect(none).not.toContain('hover:translate-x-1');
+    expect(none).not.toContain('hover:-translate-y-0.5');
+    expect(none).toContain('transition:none');
+  });
+
+  it('more hover feedback: grow scales the item, glow draws a soft ring', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'scale', nav: 'none' } }) })).toContain('hover:scale-[1.04]');
+    expect(sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'glow', nav: 'none' } }) })).toContain('hover:shadow-[0_0_0_3px_color-mix');
+  });
+
+  it('sidebar speeds: snappy is quick, gentle is slow', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'snappy', items: 'slide', nav: 'none' } }) })).toContain('transition-duration:120ms');
+    expect(sidebar({ look: look({ motion: { sidebar: 'gentle', items: 'slide', nav: 'none' } }) })).toContain('transition-duration:600ms');
+  });
+
+  it('menu entrance: stagger gives each top-level item a growing delay, none adds no animation', () => {
+    const html = sidebar({ look: look({ motion: { sidebar: 'smooth', items: 'slide', nav: 'stagger' } }) });
+    expect(html).toContain('animate-nav-in motion-reduce:animate-none');
+    expect(html).toContain('animation-delay:0ms');
+    expect(html).toContain('animation-delay:45ms');
+    expect(html).toContain('animation-delay:90ms');
+    expect(sidebar({ look: look() })).not.toContain('animate-nav-in');
+  });
+
+  it('springy sidebar motion sets a longer, overshooting transition', () => {
+    expect(sidebar({ look: look({ motion: { sidebar: 'spring', items: 'slide' } }) })).toContain('cubic-bezier(0.34, 1.4, 0.64, 1)');
+  });
+
+  it('a hover-expand rail takes only the rail width in the layout and floats the sidebar over the content', () => {
+    const html = sidebar({ collapsed: true, look: look({ expandOnHover: true }), collapsible: false });
+    expect(html).toContain('absolute inset-y-0 left-0 z-30');
+    expect(html).not.toContain('aria-label="Expand"');
+    expect(sidebar({ collapsed: false, look: look({ expandOnHover: true }) })).not.toContain('absolute inset-y-0');
+  });
+
+  it('every moving part is switched off for reduced motion', () => {
+    const html = sidebar({ look: look() });
+    expect(html).toContain('motion-reduce:transition-none');
+  });
+});
+
 describe('AppShellView', () => {
   const props = { isMobile: false, menuOpen: false, onMenuToggle: noop, onMenuClose: noop, pageTitle: 'Orders', sidebar: 'SIDEBAR', children: 'CONTENT' };
   const shell = (extra: Record<string, unknown> = {}): string => renderToStaticMarkup(createElement(AppShellView, { ...props, ...extra }));
@@ -135,5 +248,16 @@ describe('Widget', () => {
 
   it('applies a fixed height', () => {
     expect(renderToStaticMarkup(createElement(Widget, { title: 'W', height: 240 }, 'x'))).toContain('height:240px');
+  });
+});
+
+describe('KpiCard trend', () => {
+  it('draws a small trend line (hidden from assistive technology) when it has at least two values', () => {
+    const html = renderToStaticMarkup(createElement(KpiCard, { label: 'Orders', value: 10, trend: [1, 3, 2, 5] }));
+    expect(html).toContain('polyline');
+    expect(html).toContain('maw-fx-draw');
+    expect(html).toContain('aria-hidden="true"');
+    expect(renderToStaticMarkup(createElement(KpiCard, { label: 'Orders', value: 10 }))).not.toContain('polyline');
+    expect(renderToStaticMarkup(createElement(KpiCard, { label: 'Orders', value: 10, trend: [4] }))).not.toContain('polyline');
   });
 });

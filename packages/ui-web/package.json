@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@mawsoftwares/api-client": "workspace:*",
+    "@mawsoftwares/layout": "workspace:*",
+    "@mawsoftwares/page-templates": "workspace:*",
     "@mawsoftwares/rbac-core": "workspace:*",
     "@mawsoftwares/sdk": "workspace:*",
     "@mawsoftwares/theme": "workspace:*",
