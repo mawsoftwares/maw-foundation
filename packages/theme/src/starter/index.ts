@@ -346,5 +346,240 @@ export const deepVioletTheme: ThemeDefinition = {
   },
 };
 
+
+/**
+ * The MAW Hub's own design ("Aurora" in the Hub's design.md): midnight glass sidebar, indigo accents on a soft
+ * lavender-white page, Plus Jakarta Sans. Generated from that file with the Theme Engine's design-markdown parser,
+ * so it matches what the Hub shows. Pair it with Classic Admin, the layout the Hub uses.
+ */
+export const mawHubTheme: ThemeDefinition = {
+  id: 'maw-hub',
+  label: 'MAW Hub',
+  description: 'The Hub\'s own look: midnight glass sidebar, indigo accents, lavender-white pages.',
+  overrides: {
+    palette: {
+      brand: '#5B4CF0',
+      brandDark: '#4335D6',
+      brandLight: '#8B7FFF',
+      borderFocus: '#6D5EF7',
+      brandContrast: '#ffffff',
+      bgSubtle: '#F6F5FB',
+      bgMuted: '#EFEDF8',
+      bg: '#FFFFFF',
+      fg: '#14122B',
+      fgMuted: '#64627A',
+      border: '#E4E1F0',
+      fgSubtle: '#A19DBA',
+      success: '#12B76A',
+      warning: '#F5A524',
+      danger: '#F0445E',
+      info: '#2E90FA',
+      successBg: '#e7f8f0',
+      dangerBg: '#feecef',
+      warningBg: '#fef4e5',
+      infoBg: '#eaf4ff'
+    },
+    paletteDark: {
+      bgSubtle: '#0A0918',
+      bg: '#15132B',
+      fg: '#F4F3FF',
+      fgMuted: '#A6A3C4',
+      border: '#2A2745',
+      bgMuted: '#15132B',
+      brand: '#5B4CF0',
+      brandLight: '#8B7FFF',
+      brandDark: '#4335D6',
+      brandContrast: '#FFFFFF',
+      borderFocus: '#6D5EF7'
+    },
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      xxl: 32,
+      xxxl: 48
+    },
+    radius: {
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      pill: 999
+    },
+    shadows: {
+      sm: '0 1px 2px rgba(20, 18, 43, 0.04), 0 4px 12px rgba(20, 18, 43, 0.05)',
+      md: '0 2px 4px rgba(20, 18, 43, 0.04), 0 12px 32px -8px rgba(67, 53, 214, 0.18)',
+      lg: '0 24px 64px -12px rgba(14, 12, 36, 0.35), 0 8px 24px -8px rgba(67, 53, 214, 0.20)',
+      xl: '0 24px 64px -12px rgba(14, 12, 36, 0.35), 0 8px 24px -8px rgba(67, 53, 214, 0.20)'
+    },
+    transitions: {
+      fast: '160ms cubic-bezier(0.22, 1, 0.36, 1)',
+      normal: '240ms cubic-bezier(0.22, 1, 0.36, 1)',
+      slow: '420ms cubic-bezier(0.22, 1, 0.36, 1)',
+      smooth: '420ms cubic-bezier(0.22, 1, 0.36, 1)',
+      bounce: '160ms cubic-bezier(0.22, 1, 0.36, 1)'
+    },
+    typography: {
+      fontFamily: '\'Plus Jakarta Sans\', system-ui, sans-serif',
+      monoFamily: '\'JetBrains Mono\', ui-monospace, monospace',
+      scale: {
+        'display-hero': {
+          size: '44px',
+          weight: '700',
+          lineHeight: '1.1',
+          family: '\'Plus Jakarta Sans\', system-ui, sans-serif',
+          letterSpacing: '-0.025em'
+        },
+        'headline-xl': {
+          size: '32px',
+          weight: '700',
+          lineHeight: '1.2',
+          letterSpacing: '-0.02em'
+        },
+        'headline-lg': {
+          size: '24px',
+          weight: '600',
+          lineHeight: '1.3',
+          letterSpacing: '-0.015em'
+        },
+        'title-md': {
+          size: '18px',
+          weight: '600',
+          lineHeight: '1.4',
+          letterSpacing: '-0.01em'
+        },
+        'body-md': {
+          size: '15px',
+          weight: '400',
+          lineHeight: '1.6',
+          family: '\'Plus Jakarta Sans\', system-ui, sans-serif'
+        },
+        'body-sm': {
+          size: '13px',
+          weight: '500',
+          lineHeight: '1.5',
+          letterSpacing: '0.005em'
+        },
+        'code-sm': {
+          size: '13px',
+          family: '\'JetBrains Mono\', ui-monospace, monospace'
+        }
+      }
+    },
+    shell: {
+      bg: 'rgba(14, 12, 36, 0.94)',
+      fg: '#F4F3FF',
+      border: 'rgba(255, 255, 255, 0.08)',
+      fgMuted: 'rgba(244, 243, 255, 0.68)',
+      blur: '18px',
+      hover: 'rgba(255, 255, 255, 0.10)'
+    },
+    components: {
+      'button-primary': {
+        rounded: '12px',
+        height: '40px',
+        padding: '0 18px',
+        fontWeight: '600',
+        shadow: '0 8px 24px -6px rgba(91, 76, 240, 0.45)'
+      },
+      button: {
+        rounded: '12px',
+        height: '40px',
+        fontWeight: '600'
+      },
+      card: {
+        rounded: '16px',
+        shadow: '0 1px 2px rgba(20, 18, 43, 0.04), 0 4px 12px rgba(20, 18, 43, 0.05)',
+        border: '1px solid var(--maw-border)'
+      },
+      input: {
+        rounded: '10px',
+        height: '42px',
+        padding: '0 14px',
+        fontSize: '15px'
+      },
+      modal: {
+        rounded: '24px',
+        shadow: '0 24px 64px -12px rgba(14, 12, 36, 0.35), 0 8px 24px -8px rgba(67, 53, 214, 0.20)'
+      },
+      'modal-overlay': {
+        backgroundColor: 'rgba(10, 9, 24, 0.55)'
+      },
+      popover: {
+        rounded: '14px',
+        shadow: '0 2px 4px rgba(20, 18, 43, 0.04), 0 12px 32px -8px rgba(67, 53, 214, 0.18)'
+      },
+      tooltip: {
+        backgroundColor: '#14122B',
+        textColor: '#F4F3FF',
+        rounded: '8px',
+        padding: '6px 10px',
+        fontSize: '12px'
+      },
+      table: {
+        rounded: '16px'
+      },
+      'table-header': {
+        fontWeight: '600',
+        fontSize: '12px',
+        textColor: 'var(--maw-fgMuted)'
+      },
+      'table-row-hover': {
+        backgroundColor: 'var(--maw-state-selected)'
+      },
+      badge: {
+        rounded: '999px'
+      },
+      'tabs-active': {
+        textColor: '#5B4CF0',
+        borderColor: '#5B4CF0'
+      },
+      'toggle-active': {
+        backgroundColor: '#5B4CF0'
+      },
+      'nav-item': {
+        textColor: 'rgba(244, 243, 255, 0.68)',
+        rounded: '10px',
+        padding: '10px 12px'
+      },
+      'nav-item-hover': {
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        textColor: '#FFFFFF'
+      },
+      'nav-item-active': {
+        backgroundColor: 'rgba(139, 127, 255, 0.18)',
+        textColor: '#FFFFFF',
+        rounded: '10px'
+      }
+    },
+    extraTokens: {
+      'color-accent-champagne': '#E8B86B',
+      'color-aurora-violet': '#8B5CF6',
+      'color-aurora-magenta': '#D946EF',
+      'color-aurora-gradient': 'linear-gradient(135deg, #5B4CF0 0%, #8B5CF6 55%, #D946EF 100%)',
+      'color-aurora-glow': 'rgba(91, 76, 240, 0.35)',
+      'layout-shell-sidebar-expanded': '264px',
+      'layout-shell-sidebar-collapsed': '76px',
+      'layout-topbar-height': '64px',
+      'layout-content-max-width': '1440px',
+      'layout-page-gutter': '32px',
+      'motion-easing-emphasized': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      'motion-easing-spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      'motion-easing-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      'motion-duration-page': '520ms',
+      'motion-duration-ambient': '14s',
+      'motion-stagger': '45ms',
+      'motion-hover-lift': '-3px',
+      'motion-press-scale': '0.97',
+      'motion-easing': 'cubic-bezier(0.22, 1, 0.36, 1)',
+      'elevation-glass-blur': 'blur(20px) saturate(160%)',
+      'elevation-glow-primary': '0 8px 24px -6px rgba(91, 76, 240, 0.45)',
+      'elevation-glow-focus': '0 0 0 4px rgba(109, 94, 247, 0.18)'
+    }
+  } as ThemeOverrides,
+};
+
 /** All starter themes, in gallery order. */
-export const starterThemes: readonly ThemeDefinition[] = [medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme, deepVioletTheme];
+export const starterThemes: readonly ThemeDefinition[] = [mawHubTheme, medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme, deepVioletTheme];

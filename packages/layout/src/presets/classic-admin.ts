@@ -5,6 +5,7 @@ export const classicAdminPreset: LayoutPreset = {
   id: 'classic-admin',
   label: 'Classic Admin',
   description: 'Docked left sidebar, sticky top header and a contained content area. The default MAW shell.',
+  suggestedThemeId: 'maw-hub',
   settings: {
     density: 'comfortable',
     sidebar: {

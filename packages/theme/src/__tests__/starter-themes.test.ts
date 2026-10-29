@@ -12,8 +12,8 @@ const AA = 4.5;
 describe('starter themes', () => {
   const registry = createThemeRegistry(starterThemes);
 
-  it('ships thirteen themes with unique ids that all resolve', () => {
-    expect(registry.ids()).toEqual(['medical-blue', 'violet-studio', 'midnight-rose', 'clean-light', 'aurora', 'slate-minimal', 'emerald-fresh', 'ocean-teal', 'sunset-coral', 'graphite', 'lavender-soft', 'royal-navy', 'deep-violet']);
+  it('ships fourteen themes with unique ids that all resolve', () => {
+    expect(registry.ids()).toEqual(['maw-hub', 'medical-blue', 'violet-studio', 'midnight-rose', 'clean-light', 'aurora', 'slate-minimal', 'emerald-fresh', 'ocean-teal', 'sunset-coral', 'graphite', 'lavender-soft', 'royal-navy', 'deep-violet']);
     for (const id of registry.ids()) expect(() => registry.resolve(id)).not.toThrow();
   });
 

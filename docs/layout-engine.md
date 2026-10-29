@@ -174,3 +174,7 @@ The layout engine's full set of looks (right panel, tile bar, hover-expand, acti
 
 - **Preview in Light / Dark** (Studio preview card): flips only the preview. It saves nothing; the project's colour mode is still set on the Theme tab.
 - **Your own colours** (Theme tab): `theme.colors` = optional `{ brand, sidebar, page }`, each a complete `#rrggbb`. They are layered over the chosen theme (and over the typography/spacing presets); text colours on the brand and sidebar are derived (white or near-black) so they stay readable. `page` sets the light-mode page background. Stored configs without `colors` are unchanged. "Reset my colours" removes them.
+
+## MAW Hub look
+
+The Hub (`MAW-HUB/frontend`) uses the Classic Admin shell with its own "Aurora" design (`design.md`). The `maw-hub` starter theme is that design, generated with the Theme Engine's design-markdown parser. Choose **Classic Admin** and the **MAW Hub** theme card to get the Hub look; Classic Admin suggests it.
