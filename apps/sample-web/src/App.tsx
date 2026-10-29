@@ -79,6 +79,7 @@ const offlineInfra = setupOffline(config, client, 'demo-tenant');
 type Page = 'dashboard' | 'orders' | 'reports' | 'inventory' | 'billing' | 'users' | 'rbac' | 'audit-logs' | 'showcase' | 'settings' | 'account' | 'feature-flags' | 'menus' | 'theme' | 'layout' | 'superadmin' | 'messaging' | 'storage' | 'storage-settings' | (string & {});
 
 import { PagePathsProvider } from './page-paths';
+import { ACTIVE_AUDIENCE, audienceBase } from './route-bases';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset' | 'verify';
 
@@ -319,7 +320,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const [navTree, setNavTree] = useState<MenuTreeNode[]>([]);
   const [menuTree, setMenuTree] = useState<MenuTreeNode[] | null>(null);
   const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[] | null>(null);
-  const urlBase = import.meta.env.BASE_URL;
+  const urlBase = audienceBase(ACTIVE_AUDIENCE, import.meta.env.BASE_URL);
   const pagePaths = useMemo<PagePathEntry[]>(
     () => (menuTree !== null ? flattenMenuTree(menuTree) : flattenNavItems(NAV_ITEMS)),
     [menuTree],

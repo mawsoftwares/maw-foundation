@@ -8,6 +8,10 @@ import { App } from './App';
 import { staticBrandProvider, DEFAULT_TENANT } from './brand-setup';
 import { themeRegistry } from './themes';
 import { store } from './store';
+import { ACTIVE_AUDIENCE, redirectIntoBase } from './route-bases';
+
+// All page URLs live under the audience base (/admin); move bookmarks and the bare root there before first render.
+redirectIntoBase(ACTIVE_AUDIENCE, import.meta.env.BASE_URL);
 
 i18n.registerLocale('en', {
   ...AUTH_EN_MESSAGES,
