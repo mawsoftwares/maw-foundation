@@ -442,7 +442,7 @@ function colorSaturation(color: string): number {
   return (max - min) / max;
 }
 
-function mixHex(a: string, b: string, t: number): string | undefined {
+export function mixHex(a: string, b: string, t: number): string | undefined {
   const left = parseHexRgb(a);
   const right = parseHexRgb(b);
   if (left === null || right === null) return undefined;
@@ -451,7 +451,7 @@ function mixHex(a: string, b: string, t: number): string | undefined {
   return `#${hex(mix(left.r, right.r))}${hex(mix(left.g, right.g))}${hex(mix(left.b, right.b))}`;
 }
 
-function contrastOn(background: string): string {
+export function contrastOn(background: string): string {
   return relativeLuminance(background) > 0.45 ? '#0f172a' : '#ffffff';
 }
 

@@ -52,6 +52,8 @@ export {
   type ResolvedProjectUi,
   type UpgradeOptions,
   type ThemeSelection,
+  type ThemeColors,
+  THEME_COLOR_KEYS,
 } from './ui-config';
 export {
   ProjectUiStoreError,

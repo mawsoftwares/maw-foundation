@@ -1,15 +1,40 @@
 import {
+  contrastOn,
   createTheme,
   extendTheme,
+  mixHex,
   tokensToCssVars,
   type ThemeOverrides,
   type ThemeRegistry,
 } from '@mawsoftwares/theme';
-import type { ThemeSelection } from '@mawsoftwares/layout';
+import type { ThemeColors, ThemeSelection } from '@mawsoftwares/layout';
 
 /** Scale factors for the closed typography/spacing presets. `default` leaves the theme exactly as designed. */
 export const TYPOGRAPHY_SCALE = { compact: 0.92, default: 1, comfortable: 1.08 } as const;
 export const SPACING_SCALE = { compact: 0.8, default: 1, spacious: 1.25 } as const;
+
+/**
+ * Theme overrides for the colours a project picked itself. Text colours are derived so they stay readable on the
+ * chosen background (white or near-black), and the brand's light/dark shades follow from it.
+ */
+export function colorsToOverrides(colors: ThemeColors): ThemeOverrides {
+  const patch: ThemeOverrides = {};
+  const { brand, sidebar, page } = colors;
+  if (brand !== undefined) {
+    patch.palette = { brand, brandLight: mixHex(brand, '#ffffff', 0.35) ?? brand, brandDark: mixHex(brand, '#000000', 0.25) ?? brand, brandContrast: contrastOn(brand), borderFocus: brand };
+    patch.paletteDark = { brand, brandLight: mixHex(brand, '#ffffff', 0.35) ?? brand, brandDark: mixHex(brand, '#000000', 0.25) ?? brand, brandContrast: contrastOn(brand), borderFocus: brand };
+    patch.components = { 'nav-item-active': { backgroundColor: brand, textColor: contrastOn(brand) } };
+  }
+  if (sidebar !== undefined) {
+    const fg = contrastOn(sidebar);
+    const hover = mixHex(sidebar, fg, 0.14) ?? sidebar;
+    patch.shell = { bg: sidebar, fg, fgMuted: fg, border: mixHex(sidebar, fg, 0.18) ?? sidebar, hover };
+    patch.components = { ...patch.components, 'nav-item': { textColor: fg }, 'nav-item-hover': { backgroundColor: hover, textColor: fg } };
+    patch.extraTokens = { 'shell-logo': fg };
+  }
+  if (page !== undefined) patch.palette = { ...patch.palette, bgSubtle: page };
+  return patch;
+}
 
 /**
  * Theme Engine overrides for a project's theme selection: the chosen registry theme, then typography and spacing
@@ -18,7 +43,8 @@ export const SPACING_SCALE = { compact: 0.8, default: 1, spacious: 1.25 } as con
  */
 export function themeSelectionToOverrides(selection: ThemeSelection, registry?: ThemeRegistry): ThemeOverrides | undefined {
   const chosen = selection.themeId !== null && registry?.has(selection.themeId) === true ? registry.resolveOverrides(selection.themeId) : undefined;
-  if (selection.typography === 'default' && selection.spacing === 'default') return chosen;
+  const colors = selection.colors === undefined || Object.keys(selection.colors).length === 0 ? undefined : colorsToOverrides(selection.colors);
+  if (selection.typography === 'default' && selection.spacing === 'default') return colors === undefined ? chosen : chosen === undefined ? colors : extendTheme(chosen, colors);
 
   const base = createTheme(chosen);
   const patch: ThemeOverrides = {};
@@ -30,7 +56,8 @@ export function themeSelectionToOverrides(selection: ThemeSelection, registry?: 
     const k = TYPOGRAPHY_SCALE[selection.typography];
     patch.extraTokens = Object.fromEntries(Object.entries(base.typography.size).map(([name, px]) => [`text-${name}`, `${Math.round(px * k * 10) / 10}px`]));
   }
-  return chosen === undefined ? patch : extendTheme(chosen, patch);
+  const scaled = chosen === undefined ? patch : extendTheme(chosen, patch);
+  return colors === undefined ? scaled : extendTheme(scaled, colors);
 }
 
 /** CSS custom properties for a scoped preview (apply as `style` on a container; nothing global changes). */

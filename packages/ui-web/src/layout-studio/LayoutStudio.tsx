@@ -21,9 +21,11 @@ import {
   type ProjectUiConfig,
   type ProjectUiState,
   type ProjectUiStore,
+  type ThemeColors,
   type ThemeSelection,
 } from '@mawsoftwares/layout';
 import type { ThemeRegistry } from '@mawsoftwares/theme';
+import { ColorField } from '../fields';
 import { Badge, Banner, Button, Card, Checkbox, Grid, Select, Stack, Tabs } from '../kit';
 import { ShellPreview } from './ShellPreview';
 import { ThemeGallery } from './ThemeGallery';
@@ -75,6 +77,26 @@ const sameConfig = (a: ProjectUiConfig, b: ProjectUiConfig): boolean => layoutCo
  * draft and (separately, with permission) publish. The preview is a self-contained wireframe, so nothing the user
  * does here changes the running application until `publish`.
  */
+const HEX_6 = /^#[0-9a-fA-F]{6}$/;
+
+/** A colour picker that keeps what is being typed, and tells the studio only once it is a complete `#rrggbb`. */
+function ColorChoice({ label, value, fallback, disabled, onCommit }: { label: string; value: string | undefined; fallback: string; disabled: boolean; onCommit: (hex: string) => void }): ReactNode {
+  const shown = value ?? (HEX_6.test(fallback) ? fallback : '#000000');
+  const [draft, setDraft] = useState(shown);
+  useEffect(() => setDraft(shown), [shown]);
+  return (
+    <ColorField
+      label={label}
+      value={draft}
+      disabled={disabled}
+      onChange={(v) => {
+        setDraft(v);
+        if (HEX_6.test(v)) onCommit(v.toLowerCase());
+      }}
+    />
+  );
+}
+
 export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, onPreview, prefersDark = false }: LayoutStudioProps): ReactNode {
   const canEdit = can(LAYOUT_PERMISSIONS.update);
   const canPublish = can(LAYOUT_PERMISSIONS.publish);
@@ -83,6 +105,8 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   const [working, setWorking] = useState<ProjectUiConfig>(createDefaultProjectUi());
   const [tab, setTab] = useState<Tab>('layout');
   const [viewport, setViewport] = useState<PreviewViewport>('desktop');
+  /** Light/dark for the preview only; `null` follows the project's colour mode. Nothing is saved by flipping it. */
+  const [previewMode, setPreviewMode] = useState<'light' | 'dark' | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -105,7 +129,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   const preset = registry.getPreset(resolved.presetId) ?? registry.getPreset(registry.fallbackPresetId);
   const dirty = !sameConfig(working, baseline);
   const hasUnpublishedDraft = state?.draft != null;
-  const cssVars = useMemo(() => previewCssVars(working.theme, themes, prefersDark), [working.theme, themes, prefersDark]);
+  const cssVars = useMemo(() => previewCssVars(previewMode === null ? working.theme : { ...working.theme, colorMode: previewMode }, themes, prefersDark), [working.theme, previewMode, themes, prefersDark]);
   const customisations = countLayoutOverrides(working.layout);
   // Until a theme is chosen the gallery shows each preset in the look it was designed around; a chosen theme applies to all.
   const suggestedThemeFor = (id: string): string | undefined => {
@@ -308,6 +332,20 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
             <p style={{ margin: 0, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
               Theme tokens come from the Theme Engine; Layout Studio only chooses between them. Any theme works with any layout.
             </p>
+          <Stack direction="column" gap="var(--maw-space-sm)">
+            <strong>Your own colours</strong>
+            <p style={{ margin: 0, fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>
+              Pick any colour on top of the chosen theme. Text colours adjust to stay readable. Leave a colour untouched to keep the theme's own.
+            </p>
+            <Grid minChildWidth={220} gap="var(--maw-space-md)">
+              {([['brand', 'Brand', '--maw-brand'], ['sidebar', 'Sidebar', '--maw-shell-bg'], ['page', 'Page background (light mode)', '--maw-canvas']] as const).map(([key, label, cssVar]) => (
+                <ColorChoice key={key} label={label} value={working.theme.colors?.[key]} fallback={cssVars[cssVar] ?? ''} disabled={!canEdit} onCommit={(hex) => setTheme({ colors: { ...working.theme.colors, [key]: hex } })} />
+              ))}
+            </Grid>
+            <div>
+              <Button variant="ghost" disabled={!canEdit || working.theme.colors === undefined} onClick={() => setTheme({ colors: undefined })}>Reset my colours</Button>
+            </div>
+          </Stack>
           <Grid minChildWidth={200} gap="var(--maw-space-md)">
             <Select label="Colour mode" value={working.theme.colorMode} disabled={!canEdit} options={opts(...COLOR_MODES)} onChange={(e) => setTheme({ colorMode: e.target.value as ThemeSelection['colorMode'] })} />
             <Select label="Typography" value={working.theme.typography} disabled={!canEdit} options={opts(...TYPOGRAPHY_PRESETS)} onChange={(e) => setTheme({ typography: e.target.value as ThemeSelection['typography'] })} />
@@ -392,6 +430,18 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
                 {PREVIEW_VIEWPORTS[v].label}
               </Button>
             ))}
+          </Stack>
+          <Stack direction="row" align="center" gap="var(--maw-space-sm)" style={{ marginBottom: 'var(--maw-space-md)', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>Preview in</span>
+            {(['light', 'dark'] as const).map((m) => {
+              const active = (previewMode ?? (working.theme.colorMode === 'system' ? (prefersDark ? 'dark' : 'light') : working.theme.colorMode)) === m;
+              return (
+                <Button key={m} variant={active ? 'primary' : 'outline'} aria-pressed={active} onClick={() => setPreviewMode(m)}>
+                  {m === 'light' ? 'Light' : 'Dark'}
+                </Button>
+              );
+            })}
+            <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>Preview only. Set the project's colour mode on the Theme tab.</span>
           </Stack>
           <ShellPreview presetId={resolved.presetId} label={resolved.label} settings={resolved.settings} viewport={viewport} cssVars={cssVars} />
           <p style={{ margin: 'var(--maw-space-sm) 0 0', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>

@@ -83,6 +83,14 @@ describe('theme selection and project UI config', () => {
     expect(validateThemeSelection({ ...DEFAULT_THEME_SELECTION, css: 'x' }).ok).toBe(false);
   });
 
+  it('accepts custom colours only as complete hex values for the three known slots', () => {
+    expect(validateThemeSelection({ ...DEFAULT_THEME_SELECTION, colors: { brand: '#3366ff', sidebar: '#112233', page: '#f5f5f5' } }).ok).toBe(true);
+    expect(validateThemeSelection({ ...DEFAULT_THEME_SELECTION, colors: { brand: 'red' } }).ok).toBe(false);
+    expect(validateThemeSelection({ ...DEFAULT_THEME_SELECTION, colors: { brand: '#36f' } }).ok).toBe(false);
+    expect(validateThemeSelection({ ...DEFAULT_THEME_SELECTION, colors: { accent: '#3366ff' } }).ok).toBe(false);
+    expect(validateThemeSelection({ ...DEFAULT_THEME_SELECTION, colors: 'x' }).ok).toBe(false);
+  });
+
   it('prefixes nested issue paths', () => {
     const r = validateProjectUiConfig({ version: 1, layout: { version: 1, presetId: 'x', overrides: { sidebar: { width: 'z' } } }, theme: DEFAULT_THEME_SELECTION }, components);
     expect(r.ok).toBe(false);

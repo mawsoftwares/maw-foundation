@@ -84,6 +84,13 @@ describe('LayoutStudio (initial render)', () => {
     expect(withPreview((p) => p === 'Read_Layout')).toMatch(/<button(?![^>]*disabled)[^>]*>Preview in the app/);
   });
 
+  it('lets the preview be flipped between light and dark without changing the project, and offers custom colours', () => {
+    const html = render(() => true);
+    expect(html).toContain('Preview in');
+    expect(html).toMatch(/aria-pressed="(?:true|false)"[^>]*>Light</);
+    expect(html).toMatch(/aria-pressed="(?:true|false)"[^>]*>Dark</);
+  });
+
   it('is read-only without Update_Layout and says why', () => {
     const html = render((p) => p === 'Read_Layout');
     expect(html).toContain('requires Update_Layout');

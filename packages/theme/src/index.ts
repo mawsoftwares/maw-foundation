@@ -540,6 +540,8 @@ export {
   storedDesignToOverrides,
   injectWebFonts,
   isLoadableFont,
+  mixHex,
+  contrastOn,
   googleFontUrl,
   type DesignMdParseOptions,
   type DesignMdParseResult,

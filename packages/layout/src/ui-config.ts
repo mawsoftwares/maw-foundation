@@ -9,7 +9,8 @@ import { validateStoredLayoutConfig } from './validate';
 
 /**
  * A project's whole UI selection: which layout, and which theme choices. Theme choices are NAMES from the Theme
- * Engine's registry and closed presets — never token values — so the two engines stay independent.
+ * Engine's registry and closed presets, plus up to three optional hex colours the project chose itself (applied by
+ * the host on top of the theme) — so the two engines stay independent.
  */
 
 export const CURRENT_PROJECT_UI_VERSION = 1;
@@ -18,12 +19,24 @@ export const COLOR_MODES = ['light', 'dark', 'system'] as const;
 export const TYPOGRAPHY_PRESETS = ['compact', 'default', 'comfortable'] as const;
 export const SPACING_PRESETS = ['compact', 'default', 'spacious'] as const;
 
+/** Colours a project picks for itself; each is `#rrggbb`. Omitted = the chosen theme's own colour. */
+export interface ThemeColors {
+  readonly brand?: string;
+  readonly sidebar?: string;
+  /** The page background behind the content (light mode). */
+  readonly page?: string;
+}
+
+export const THEME_COLOR_KEYS = ['brand', 'sidebar', 'page'] as const;
+const HEX_6 = /^#[0-9a-fA-F]{6}$/;
+
 export interface ThemeSelection {
   /** A theme id from the app's theme registry; `null` = the app's built-in/tenant theme, untouched. */
   readonly themeId: string | null;
   readonly colorMode: (typeof COLOR_MODES)[number];
   readonly typography: (typeof TYPOGRAPHY_PRESETS)[number];
   readonly spacing: (typeof SPACING_PRESETS)[number];
+  readonly colors?: ThemeColors;
 }
 
 export const DEFAULT_THEME_SELECTION: ThemeSelection = { themeId: null, colorMode: 'system', typography: 'default', spacing: 'default' };
@@ -46,7 +59,7 @@ export function validateThemeSelection(input: unknown, knownThemeIds?: ReadonlyS
   if (!isRecord(input)) return { ok: false, issues: [{ path, message: 'Expected an object.' }] };
   const issues: LayoutIssue[] = [];
   for (const key of Object.keys(input)) {
-    if (!['themeId', 'colorMode', 'typography', 'spacing'].includes(key)) issues.push({ path: `${path}.${key}`, message: 'Unknown setting.' });
+    if (!['themeId', 'colorMode', 'typography', 'spacing', 'colors'].includes(key)) issues.push({ path: `${path}.${key}`, message: 'Unknown setting.' });
   }
   const { themeId, colorMode, typography, spacing } = input;
   if (themeId !== null) {
@@ -59,6 +72,16 @@ export function validateThemeSelection(input: unknown, knownThemeIds?: ReadonlyS
   oneOf(colorMode, COLOR_MODES, 'colorMode');
   oneOf(typography, TYPOGRAPHY_PRESETS, 'typography');
   oneOf(spacing, SPACING_PRESETS, 'spacing');
+  const { colors } = input;
+  if (colors !== undefined) {
+    if (!isRecord(colors)) issues.push({ path: `${path}.colors`, message: 'Expected an object.' });
+    else {
+      for (const [key, v] of Object.entries(colors)) {
+        if (!(THEME_COLOR_KEYS as readonly string[]).includes(key)) issues.push({ path: `${path}.colors.${key}`, message: 'Unknown colour.' });
+        else if (typeof v !== 'string' || !HEX_6.test(v)) issues.push({ path: `${path}.colors.${key}`, message: 'Expected a hex colour like #3366ff.' });
+      }
+    }
+  }
   return issues.length === 0 ? { ok: true, value: input as unknown as ThemeSelection } : { ok: false, issues };
 }
 

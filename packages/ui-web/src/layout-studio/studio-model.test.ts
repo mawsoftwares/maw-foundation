@@ -107,3 +107,31 @@ describe('composeProjectTheme', () => {
     expect(composeProjectTheme(undefined, { ...DEFAULT_THEME_SELECTION, themeId: 'brand' }, registry)).toEqual(registry.resolveOverrides('brand'));
   });
 });
+
+describe('custom colours', () => {
+  const light = (colors: NonNullable<(typeof DEFAULT_THEME_SELECTION)['colors']>): Record<string, string> => previewCssVars({ ...DEFAULT_THEME_SELECTION, colorMode: 'light', colors }, undefined, false);
+
+  it('brand colour sets the brand with a readable text colour on it', () => {
+    expect(light({ brand: '#ffe14d' })['--maw-brand']).toBe('#ffe14d');
+    expect(light({ brand: '#ffe14d' })['--maw-brandContrast']).toBe('#0f172a');
+    expect(light({ brand: '#1a2b6d' })['--maw-brandContrast']).toBe('#ffffff');
+  });
+
+  it('sidebar colour sets the sidebar and flips its text for light backgrounds', () => {
+    const dark = light({ sidebar: '#101040' });
+    expect(dark['--maw-shell-bg']).toBe('#101040');
+    expect(dark['--maw-shell-fg']).toBe('#ffffff');
+    expect(light({ sidebar: '#f4f4f8' })['--maw-shell-fg']).toBe('#0f172a');
+  });
+
+  it('page colour sets the canvas, and colours layer over the chosen theme and the typography presets', () => {
+    expect(light({ page: '#fafafa' })['--maw-canvas']).toBe('#fafafa');
+    const scaled = themeSelectionToOverrides({ ...DEFAULT_THEME_SELECTION, spacing: 'compact', colors: { brand: '#336699' } });
+    expect(scaled?.palette?.brand).toBe('#336699');
+    expect(scaled?.spacing).toBeDefined();
+  });
+
+  it('no colours chosen leaves the theme untouched', () => {
+    expect(themeSelectionToOverrides({ ...DEFAULT_THEME_SELECTION, colors: {} })).toBeUndefined();
+  });
+});
