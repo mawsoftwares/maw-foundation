@@ -60,10 +60,11 @@ export function themeSelectionToOverrides(selection: ThemeSelection, registry?: 
   return colors === undefined ? scaled : extendTheme(scaled, colors);
 }
 
-/** CSS custom properties for a scoped preview (apply as `style` on a container; nothing global changes). */
-export function previewCssVars(selection: ThemeSelection, registry: ThemeRegistry | undefined, prefersDark: boolean): Record<string, string> {
+/** CSS custom properties for a scoped preview (`base` = the app's shared theme, layered under the selection) (apply as `style` on a container; nothing global changes). */
+export function previewCssVars(selection: ThemeSelection, registry: ThemeRegistry | undefined, prefersDark: boolean, base?: ThemeOverrides): Record<string, string> {
   const dark = selection.colorMode === 'dark' || (selection.colorMode === 'system' && prefersDark);
-  const vars = tokensToCssVars(dark, createTheme(themeSelectionToOverrides(selection, registry)));
+  // `base` is the app's shared theme: the preview shows the selection layered over it, exactly as the running app will.
+  const vars = tokensToCssVars(dark, createTheme(composeProjectTheme(base, selection, registry)));
   return { ...inheritedShellVarResets(vars), ...vars };
 }
 

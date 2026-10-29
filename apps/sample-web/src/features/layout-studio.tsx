@@ -3,10 +3,12 @@ import { Banner, LayoutStudio, Stack, useDynamicAccess } from '@mawsoftwares/ui-
 import type { ProjectUiState } from '@mawsoftwares/layout';
 import { PROJECT_UI_PUBLISHED_EVENT, projectUiStore, startPreviewUi, stopPreviewUi } from '../layout-config';
 import { projectThemeRegistry } from '../project-themes';
+import { useSharedTheme } from '../shared-theme';
 
 /** Layout Studio page. Access (Read_Layout) is enforced by the page guard in App; Update/Publish are checked inside. */
 export function LayoutStudioView(): ReactNode {
   const { can } = useDynamicAccess();
+  const baseTheme = useSharedTheme();
   const prefersDark = useMemo(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches === true, []);
   const onPublished = (state: ProjectUiState): void => {
     stopPreviewUi(); // the preview has become the live layout
@@ -24,7 +26,7 @@ export function LayoutStudioView(): ReactNode {
         Publishing applies the layout and theme choices for everyone in this project (they are stored on the server). A theme chosen here is layered over
         the shared theme from Theme Designer; each person's own light/dark choice still wins.
       </Banner>
-      <LayoutStudio store={projectUiStore} themes={projectThemeRegistry} can={can} onPublished={onPublished} onPreview={startPreviewUi} prefersDark={prefersDark} />
+      <LayoutStudio store={projectUiStore} themes={projectThemeRegistry} can={can} onPublished={onPublished} onPreview={startPreviewUi} prefersDark={prefersDark} baseTheme={baseTheme} />
     </Stack>
   );
 }

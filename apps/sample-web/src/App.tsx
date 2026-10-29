@@ -53,6 +53,7 @@ import { MessagingView } from './features/messaging';
 import { StorageView } from './features/storage-page';
 import { StorageSettingsView } from './features/storage-settings';
 import { LayoutStudioView } from './features/layout-studio';
+import { SharedThemeContext } from './shared-theme';
 import { PROJECT_UI_PREVIEW_EVENT, PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, readPreviewUi, stopPreviewUi, readCachedPublishedUi, resolvePublishedUi, writeCachedPublishedUi } from './layout-config';
 import { projectThemeRegistry } from './project-themes';
 import type { ProjectUiConfig, ResolvedProjectUi } from '@mawsoftwares/layout';
@@ -480,6 +481,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   }
 
   return (
+    <SharedThemeContext.Provider value={sharedOverrides}>
     <NavigationProvider config={navConfig}>
       <AppShell
         layout={effectiveUi === null || effectiveUi.layout.source === 'default' ? undefined : effectiveUi.layout}
@@ -543,6 +545,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         </div>
       )}
     </NavigationProvider>
+    </SharedThemeContext.Provider>
   );
 }
 

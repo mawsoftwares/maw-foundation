@@ -151,3 +151,19 @@ describe('preview isolation from the running app\'s theme', () => {
     }
   });
 });
+
+describe('preview over the app\'s shared theme', () => {
+  const shared = { palette: { brand: '#0b5ed7' }, shell: { bg: '#e8f0fb', fg: '#14253d' } };
+
+  it('with no theme chosen, shows the shared theme (what the app shows), not the built-in default', () => {
+    const vars = previewCssVars({ ...DEFAULT_THEME_SELECTION, colorMode: 'light' }, undefined, false, shared);
+    expect(vars['--maw-brand']).toBe('#0b5ed7');
+    expect(vars['--maw-shell-bg']).toBe('#e8f0fb');
+  });
+
+  it('a chosen theme is layered over it, and a custom colour over that', () => {
+    const registry = createThemeRegistry([{ id: 'plum', overrides: { palette: { brand: '#7a1f5c' } } }]);
+    expect(previewCssVars({ ...DEFAULT_THEME_SELECTION, themeId: 'plum', colorMode: 'light' }, registry, false, shared)['--maw-brand']).toBe('#7a1f5c');
+    expect(previewCssVars({ ...DEFAULT_THEME_SELECTION, themeId: 'plum', colorMode: 'light', colors: { brand: '#112233' } }, registry, false, shared)['--maw-brand']).toBe('#112233');
+  });
+});

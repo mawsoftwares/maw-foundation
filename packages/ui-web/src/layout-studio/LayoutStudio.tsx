@@ -24,7 +24,7 @@ import {
   type ThemeColors,
   type ThemeSelection,
 } from '@mawsoftwares/layout';
-import type { ThemeRegistry } from '@mawsoftwares/theme';
+import type { ThemeOverrides, ThemeRegistry } from '@mawsoftwares/theme';
 import { ColorField } from '../fields';
 import { Badge, Banner, Button, Card, Checkbox, Grid, Select, Stack, Tabs } from '../kit';
 import { ShellPreview } from './ShellPreview';
@@ -46,6 +46,8 @@ export interface LayoutStudioProps {
   readonly onPreview?: (config: ProjectUiConfig) => void;
   /** Whether the OS prefers dark mode (for the `system` colour mode preview). */
   readonly prefersDark?: boolean;
+  /** The app's shared theme (Theme Designer). Previews show the project's theme choice layered over it, as the app will. */
+  readonly baseTheme?: ThemeOverrides;
 }
 
 type Tab = 'layout' | 'sidebar' | 'header' | 'panels' | 'shape' | 'theme' | 'history';
@@ -97,7 +99,7 @@ function ColorChoice({ label, value, fallback, disabled, onCommit }: { label: st
   );
 }
 
-export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, onPreview, prefersDark = false }: LayoutStudioProps): ReactNode {
+export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, onPreview, prefersDark = false, baseTheme }: LayoutStudioProps): ReactNode {
   const canEdit = can(LAYOUT_PERMISSIONS.update);
   const canPublish = can(LAYOUT_PERMISSIONS.publish);
 
@@ -129,7 +131,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   const preset = registry.getPreset(resolved.presetId) ?? registry.getPreset(registry.fallbackPresetId);
   const dirty = !sameConfig(working, baseline);
   const hasUnpublishedDraft = state?.draft != null;
-  const cssVars = useMemo(() => previewCssVars(previewMode === null ? working.theme : { ...working.theme, colorMode: previewMode }, themes, prefersDark), [working.theme, previewMode, themes, prefersDark]);
+  const cssVars = useMemo(() => previewCssVars(previewMode === null ? working.theme : { ...working.theme, colorMode: previewMode }, themes, prefersDark, baseTheme), [working.theme, previewMode, themes, prefersDark, baseTheme]);
   const customisations = countLayoutOverrides(working.layout);
   // Until a theme is chosen the gallery shows each preset in the look it was designed around; a chosen theme applies to all.
   const suggestedThemeFor = (id: string): string | undefined => {
@@ -138,7 +140,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   };
   const thumbVars = (id: string): Record<string, string> => {
     const suggested = working.theme.themeId === null ? suggestedThemeFor(id) : undefined;
-    return suggested === undefined ? cssVars : previewCssVars({ ...working.theme, themeId: suggested }, themes, prefersDark);
+    return suggested === undefined ? cssVars : previewCssVars({ ...working.theme, themeId: suggested }, themes, prefersDark, baseTheme);
   };
   const matchingTheme = suggestedThemeFor(resolved.presetId);
 
