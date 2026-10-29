@@ -69,7 +69,7 @@ function SidebarItem({
             ? cn(
                 'rounded-[var(--maw-comp-nav-item-active-border-radius,var(--maw-comp-nav-item-border-radius,var(--maw-radius-md)))] font-semibold',
                 indicator === 'fill' &&
-                  '[background:var(--maw-comp-nav-item-active-background,var(--maw-shell-nav-active-bg,var(--maw-brand)))] text-[var(--maw-comp-nav-item-active-text-color,var(--maw-shell-nav-active-fg,var(--maw-brandContrast)))] shadow-[var(--maw-shell-nav-active-shadow,none),var(--maw-shell-nav-active-indicator,none)]',
+                  '[background:var(--maw-comp-nav-item-active-background,var(--maw-shell-nav-active-bg,var(--maw-brand)))] text-[var(--maw-comp-nav-item-active-text-color,var(--maw-shell-nav-active-fg,var(--maw-brandContrast)))] [box-shadow:var(--maw-shell-nav-active-shadow,none),var(--maw-shell-nav-active-indicator,none)]',
                 indicator === 'bar' &&
                   'bg-[color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_12%,transparent)] text-[var(--maw-shell-fg,var(--maw-fg))] shadow-[inset_3px_0_0_var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'dot' && 'bg-transparent text-[var(--maw-shell-fg,var(--maw-fg))]',
@@ -267,7 +267,7 @@ export function SidebarView({
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && !below && (!shownCollapsed || isMobile) && (
-              <div className="flex items-center gap-2.5 px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--maw-shell-fg-muted,var(--maw-fgSubtle))] after:h-px after:flex-1 after:bg-[linear-gradient(90deg,var(--maw-shell-group-rule,transparent),transparent)] after:content-['']">
+              <div className="flex items-center gap-2.5 px-3 pb-[var(--maw-shell-group-pb,0.25rem)] pt-[var(--maw-shell-group-pt,0.5rem)] text-[length:var(--maw-shell-group-size,0.75rem)] font-[var(--maw-shell-group-weight,600)] uppercase tracking-[var(--maw-shell-group-tracking,0.05em)] text-[var(--maw-shell-fg-muted,var(--maw-fgSubtle))] after:h-px after:flex-1 after:bg-[linear-gradient(90deg,var(--maw-shell-group-rule,transparent),transparent)] after:content-['']">
                 {group}
               </div>
             )}

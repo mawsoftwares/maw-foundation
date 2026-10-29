@@ -87,4 +87,11 @@ describe('starter themes', () => {
     // Themes that do not opt in define none of them, so nothing animates.
     expect(tokensToCssVars(false, registry.resolve('clean-light'))['--maw-fx-rise-duration']).toBeUndefined();
   });
+
+  it('a theme\'s own active-item indicator and glow win over the derived defaults', () => {
+    const vars = tokensToCssVars(false, registry.resolve('maw-console'));
+    expect(vars['--maw-shell-nav-active-indicator']).toBe('inset 3px 0 0 0 #1e88e5');
+    expect(vars['--maw-shell-nav-active-shadow']).toContain('#1565c0');
+    expect(tokensToCssVars(false, registry.resolve('clean-light'))['--maw-shell-nav-active-shadow']).toBe('none');
+  });
 });

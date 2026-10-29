@@ -655,6 +655,11 @@ export function tokensToCssVars(dark = false, theme?: Theme): Record<string, str
     vars['--maw-shell-nav-active-shadow'] = 'none';
     vars['--maw-shell-nav-active-indicator'] = `inset 3px 0 0 0 ${p.brand}`;
   }
+  // A theme that sets these itself (extraTokens `shell-nav-active-*`) wins over the derived defaults above.
+  for (const key of ['shell-nav-active-bg', 'shell-nav-active-fg', 'shell-nav-active-shadow', 'shell-nav-active-indicator']) {
+    const explicit = (dark ? t.extraTokensDark?.[key] : undefined) ?? t.extraTokens?.[key];
+    if (explicit !== undefined) vars[`--maw-${key}`] = explicit;
+  }
 
   return vars;
 }

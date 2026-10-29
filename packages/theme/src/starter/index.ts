@@ -619,6 +619,12 @@ export const mawConsoleTheme: ThemeDefinition = {
       'shell-glow': '#1565c0',
       'shell-glow-2': '#42a5f5',
       'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
+      // Group labels as in the Hub: small, bold, widely spaced caps with more room above.
+      'shell-group-size': '10.5px',
+      'shell-group-weight': '700',
+      'shell-group-tracking': '0.14em',
+      'shell-group-pt': '1.25rem',
+      'shell-group-pb': '0.5rem',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #1e88e5',
       'shell-nav-active-shadow': '0 10px 24px -14px #1565c0',
       // Motion and polish (see the effects block in ui-web-tailwind's theme.css).
