@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   createTheme,
   mergeThemeOverrides,
@@ -308,15 +308,22 @@ export function ThemeProvider({
     return () => mq.removeEventListener('change', handler);
   }, [colorMode]);
 
+  const appliedVars = useRef<ReadonlySet<string>>(new Set());
   useLayoutEffect(() => {
     const vars = tokensToCssVars(isDark, theme);
     const root = document.documentElement;
     // Responsive tokens live in the <style> below: an inline value would beat its media-query overrides.
     const responsiveOwned = new Set(responsiveVarNames(theme.responsive));
+    const applied = new Set<string>();
     for (const [prop, val] of Object.entries(vars)) {
       if (responsiveOwned.has(prop)) continue;
       root.style.setProperty(prop, val);
+      applied.add(prop);
     }
+    // A theme change must not leave the previous theme's variables behind (e.g. a font scale or an effect that the
+    // new theme does not define).
+    for (const prop of appliedVars.current) if (!applied.has(prop)) root.style.removeProperty(prop);
+    appliedVars.current = applied;
     root.setAttribute('data-theme', isDark ? 'dark' : 'light');
     root.style.colorScheme = isDark ? 'dark' : 'light';
   }, [isDark, theme]);

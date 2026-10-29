@@ -67,6 +67,14 @@ const TABS: readonly { key: Tab; label: string }[] = [
 
 const opts = (...values: readonly string[]): readonly { value: string; label: string }[] =>
   values.map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1).replace(/-/g, ' ') }));
+const FONT_SIZE_OPTIONS = [
+  { value: 'small', label: 'Small (85%)' },
+  { value: 'compact', label: 'Compact (92%)' },
+  { value: 'default', label: 'Default (100%)' },
+  { value: 'comfortable', label: 'Comfortable (108%)' },
+  { value: 'large', label: 'Large (118%)' },
+  { value: 'xlarge', label: 'Extra large (130%)' },
+] as const satisfies readonly { value: (typeof TYPOGRAPHY_PRESETS)[number]; label: string }[];
 const BREAKPOINT_OPTIONS = [
   { value: 'sm', label: 'Small (640px)' },
   { value: 'md', label: 'Medium (768px)' },
@@ -358,7 +366,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
           </Stack>
           <Grid minChildWidth={200} gap="var(--maw-space-md)">
             <Select label="Colour mode" value={working.theme.colorMode} disabled={!canEdit} options={opts(...COLOR_MODES)} onChange={(e) => setTheme({ colorMode: e.target.value as ThemeSelection['colorMode'] })} />
-            <Select label="Typography" value={working.theme.typography} disabled={!canEdit} options={opts(...TYPOGRAPHY_PRESETS)} onChange={(e) => setTheme({ typography: e.target.value as ThemeSelection['typography'] })} />
+            <Select label="Font size (whole app)" value={working.theme.typography} disabled={!canEdit} options={FONT_SIZE_OPTIONS} onChange={(e) => setTheme({ typography: e.target.value as ThemeSelection['typography'] })} />
             <Select label="Spacing" value={working.theme.spacing} disabled={!canEdit} options={opts(...SPACING_PRESETS)} onChange={(e) => setTheme({ spacing: e.target.value as ThemeSelection['spacing'] })} />
           </Grid>
           </Stack>

@@ -16,7 +16,8 @@ import { validateStoredLayoutConfig } from './validate';
 export const CURRENT_PROJECT_UI_VERSION = 1;
 
 export const COLOR_MODES = ['light', 'dark', 'system'] as const;
-export const TYPOGRAPHY_PRESETS = ['compact', 'default', 'comfortable'] as const;
+/** Font size steps for the whole app, smallest to largest. `default` leaves the theme exactly as designed. */
+export const TYPOGRAPHY_PRESETS = ['small', 'compact', 'default', 'comfortable', 'large', 'xlarge'] as const;
 export const SPACING_PRESETS = ['compact', 'default', 'spacious'] as const;
 
 /** Colours a project picks for itself; each is `#rrggbb`. Omitted = the chosen theme's own colour. */

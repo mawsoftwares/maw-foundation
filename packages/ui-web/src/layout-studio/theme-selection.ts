@@ -10,7 +10,7 @@ import {
 import type { ThemeColors, ThemeSelection } from '@mawsoftwares/layout';
 
 /** Scale factors for the closed typography/spacing presets. `default` leaves the theme exactly as designed. */
-export const TYPOGRAPHY_SCALE = { compact: 0.92, default: 1, comfortable: 1.08 } as const;
+export const TYPOGRAPHY_SCALE = { small: 0.85, compact: 0.92, default: 1, comfortable: 1.08, large: 1.18, xlarge: 1.3 } as const;
 export const SPACING_SCALE = { compact: 0.8, default: 1, spacious: 1.25 } as const;
 
 /**
@@ -54,7 +54,11 @@ export function themeSelectionToOverrides(selection: ThemeSelection, registry?: 
   }
   if (selection.typography !== 'default') {
     const k = TYPOGRAPHY_SCALE[selection.typography];
-    patch.extraTokens = Object.fromEntries(Object.entries(base.typography.size).map(([name, px]) => [`text-${name}`, `${Math.round(px * k * 10) / 10}px`]));
+    // Sizes written in px follow the `text-*` tokens; sizes written in rem (Tailwind) follow the root `font-scale`.
+    patch.extraTokens = {
+      ...Object.fromEntries(Object.entries(base.typography.size).map(([name, px]) => [`text-${name}`, `${Math.round(px * k * 10) / 10}px`])),
+      'font-scale': String(k),
+    };
   }
   const scaled = chosen === undefined ? patch : extendTheme(chosen, patch);
   return colors === undefined ? scaled : extendTheme(scaled, colors);

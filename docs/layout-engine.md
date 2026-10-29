@@ -192,3 +192,7 @@ Ported from the Hub's `motion.css`/`sidebar.css` into the Tailwind kit (`styles/
 ## The sample app uses the Hub look by default
 
 `apps/sample-web` now looks like the MAW Hub with the Tailwind kit: the sidebar uses `SidebarBrand` and `SidebarUser` (new in `ui-web`: gradient logo tile, ringed avatar with a live dot, profile menu), the dashboard opens with the `HeroBanner` and counts the KPIs up, and the **MAW Console** theme is the app's built-in look (`app-theme.ts`). "Application default" in Layout Studio shows that look; a theme from Theme Designer still wins over it, and any theme a project picks stands on its own.
+
+## Font size (whole app)
+
+Layout Studio → Theme → **Font size (whole app)**: Small 85%, Compact 92%, Default 100%, Comfortable 108%, Large 118%, Extra large 130% (`theme.typography`; stored configs with the older three values stay valid). It scales the `text-*` tokens (sizes written in px) and sets `--maw-font-scale`, which the Tailwind kit applies to the root font size so everything written in rem scales too. The Studio's small preview frame shows the token-sized text only; **Preview in the app** shows the full effect. `ThemeProvider` now also removes variables the previous theme set, so switching back to Default (or to another theme) leaves nothing behind.

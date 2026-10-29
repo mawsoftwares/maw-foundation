@@ -147,6 +147,9 @@
  *   fx-collapse-radius / -bg / -border        the sidebar collapse button (e.g. round)
  * Unlayered on purpose: it must win over the kit's utility classes. Reduced motion switches it all off.
  */
+/* Whole-app font size (Layout Studio "Font size"): everything sized in rem scales with it. 1 = as designed. */
+html { font-size: calc(100% * var(--maw-font-scale, 1)); }
+
 @keyframes maw-fx-rise {
   from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
   to { opacity: 1; transform: none; filter: none; }

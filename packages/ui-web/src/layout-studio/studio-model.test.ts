@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { classicAdminPreset, enterpriseDashboardPreset, floatingSidebarPreset, listingWorkspacePreset, splitWorkspacePreset, DEFAULT_THEME_SELECTION } from '@mawsoftwares/layout';
+import { classicAdminPreset, enterpriseDashboardPreset, floatingSidebarPreset, listingWorkspacePreset, splitWorkspacePreset, DEFAULT_THEME_SELECTION, TYPOGRAPHY_PRESETS } from '@mawsoftwares/layout';
 import { createThemeRegistry, createTheme, tokensToCssVars } from '@mawsoftwares/theme';
 import { describePreview, previewState } from './viewport';
 import { composeProjectTheme, previewCssVars, themeSelectionToOverrides } from './theme-selection';
@@ -165,5 +165,21 @@ describe('preview over the app\'s shared theme', () => {
     const registry = createThemeRegistry([{ id: 'plum', overrides: { palette: { brand: '#7a1f5c' } } }]);
     expect(previewCssVars({ ...DEFAULT_THEME_SELECTION, themeId: 'plum', colorMode: 'light' }, registry, false, shared)['--maw-brand']).toBe('#7a1f5c');
     expect(previewCssVars({ ...DEFAULT_THEME_SELECTION, themeId: 'plum', colorMode: 'light', colors: { brand: '#112233' } }, registry, false, shared)['--maw-brand']).toBe('#112233');
+  });
+});
+
+describe('font size (whole app)', () => {
+  const base = (typography: 'small' | 'default' | 'xlarge'): Record<string, string> => previewCssVars({ ...DEFAULT_THEME_SELECTION, colorMode: 'light', typography }, undefined, false);
+
+  it('scales px text tokens and the root font scale together, in six steps', () => {
+    expect(TYPOGRAPHY_PRESETS).toEqual(['small', 'compact', 'default', 'comfortable', 'large', 'xlarge']);
+    const small = base('small');
+    const big = base('xlarge');
+    const normal = base('default');
+    expect(parseFloat(big['--maw-text-md']!)).toBeGreaterThan(parseFloat(normal['--maw-text-md']!));
+    expect(parseFloat(small['--maw-text-md']!)).toBeLessThan(parseFloat(normal['--maw-text-md']!));
+    expect(big['--maw-font-scale']).toBe('1.3');
+    expect(small['--maw-font-scale']).toBe('0.85');
+    expect(normal['--maw-font-scale']).toBeUndefined();
   });
 });
