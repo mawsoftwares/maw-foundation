@@ -77,7 +77,7 @@ describe('starter themes', () => {
 
   it('MAW Console sets its own font, and it is one the app can load from Google Fonts', () => {
     const family = registry.resolve('maw-console').typography.fontFamily;
-    expect(family).toContain('Roboto');
+    expect(family).toContain('Inter');
     expect(googleFontUrl(family)).toContain('fonts.googleapis.com');
   });
 
