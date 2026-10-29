@@ -614,8 +614,10 @@ export const mawConsoleTheme: ThemeDefinition = {
       },
     },
     extraTokens: {
-      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #42a5f5 16%, transparent) 0%, transparent 40%)',
-      'shell-glow': '#42a5f5',
+      // Same recipe as the Hub: a 10% brand wash over the top 38%, a brand glow behind it, a light-blue glow bottom-right.
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #1565c0 10%, transparent) 0%, transparent 38%)',
+      'shell-glow': '#1565c0',
+      'shell-glow-2': '#42a5f5',
       'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #1e88e5',
       'shell-nav-active-shadow': '0 10px 24px -14px #1565c0',
@@ -635,8 +637,9 @@ export const mawConsoleTheme: ThemeDefinition = {
       ...LIGHT_HEADER('#e3e9f3', '#1b2a41'),
     },
     extraTokensDark: {
-      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 14%, transparent) 0%, transparent 40%)',
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 12%, transparent) 0%, transparent 38%)',
       'shell-glow': '#5aa9f0',
+      'shell-glow-2': '#8ec5f7',
       'shell-group-rule': 'rgba(234, 241, 251, 0.16)',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #5aa9f0',
       'fx-collapse-bg': 'rgba(234, 241, 251, 0.08)',

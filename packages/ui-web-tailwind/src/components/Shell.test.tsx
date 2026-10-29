@@ -80,6 +80,8 @@ describe('SidebarView theme-driven polish (tokens)', () => {
     const html = sidebar();
     expect(html).toContain('background-image:var(--maw-shell-gradient, none)');
     expect(html).toContain('--maw-shell-glow,transparent');
+    expect(html).toContain('--maw-shell-glow-2,transparent');
+    expect(html).toContain('maw-fx-breathe');
     expect(html).toContain('--maw-shell-group-rule,transparent');
     expect(html).toContain('aria-hidden');
   });

@@ -225,7 +225,13 @@ export function SidebarView({
       {!isMobile && (
         <span
           aria-hidden
-          className="pointer-events-none absolute -inset-x-20 -top-28 -z-10 h-80 opacity-55 blur-[20px] [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow,transparent)_38%,transparent),transparent)]"
+          className="pointer-events-none absolute -inset-x-20 -top-28 -z-10 h-[340px] animate-[maw-fx-breathe_9s_ease-in-out_infinite] opacity-55 blur-[20px] motion-reduce:animate-none [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow,transparent)_38%,transparent),transparent)]"
+        />
+      )}
+      {!isMobile && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -bottom-36 -right-14 -z-10 size-64 blur-[24px] [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow-2,transparent)_22%,transparent),transparent)]"
         />
       )}
       {(headerContent !== undefined || isMobile) && (

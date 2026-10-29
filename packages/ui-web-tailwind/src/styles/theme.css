@@ -141,6 +141,7 @@
  *   motion-hover-lift / motion-press-scale    cards lift on hover; buttons press in
  *   fx-card-hover-shadow                      card shadow while lifted
  *   fx-btn-glow / fx-btn-shine                primary buttons glow, and a light streak crosses them on hover
+ *   shell-gradient / shell-glow / shell-glow-2  sidebar: a colour wash from the top, a breathing glow behind it, a second glow bottom-right
  *   fx-spotlight                              a glow that follows the cursor across a card
  *   fx-icon-glow                              sidebar icons glow on hover
  *   fx-collapse-radius / -bg / -border        the sidebar collapse button (e.g. round)
@@ -149,6 +150,10 @@
 @keyframes maw-fx-rise {
   from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
   to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes maw-fx-breathe {
+  0%, 100% { opacity: 0.45; transform: translateY(0); }
+  50% { opacity: 0.7; transform: translateY(12px); }
 }
 @keyframes maw-fx-drift {
   0%, 100% { transform: translate(0, 0) scale(1); }
