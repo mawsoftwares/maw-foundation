@@ -60,7 +60,8 @@ function SidebarItem({
           ...(look?.motion.nav === 'stagger' && depth === 0 ? { animationDelay: `${Math.min(index, 12) * 45}ms` } : {}),
         }}
         className={cn(
-          'group relative mb-1 box-border flex w-full cursor-pointer items-center border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
+          'group relative mb-1 box-border flex cursor-pointer items-center border-0 text-left text-sm outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand motion-reduce:transform-none motion-reduce:transition-none',
+          !(active && indicator === 'tab') && 'w-full',
           look?.motion.nav === 'stagger' && depth === 0 && 'animate-nav-in motion-reduce:animate-none',
           below ? 'flex-col justify-center gap-1 px-1 py-2 text-center text-[11px] leading-tight' : cn('gap-3', collapsed ? 'justify-center p-2.5' : 'px-4 py-2.5'),
           indicator === 'tab' && !collapsed && !below && 'gap-4 py-3.5 pl-6',
@@ -73,7 +74,7 @@ function SidebarItem({
                   'bg-[color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_12%,transparent)] text-[var(--maw-shell-fg,var(--maw-fg))] shadow-[inset_3px_0_0_var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'dot' && 'bg-transparent text-[var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'tab' &&
-                  "-mr-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))] rounded-l-full rounded-r-none bg-[var(--maw-canvas)] text-[var(--maw-fg)] before:absolute before:-top-7 before:right-0 before:size-7 before:bg-[radial-gradient(circle_at_0_0,transparent_28px,var(--maw-canvas)_28.5px)] before:content-[''] after:absolute after:-bottom-7 after:right-0 after:size-7 after:bg-[radial-gradient(circle_at_0_100%,transparent_28px,var(--maw-canvas)_28.5px)] after:content-['']",
+                  "-mr-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))] w-[calc(100%+var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs)))] rounded-l-full rounded-r-none bg-[var(--maw-canvas)] text-[var(--maw-fg)] before:absolute before:-top-7 before:right-0 before:size-7 before:bg-[radial-gradient(circle_at_0_0,transparent_28px,var(--maw-canvas)_28.5px)] before:content-[''] after:absolute after:-bottom-7 after:right-0 after:size-7 after:bg-[radial-gradient(circle_at_0_100%,transparent_28px,var(--maw-canvas)_28.5px)] after:content-['']",
               )
             : cn(
                 'rounded-[var(--maw-comp-nav-item-border-radius,var(--maw-radius-md))] bg-[var(--maw-comp-nav-item-background,transparent)] font-medium text-[var(--maw-comp-nav-item-text-color,var(--maw-shell-fg,var(--maw-fg)))]',
@@ -217,7 +218,7 @@ export function SidebarView({
         hoverExpand && hovered && 'shadow-[0_12px_32px_rgb(0_0_0/0.25)]',
         isMobile
           ? 'min-h-full bg-transparent'
-          : 'min-h-full border-r border-[var(--maw-shell-border,var(--maw-border))] bg-[var(--maw-shell-bg,var(--maw-surface))]',
+          : cn('min-h-full bg-[var(--maw-shell-bg,var(--maw-surface))]', look?.indicator === 'tab' ? 'border-r-0' : 'border-r border-[var(--maw-shell-border,var(--maw-border))]'),
       )}
       style={{ width, backdropFilter: 'blur(var(--maw-shell-blur, 0px))', WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))', ...motionStyle, ...style }}
     >

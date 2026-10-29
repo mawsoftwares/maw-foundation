@@ -38,7 +38,7 @@ const {
 function printHelp() {
   console.log('Usage:')
   console.log(
-    '  npx @mawsoftwares/deploy <environment> [--dry-run] [--skip-nginx] [--skip-build] [--yes-nginx] [--ssl-ready] [--setup-https] [--project-root <path>]'
+    '  npx @mawsoftwares/deploy <environment> [--dry-run] [--skip-nginx] [--skip-build] [--yes-nginx] [--ssl-ready] [--setup-https] [--version <x.y.z>] [--project-root <path>]'
   )
   console.log('  npx @mawsoftwares/deploy list')
   console.log('  npx @mawsoftwares/deploy init                     Scaffold a deploy/ folder in the current project')
@@ -51,6 +51,7 @@ function printHelp() {
   console.log('  --ssl-ready     Use HTTPS nginx template (certs already issued)')
   console.log('  --skip-nginx    Skip nginx install (app deploy only)')
   console.log('  --skip-build    Skip frontend local build (upload existing dist) or backend remote build')
+  console.log('  --version       Deployment version to stamp into the app (default: git tag/commit)')
   console.log('  --project-root  Override project root path (default: auto-detected)')
 }
 
@@ -67,11 +68,21 @@ function executeStep({ dryRun, logger, title, command, manifest }) {
 function parseArguments(argv) {
   const args = argv.slice(2)
   let command
+  let version
   const flags = []
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]
     if (arg === '--project-root') {
       i += 1
+      continue
+    }
+    if (arg === '--version') {
+      version = args[i + 1]
+      i += 1
+      continue
+    }
+    if (arg.startsWith('--version=')) {
+      version = arg.slice('--version='.length)
       continue
     }
     if (arg.startsWith('--')) {
@@ -84,6 +95,7 @@ function parseArguments(argv) {
   }
   return {
     command,
+    version,
     dryRun: flags.includes('--dry-run'),
     skipNginx: flags.includes('--skip-nginx'),
     skipBuild: flags.includes('--skip-build'),
@@ -91,6 +103,22 @@ function parseArguments(argv) {
     sslCertsReady: flags.includes('--ssl-ready'),
     setupHttps: flags.includes('--setup-https'),
   }
+}
+
+function gitOutput(args) {
+  const result = spawnSync('git', args, { cwd: PROJECT_ROOT, encoding: 'utf8' })
+  return result.status === 0 ? result.stdout.trim() : ''
+}
+
+/**
+ * Resolve the version info stamped into the app as APP_VERSION / APP_COMMIT / APP_DEPLOYED_AT.
+ * Version: --version flag, else the nearest git tag, else the short commit, else "unknown".
+ */
+function resolveDeployInfo(explicitVersion) {
+  const commit = gitOutput(['rev-parse', '--short', 'HEAD']) || 'unknown'
+  const version =
+    (explicitVersion && explicitVersion.trim()) || gitOutput(['describe', '--tags', '--always']) || commit
+  return { version, commit, deployedAt: new Date().toISOString() }
 }
 
 function listAvailableEnvironments() {
@@ -221,6 +249,7 @@ async function deploy(environment, options = {}) {
   const yesNginx = Boolean(options.yesNginx)
   const sslCertsReady = Boolean(options.sslCertsReady)
   const setupHttps = Boolean(options.setupHttps)
+  const deployInfo = resolveDeployInfo(options.version)
   const logger = createDeploymentLogger(environment)
   const startedAt = new Date().toISOString()
   const availableEnvironments = listEnvironments()
@@ -234,7 +263,13 @@ async function deploy(environment, options = {}) {
   }
 
   const rawEnvVars = parseEnvFile(envFilePath)
-  const preparedEnvVars = prepareDeployEnv(manifest, rawEnvVars)
+  const preparedEnvVars = {
+    ...prepareDeployEnv(manifest, rawEnvVars),
+    APP_VERSION: deployInfo.version,
+    APP_COMMIT: deployInfo.commit,
+    APP_DEPLOYED_AT: deployInfo.deployedAt,
+  }
+  logger.info('Deployment version', deployInfo)
   const envValidation = validateDeployEnv(manifest, preparedEnvVars, {
     allowPlaceholders: dryRun,
   })
@@ -266,6 +301,8 @@ async function deploy(environment, options = {}) {
     dryRun,
     timestamp: startedAt,
     branch: manifest.branch,
+    version: deployInfo.version,
+    commit: deployInfo.commit,
     deployPath: deployRoot,
     generatedFiles: generated.generatedFiles,
     success: false,
@@ -369,6 +406,11 @@ async function deploy(environment, options = {}) {
           canUseSudoFallback: sudoAvailable,
         })
 
+        fs.writeFileSync(
+          path.join(localDist, 'version.json'),
+          `${JSON.stringify({ service: 'frontend', ...deployInfo }, null, 2)}\n`,
+          'utf8'
+        )
         logger.info('Uploading local dist/ to server', { localDist, staticRoot })
         uploadDirectory(manifest, localDist, staticRoot, { logger })
         sshExec(manifest, `test -f ${shellQuote(`${staticRoot}/index.html`)}`, { logger })
@@ -631,7 +673,7 @@ async function deploy(environment, options = {}) {
 }
 
 async function runCli() {
-  const { command, dryRun, skipNginx, skipBuild, yesNginx, sslCertsReady, setupHttps } =
+  const { command, version, dryRun, skipNginx, skipBuild, yesNginx, sslCertsReady, setupHttps } =
     parseArguments(process.argv)
 
   if (!command) {
@@ -652,7 +694,7 @@ async function runCli() {
   }
 
   try {
-    await deploy(command, { dryRun, skipNginx, skipBuild, yesNginx, sslCertsReady, setupHttps })
+    await deploy(command, { version, dryRun, skipNginx, skipBuild, yesNginx, sslCertsReady, setupHttps })
     console.log(`Deployment command completed for "${command}"${dryRun ? ' (dry run)' : ''}.`)
   } catch (error) {
     console.error(error.message)
