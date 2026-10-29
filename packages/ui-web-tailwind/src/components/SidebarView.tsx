@@ -214,8 +214,9 @@ export function SidebarView({
     <aside
       className={cn(
         'maw-shell-chrome box-border flex shrink-0 flex-col overflow-hidden font-sans text-[var(--maw-shell-fg,var(--maw-fg))] transition-[width] duration-200 ease-out motion-reduce:transition-none',
-        hoverExpand ? 'absolute inset-y-0 left-0 z-30' : 'relative isolate',
-        hoverExpand && hovered && 'shadow-[0_12px_32px_rgb(0_0_0/0.25)]',
+        hoverExpand ? 'absolute inset-y-0 left-0 z-30' : 'relative isolate z-[1]',
+        '[box-shadow:var(--maw-shell-shadow,none)]',
+        hoverExpand && hovered && '[box-shadow:0_12px_32px_rgb(0_0_0/0.25)]',
         isMobile
           ? 'min-h-full bg-transparent'
           : cn('min-h-full bg-[var(--maw-shell-bg,var(--maw-surface))]', look?.indicator === 'tab' ? 'border-r-0' : 'border-r border-[var(--maw-shell-border,var(--maw-border))]'),

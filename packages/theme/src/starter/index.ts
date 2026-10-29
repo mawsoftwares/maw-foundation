@@ -604,7 +604,7 @@ export const mawConsoleTheme: ThemeDefinition = {
     typography: { fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" },
     radius: { sm: 8, md: 10, lg: 16, xl: 22 },
     shadows: SOFT_SHADOWS,
-    shell: { bg: '#f7f9fd', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },
+    shell: { bg: '#ffffff', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },
     components: {
       'nav-item': { textColor: '#41526b' },
       'nav-item-hover': { backgroundColor: 'rgba(21, 101, 192, 0.07)', textColor: '#1b2a41' },
@@ -618,6 +618,8 @@ export const mawConsoleTheme: ThemeDefinition = {
       'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #1565c0 9%, transparent) 0%, transparent 34%, transparent 78%, color-mix(in srgb, #42a5f5 4%, transparent) 100%)',
       'shell-glow': '#1565c0',
       'shell-glow-2': '#42a5f5',
+      // The sidebar floats above the page: a soft blue shadow to its right.
+      'shell-shadow': '8px 0 32px -8px rgba(21, 101, 192, 0.22), 2px 0 8px -2px rgba(16, 24, 40, 0.06)',
       'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
       // Group labels as in the Hub: small, bold, widely spaced caps with more room above.
       'shell-item-size': '0.9375rem',
@@ -647,6 +649,7 @@ export const mawConsoleTheme: ThemeDefinition = {
       'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 9%, transparent) 0%, transparent 34%, transparent 78%, color-mix(in srgb, #8ec5f7 4%, transparent) 100%)',
       'shell-glow': '#5aa9f0',
       'shell-glow-2': '#8ec5f7',
+      'shell-shadow': '8px 0 32px -8px rgba(0, 0, 0, 0.55)',
       'shell-group-rule': 'rgba(234, 241, 251, 0.16)',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #5aa9f0',
       'fx-collapse-bg': 'rgba(234, 241, 251, 0.08)',

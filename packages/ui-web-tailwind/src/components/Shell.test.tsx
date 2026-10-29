@@ -82,6 +82,7 @@ describe('SidebarView theme-driven polish (tokens)', () => {
     expect(html).toContain('--maw-shell-glow,transparent');
     expect(html).toContain('--maw-shell-glow-2,transparent');
     expect(html).toContain('maw-fx-breathe');
+    expect(html).toContain('--maw-shell-shadow,none');
     expect(html).toContain('--maw-shell-group-rule,transparent');
     expect(html).toContain('aria-hidden');
   });
