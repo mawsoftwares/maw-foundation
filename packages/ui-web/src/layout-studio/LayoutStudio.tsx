@@ -24,12 +24,12 @@ import {
   type ThemeColors,
   type ThemeSelection,
 } from '@mawsoftwares/layout';
-import type { ThemeOverrides, ThemeRegistry } from '@mawsoftwares/theme';
+import { injectWebFonts, type ThemeOverrides, type ThemeRegistry } from '@mawsoftwares/theme';
 import { ColorField } from '../fields';
 import { Badge, Banner, Button, Card, Checkbox, Grid, Select, Stack, Tabs } from '../kit';
 import { ShellPreview } from './ShellPreview';
 import { ThemeGallery } from './ThemeGallery';
-import { previewCssVars } from './theme-selection';
+import { composeProjectTheme, previewCssVars } from './theme-selection';
 import { PREVIEW_VIEWPORTS, type PreviewViewport } from './viewport';
 
 export interface LayoutStudioProps {
@@ -131,6 +131,11 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   const preset = registry.getPreset(resolved.presetId) ?? registry.getPreset(registry.fallbackPresetId);
   const dirty = !sameConfig(working, baseline);
   const hasUnpublishedDraft = state?.draft != null;
+  // The chosen theme's font must be loaded for the preview to show it (the app only loads the font it has applied).
+  useEffect(() => {
+    const overrides = composeProjectTheme(baseTheme, working.theme, themes);
+    if (overrides !== undefined) injectWebFonts(overrides);
+  }, [baseTheme, working.theme, themes]);
   const cssVars = useMemo(() => previewCssVars(previewMode === null ? working.theme : { ...working.theme, colorMode: previewMode }, themes, prefersDark, baseTheme), [working.theme, previewMode, themes, prefersDark, baseTheme]);
   const customisations = countLayoutOverrides(working.layout);
   // Until a theme is chosen the gallery shows each preset in the look it was designed around; a chosen theme applies to all.

@@ -59,3 +59,11 @@ Run `php artisan config:clear` (or rebuild) if the PHP config was cached before 
 
 - The version is set at deploy time, not baked into the Docker image, so redeploying or rolling back the same image reports the right version.
 - A `--dry-run` also writes a history entry (with the version), as before.
+
+## Checking from MAW-HUB
+
+- **Projects** (BASE-style apps): Project → Deployments tab → **Check running versions**. For every active environment (and its portals) the Hub asks `<url>/version`, then `<url>/version.json`, and compares the answer with the latest *succeeded* deployment record for that environment (matched by environment name or type; `v1.2.3` and `1.2.3` count as the same). Record the same version you pass to `--version`.
+- **Sites** (website_cms): Site → Deploy tab → **Check running versions**. The Hub asks the API base URL, admin domain and website domain, and compares with the release tag of the latest real (non-dry-run) succeeded deploy. `website_cms/deploy/deploy.sh` stamps `version.json` (release tag, commit, time) into the admin and website builds, and into the API's `public/` folder for the upload.
+- Results: **Matches**, **Different**, **No answer**, **No version set** (app answers but has no version), **Nothing recorded**.
+- The check runs only when you click it. It never contacts private or local addresses, does not follow redirects, and is rate-limited.
+- For the API of a website_cms site, `version.json` is served from the API's public folder; if the API base URL does not map to that folder, the API row shows *No answer* while the admin and website rows still work.

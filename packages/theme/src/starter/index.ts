@@ -601,6 +601,7 @@ export const mawConsoleTheme: ThemeDefinition = {
       brand: '#5aa9f0', brandLight: '#8ec5f7', brandDark: '#3b8ad6', brandContrast: '#071a30',
       bg: '#101a2b', bgMuted: '#17233a', bgSubtle: '#0a1220', fg: '#eaf1fb', fgMuted: '#a3b3cb', border: '#233350',
     },
+    typography: { fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif" },
     radius: { sm: 8, md: 10, lg: 16, xl: 22 },
     shadows: SOFT_SHADOWS,
     shell: { bg: '#f1f6fc', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },

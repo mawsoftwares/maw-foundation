@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { googleFontUrl } from '../index';
 import { contrastRatio, createTheme, createThemeRegistry, parseColor, starterThemes, tokensToCssVars, type Rgba } from '../index';
 
 const rgb = (c: string): Rgba => {
@@ -72,5 +73,11 @@ describe('starter themes', () => {
     const t = registry.resolve('clean-light');
     expect(t.typography.fontFamily).toBe(createTheme().typography.fontFamily);
     expect(t.radius.md).toBe(10);
+  });
+
+  it('MAW Console sets its own font, and it is one the app can load from Google Fonts', () => {
+    const family = registry.resolve('maw-console').typography.fontFamily;
+    expect(family).toContain('Roboto');
+    expect(googleFontUrl(family)).toContain('fonts.googleapis.com');
   });
 });
