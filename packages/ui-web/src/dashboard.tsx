@@ -197,26 +197,38 @@ export function DashboardPage({
 // MiniChart — simple inline bar/line visual (no charting library dependency)
 // ---------------------------------------------------------------------------
 
+/** Inline so it works in either UI kit. Reduced motion shows the finished chart at once. */
+const CHART_KEYFRAMES =
+  '@keyframes maw-bar-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}' +
+  '@keyframes maw-line-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}' +
+  '@media (prefers-reduced-motion:reduce){[data-maw-chart]{animation:none!important}}';
+
 export function MiniBarChart({
   data,
   height = 60,
   barColor = 'var(--maw-brand)',
   style,
+  animate = true,
 }: {
   data: readonly number[];
   height?: number;
   barColor?: string;
   style?: CSSProperties;
+  /** Bars grow up from the baseline, one after another. */
+  animate?: boolean;
 }): ReactNode {
   if (data.length === 0) return null;
   const max = Math.max(...data, 1);
 
   return (
     <Stack direction="row" align="flex-end" gap="2px" style={{ height, ...style }}>
+      {animate && <style>{CHART_KEYFRAMES}</style>}
       {data.map((v, i) => (
         <div
           key={i}
+          data-maw-chart={animate ? '' : undefined}
           style={{
+            ...(animate ? { transformOrigin: 'bottom', animation: `maw-bar-grow 700ms cubic-bezier(0.22, 1, 0.36, 1) ${Math.min(i, 24) * 40}ms backwards` } : {}),
             flex: 1,
             height: `${(v / max) * 100}%`,
             background: barColor,
@@ -237,12 +249,15 @@ export function MiniLineChart({
   height = 40,
   color = 'var(--maw-brand)',
   style,
+  animate = true,
 }: {
   data: readonly number[];
   width?: number;
   height?: number;
   color?: string;
   style?: CSSProperties;
+  /** The line is drawn from left to right. */
+  animate?: boolean;
 }): ReactNode {
   if (data.length < 2) return null;
   const max = Math.max(...data, 1);
@@ -258,8 +273,13 @@ export function MiniLineChart({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} style={style}>
+      {animate && <style>{CHART_KEYFRAMES}</style>}
       <polyline
         points={points}
+        pathLength={animate ? 1 : undefined}
+        data-maw-chart={animate ? '' : undefined}
+        strokeDasharray={animate ? 1 : undefined}
+        style={animate ? { animation: 'maw-line-draw 1200ms cubic-bezier(0.22, 1, 0.36, 1) 250ms backwards' } : undefined}
         fill="none"
         stroke={color}
         strokeWidth="2"
