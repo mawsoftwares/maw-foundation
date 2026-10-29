@@ -1,5 +1,16 @@
 # @mawsoftwares/modules
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/core@1.0.0
+
 ## 0.1.4
 
 ### Patch Changes

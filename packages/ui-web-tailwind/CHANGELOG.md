@@ -1,5 +1,16 @@
 # @mawsoftwares/ui-web-tailwind
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/ui-contract@1.0.0
+
 ## 0.1.2
 
 ### Patch Changes

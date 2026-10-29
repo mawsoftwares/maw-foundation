@@ -1,5 +1,18 @@
 # @mawsoftwares/observability
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/config@1.0.0
+  - @mawsoftwares/platform@1.0.0
+  - @mawsoftwares/sdk@1.0.0
+
 ## 0.1.5
 
 ### Patch Changes

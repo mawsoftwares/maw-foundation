@@ -419,6 +419,8 @@ importers:
         specifier: workspace:*
         version: link:../sdk
 
+  packages/layout: {}
+
   packages/modules:
     dependencies:
       '@mawsoftwares/core':
@@ -442,6 +444,12 @@ importers:
       hono:
         specifier: '>=4'
         version: 4.13.5
+
+  packages/page-templates:
+    dependencies:
+      '@mawsoftwares/layout':
+        specifier: workspace:*
+        version: link:../layout
 
   packages/platform:
     dependencies:
@@ -599,6 +607,12 @@ importers:
       '@mawsoftwares/api-client':
         specifier: workspace:*
         version: link:../api-client
+      '@mawsoftwares/layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@mawsoftwares/page-templates':
+        specifier: workspace:*
+        version: link:../page-templates
       '@mawsoftwares/rbac-core':
         specifier: workspace:*
         version: link:../rbac-core

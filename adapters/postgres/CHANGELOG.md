@@ -1,5 +1,17 @@
 # @mawsoftwares/postgres
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/database@1.0.0
+  - @mawsoftwares/tenancy@1.0.0
+
 ## 0.2.2
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@mawsoftwares/layout",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Config-driven application layout engine: typed layout schema, preset registry, resolver, validation and versioned migrations. Pure data and logic — no React, Tailwind or UI-kit dependency.",
   "repository": {
     "type": "git",

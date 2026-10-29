@@ -1,6 +1,6 @@
 {
   "name": "@mawsoftwares/ui-contract",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Component contracts (prop types) and the UI-kit registry shared by @mawsoftwares/ui-web and alternative kits such as @mawsoftwares/ui-web-tailwind. Types + one setter; no UI code.",
   "repository": {
     "type": "git",

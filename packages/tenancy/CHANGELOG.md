@@ -1,5 +1,16 @@
 # @mawsoftwares/tenancy
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/core@1.0.0
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,5 +1,22 @@
 # @mawsoftwares/ui-web
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/api-client@1.0.0
+  - @mawsoftwares/layout@1.0.0
+  - @mawsoftwares/page-templates@1.0.0
+  - @mawsoftwares/rbac-core@1.0.0
+  - @mawsoftwares/sdk@1.0.0
+  - @mawsoftwares/theme@1.0.0
+  - @mawsoftwares/ui-contract@1.0.0
+
 ## 0.5.0
 
 ### Minor Changes

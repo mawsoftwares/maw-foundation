@@ -1,5 +1,18 @@
 # @mawsoftwares/ui-auth
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/api-client@1.0.0
+  - @mawsoftwares/sdk@1.0.0
+  - @mawsoftwares/ui-web@1.0.0
+
 ## 0.1.7
 
 ### Patch Changes

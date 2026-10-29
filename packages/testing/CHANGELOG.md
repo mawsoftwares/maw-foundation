@@ -1,5 +1,17 @@
 # @mawsoftwares/testing
 
+## 3.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/database@1.0.0
+  - @mawsoftwares/sdk@1.0.0
+
 ## 2.0.1
 
 ### Patch Changes

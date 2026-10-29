@@ -1,5 +1,16 @@
 # @mawsoftwares/express
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/server-express@1.0.0
+
 ## 0.1.6
 
 ### Patch Changes

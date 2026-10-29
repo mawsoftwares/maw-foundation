@@ -1,5 +1,16 @@
 # @mawsoftwares/hono
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/server-hono@1.0.0
+
 ## 0.1.6
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @mawsoftwares/server-hono
 
+## 1.0.0
+
+### Major Changes
+
+- layout engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @mawsoftwares/api@1.0.0
+  - @mawsoftwares/auth-core@1.0.0
+  - @mawsoftwares/rbac-core@1.0.0
+  - @mawsoftwares/sdk@1.0.0
+
 ## 0.2.0
 
 ### Minor Changes

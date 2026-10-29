@@ -1,7 +1,7 @@
 {
   "name": "@mawsoftwares/page-templates",
-  "version": "0.0.0",
-  "description": "Config-driven page template engine: template registry (dashboard, listing, details, form, kanban, calendar, communication), named content slots, approved widget placements, validation and versioned configs. Pure data and logic \u2014 no React.",
+  "version": "1.0.0",
+  "description": "Config-driven page template engine: template registry (dashboard, listing, details, form, kanban, calendar, communication), named content slots, approved widget placements, validation and versioned configs. Pure data and logic — no React.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mawsoftwares/maw-foundation.git",

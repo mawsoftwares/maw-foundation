@@ -1,6 +1,6 @@
 {
   "name": "@mawsoftwares/ui-web-tailwind",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "Tailwind + shadcn-style UI kit for @mawsoftwares/ui-web. Same component names and props, driven by the same --maw-* theme tokens; install with setUIKit(tailwindKit).",
   "repository": {
     "type": "git",
