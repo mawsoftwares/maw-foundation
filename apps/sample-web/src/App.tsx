@@ -237,7 +237,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 }): ReactNode {
   const { session, loading } = useAuth();
   const { t } = useI18n();
-  const { applyThemeOverrides, setColorMode } = useTheme();
+  const { applyThemeOverrides, setColorMode, isDark } = useTheme();
   // The tenant's shared theme (Theme Designer). The project's published theme selection is layered over it below.
   const [sharedOverrides, setSharedOverrides] = useState<ThemeOverrides | undefined>(undefined);
   // End users render the PUBLISHED config only; Layout Studio edits a draft until it is published. The server is the
@@ -519,8 +519,10 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--maw-space-md)',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
             padding: 'var(--maw-space-sm) var(--maw-space-md)',
-            borderRadius: 9999,
+            borderRadius: 24,
             background: 'var(--maw-surface)',
             color: 'var(--maw-fg)',
             border: '1px solid var(--maw-border)',
@@ -529,6 +531,13 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
           }}
         >
           <span style={{ fontSize: 'var(--maw-text-sm)' }}>Previewing an unpublished layout — only you see this.</span>
+          <div role="group" aria-label="Colour mode" style={{ display: 'flex', gap: 'var(--maw-space-xs)' }}>
+            {(['light', 'dark'] as const).map((mode) => (
+              <Button key={mode} variant={isDark === (mode === 'dark') ? 'primary' : 'outline'} aria-pressed={isDark === (mode === 'dark')} onClick={() => setColorMode(mode)}>
+                {mode === 'light' ? 'Light' : 'Dark'}
+              </Button>
+            ))}
+          </div>
           <Button onClick={() => setPage('layout')}>Back to Studio</Button>
           <Button variant="outline" onClick={stopPreviewUi}>Exit preview</Button>
         </div>
