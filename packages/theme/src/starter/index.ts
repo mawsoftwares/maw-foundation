@@ -354,8 +354,8 @@ export const deepVioletTheme: ThemeDefinition = {
  */
 export const mawHubTheme: ThemeDefinition = {
   id: 'maw-hub',
-  label: 'MAW Hub',
-  description: 'The Hub\'s own look: midnight glass sidebar, indigo accents, lavender-white pages.',
+  label: 'MAW Hub Aurora',
+  description: 'The Hub\'s design.md: midnight glass sidebar, indigo accents, lavender-white pages.',
   overrides: {
     palette: {
       brand: '#5B4CF0',
@@ -581,5 +581,53 @@ export const mawHubTheme: ThemeDefinition = {
   } as ThemeOverrides,
 };
 
+/**
+ * The blue-and-white admin console look: a pale blue sidebar with a soft blue wash and glow at the top, a gradient
+ * pill with a left bar for the active item, hairline group labels, white cards on a clean page and a blue banner.
+ * The wash, glow and rules are plain theme tokens (`shell-gradient`, `shell-glow`, `shell-group-rule`) that the
+ * Tailwind kit's sidebar reads, so any theme can use them.
+ */
+export const mawConsoleTheme: ThemeDefinition = {
+  id: 'maw-console',
+  label: 'MAW Console',
+  description: 'Blue and white admin console: soft blue glow in the sidebar, gradient banner, clean cards.',
+  overrides: {
+    palette: {
+      brand: '#1565c0', brandLight: '#42a5f5', brandDark: '#0d47a1', brandContrast: '#ffffff',
+      bg: '#ffffff', bgMuted: '#eef3fa', bgSubtle: '#f6f8fc',
+      fg: '#1b2a41', fgMuted: '#56677f', fgSubtle: '#8b9ab0', border: '#e3e9f3', borderFocus: '#1565c0',
+    },
+    paletteDark: {
+      brand: '#5aa9f0', brandLight: '#8ec5f7', brandDark: '#3b8ad6', brandContrast: '#071a30',
+      bg: '#101a2b', bgMuted: '#17233a', bgSubtle: '#0a1220', fg: '#eaf1fb', fgMuted: '#a3b3cb', border: '#233350',
+    },
+    radius: { sm: 8, md: 10, lg: 16, xl: 22 },
+    shadows: SOFT_SHADOWS,
+    shell: { bg: '#f1f6fc', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },
+    components: {
+      'nav-item': { textColor: '#41526b' },
+      'nav-item-hover': { backgroundColor: 'rgba(21, 101, 192, 0.07)', textColor: '#1b2a41' },
+      'nav-item-active': {
+        backgroundColor: 'linear-gradient(90deg, rgba(66, 165, 245, 0.30) 0%, rgba(66, 165, 245, 0.06) 100%)',
+        textColor: '#0d3c7a',
+      },
+    },
+    extraTokens: {
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #42a5f5 16%, transparent) 0%, transparent 40%)',
+      'shell-glow': '#42a5f5',
+      'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
+      'shell-nav-active-indicator': 'inset 3px 0 0 0 #1e88e5',
+      'shell-nav-active-shadow': '0 10px 24px -14px #1565c0',
+      ...LIGHT_HEADER('#e3e9f3', '#1b2a41'),
+    },
+    extraTokensDark: {
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 14%, transparent) 0%, transparent 40%)',
+      'shell-glow': '#5aa9f0',
+      'shell-group-rule': 'rgba(234, 241, 251, 0.16)',
+      'shell-nav-active-indicator': 'inset 3px 0 0 0 #5aa9f0',
+    },
+  },
+};
+
 /** All starter themes, in gallery order. */
-export const starterThemes: readonly ThemeDefinition[] = [mawHubTheme, medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme, deepVioletTheme];
+export const starterThemes: readonly ThemeDefinition[] = [mawConsoleTheme, mawHubTheme, medicalBlueTheme, violetStudioTheme, midnightRoseTheme, cleanLightTheme, auroraTheme, slateMinimalTheme, emeraldFreshTheme, oceanTealTheme, sunsetCoralTheme, graphiteTheme, lavenderSoftTheme, royalNavyTheme, deepVioletTheme];

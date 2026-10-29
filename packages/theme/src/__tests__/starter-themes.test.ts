@@ -12,8 +12,8 @@ const AA = 4.5;
 describe('starter themes', () => {
   const registry = createThemeRegistry(starterThemes);
 
-  it('ships fourteen themes with unique ids that all resolve', () => {
-    expect(registry.ids()).toEqual(['maw-hub', 'medical-blue', 'violet-studio', 'midnight-rose', 'clean-light', 'aurora', 'slate-minimal', 'emerald-fresh', 'ocean-teal', 'sunset-coral', 'graphite', 'lavender-soft', 'royal-navy', 'deep-violet']);
+  it('ships fifteen themes with unique ids that all resolve', () => {
+    expect(registry.ids()).toEqual(['maw-console', 'maw-hub', 'medical-blue', 'violet-studio', 'midnight-rose', 'clean-light', 'aurora', 'slate-minimal', 'emerald-fresh', 'ocean-teal', 'sunset-coral', 'graphite', 'lavender-soft', 'royal-navy', 'deep-violet']);
     for (const id of registry.ids()) expect(() => registry.resolve(id)).not.toThrow();
   });
 
@@ -49,7 +49,8 @@ describe('starter themes', () => {
       if (idle !== undefined) expect(contrastRatio(idle, rgb(shellBg), rgb(shellBg)), 'idle nav item').toBeGreaterThanOrEqual(AA);
       const activeBg = light['--maw-comp-nav-item-active-background'];
       const activeFg = light['--maw-comp-nav-item-active-text-color'];
-      if (activeBg !== undefined && activeFg !== undefined) expect(ratio(activeFg, activeBg), 'active item').toBeGreaterThanOrEqual(AA);
+      // A gradient pill is a faint tint over the sidebar, so its text is judged against the sidebar colour.
+      if (activeBg !== undefined && activeFg !== undefined) expect(ratio(activeFg, activeBg.includes('gradient') ? shellBg : activeBg), 'active item').toBeGreaterThanOrEqual(AA);
     });
 
     it('dark mode keeps a readable sidebar', () => {

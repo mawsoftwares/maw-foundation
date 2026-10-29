@@ -71,6 +71,24 @@ describe('SidebarView', () => {
   });
 });
 
+describe('SidebarView theme-driven polish (tokens)', () => {
+  it('layers the theme\'s wash and glow behind the sidebar, with a rule after each group label, all from tokens', () => {
+    const html = sidebar();
+    expect(html).toContain('background-image:var(--maw-shell-gradient, none)');
+    expect(html).toContain('--maw-shell-glow,transparent');
+    expect(html).toContain('--maw-shell-group-rule,transparent');
+    expect(html).toContain('aria-hidden');
+  });
+
+  it('the active fill accepts a gradient as well as a colour', () => {
+    expect(sidebar({ activeKey: 'invoices' })).toContain('[background:var(--maw-comp-nav-item-active-background');
+  });
+
+  it('draws no decoration inside the mobile drawer', () => {
+    expect(sidebar({ isMobile: true })).not.toContain('--maw-shell-glow');
+  });
+});
+
 describe('SidebarView look (from a layout)', () => {
   const look = (extra: Record<string, unknown> = {}) => ({ labels: 'beside', expandOnHover: false, indicator: 'fill', motion: { sidebar: 'smooth', items: 'slide', nav: 'none' }, ...extra }) as const;
 

@@ -69,7 +69,7 @@ function SidebarItem({
             ? cn(
                 'rounded-[var(--maw-comp-nav-item-active-border-radius,var(--maw-comp-nav-item-border-radius,var(--maw-radius-md)))] font-semibold',
                 indicator === 'fill' &&
-                  'bg-[var(--maw-comp-nav-item-active-background,var(--maw-shell-nav-active-bg,var(--maw-brand)))] text-[var(--maw-comp-nav-item-active-text-color,var(--maw-shell-nav-active-fg,var(--maw-brandContrast)))] shadow-[var(--maw-shell-nav-active-shadow,none),var(--maw-shell-nav-active-indicator,none)]',
+                  '[background:var(--maw-comp-nav-item-active-background,var(--maw-shell-nav-active-bg,var(--maw-brand)))] text-[var(--maw-comp-nav-item-active-text-color,var(--maw-shell-nav-active-fg,var(--maw-brandContrast)))] shadow-[var(--maw-shell-nav-active-shadow,none),var(--maw-shell-nav-active-indicator,none)]',
                 indicator === 'bar' &&
                   'bg-[color-mix(in_srgb,var(--maw-shell-fg,var(--maw-fg))_12%,transparent)] text-[var(--maw-shell-fg,var(--maw-fg))] shadow-[inset_3px_0_0_var(--maw-shell-fg,var(--maw-fg))]',
                 indicator === 'dot' && 'bg-transparent text-[var(--maw-shell-fg,var(--maw-fg))]',
@@ -214,14 +214,20 @@ export function SidebarView({
     <aside
       className={cn(
         'maw-shell-chrome box-border flex shrink-0 flex-col overflow-hidden font-sans text-[var(--maw-shell-fg,var(--maw-fg))] transition-[width] duration-200 ease-out motion-reduce:transition-none',
-        hoverExpand && 'absolute inset-y-0 left-0 z-30',
+        hoverExpand ? 'absolute inset-y-0 left-0 z-30' : 'relative isolate',
         hoverExpand && hovered && 'shadow-[0_12px_32px_rgb(0_0_0/0.25)]',
         isMobile
           ? 'min-h-full bg-transparent'
           : cn('min-h-full bg-[var(--maw-shell-bg,var(--maw-surface))]', look?.indicator === 'tab' ? 'border-r-0' : 'border-r border-[var(--maw-shell-border,var(--maw-border))]'),
       )}
-      style={{ width, backdropFilter: 'blur(var(--maw-shell-blur, 0px))', WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))', ...motionStyle, ...style }}
+      style={{ width, backgroundImage: 'var(--maw-shell-gradient, none)', backdropFilter: 'blur(var(--maw-shell-blur, 0px))', WebkitBackdropFilter: 'blur(var(--maw-shell-blur, 0px))', ...motionStyle, ...style }}
     >
+      {!isMobile && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-20 -top-28 -z-10 h-80 opacity-55 blur-[20px] [background:radial-gradient(closest-side,color-mix(in_srgb,var(--maw-shell-glow,transparent)_38%,transparent),transparent)]"
+        />
+      )}
       {(headerContent !== undefined || isMobile) && (
         <div
           className={cn(
@@ -255,7 +261,7 @@ export function SidebarView({
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && !below && (!shownCollapsed || isMobile) && (
-              <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--maw-shell-fg-muted,var(--maw-fgSubtle))]">
+              <div className="flex items-center gap-2.5 px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--maw-shell-fg-muted,var(--maw-fgSubtle))] after:h-px after:flex-1 after:bg-[linear-gradient(90deg,var(--maw-shell-group-rule,transparent),transparent)] after:content-['']">
                 {group}
               </div>
             )}
