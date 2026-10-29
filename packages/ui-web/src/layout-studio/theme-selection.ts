@@ -63,7 +63,24 @@ export function themeSelectionToOverrides(selection: ThemeSelection, registry?: 
 /** CSS custom properties for a scoped preview (apply as `style` on a container; nothing global changes). */
 export function previewCssVars(selection: ThemeSelection, registry: ThemeRegistry | undefined, prefersDark: boolean): Record<string, string> {
   const dark = selection.colorMode === 'dark' || (selection.colorMode === 'system' && prefersDark);
-  return tokensToCssVars(dark, createTheme(themeSelectionToOverrides(selection, registry)));
+  const vars = tokensToCssVars(dark, createTheme(themeSelectionToOverrides(selection, registry)));
+  return { ...inheritedShellVarResets(vars), ...vars };
+}
+
+/**
+ * The running app's own theme (e.g. the tenant's shared theme) sets component and shell variables on the page root.
+ * A preview theme only redefines the ones IT has, so the rest would leak in from the app (light text on a light
+ * sidebar). Resetting them to `initial` makes the components use their built-in fallbacks, as the preview theme intends.
+ */
+function inheritedShellVarResets(own: Readonly<Record<string, string>>): Record<string, string> {
+  const resets: Record<string, string> = {};
+  if (typeof document === 'undefined') return resets;
+  const style = document.documentElement.style;
+  for (let i = 0; i < style.length; i += 1) {
+    const name = style.item(i);
+    if ((name.startsWith('--maw-comp-') || name.startsWith('--maw-shell-')) && !(name in own)) resets[name] = 'initial';
+  }
+  return resets;
 }
 
 /**

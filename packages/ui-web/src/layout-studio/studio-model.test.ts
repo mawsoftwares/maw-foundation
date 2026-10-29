@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { classicAdminPreset, enterpriseDashboardPreset, floatingSidebarPreset, listingWorkspacePreset, splitWorkspacePreset, DEFAULT_THEME_SELECTION } from '@mawsoftwares/layout';
 import { createThemeRegistry, createTheme, tokensToCssVars } from '@mawsoftwares/theme';
 import { describePreview, previewState } from './viewport';
@@ -133,5 +133,21 @@ describe('custom colours', () => {
 
   it('no colours chosen leaves the theme untouched', () => {
     expect(themeSelectionToOverrides({ ...DEFAULT_THEME_SELECTION, colors: {} })).toBeUndefined();
+  });
+});
+
+describe('preview isolation from the running app\'s theme', () => {
+  it('resets shell and component variables the app set on the page root but the preview theme does not define', () => {
+    const names = ['--maw-comp-nav-item-text-color', '--maw-shell-test-only', '--maw-brand'];
+    vi.stubGlobal('document', { documentElement: { style: { length: names.length, item: (i: number) => names[i] } } });
+    try {
+      const vars = previewCssVars({ ...DEFAULT_THEME_SELECTION, colorMode: 'light' }, undefined, false);
+      expect(vars['--maw-comp-nav-item-text-color']).toBe('initial');
+      expect(vars['--maw-shell-test-only']).toBe('initial');
+      expect(vars['--maw-shell-bg']).toBe('#ffffff'); // the preview theme's own value is kept
+      expect(vars['--maw-brand']).not.toBe('initial'); // only shell and component variables are reset
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
