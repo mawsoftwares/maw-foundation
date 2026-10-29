@@ -382,6 +382,8 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
           </div>
           <div style={{ marginTop: 'var(--maw-space-lg)' }}>{panel}</div>
         </Card>
+        {/* Stays on screen while the (long) controls column scrolls, so every change is seen as it is made. */}
+        <div style={{ position: 'sticky', top: 'var(--maw-space-md)', alignSelf: 'start', maxHeight: 'calc(100vh - 2 * var(--maw-space-md))', overflowY: 'auto', minWidth: 0 }}>
         <Card>
           <Stack direction="row" align="center" gap="var(--maw-space-sm)" style={{ marginBottom: 'var(--maw-space-md)', flexWrap: 'wrap' }}>
             <strong style={{ marginRight: 'auto' }}>Preview — {resolved.label}</strong>
@@ -395,27 +397,29 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
           <p style={{ margin: 'var(--maw-space-sm) 0 0', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
             This is the real application shell with sample content. Nothing here changes the live application until you publish.
           </p>
+          {onPreview !== undefined && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 'var(--maw-space-md)',
+                flexWrap: 'wrap',
+                padding: 'var(--maw-space-sm) var(--maw-space-md)',
+                marginTop: 'var(--maw-space-md)',
+                borderRadius: 'var(--maw-radius-lg)',
+                border: '1px solid var(--maw-border)',
+                background: 'var(--maw-surface)',
+              }}
+            >
+              <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>See these choices across the whole app before publishing. Only you see it.</span>
+              <Button disabled={busy} onClick={() => { onPreview(working); setMessage({ kind: 'info', text: 'Previewing in the app, for you only. Nothing is saved or published. Use “Exit preview” in the app to go back.' }); }}>Preview in the app</Button>
+            </div>
+          )}
         </Card>
+        </div>
       </Grid>
 
-      {onPreview !== undefined && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 'var(--maw-space-md)',
-            flexWrap: 'wrap',
-            padding: 'var(--maw-space-sm) var(--maw-space-md)',
-            borderRadius: 'var(--maw-radius-lg)',
-            border: '1px solid var(--maw-border)',
-            background: 'var(--maw-surface)',
-          }}
-        >
-          <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>See these choices across the whole app before publishing. Only you see it.</span>
-          <Button disabled={busy} onClick={() => { onPreview(working); setMessage({ kind: 'info', text: 'Previewing in the app, for you only. Nothing is saved or published. Use “Exit preview” in the app to go back.' }); }}>Preview in the app</Button>
-        </div>
-      )}
     </Stack>
   );
 }
