@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { classicAdminPreset, defaultLayoutRegistry, enterpriseDashboardPreset, listingWorkspacePreset, splitWorkspacePreset, createMemoryProjectUiStore } from '@mawsoftwares/layout';
 import { createThemeRegistry, starterThemes } from '@mawsoftwares/theme';
 import { ThemeGallery } from './ThemeGallery';
-import { HeroBanner, ProfileCard } from '../showcase';
+import { FilterChips, HeroBanner, ListingCard, ProfileCard } from '../showcase';
 import { LayoutStudio } from './LayoutStudio';
 import { ShellPreview } from './ShellPreview';
 
@@ -51,6 +51,13 @@ describe('ShellPreview (the real shell)', () => {
     const html = preview(classicAdminPreset, 'desktop', { cssVars: { '--maw-brand': '#123456' }, scale: 0.25 });
     expect(html).toContain('--maw-brand:#123456');
     expect(html).toContain('transform:scale(0.25)');
+  });
+
+  it('shows a listing page (filters and cards) for the Listing preset and the dashboard for the others', () => {
+    const listing = preview(listingWorkspacePreset);
+    for (const t of ['Find your next role', 'Product Designer', 'Remote']) expect(listing, t).toContain(t);
+    expect(listing).not.toContain('Total orders');
+    expect(preview(classicAdminPreset)).not.toContain('Find your next role');
   });
 
   it('shows the bottom tab bar on mobile for layouts that ask for it', () => {
@@ -155,5 +162,19 @@ describe('HeroBanner and ProfileCard (reference-style widgets)', () => {
   it('profile card shows name, role, stats and a labelled progress bar', () => {
     const html = renderToStaticMarkup(createElement(ProfileCard, { name: 'Dr K', role: 'Surgeon', stats: [{ label: 'Patients', value: '3,567' }], progress: { label: 'Limit', value: 112, max: 200 } }));
     for (const t of ['Dr K', 'Surgeon', 'Patients', '3,567', 'Limit', '112 / 200']) expect(html, t).toContain(t);
+  });
+});
+
+describe('FilterChips and ListingCard', () => {
+  it('chips are radios with only the selected one checked', () => {
+    const html = renderToStaticMarkup(createElement(FilterChips, { options: [{ key: 'a', label: 'A' }, { key: 'b', label: 'B' }], value: 'b', onChange: () => undefined, label: 'Kind' }));
+    expect(html).toContain('aria-label="Kind"');
+    expect((html.match(/aria-checked="true"/g) ?? []).length).toBe(1);
+  });
+
+  it('card shows title, owner, facts, tags, figure and action; the logo is decorative', () => {
+    const html = renderToStaticMarkup(createElement(ListingCard, { title: 'Designer', subtitle: 'Acme', meta: ['Remote', 'Full time'], tags: ['Figma'], highlight: '10L', action: 'APPLY', logo: 'L' }));
+    for (const t of ['Designer', 'Acme', 'Remote · Full time', 'Figma', '10L', 'APPLY']) expect(html, t).toContain(t);
+    expect(html).toContain('aria-hidden="true"');
   });
 });

@@ -3,7 +3,8 @@ import type { LayoutSettings, ResolvedLayout } from '@mawsoftwares/layout';
 import { Avatar } from '../components/Avatar';
 import { ActivityFeed, KpiGrid, MiniBarChart, Widget, WidgetGrid, type KpiConfig } from '../dashboard';
 import { Icon, IconButton, SearchBar } from '../kit';
-import { HeroBanner, ProfileCard } from '../showcase';
+import { Button } from '../components/Button';
+import { FilterChips, HeroBanner, ListingCard, ProfileCard } from '../showcase';
 import { AppShell, Breadcrumbs, NavigationProvider, Sidebar, type NavItem } from '../navigation';
 import { useContainerWidth } from '../responsive';
 import { describePreview, previewState, PREVIEW_VIEWPORTS, type PreviewViewport } from './viewport';
@@ -53,6 +54,38 @@ function SampleDashboard({ width }: { width: number }): ReactNode {
     </div>
   );
 }
+
+const SAMPLE_FILTERS = [
+  { key: 'all', label: 'All jobs' },
+  { key: 'remote', label: 'Remote' },
+  { key: 'full', label: 'Full time' },
+  { key: 'design', label: 'Design' },
+];
+const SAMPLE_LISTINGS = [
+  { title: 'Product Designer', subtitle: 'Northwind Labs', meta: ['Remote', 'Full time'], tags: ['Figma', 'UX'], highlight: '₹18L / yr', logo: '🎨' },
+  { title: 'Frontend Engineer', subtitle: 'Acme Co.', meta: ['Pune', 'Hybrid'], tags: ['React', 'TypeScript'], highlight: '₹24L / yr', logo: '💻' },
+  { title: 'Data Analyst', subtitle: 'Brightside', meta: ['Mumbai', 'On site'], tags: ['SQL', 'BI'], highlight: '₹14L / yr', logo: '📊' },
+  { title: 'Customer Success Lead', subtitle: 'Helix Health', meta: ['Remote', 'Full time'], tags: ['SaaS'], highlight: '₹12L / yr', logo: '🤝' },
+];
+
+/** Listing sample page (search-first layouts): filter chips over a card grid. */
+function SampleListing({ width }: { width: number }): ReactNode {
+  const columns = width >= 1100 ? 3 : width >= 700 ? 2 : 1;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-lg)' }}>
+      <HeroBanner title="Find your next role" subtitle="1,240 openings match your profile" tone="soft" art="🔎" />
+      <FilterChips options={SAMPLE_FILTERS} value="all" onChange={() => undefined} label="Job type" />
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 'var(--maw-space-md)' }}>
+        {SAMPLE_LISTINGS.map((l) => (
+          <ListingCard key={l.title} {...l} action={<Button variant="outline" tabIndex={-1}>Apply</Button>} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Presets whose purpose is browsing listings get the listing sample page; every other preset shows the dashboard. */
+const LISTING_PRESET_IDS: ReadonlySet<string> = new Set(['listing-workspace']);
 
 const slotIcon = (name: string, label: string): ReactNode => (
   <IconButton label={label} tabIndex={-1}>
@@ -142,7 +175,7 @@ export function ShellPreview({ presetId, label, settings, viewport, cssVars, sca
             header={<Breadcrumbs />}
             actions={<Avatar name="Dr Kennedy" size={32} />}
           >
-            <SampleDashboard width={width} />
+            {LISTING_PRESET_IDS.has(presetId) ? <SampleListing width={width} /> : <SampleDashboard width={width} />}
           </AppShell>
         </NavigationProvider>
       </div>

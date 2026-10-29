@@ -96,3 +96,105 @@ export function ProfileCard({ name, role, stats, progress }: ProfileCardProps): 
     </div>
   );
 }
+
+export interface FilterChipsProps {
+  readonly options: ReadonlyArray<{ readonly key: string; readonly label: string }>;
+  readonly value: string;
+  readonly onChange: (key: string) => void;
+  readonly label?: string;
+}
+
+/** A row of pill filters (one selected). The selected chip uses the brand colour; the rest are quiet. */
+export function FilterChips({ options, value, onChange, label = 'Filter' }: FilterChipsProps): ReactNode {
+  return (
+    <div role="radiogroup" aria-label={label} style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--maw-space-sm)' }}>
+      {options.map((o) => {
+        const selected = o.key === value;
+        return (
+          <button
+            key={o.key}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(o.key)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 'var(--maw-radius-pill)',
+              border: selected ? '1px solid var(--maw-brand)' : '1px solid var(--maw-border)',
+              background: selected ? 'var(--maw-brand)' : 'var(--maw-surface)',
+              color: selected ? 'var(--maw-brandContrast)' : 'var(--maw-fgMuted)',
+              fontFamily: 'var(--maw-font-family)',
+              fontSize: 'var(--maw-text-sm)',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export interface ListingCardProps {
+  readonly title: string;
+  /** Who it belongs to (company, owner). */
+  readonly subtitle?: string;
+  /** Small facts under the title, e.g. location and type. */
+  readonly meta?: readonly string[];
+  readonly tags?: readonly string[];
+  /** Headline figure, e.g. a salary or price. */
+  readonly highlight?: ReactNode;
+  /** A button or link. */
+  readonly action?: ReactNode;
+  /** Emoji or logo shown in the tinted square. Hidden from assistive technology. */
+  readonly logo?: ReactNode;
+}
+
+/** A listing card (job, product, property): tinted logo square, title, facts, tag pills, figure and action. */
+export function ListingCard({ title, subtitle, meta, tags, highlight, action, logo }: ListingCardProps): ReactNode {
+  return (
+    <article
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--maw-space-md)',
+        padding: 'var(--maw-space-lg)',
+        borderRadius: 'var(--maw-radius-xl)',
+        background: 'var(--maw-surface)',
+        border: '1px solid var(--maw-border)',
+        boxShadow: 'var(--maw-shadow-sm)',
+        minWidth: 0,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--maw-space-md)', minWidth: 0 }}>
+        {logo !== undefined && (
+          <div aria-hidden style={{ width: 48, height: 48, flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 24, borderRadius: 'var(--maw-radius-lg)', background: 'color-mix(in srgb, var(--maw-brand) 12%, var(--maw-surface))' }}>
+            {logo}
+          </div>
+        )}
+        <div style={{ minWidth: 0 }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--maw-text-md)', fontWeight: 700, color: 'var(--maw-fg)' }}>{title}</h3>
+          {subtitle !== undefined && <div style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>{subtitle}</div>}
+        </div>
+      </div>
+      {meta !== undefined && meta.length > 0 && <div style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>{meta.join(' · ')}</div>}
+      {tags !== undefined && tags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {tags.map((tag) => (
+            <span key={tag} style={{ padding: '3px 10px', borderRadius: 'var(--maw-radius-pill)', fontSize: 'var(--maw-text-xs)', background: 'color-mix(in srgb, var(--maw-brand) 10%, var(--maw-surface))', color: 'var(--maw-brand)' }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+      {(highlight !== undefined || action !== undefined) && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--maw-space-sm)', marginTop: 'auto' }}>
+          <div style={{ fontWeight: 700, color: 'var(--maw-fg)' }}>{highlight}</div>
+          {action}
+        </div>
+      )}
+    </article>
+  );
+}
