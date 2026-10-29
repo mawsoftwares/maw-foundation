@@ -72,6 +72,13 @@ describe('SidebarView', () => {
 });
 
 describe('SidebarView theme-driven polish (tokens)', () => {
+  it('the menu scrolls but shows no scrollbar', () => {
+    const html = sidebar();
+    expect(html).toContain('overflow-y-auto');
+    expect(html).toContain('[scrollbar-width:none]');
+    expect(html).toContain('[&amp;::-webkit-scrollbar]:hidden');
+  });
+
   it('the collapse button takes its shape from tokens', () => {
     expect(sidebar({ collapsible: true })).toContain('--maw-fx-collapse-radius');
   });

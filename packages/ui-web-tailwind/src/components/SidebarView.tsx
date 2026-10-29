@@ -264,7 +264,7 @@ export function SidebarView({
         </div>
       )}
 
-      <nav aria-label="Main" className={cn('flex-1 overflow-y-auto p-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))]', look?.indicator === 'tab' && !below && 'py-7')}>
+      <nav aria-label="Main" className={cn('flex-1 overflow-y-auto p-[var(--maw-comp-shell-sidebar-padding,var(--maw-space-xs))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', look?.indicator === 'tab' && !below && 'py-7')}>
         {Array.from(grouped.entries()).map(([group, groupItems]) => (
           <div key={group}>
             {group !== '' && !below && (!shownCollapsed || isMobile) && (
