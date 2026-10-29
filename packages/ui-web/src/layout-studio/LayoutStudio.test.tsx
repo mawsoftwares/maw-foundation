@@ -91,6 +91,15 @@ describe('LayoutStudio (initial render)', () => {
     expect(html).toMatch(/aria-pressed="(?:true|false)"[^>]*>Dark</);
   });
 
+  it('puts the font size steps right on the preview card, where they are easy to find', () => {
+    const html = render(() => true);
+    expect(html).toContain('aria-label="Decrease font size"');
+    expect(html).toContain('aria-label="Increase font size"');
+    expect(html).toContain('Default (100%)');
+    const readOnly = render((p) => p === 'Read_Layout');
+    expect(readOnly).toMatch(/<button[^>]*disabled[^>]*aria-label="Increase font size"|aria-label="Increase font size"[^>]*disabled/);
+  });
+
   it('is read-only without Update_Layout and says why', () => {
     const html = render((p) => p === 'Read_Layout');
     expect(html).toContain('requires Update_Layout');

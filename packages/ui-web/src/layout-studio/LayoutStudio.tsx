@@ -189,6 +189,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
     setMessage(null);
     setWorking((w) => ({ ...w, theme: { ...w.theme, ...patch } }));
   };
+  const fontStep = Math.max(0, TYPOGRAPHY_PRESETS.indexOf(working.theme.typography));
   const value = (path: OverridePath): unknown => getAtPath(resolved.settings, path);
   const text = (path: OverridePath): string => String(value(path));
   const flag = (path: OverridePath): boolean => value(path) === true;
@@ -460,6 +461,27 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
               );
             })}
             <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>Preview only. Set the project's colour mode on the Theme tab.</span>
+          </Stack>
+          <Stack direction="row" align="center" gap="var(--maw-space-sm)" style={{ marginBottom: 'var(--maw-space-md)', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--maw-text-sm)', color: 'var(--maw-fgMuted)' }}>Font size</span>
+            <Button
+              variant="outline"
+              aria-label="Decrease font size"
+              disabled={!canEdit || fontStep <= 0}
+              onClick={() => setTheme({ typography: TYPOGRAPHY_PRESETS[Math.max(0, fontStep - 1)] })}
+            >
+              A−
+            </Button>
+            <strong aria-live="polite" style={{ minWidth: 150, textAlign: 'center', fontSize: 'var(--maw-text-sm)' }}>{FONT_SIZE_OPTIONS[fontStep]?.label}</strong>
+            <Button
+              variant="outline"
+              aria-label="Increase font size"
+              disabled={!canEdit || fontStep >= TYPOGRAPHY_PRESETS.length - 1}
+              onClick={() => setTheme({ typography: TYPOGRAPHY_PRESETS[Math.min(TYPOGRAPHY_PRESETS.length - 1, fontStep + 1)] })}
+            >
+              A+
+            </Button>
+            <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>Applies to the whole app when published.</span>
           </Stack>
           <ShellPreview presetId={resolved.presetId} label={resolved.label} settings={resolved.settings} viewport={viewport} cssVars={cssVars} />
           <p style={{ margin: 'var(--maw-space-sm) 0 0', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>
