@@ -188,3 +188,7 @@ The Hub (`MAW-HUB/frontend`) uses the Classic Admin shell with its own "Aurora" 
 ## Hub-style effects (theme tokens)
 
 Ported from the Hub's `motion.css`/`sidebar.css` into the Tailwind kit (`styles/theme.css`, "Theme-driven effects"). Each is **off until a theme sets its token**, so existing themes look the same. MAW Console turns them on. Tokens: `fx-rise-duration`, `fx-stagger` (cards on a page rise in one after another), `motion-hover-lift`, `fx-card-hover-shadow` (cards lift), `motion-press-scale`, `fx-btn-glow`, `fx-btn-shine` (primary buttons), `fx-spotlight` (glow following the cursor over a card), `fx-icon-glow` (sidebar icons on hover), `fx-collapse-radius`/`-bg`/`-border` (round collapse button). Also in `ui-web`: `LiveDot` (pulsing online dot), a drifting glow in `HeroBanner`, and `KpiGrid countUp` / `useCountUp`. All respect `prefers-reduced-motion`. Not ported: the Hub's login-screen aurora and its brand/user sidebar blocks.
+
+## The sample app uses the Hub look by default
+
+`apps/sample-web` now looks like the MAW Hub with the Tailwind kit: the sidebar uses `SidebarBrand` and `SidebarUser` (new in `ui-web`: gradient logo tile, ringed avatar with a live dot, profile menu), the dashboard opens with the `HeroBanner` and counts the KPIs up, and the **MAW Console** theme is the app's built-in look (`app-theme.ts`). "Application default" in Layout Studio shows that look; a theme from Theme Designer still wins over it, and any theme a project picks stands on its own.

@@ -48,6 +48,8 @@ export interface LayoutStudioProps {
   readonly prefersDark?: boolean;
   /** The app's shared theme (Theme Designer). Previews show the project's theme choice layered over it, as the app will. */
   readonly baseTheme?: ThemeOverrides;
+  /** Like `baseTheme`, but may depend on the chosen theme (an app can have a built-in look that only "Application default" shows). */
+  readonly baseThemeFor?: (themeId: string | null) => ThemeOverrides | undefined;
 }
 
 type Tab = 'layout' | 'sidebar' | 'header' | 'panels' | 'shape' | 'theme' | 'history';
@@ -99,7 +101,7 @@ function ColorChoice({ label, value, fallback, disabled, onCommit }: { label: st
   );
 }
 
-export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, onPreview, prefersDark = false, baseTheme }: LayoutStudioProps): ReactNode {
+export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, can, onPublished, onPreview, prefersDark = false, baseTheme, baseThemeFor }: LayoutStudioProps): ReactNode {
   const canEdit = can(LAYOUT_PERMISSIONS.update);
   const canPublish = can(LAYOUT_PERMISSIONS.publish);
 
@@ -131,12 +133,13 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   const preset = registry.getPreset(resolved.presetId) ?? registry.getPreset(registry.fallbackPresetId);
   const dirty = !sameConfig(working, baseline);
   const hasUnpublishedDraft = state?.draft != null;
+  const baseFor = useCallback((themeId: string | null): ThemeOverrides | undefined => (baseThemeFor !== undefined ? baseThemeFor(themeId) : baseTheme), [baseThemeFor, baseTheme]);
   // The chosen theme's font must be loaded for the preview to show it (the app only loads the font it has applied).
   useEffect(() => {
-    const overrides = composeProjectTheme(baseTheme, working.theme, themes);
+    const overrides = composeProjectTheme(baseFor(working.theme.themeId), working.theme, themes);
     if (overrides !== undefined) injectWebFonts(overrides);
-  }, [baseTheme, working.theme, themes]);
-  const cssVars = useMemo(() => previewCssVars(previewMode === null ? working.theme : { ...working.theme, colorMode: previewMode }, themes, prefersDark, baseTheme), [working.theme, previewMode, themes, prefersDark, baseTheme]);
+  }, [baseFor, working.theme, themes]);
+  const cssVars = useMemo(() => previewCssVars(previewMode === null ? working.theme : { ...working.theme, colorMode: previewMode }, themes, prefersDark, baseFor(working.theme.themeId)), [working.theme, previewMode, themes, prefersDark, baseFor]);
   const customisations = countLayoutOverrides(working.layout);
   // Until a theme is chosen the gallery shows each preset in the look it was designed around; a chosen theme applies to all.
   const suggestedThemeFor = (id: string): string | undefined => {
@@ -145,7 +148,7 @@ export function LayoutStudio({ store, registry = defaultLayoutRegistry, themes, 
   };
   const thumbVars = (id: string): Record<string, string> => {
     const suggested = working.theme.themeId === null ? suggestedThemeFor(id) : undefined;
-    return suggested === undefined ? cssVars : previewCssVars({ ...working.theme, themeId: suggested }, themes, prefersDark, baseTheme);
+    return suggested === undefined ? cssVars : previewCssVars({ ...working.theme, themeId: suggested }, themes, prefersDark, baseFor(suggested));
   };
   const matchingTheme = suggestedThemeFor(resolved.presetId);
 

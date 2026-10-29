@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAuth, useI18n, DashboardPage, KpiGrid, WidgetGrid, Widget, MiniBarChart, MiniLineChart, ActivityFeed } from '@mawsoftwares/ui-web';
+import { useAuth, useI18n, useCountUp, HeroBanner, KpiGrid, WidgetGrid, Widget, MiniBarChart, MiniLineChart, ActivityFeed } from '@mawsoftwares/ui-web';
 
 const SAMPLE_ORDERS = [12, 19, 8, 15, 22, 30, 25, 18, 27, 35, 20, 28];
 const SAMPLE_REVENUE = [45000, 52000, 48000, 61000, 55000, 72000, 68000, 75000, 81000, 79000, 85000, 92000];
@@ -12,21 +12,28 @@ const ACTIVITY: Parameters<typeof ActivityFeed>[0]['items'] = [
   { id: '5', icon: '📈', title: 'Q3 report generated', timestamp: '3 hrs ago' },
 ];
 
+const KPI_TARGETS = [1247, 920000, 42, 7] as const;
+const formatCount = (n: number): string => n.toLocaleString('en-IN');
+
 export function DashboardView(): ReactNode {
   const { session } = useAuth();
   const { t } = useI18n();
 
+  const [orders = 0, revenue = 0, activeUsers = 0, pendingBills = 0] = useCountUp(KPI_TARGETS);
+
   return (
-    <DashboardPage
-      title={t('dashboard.welcome', { name: session?.userId ?? 'User' })}
-      subtitle="Here's what's happening today"
-    >
+    <div>
+      <HeroBanner
+        title={t('dashboard.welcome', { name: session?.userId ?? 'User' })}
+        subtitle="Here's what's happening today"
+        style={{ marginBottom: 'var(--maw-space-xl)', padding: 'var(--maw-space-xxl)' }}
+      />
       <KpiGrid
         kpis={[
-          { label: t('dashboard.totalOrders'), value: '1,247', change: 12.5, changeLabel: 'vs last month', icon: '📦' },
-          { label: t('dashboard.revenue'), value: '₹9,20,000', change: 8.2, changeLabel: 'vs last month', icon: '💰' },
-          { label: t('dashboard.activeUsers'), value: '42', change: -3.1, changeLabel: 'vs last week', icon: '👥' },
-          { label: t('dashboard.pendingBills'), value: '7', change: -15, changeLabel: 'vs last month', icon: '💳', color: 'var(--maw-warning)' },
+          { label: t('dashboard.totalOrders'), value: formatCount(orders), change: 12.5, changeLabel: 'vs last month', icon: '📦' },
+          { label: t('dashboard.revenue'), value: `₹${formatCount(revenue)}`, change: 8.2, changeLabel: 'vs last month', icon: '💰' },
+          { label: t('dashboard.activeUsers'), value: formatCount(activeUsers), change: -3.1, changeLabel: 'vs last week', icon: '👥' },
+          { label: t('dashboard.pendingBills'), value: formatCount(pendingBills), change: -15, changeLabel: 'vs last month', icon: '💳', color: 'var(--maw-warning)' },
         ]}
       />
 
@@ -67,6 +74,6 @@ export function DashboardView(): ReactNode {
           </div>
         </Widget>
       </WidgetGrid>
-    </DashboardPage>
+    </div>
   );
 }

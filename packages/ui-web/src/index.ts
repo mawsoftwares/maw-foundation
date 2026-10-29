@@ -401,5 +401,6 @@ export { ClientThemeProvider, useClientTheme, type ClientThemeProviderProps, typ
 export { composeSlot, layoutBreakpointPx, layoutMinWidthQuery, toShellFrame, type FrameOptions } from './layout/shell-frame';
 export { HeroBanner, LiveDot, ProfileCard, FilterChips, ListingCard, type HeroBannerProps, type ProfileCardProps, type FilterChipsProps, type ListingCardProps } from './showcase';
 export { useCountUp } from './motion';
+export { SidebarBrand, SidebarUser } from './sidebar-chrome';
 export * from './page-templates';
 export * from './layout-studio';

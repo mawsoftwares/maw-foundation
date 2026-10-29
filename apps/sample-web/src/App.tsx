@@ -18,9 +18,9 @@ import {
   EmptyState,
   Breadcrumbs,
   useI18n,
-  Avatar,
+  SidebarBrand,
+  SidebarUser,
   Button,
-  Icon,
   OfflineProvider,
   OfflineBanner,
   FeatureFlagProvider,
@@ -54,6 +54,7 @@ import { StorageView } from './features/storage-page';
 import { StorageSettingsView } from './features/storage-settings';
 import { LayoutStudioView } from './features/layout-studio';
 import { SharedThemeContext } from './shared-theme';
+import { appBaseTheme } from './app-theme';
 import { PROJECT_UI_PREVIEW_EVENT, PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, readPreviewUi, stopPreviewUi, readCachedPublishedUi, resolvePublishedUi, writeCachedPublishedUi } from './layout-config';
 import { projectThemeRegistry } from './project-themes';
 import type { ProjectUiConfig, ResolvedProjectUi } from '@mawsoftwares/layout';
@@ -288,13 +289,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   // Theme = shared theme + the project's published selection. Nothing is applied until something is configured, so
   // an app with no layout config renders exactly as before.
   const effectiveUi = session === null ? liveUi : (previewUi ?? liveUi);
+  const baseThemeFor = useCallback((themeId: string | null) => appBaseTheme(sharedOverrides, themeId, projectThemeRegistry), [sharedOverrides]);
   const themeTouched = useRef(false);
   useEffect(() => {
-    const composed = composeProjectTheme(sharedOverrides, effectiveUi?.theme, projectThemeRegistry);
+    const composed = composeProjectTheme(baseThemeFor(effectiveUi?.theme.themeId ?? null), effectiveUi?.theme, projectThemeRegistry);
     if (composed === undefined && !themeTouched.current) return;
     themeTouched.current = true;
     applyThemeOverrides(composed ?? {});
-  }, [sharedOverrides, effectiveUi, applyThemeOverrides]);
+  }, [baseThemeFor, effectiveUi, applyThemeOverrides]);
 
   // The published colour mode is a project default: a user's own light/dark choice always wins.
   const publishedColorMode = effectiveUi?.theme.colorMode;
@@ -481,24 +483,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   }
 
   return (
-    <SharedThemeContext.Provider value={sharedOverrides}>
+    <SharedThemeContext.Provider value={baseThemeFor}>
     <NavigationProvider config={navConfig}>
       <AppShell
         layout={effectiveUi === null || effectiveUi.layout.source === 'default' ? undefined : effectiveUi.layout}
         sidebar={
           <Sidebar
-            logo={<Icon name="zap" size={22} />}
-            title="MAW Foundation Admin"
-            footer={(collapsed) => (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, justifyContent: collapsed ? 'center' : undefined, width: '100%' }}>
-                <Avatar name={session.userId} size={28} />
-                {!collapsed && (
-                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}>
-                    {session.userId}
-                  </div>
-                )}
-              </div>
-            )}
+            header={(collapsed) => <SidebarBrand collapsed={collapsed} title="MAW Foundation" subtitle="Admin Console" />}
+            footer={(collapsed) => <SidebarUser collapsed={collapsed} name={session.userId} role={session.role} />}
           />
         }
         header={<Breadcrumbs />}
