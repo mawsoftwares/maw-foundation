@@ -604,7 +604,7 @@ export const mawConsoleTheme: ThemeDefinition = {
     typography: { fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" },
     radius: { sm: 8, md: 10, lg: 16, xl: 22 },
     shadows: SOFT_SHADOWS,
-    shell: { bg: '#ffffff', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },
+    shell: { bg: '#ffffff', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', blur: '14px', hover: 'rgba(21, 101, 192, 0.07)' },
     components: {
       'nav-item': { textColor: '#41526b' },
       'nav-item-hover': { backgroundColor: 'rgba(21, 101, 192, 0.07)', textColor: '#1b2a41' },
@@ -641,7 +641,12 @@ export const mawConsoleTheme: ThemeDefinition = {
       'fx-collapse-radius': '999px',
       'fx-collapse-bg': 'rgba(27, 42, 65, 0.06)',
       'fx-collapse-border': 'rgba(27, 42, 65, 0.10)',
+      // Tables: rows light up with a blue bar on hover.
+      'fx-row-hover': 'color-mix(in srgb, #1565c0 5%, #ffffff)',
+      'fx-row-accent': '#1565c0',
       ...LIGHT_HEADER('#e3e9f3', '#1b2a41'),
+      // A frosted header: the page shows faintly through it as it scrolls underneath.
+      'shell-header-bg': 'color-mix(in srgb, #ffffff 80%, transparent)',
     },
     extraTokensDark: {
       'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 9%, transparent) 0%, transparent 34%, transparent 78%, color-mix(in srgb, #8ec5f7 4%, transparent) 100%)',
@@ -650,6 +655,11 @@ export const mawConsoleTheme: ThemeDefinition = {
       'shell-group-rule': 'rgba(234, 241, 251, 0.16)',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #5aa9f0',
       'fx-collapse-bg': 'rgba(234, 241, 251, 0.08)',
+      'shell-header-bg': 'color-mix(in srgb, #101a2b 80%, transparent)',
+      'shell-header-fg': '#eaf1fb',
+      'shell-header-border': '#233350',
+      'fx-row-hover': 'color-mix(in srgb, #5aa9f0 8%, #101a2b)',
+      'fx-row-accent': '#5aa9f0',
       'fx-collapse-border': 'rgba(234, 241, 251, 0.14)',
     },
   },

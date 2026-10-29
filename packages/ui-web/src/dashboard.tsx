@@ -30,6 +30,7 @@ export function KpiCard({
   changeLabel,
   icon,
   color,
+  trend,
   style,
 }: KpiConfig & { style?: CSSProperties }): ReactNode {
   const isPositive = change !== undefined && change >= 0;
@@ -54,6 +55,11 @@ export function KpiCard({
             </span>
             {changeLabel !== undefined && <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-fgMuted)' }}>{changeLabel}</span>}
           </Stack>
+        )}
+        {trend !== undefined && trend.length >= 2 && (
+          <div aria-hidden style={{ marginTop: 'var(--maw-space-sm)' }}>
+            <MiniLineChart data={trend} width={120} height={28} color={color ?? (isPositive || change === undefined ? 'var(--maw-brand)' : 'var(--maw-danger)')} />
+          </div>
         )}
       </Stack>
     </Card>

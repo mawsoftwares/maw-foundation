@@ -523,6 +523,8 @@ export interface KpiConfig {
   icon?: string;
   /** CSS colour for the value and icon. */
   color?: string;
+  /** Recent values, oldest first. Drawn as a small trend line under the figure when there are at least two. */
+  trend?: readonly number[];
 }
 
 export type KpiCardProps = KpiConfig & { readonly style?: CSSProperties };

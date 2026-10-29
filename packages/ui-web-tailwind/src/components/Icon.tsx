@@ -39,7 +39,9 @@ import {
   Shield,
   Share2,
   ShoppingCart,
+  Moon,
   Star,
+  Sun,
   TrendingUp,
   TriangleAlert,
   User,
@@ -102,6 +104,8 @@ const ICONS = {
   wallet: Wallet,
   'message-square': MessageSquare,
   star: Star,
+  sun: Sun,
+  moon: Moon,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

@@ -250,3 +250,14 @@ describe('Widget', () => {
     expect(renderToStaticMarkup(createElement(Widget, { title: 'W', height: 240 }, 'x'))).toContain('height:240px');
   });
 });
+
+describe('KpiCard trend', () => {
+  it('draws a small trend line (hidden from assistive technology) when it has at least two values', () => {
+    const html = renderToStaticMarkup(createElement(KpiCard, { label: 'Orders', value: 10, trend: [1, 3, 2, 5] }));
+    expect(html).toContain('polyline');
+    expect(html).toContain('maw-fx-draw');
+    expect(html).toContain('aria-hidden="true"');
+    expect(renderToStaticMarkup(createElement(KpiCard, { label: 'Orders', value: 10 }))).not.toContain('polyline');
+    expect(renderToStaticMarkup(createElement(KpiCard, { label: 'Orders', value: 10, trend: [4] }))).not.toContain('polyline');
+  });
+});

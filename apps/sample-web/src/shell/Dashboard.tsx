@@ -30,10 +30,10 @@ export function DashboardView(): ReactNode {
       />
       <KpiGrid
         kpis={[
-          { label: t('dashboard.totalOrders'), value: formatCount(orders), change: 12.5, changeLabel: 'vs last month', icon: '📦' },
-          { label: t('dashboard.revenue'), value: `₹${formatCount(revenue)}`, change: 8.2, changeLabel: 'vs last month', icon: '💰' },
-          { label: t('dashboard.activeUsers'), value: formatCount(activeUsers), change: -3.1, changeLabel: 'vs last week', icon: '👥' },
-          { label: t('dashboard.pendingBills'), value: formatCount(pendingBills), change: -15, changeLabel: 'vs last month', icon: '💳', color: 'var(--maw-warning)' },
+          { label: t('dashboard.totalOrders'), value: formatCount(orders), change: 12.5, changeLabel: 'vs last month', icon: '📦', trend: [18, 22, 19, 26, 24, 31, 35] },
+          { label: t('dashboard.revenue'), value: `₹${formatCount(revenue)}`, change: 8.2, changeLabel: 'vs last month', icon: '💰', trend: [40, 44, 43, 49, 52, 51, 58] },
+          { label: t('dashboard.activeUsers'), value: formatCount(activeUsers), change: -3.1, changeLabel: 'vs last week', icon: '👥', trend: [48, 47, 49, 46, 45, 44, 42] },
+          { label: t('dashboard.pendingBills'), value: formatCount(pendingBills), change: -15, changeLabel: 'vs last month', icon: '💳', color: 'var(--maw-warning)', trend: [14, 12, 11, 10, 9, 8, 7] },
         ]}
       />
 

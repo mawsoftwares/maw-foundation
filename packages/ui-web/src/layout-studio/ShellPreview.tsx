@@ -24,9 +24,9 @@ const SAMPLE_NAV: NavItem[] = [
 ];
 const SAMPLE_CRUMBS = [{ label: 'Home', path: '/dashboard' }, { label: 'Dashboard' }];
 const SAMPLE_KPIS: KpiConfig[] = [
-  { label: 'Total orders', value: '1,247', change: 12.5, changeLabel: 'vs last month', icon: 'shopping-cart' },
-  { label: 'Revenue', value: '₹9,20,000', change: 8.2, changeLabel: 'vs last month', icon: 'credit-card' },
-  { label: 'Active users', value: 42, change: -3.1, changeLabel: 'vs last week', icon: 'users' },
+  { label: 'Total orders', value: '1,247', change: 12.5, changeLabel: 'vs last month', icon: 'shopping-cart', trend: [18, 22, 19, 26, 24, 31, 35] },
+  { label: 'Revenue', value: '₹9,20,000', change: 8.2, changeLabel: 'vs last month', icon: 'credit-card', trend: [40, 44, 43, 49, 52, 51, 58] },
+  { label: 'Active users', value: 42, change: -3.1, changeLabel: 'vs last week', icon: 'users', trend: [48, 47, 49, 46, 45, 44, 42] },
   { label: 'Pending', value: 7 },
 ];
 const SAMPLE_BARS = [42, 58, 31, 49, 66, 80, 61, 54, 72, 90, 58, 76];

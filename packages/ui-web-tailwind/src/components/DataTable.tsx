@@ -221,7 +221,7 @@ export function DataTable<T extends object>({
                       'border-b border-[var(--maw-comp-tables-border-color,var(--maw-border))] transition-colors last:border-b-0',
                       isSelected
                         ? 'bg-[var(--maw-comp-tables-row-selected-background,var(--maw-bgSubtle))]'
-                        : 'bg-[var(--maw-comp-tables-row-background,var(--maw-surface))] hover:bg-bg-subtle',
+                        : 'bg-[var(--maw-comp-tables-row-background,var(--maw-surface))] hover:bg-[var(--maw-fx-row-hover,var(--maw-bgSubtle))] hover:[box-shadow:inset_3px_0_0_var(--maw-fx-row-accent,transparent)]',
                       onRowClick && 'cursor-pointer',
                     )}
                   >
