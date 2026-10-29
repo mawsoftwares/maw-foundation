@@ -72,6 +72,10 @@ describe('SidebarView', () => {
 });
 
 describe('SidebarView theme-driven polish (tokens)', () => {
+  it('the collapse button takes its shape from tokens', () => {
+    expect(sidebar({ collapsible: true })).toContain('--maw-fx-collapse-radius');
+  });
+
   it('layers the theme\'s wash and glow behind the sidebar, with a rule after each group label, all from tokens', () => {
     const html = sidebar();
     expect(html).toContain('background-image:var(--maw-shell-gradient, none)');

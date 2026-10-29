@@ -250,7 +250,7 @@ export function SidebarView({
           <IconButton
             label={collapsed ? 'Expand' : 'Collapse'}
             onClick={onToggleCollapsed}
-            className="text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]"
+            className="rounded-[var(--maw-fx-collapse-radius,var(--maw-radius-md))] border border-[var(--maw-fx-collapse-border,transparent)] bg-[var(--maw-fx-collapse-bg,transparent)] text-[var(--maw-shell-fg-muted,var(--maw-fgMuted))]"
           >
             <Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size={18} />
           </IconButton>

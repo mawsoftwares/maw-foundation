@@ -31,7 +31,7 @@ exports[`shell structure: analytics-dashboard > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-fade motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-fade motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -102,7 +102,7 @@ exports[`shell structure: analytics-dashboard > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-fade motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-fade motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -143,7 +143,7 @@ exports[`shell structure: classic-admin > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
   CONTENT</div>
   
 </main>
@@ -213,7 +213,7 @@ exports[`shell structure: classic-admin > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)]">
   CONTENT</div>
   
 </main>
@@ -256,7 +256,7 @@ exports[`shell structure: communication-workspace > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none animate-page-zoom motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none animate-page-zoom motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -327,7 +327,7 @@ exports[`shell structure: communication-workspace > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none animate-page-zoom motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none animate-page-zoom motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -370,7 +370,7 @@ exports[`shell structure: enterprise-dashboard > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none">
   CONTENT</div>
   
 </main>
@@ -457,7 +457,7 @@ exports[`shell structure: enterprise-dashboard > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none">
   CONTENT</div>
   
 </main>
@@ -502,7 +502,7 @@ exports[`shell structure: floating-sidebar > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-blur motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-blur motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -556,7 +556,7 @@ exports[`shell structure: floating-sidebar > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-blur motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-blur motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -597,7 +597,7 @@ exports[`shell structure: listing-workspace > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-rise motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-rise motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -667,7 +667,7 @@ exports[`shell structure: listing-workspace > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-rise motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-[var(--maw-layout-container-max,none)] animate-page-rise motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -711,7 +711,7 @@ exports[`shell structure: project-workspace > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none">
   CONTENT</div>
   
 </main>
@@ -765,7 +765,7 @@ exports[`shell structure: project-workspace > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none">
   CONTENT</div>
   
 </main>
@@ -806,7 +806,7 @@ exports[`shell structure: split-workspace > desktop 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-container-padding,var(--maw-space-xl))]">
   
-<div class="mx-auto w-full max-w-none animate-page-rise motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none animate-page-rise motion-reduce:animate-none">
   CONTENT</div>
   
 </main>
@@ -860,7 +860,7 @@ exports[`shell structure: split-workspace > mobile 1`] = `
   
 <main id="maw-main" tabindex="-1" class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden outline-none p-[var(--maw-space-md)]">
   
-<div class="mx-auto w-full max-w-none animate-page-rise motion-reduce:animate-none">
+<div class="maw-page maw-fx-spotlight mx-auto w-full max-w-none animate-page-rise motion-reduce:animate-none">
   CONTENT</div>
   
 </main>

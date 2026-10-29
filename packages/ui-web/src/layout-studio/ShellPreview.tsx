@@ -4,7 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { ActivityFeed, KpiGrid, MiniBarChart, Widget, WidgetGrid, type KpiConfig } from '../dashboard';
 import { Icon, IconButton, SearchBar } from '../kit';
 import { Button } from '../components/Button';
-import { FilterChips, HeroBanner, ListingCard, ProfileCard } from '../showcase';
+import { FilterChips, HeroBanner, ListingCard, LiveDot, ProfileCard } from '../showcase';
 import { AppShell, Breadcrumbs, NavigationProvider, Sidebar, type NavItem } from '../navigation';
 import { useContainerWidth } from '../responsive';
 import { describePreview, previewState, PREVIEW_VIEWPORTS, type PreviewViewport } from './viewport';
@@ -37,12 +37,12 @@ const SAMPLE_ACTIVITY = [
 ];
 
 /** Sample page content. Fixed column counts: the window's width must not decide how a 390px preview lays out. */
-function SampleDashboard({ width }: { width: number }): ReactNode {
+function SampleDashboard({ width, animate }: { width: number; animate: boolean }): ReactNode {
   const columns = width >= 1100 ? 4 : width >= 700 ? 2 : 1;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--maw-space-lg)' }}>
       <HeroBanner title="Welcome back" subtitle="Here's what's happening today" art="🩺" />
-      <KpiGrid kpis={SAMPLE_KPIS} columns={columns} style={{ marginBottom: 0 }} />
+      <KpiGrid kpis={SAMPLE_KPIS} columns={columns} style={{ marginBottom: 0 }} countUp={animate} />
       <WidgetGrid columns={width >= 700 ? 2 : 1}>
         <Widget title="Orders (12 months)" height={200}>
           <MiniBarChart data={SAMPLE_BARS} height={120} />
@@ -166,7 +166,10 @@ export function ShellPreview({ presetId, label, settings, viewport, cssVars, sca
                 title="Acme Co."
                 footer={(collapsed) => (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, justifyContent: collapsed ? 'center' : undefined, width: '100%' }}>
-                    <Avatar name="Dr Kennedy" size={28} />
+                    <span style={{ position: "relative", display: "inline-flex" }}>
+                      <Avatar name="Dr Kennedy" size={28} />
+                      <LiveDot style={{ position: "absolute", right: -1, bottom: -1, border: "2px solid var(--maw-shell-bg, var(--maw-surface))" }} />
+                    </span>
                     {!collapsed && <span style={{ fontSize: 'var(--maw-text-xs)', color: 'var(--maw-shell-fg-muted, var(--maw-fgMuted))' }}>Dr Kennedy</span>}
                   </div>
                 )}
@@ -175,7 +178,7 @@ export function ShellPreview({ presetId, label, settings, viewport, cssVars, sca
             header={<Breadcrumbs />}
             actions={<Avatar name="Dr Kennedy" size={32} />}
           >
-            {LISTING_PRESET_IDS.has(presetId) ? <SampleListing width={width} /> : <SampleDashboard width={width} />}
+            {LISTING_PRESET_IDS.has(presetId) ? <SampleListing width={width} /> : <SampleDashboard width={width} animate={scale === undefined} />}
           </AppShell>
         </NavigationProvider>
       </div>

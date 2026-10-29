@@ -80,4 +80,11 @@ describe('starter themes', () => {
     expect(family).toContain('Roboto');
     expect(googleFontUrl(family)).toContain('fonts.googleapis.com');
   });
+
+  it('MAW Console switches on the kit\'s motion and polish effects through tokens', () => {
+    const vars = tokensToCssVars(false, registry.resolve('maw-console'));
+    for (const name of ['--maw-fx-rise-duration', '--maw-motion-hover-lift', '--maw-fx-btn-glow', '--maw-fx-spotlight', '--maw-fx-icon-glow', '--maw-fx-collapse-radius']) expect(vars[name], name).toBeTruthy();
+    // Themes that do not opt in define none of them, so nothing animates.
+    expect(tokensToCssVars(false, registry.resolve('clean-light'))['--maw-fx-rise-duration']).toBeUndefined();
+  });
 });

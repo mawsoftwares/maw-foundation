@@ -1,4 +1,4 @@
-import { useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import type { AppShellViewProps, ShellFrame } from '@mawsoftwares/ui-contract';
 import { cn } from '../lib/cn';
 import { Drawer } from './Drawer';
@@ -8,6 +8,15 @@ import { IconButton } from './IconButton';
 // ui-web's desktop footer carries this vendor mark; kept as-is so switching kits does not change the product's branding.
 const BRAND_BLUE = '#2b7ec2';
 const BRAND_ORANGE = '#f16d22';
+
+/** Points a card's spotlight glow at the cursor (the glow itself is drawn only by themes that set `--maw-fx-spotlight`). */
+function trackSpotlight(event: PointerEvent<HTMLElement>): void {
+  const card = (event.target as HTMLElement).closest<HTMLElement>('.maw-card');
+  if (card === null || !event.currentTarget.contains(card)) return;
+  const rect = card.getBoundingClientRect();
+  card.style.setProperty('--x', `${event.clientX - rect.left}px`);
+  card.style.setProperty('--y', `${event.clientY - rect.top}px`);
+}
 
 function PoweredBy(): ReactNode {
   return (
@@ -112,8 +121,9 @@ export function AppShellView({
     >
       <div
         key={frame?.pageKey}
+        onPointerMove={trackSpotlight}
         className={cn(
-          'mx-auto w-full',
+          'maw-page maw-fx-spotlight mx-auto w-full',
           frame?.contentWidth === 'full' ? 'max-w-none' : 'max-w-[var(--maw-layout-container-max,none)]',
           frame?.motion.page === 'fade' && 'animate-page-fade motion-reduce:animate-none',
           frame?.motion.page === 'rise' && 'animate-page-rise motion-reduce:animate-none',

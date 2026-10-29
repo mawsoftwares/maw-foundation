@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode, type CSSProperties } from 'react';
+import { useCountUp } from './motion';
 import { useResponsiveProp, type ResponsiveProp } from './responsive';
 import { Card, Grid, KpiCard as KitKpiCard, Stack } from './kit';
 import type { KpiConfig } from '@mawsoftwares/ui-contract';
@@ -67,11 +68,15 @@ export function KpiGrid({
   kpis,
   columns = { xs: 1, sm: 2, lg: 4 },
   style,
+  countUp = false,
 }: {
   kpis: readonly KpiConfig[];
   columns?: ResponsiveProp<number>;
   style?: CSSProperties;
+  /** Numeric values count up from 0 when the grid appears. Text values (e.g. "₹9,20,000") are shown as given. */
+  countUp?: boolean;
 }): ReactNode {
+  const counted = useCountUp(kpis.map((k) => (typeof k.value === 'number' ? k.value : 0)), countUp);
   return (
     <Grid
       columns={columns}
@@ -79,7 +84,7 @@ export function KpiGrid({
       style={{ marginBottom: 'var(--maw-space-xl)', ...style }}
     >
       {kpis.map((kpi, i) => (
-        <KitKpiCard key={i} {...kpi} />
+        <KitKpiCard key={i} {...kpi} value={countUp && typeof kpi.value === 'number' ? (counted[i] ?? kpi.value) : kpi.value} />
       ))}
     </Grid>
   );

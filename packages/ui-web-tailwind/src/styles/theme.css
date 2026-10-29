@@ -133,3 +133,97 @@
     color: inherit;
   }
 }
+
+/*
+ * Theme-driven effects (ported from the MAW Hub's "Aurora" motion layer). Every effect is OFF until a theme sets its
+ * token, so apps and themes that do not opt in render exactly as before. Tokens (all optional):
+ *   fx-rise-duration / fx-stagger / fx-ease   cards on a page rise in, one after another
+ *   motion-hover-lift / motion-press-scale    cards lift on hover; buttons press in
+ *   fx-card-hover-shadow                      card shadow while lifted
+ *   fx-btn-glow / fx-btn-shine                primary buttons glow, and a light streak crosses them on hover
+ *   fx-spotlight                              a glow that follows the cursor across a card
+ *   fx-icon-glow                              sidebar icons glow on hover
+ *   fx-collapse-radius / -bg / -border        the sidebar collapse button (e.g. round)
+ * Unlayered on purpose: it must win over the kit's utility classes. Reduced motion switches it all off.
+ */
+@keyframes maw-fx-rise {
+  from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes maw-fx-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6%, -8%) scale(1.12); }
+}
+@keyframes maw-fx-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--maw-success) 55%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* `backwards` (not `both`) so the card's own hover transform works once the entrance has finished. */
+.maw-page .maw-card {
+  animation: maw-fx-rise var(--maw-fx-rise-duration, 0ms) var(--maw-fx-ease, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+  animation-delay: calc(var(--maw-fx-stagger, 45ms) * 2);
+}
+.maw-page .maw-card:nth-child(2) { animation-delay: calc(var(--maw-fx-stagger, 45ms) * 3); }
+.maw-page .maw-card:nth-child(3) { animation-delay: calc(var(--maw-fx-stagger, 45ms) * 4); }
+.maw-page .maw-card:nth-child(4) { animation-delay: calc(var(--maw-fx-stagger, 45ms) * 5); }
+.maw-page .maw-card:nth-child(5) { animation-delay: calc(var(--maw-fx-stagger, 45ms) * 6); }
+.maw-page .maw-card:nth-child(6) { animation-delay: calc(var(--maw-fx-stagger, 45ms) * 7); }
+.maw-page .maw-card:nth-child(n+7) { animation-delay: calc(var(--maw-fx-stagger, 45ms) * 8); }
+.maw-page .maw-card .maw-card { animation: none; }
+
+.maw-card:hover {
+  transform: translateY(var(--maw-motion-hover-lift, 0px));
+  box-shadow: var(--maw-fx-card-hover-shadow, var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000));
+}
+
+.maw-fx-spotlight .maw-card { position: relative; isolation: isolate; }
+.maw-fx-spotlight .maw-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(360px circle at var(--x, 50%) var(--y, 50%), var(--maw-fx-spotlight, transparent), transparent 55%);
+  opacity: 0;
+  transition: opacity 420ms;
+  pointer-events: none;
+}
+.maw-fx-spotlight .maw-card:hover::before { opacity: 0.55; }
+
+.maw-btn--primary:active:not(:disabled) { scale: var(--maw-motion-press-scale, 0.98); }
+.maw-btn--primary {
+  box-shadow:
+    var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000), var(--maw-fx-btn-glow, 0 0 #0000);
+}
+.maw-btn--primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.28) 50%, transparent 70%);
+  transform: translateX(-120%);
+  opacity: var(--maw-fx-btn-shine, 0);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.maw-btn--primary:hover:not(:disabled)::after { transform: translateX(120%); }
+
+aside.maw-shell-chrome nav button svg { transition: filter 240ms; }
+aside.maw-shell-chrome nav button:hover svg { filter: drop-shadow(0 0 6px var(--maw-fx-icon-glow, transparent)); }
+
+.maw-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--maw-success);
+  animation: maw-fx-pulse 2.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maw-page .maw-card, .maw-live-dot { animation: none !important; }
+  .maw-card:hover { transform: none; }
+  .maw-btn--primary::after { display: none; }
+}

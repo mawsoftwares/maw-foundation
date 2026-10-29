@@ -2,6 +2,22 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Avatar } from './components/Avatar';
 import { Progress } from './components/Progress';
 
+/** Keyframes for the banner's drifting glow and the live dot's pulse; inline so they work in either UI kit. */
+const FX_KEYFRAMES =
+  '@keyframes maw-drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,-8%) scale(1.12)}}' +
+  '@keyframes maw-live-pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--maw-success) 55%,transparent)}70%,100%{box-shadow:0 0 0 6px transparent}}' +
+  '@media (prefers-reduced-motion:reduce){[data-maw-fx]{animation:none!important}}';
+
+/** A small green dot that pulses to say "live / online". Decorative: pair it with text for assistive technology. */
+export function LiveDot({ style }: { readonly style?: CSSProperties }): ReactNode {
+  return (
+    <>
+      <style>{FX_KEYFRAMES}</style>
+      <span aria-hidden data-maw-fx style={{ display: 'inline-block', width: 8, height: 8, flexShrink: 0, borderRadius: '50%', background: 'var(--maw-success)', animation: 'maw-live-pulse 2.4s ease-out infinite', ...style }} />
+    </>
+  );
+}
+
 export interface HeroBannerProps {
   readonly title: ReactNode;
   readonly subtitle?: ReactNode;
@@ -39,8 +55,9 @@ export function HeroBanner({ title, subtitle, action, art, tone = 'brand', style
         ...style,
       }}
     >
-      <span aria-hidden style={{ position: 'absolute', right: -40, top: -50, width: 190, height: 190, borderRadius: '50%', background: brand ? 'rgb(255 255 255 / 0.12)' : 'color-mix(in srgb, var(--maw-brand) 12%, transparent)' }} />
-      <span aria-hidden style={{ position: 'absolute', right: 90, bottom: -70, width: 130, height: 130, borderRadius: '50%', background: brand ? 'rgb(255 255 255 / 0.10)' : 'color-mix(in srgb, var(--maw-brand) 8%, transparent)' }} />
+      <style>{FX_KEYFRAMES}</style>
+      <span aria-hidden data-maw-fx style={{ position: 'absolute', right: -40, top: -50, width: 190, height: 190, borderRadius: '50%', filter: 'blur(28px)', background: brand ? 'rgb(255 255 255 / 0.22)' : 'color-mix(in srgb, var(--maw-brand) 16%, transparent)', animation: 'maw-drift 14s ease-in-out infinite' }} />
+      <span aria-hidden data-maw-fx style={{ position: 'absolute', right: 90, bottom: -70, width: 130, height: 130, borderRadius: '50%', filter: 'blur(24px)', background: brand ? 'color-mix(in srgb, var(--maw-brandLight, var(--maw-brand)) 70%, transparent)' : 'color-mix(in srgb, var(--maw-brand) 10%, transparent)', animation: 'maw-drift 14s ease-in-out -7s infinite' }} />
       <div style={{ position: 'relative', minWidth: 0 }}>
         <div style={{ fontSize: 'var(--maw-text-xl)', fontWeight: 700, lineHeight: 1.2 }}>{title}</div>
         {subtitle !== undefined && <div style={{ marginTop: 6, fontSize: 'var(--maw-text-sm)', opacity: 0.9 }}>{subtitle}</div>}

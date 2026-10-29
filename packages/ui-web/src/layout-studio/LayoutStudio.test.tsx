@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { classicAdminPreset, defaultLayoutRegistry, enterpriseDashboardPreset, listingWorkspacePreset, splitWorkspacePreset, createMemoryProjectUiStore } from '@mawsoftwares/layout';
 import { createThemeRegistry, starterThemes } from '@mawsoftwares/theme';
 import { ThemeGallery } from './ThemeGallery';
-import { FilterChips, HeroBanner, ListingCard, ProfileCard } from '../showcase';
+import { FilterChips, HeroBanner, ListingCard, LiveDot, ProfileCard } from '../showcase';
 import { LayoutStudio } from './LayoutStudio';
 import { ShellPreview } from './ShellPreview';
 
@@ -185,3 +185,15 @@ describe('FilterChips and ListingCard', () => {
     expect(html).toContain('aria-hidden="true"');
   });
 });
+
+describe('Hub-style effects (ported)', () => {
+  it('live dot is decorative and pulses; the banner glow drifts and both honour reduced motion', () => {
+    const dot = renderToStaticMarkup(createElement(LiveDot, {}));
+    expect(dot).toContain('maw-live-pulse');
+    expect(dot).toContain('aria-hidden="true"');
+    const banner = renderToStaticMarkup(createElement(HeroBanner, { title: 'T' }));
+    expect(banner).toContain('maw-drift');
+    expect(banner).toContain('prefers-reduced-motion');
+  });
+});
+

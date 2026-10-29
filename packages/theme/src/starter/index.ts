@@ -619,6 +619,19 @@ export const mawConsoleTheme: ThemeDefinition = {
       'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #1e88e5',
       'shell-nav-active-shadow': '0 10px 24px -14px #1565c0',
+      // Motion and polish (see the effects block in ui-web-tailwind's theme.css).
+      'fx-rise-duration': '420ms',
+      'fx-stagger': '45ms',
+      'motion-hover-lift': '-3px',
+      'motion-press-scale': '0.97',
+      'fx-card-hover-shadow': '0 2px 4px rgba(16, 24, 40, 0.06), 0 12px 32px -8px rgba(21, 101, 192, 0.22)',
+      'fx-btn-glow': '0 8px 24px -6px rgba(21, 101, 192, 0.45)',
+      'fx-btn-shine': '1',
+      'fx-spotlight': 'rgba(66, 165, 245, 0.35)',
+      'fx-icon-glow': 'rgba(66, 165, 245, 0.7)',
+      'fx-collapse-radius': '999px',
+      'fx-collapse-bg': 'rgba(27, 42, 65, 0.06)',
+      'fx-collapse-border': 'rgba(27, 42, 65, 0.10)',
       ...LIGHT_HEADER('#e3e9f3', '#1b2a41'),
     },
     extraTokensDark: {
@@ -626,6 +639,8 @@ export const mawConsoleTheme: ThemeDefinition = {
       'shell-glow': '#5aa9f0',
       'shell-group-rule': 'rgba(234, 241, 251, 0.16)',
       'shell-nav-active-indicator': 'inset 3px 0 0 0 #5aa9f0',
+      'fx-collapse-bg': 'rgba(234, 241, 251, 0.08)',
+      'fx-collapse-border': 'rgba(234, 241, 251, 0.14)',
     },
   },
 };
