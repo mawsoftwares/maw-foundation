@@ -604,7 +604,7 @@ export const mawConsoleTheme: ThemeDefinition = {
     typography: { fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" },
     radius: { sm: 8, md: 10, lg: 16, xl: 22 },
     shadows: SOFT_SHADOWS,
-    shell: { bg: '#eaf1fb', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },
+    shell: { bg: '#f7f9fd', fg: '#1b2a41', fgMuted: '#56677f', border: 'rgba(21, 101, 192, 0.12)', hover: 'rgba(21, 101, 192, 0.07)' },
     components: {
       'nav-item': { textColor: '#41526b' },
       'nav-item-hover': { backgroundColor: 'rgba(21, 101, 192, 0.07)', textColor: '#1b2a41' },
@@ -614,8 +614,8 @@ export const mawConsoleTheme: ThemeDefinition = {
       },
     },
     extraTokens: {
-      // The Hub's recipe, carried down the whole sidebar: a brand wash that is strongest at the top and still tints the bottom, a brand glow behind it, a light-blue glow bottom-right.
-      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #1565c0 12%, transparent) 0%, color-mix(in srgb, #1565c0 6%, transparent) 55%, color-mix(in srgb, #42a5f5 10%, transparent) 100%)',
+      // As in the Hub: blue at the top that fades to an almost-white middle, then a light-blue tint again at the bottom; a brand glow behind the top and a light-blue glow bottom-right.
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #1565c0 16%, transparent) 0%, transparent 38%, transparent 72%, color-mix(in srgb, #42a5f5 9%, transparent) 100%)',
       'shell-glow': '#1565c0',
       'shell-glow-2': '#42a5f5',
       'shell-group-rule': 'rgba(27, 42, 65, 0.16)',
@@ -643,7 +643,7 @@ export const mawConsoleTheme: ThemeDefinition = {
       ...LIGHT_HEADER('#e3e9f3', '#1b2a41'),
     },
     extraTokensDark: {
-      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 14%, transparent) 0%, color-mix(in srgb, #5aa9f0 7%, transparent) 55%, color-mix(in srgb, #8ec5f7 10%, transparent) 100%)',
+      'shell-gradient': 'linear-gradient(180deg, color-mix(in srgb, #5aa9f0 16%, transparent) 0%, transparent 38%, transparent 72%, color-mix(in srgb, #8ec5f7 9%, transparent) 100%)',
       'shell-glow': '#5aa9f0',
       'shell-glow-2': '#8ec5f7',
       'shell-group-rule': 'rgba(234, 241, 251, 0.16)',
