@@ -13,6 +13,8 @@ MAW Foundation distinguishes between two kinds of modules:
 
 ---
 
+> Modules that must run standalone **and** plug into a host app: see [plug-and-play.md](./plug-and-play.md).
+
 ## Visual Architecture
 
 ```

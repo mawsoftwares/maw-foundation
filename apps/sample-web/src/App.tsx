@@ -8,6 +8,10 @@ import {
   composeProjectTheme,
   DynamicAccessProvider,
   useDynamicAccess,
+  disabledModuleKeys,
+  hiddenNavKeys,
+  moduleOfPage,
+  modulePermissions,
   useUrlSyncedPage,
   pageFromPathname,
   type PagePathEntry,
@@ -59,6 +63,7 @@ import { PROJECT_UI_PREVIEW_EVENT, PROJECT_UI_PUBLISHED_EVENT, loadPublishedUi, 
 import { projectThemeRegistry } from './project-themes';
 import type { ProjectUiConfig, ResolvedProjectUi } from '@mawsoftwares/layout';
 import type { ThemeOverrides } from '@mawsoftwares/theme';
+import { FRONTEND_MODULES } from './module';
 // @scaffold:imports
 import { loadMenuTree, flattenMenuTree, findMenuKeyByPath, MENUS_CHANGED_EVENT, type MenuTreeNode } from './menu-tree';
 import { buildPageBreadcrumbs, sidebarActiveKey } from './nav-breadcrumbs';
@@ -111,6 +116,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'account', label: 'Account', icon: 'lock', path: '/account', group: 'Admin', sortOrder: 7 },
   { key: 'layout', label: 'Layout Studio', icon: 'layout-dashboard', path: '/layout', group: 'Admin', sortOrder: 8.5, permission: 'Read_Layout' },
   { key: 'superadmin', label: 'Super Admin', icon: 'shield', path: '/superadmin', group: 'Admin', sortOrder: 8.4 },
+  ...FRONTEND_MODULES.flatMap((m) => m.nav),
   { key: 'customers', label: 'Customers', icon: 'list', path: '/customers', group: 'Main', sortOrder: 8, permission: 'Read_Customers' },
   // @scaffold:nav
 ];
@@ -132,6 +138,7 @@ const PAGE_PERMISSIONS: Partial<Record<Page, string>> = {
   messaging: 'Read_Messaging',
   storage: 'Read_Storage',
   'storage-settings': 'Manage_StorageConfiguration',
+  ...modulePermissions(FRONTEND_MODULES),
   // @scaffold:permissions
 };
 
@@ -143,6 +150,7 @@ const NAV_GROUPS: Record<string, string> = {
   billing: 'Finance',
   users: 'Admin', 'audit-logs': 'Admin', account: 'Admin',
   superadmin: 'Admin', settings: 'Admin',
+  ...Object.fromEntries(FRONTEND_MODULES.flatMap((m) => m.nav).flatMap((n) => (n.group !== undefined ? [[n.key, n.group] as const] : []))),
 };
 
 /** Hub nodes whose children are shown as cards on their own page, not as nested sidebar entries. */
@@ -202,10 +210,19 @@ function PageContent({ page, onFeatureChange, featureOverrides }: {
   onFeatureChange?: (key: string, enabled: boolean) => void;
   featureOverrides?: Record<string, boolean>;
 }): ReactNode {
-  const { can } = useDynamicAccess();
+  const { can, modules: catalog } = useDynamicAccess();
   const requiredPermission = PAGE_PERMISSIONS[page];
   if (requiredPermission !== undefined && !can(requiredPermission)) {
     return <AccessDenied permission={requiredPermission} />;
+  }
+
+  // Pages owned by a pluggable module (see ./module). A module switched off on the server has no pages.
+  const owner = moduleOfPage(FRONTEND_MODULES, page);
+  if (owner !== undefined) {
+    if (disabledModuleKeys(catalog).has(owner.key)) {
+      return <EmptyState title="Module disabled" message="This module is switched off for this deployment." />;
+    }
+    return owner.pages[page]?.() ?? null;
   }
 
   switch (page) {
@@ -402,7 +419,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
   const featureOverrides = useMemo(() => ({ offline: offlineEnabled }), [offlineEnabled]);
 
   const isSuperadmin = session !== null && SUPERADMIN_ROLES.has(session.role);
-  const { can: canDynamic, loading: accessLoading, reload: reloadAccess } = useDynamicAccess();
+  const { can: canDynamic, loading: accessLoading, reload: reloadAccess, modules: moduleCatalog } = useDynamicAccess();
   const { isEnabled } = useFeatureFlags();
 
   // Menu Management drives the real nav tree from the DB (see /menus admin page);
@@ -430,6 +447,14 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
         // Admin") is a hub whose sub-pages are reached via cards on its own page,
         // not a nested sidebar submenu.
         const roots = tree.map(menuNodeToNavItem);
+        // Module-owned entries are added when the DB menu tree does not have them, in module order after Settings.
+        const settingsSortOrder = roots.find((item) => item.key === 'settings')?.sortOrder ?? 90;
+        FRONTEND_MODULES.flatMap((m) => m.nav).forEach((navItem, i) => {
+          const sortOrder = settingsSortOrder + (i + 1) / 10;
+          const index = roots.findIndex((item) => item.key === navItem.key);
+          if (index === -1) roots.push({ ...navItem, sortOrder });
+          else roots[index] = { ...roots[index]!, sortOrder };
+        });
         setDynamicNavItems(roots.length > 0 ? roots : null);
       })
       .catch(() => {
@@ -445,7 +470,10 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
 
   const navConfig = useMemo<NavigationConfig>(() => {
     const flagByKey = new Map(flattenMenuTree(menuTree ?? []).map((n) => [n.key, n.featureFlag]));
+    const hidden = hiddenNavKeys(FRONTEND_MODULES, disabledModuleKeys(moduleCatalog));
     const items = pruneNav(allNavItems, (item) => {
+      // Entries of modules switched off on the server
+      if (hidden.has(item.key)) return false;
       // Hide dev/admin-only pages from non-superadmins
       if (SUPERADMIN_ONLY_KEYS.has(item.key) && !isSuperadmin) return false;
       // If the item requires a permission, check it against the live RBAC snapshot
@@ -464,7 +492,7 @@ function Shell({ offlineEnabled, setOfflineEnabled }: {
       onNavigate: navigate,
       breadcrumbs: buildPageBreadcrumbs(page, allNavItems, menuTree),
     };
-  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled, allNavItems, menuTree]);
+  }, [page, navigate, isSuperadmin, canDynamic, accessLoading, isEnabled, allNavItems, menuTree, moduleCatalog]);
 
   if (loading) return <div className="maw-auth-screen">{t('common.loading')}</div>;
   if (session === null) {
@@ -565,6 +593,8 @@ export function App(): ReactNode {
 
           'module.rbac': true,
           'module.menus': true,
+          // Nav entries of plugged-in modules are gated by `module.<key>` like the built-in ones.
+          ...Object.fromEntries(FRONTEND_MODULES.flatMap((m) => m.nav).map((n) => [`module.${n.key}`, true] as const)),
           // @scaffold:flags
         })}>
           <OfflineProvider

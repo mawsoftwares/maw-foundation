@@ -404,3 +404,16 @@ export { useCountUp } from './motion';
 export { SidebarBrand, SidebarUser } from './sidebar-chrome';
 export * from './page-templates';
 export * from './layout-studio';
+
+export {
+  assertConsistent,
+  assertStateConsistent,
+  disabledModuleKeys,
+  hiddenNavKeys,
+  moduleOfPage,
+  modulePermissions,
+  type FrontendModule,
+  type FrontendModuleState,
+  type ModuleCatalogEntry,
+  type ModuleStore,
+} from './module-host';

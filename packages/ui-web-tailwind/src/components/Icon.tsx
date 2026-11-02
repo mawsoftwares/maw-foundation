@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
+  Activity,
   ArrowLeftRight,
   Bell,
   Box,
@@ -7,12 +8,17 @@ import {
   Building2,
   Calendar,
   ChartColumn,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Circle,
+  CircleAlert,
+  CircleCheck,
   ClipboardList,
   Clock,
   CreditCard,
   Database,
+  DollarSign,
   FileText,
   Flag,
   Folder,
@@ -31,6 +37,7 @@ import {
   MessageSquare,
   Package,
   Palette,
+  Plus,
   Puzzle,
   Receipt,
   ScrollText,
@@ -85,6 +92,7 @@ const ICONS = {
   list: List,
   menu: Menu,
   x: X,
+  'chevron-down': ChevronDown,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
   receipt: Receipt,
@@ -106,6 +114,12 @@ const ICONS = {
   star: Star,
   sun: Sun,
   moon: Moon,
+  activity: Activity,
+  'alert-circle': CircleAlert,
+  'check-circle': CircleCheck,
+  circle: Circle,
+  'dollar-sign': DollarSign,
+  plus: Plus,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
