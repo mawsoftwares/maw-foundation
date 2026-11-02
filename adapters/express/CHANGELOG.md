@@ -1,5 +1,12 @@
 # @mawsoftwares/express
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [20592e0]
+  - @mawsoftwares/server-express@1.1.0
+
 ## 1.0.0
 
 ### Major Changes

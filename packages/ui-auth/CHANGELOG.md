@@ -1,5 +1,12 @@
 # @mawsoftwares/ui-auth
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [20592e0]
+  - @mawsoftwares/ui-web@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
