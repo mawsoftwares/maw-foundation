@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
+import { HOST_DEDUPE, mawHostFsAllow, mawHostSingletons } from '../../packages/ui-web-tailwind/src/vite-host';
 
 /**
  * UI kit switch. `VITE_UI_KIT=tailwind` swaps `@mawsoftwares/ui-web` for the Tailwind/shadcn kit
@@ -27,6 +28,14 @@ const alias = [
   ]),
 ];
 
+/**
+ * Integrated host: `MAW_HOST_MODULES=/abs/path/to/moduleA/frontend/src,/abs/path/to/moduleB/frontend/src` plugs those
+ * module apps' frontends into this app (see docs/plug-and-play.md). Their app-level singletons (`../api`, `../config`, ...)
+ * are redirected to this app's, and React/Redux/Foundation resolve to a single copy.
+ */
+const hostModuleDirs = (process.env.MAW_HOST_MODULES ?? '').split(',').map((d) => d.trim()).filter((d) => d !== '');
+const hostOptions = { hostSrc: src('./src'), moduleSrcDirs: hostModuleDirs };
+
 async function kitPlugins(): Promise<PluginOption[]> {
   if (UI_KIT !== 'tailwind') return [];
   const { default: tailwindcss } = await import('@tailwindcss/vite');
@@ -35,10 +44,10 @@ async function kitPlugins(): Promise<PluginOption[]> {
 
 export default defineConfig(async () => ({
   root: fileURLToPath(new URL('.', import.meta.url)),
-  plugins: [react(), ...(await kitPlugins())],
+  plugins: [...(hostModuleDirs.length > 0 ? [mawHostSingletons(hostOptions)] : []), react(), ...(await kitPlugins())],
   base: process.env.VITE_BASE_PATH || '/',
-  resolve: { alias },
-  server: { port: 5173 },
+  resolve: { alias, ...(hostModuleDirs.length > 0 ? { dedupe: [...HOST_DEDUPE] } : {}) },
+  server: { port: 5173, ...(hostModuleDirs.length > 0 ? { fs: { allow: [src('../../..'), ...mawHostFsAllow(hostOptions)] } } : {}) },
   optimizeDeps: {
     exclude: ['@mawsoftwares/database', '@mawsoftwares/api'],
   },

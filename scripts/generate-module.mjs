@@ -10,7 +10,7 @@
 //
 // It writes real, editable source files (schema, migration, permission
 // module, routes, RTK Query slice, list/form/detail UI) and then wires them
-// into the existing registries (schema/index.ts, modules/index.ts, main.ts,
+// into the existing registries (schema/index.ts, modules/index.ts, app.ts,
 // store/index.ts, App.tsx) via small, idempotent anchor-based patches — not
 // a runtime plugin system. Once generated, every file is normal code you
 // own and can freely diverge from the template; re-running the generator
@@ -801,9 +801,9 @@ function patchModulesIndex(names) {
 
 function patchMainTs(names) {
   const marker = `create${names.pluralPascal}Router`;
-  patchFile('apps/sample-server/src/main.ts', marker, (text) => {
+  patchFile('apps/sample-server/src/app.ts', marker, (text) => {
     const importAnchor = "import { createMessagingRouter } from './messaging-routes';";
-    if (!text.includes(importAnchor)) throw new Error('main.ts import anchor not found');
+    if (!text.includes(importAnchor)) throw new Error('app.ts import anchor not found');
     const withImport = text.replace(
       importAnchor,
       `${importAnchor}\nimport { create${names.pluralPascal}Router } from './${names.pluralKebab}-routes';`,
@@ -815,7 +815,7 @@ function patchMainTs(names) {
       `  requirePermission: (perm) => auth.requirePermission(perm),\n` +
       `}));\n`,
     );
-  }, 'main.ts route mount');
+  }, 'app.ts route mount');
 }
 
 function patchStoreIndex(names) {

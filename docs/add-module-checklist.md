@@ -56,7 +56,7 @@ registry.register(
 
 ### 3. Add API routes (when you have APIs)
 
-In `apps/sample-server/src/main.ts`, mount the router and guard every route:
+In `apps/sample-server/src/app.ts` (inside `createApp`), mount the router and guard every route:
 
 ```ts
 app.get('/api/v1/customers',     auth.requireAuth, auth.requirePermission('Read_Customers'), handler);
