@@ -1,5 +1,12 @@
 # @mawsoftwares/testing
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [4832e80]
+  - @mawsoftwares/database@1.1.0
+
 ## 3.0.0
 
 ### Major Changes

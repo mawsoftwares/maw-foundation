@@ -1,5 +1,13 @@
 # @mawsoftwares/auth-core
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [4832e80]
+  - @mawsoftwares/database@1.1.0
+  - @mawsoftwares/platform@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,5 +1,12 @@
 # @mawsoftwares/express
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [fecab1b]
+  - @mawsoftwares/server-express@1.2.0
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @mawsoftwares/observability
 
+## 1.0.1
+
+### Patch Changes
+
+- @mawsoftwares/platform@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
