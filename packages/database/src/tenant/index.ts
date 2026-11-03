@@ -4,6 +4,7 @@ import type { RepositoryConfig, FindOptions } from '../repository/index';
 import { QueryBuilder } from '../query/index';
 
 export { setTenantContext, withTenantTransaction } from './context';
+export { createTenantScopedPool, type TenantScopedPoolOptions } from './scoped-pool';
 export {
   TENANT_SETTING,
   appRoleStatements,

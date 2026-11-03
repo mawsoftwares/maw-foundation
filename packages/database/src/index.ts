@@ -36,12 +36,13 @@ export {
   TenantScopedRepository,
   setTenantContext,
   withTenantTransaction,
+  createTenantScopedPool,
   TENANT_SETTING,
   appRoleStatements,
   forceRlsStatements,
   assertSafeIdentifier,
 } from './tenant/index';
-export type { AppRoleOptions } from './tenant/index';
+export type { AppRoleOptions, TenantScopedPoolOptions } from './tenant/index';
 
 // Soft delete
 export { SoftDeleteRepository } from './soft-delete/index';
