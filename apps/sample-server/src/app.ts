@@ -41,7 +41,7 @@ import {
   type ICacheStore,
 } from '@mawsoftwares/rbac-core';
 import { createDynamicExpressAuth, createFileUploadHandler, createFileRoutes, createSecurityPipeline, createAuthRoutes, handleAuthError, populateRequestContext, createTenantMiddleware, createTenantRoutes, type DynamicAuthedRequest, type UploadedRequest } from '@mawsoftwares/server-express';
-import { AlsTenantContextHolder, HeaderTenantResolver } from '@mawsoftwares/tenancy';
+import { AlsTenantContextHolder, StaticTenantResolver, type ITenantResolver } from '@mawsoftwares/tenancy';
 import { PgTenantRepository } from '@mawsoftwares/postgres';
 import { initializeObservability } from '@mawsoftwares/observability';
 import { observabilityContextMiddleware, createRequestLogger as createObsRequestLogger } from '@mawsoftwares/observability/adapters/express';
@@ -141,6 +141,14 @@ export interface CreateAppOptions {
   /** Pluggable modules (see @mawsoftwares/server-express `MawModule`). Their routes are mounted at `routePrefix`. */
   readonly modules?: readonly MawModule[];
   readonly moduleSelection?: ModuleSelection;
+  /**
+   * Decides which tenant a request belongs to before anyone is authenticated (login, social callback,
+   * register, forgot-password). Default: the one configured tenant (`defaultTenantId`), so a caller can
+   * never choose its tenant. Swap in a `SubdomainTenantResolver` / `CompositeTenantResolver` for multi-tenant.
+   */
+  readonly tenantResolver?: ITenantResolver;
+  /** Tenant used by the default resolver. Default: the demo tenant of the seed data. */
+  readonly defaultTenantId?: string;
 }
 
 export interface MawApp extends ServableApp {
@@ -267,7 +275,8 @@ log.info('Cache loaded', { roles: cache.getCache()!.roles.length, permissions: c
 
 const tenantRepository = new PgTenantRepository(data.db);
 const tenantContextHolder = new AlsTenantContextHolder();
-const tenantResolver = new HeaderTenantResolver(tenantRepository);
+const tenantResolver: ITenantResolver = options.tenantResolver
+  ?? new StaticTenantResolver({ tenantId: options.defaultTenantId ?? DEMO_TENANT, tenantStatus: 'active' });
 
 // ---------------------------------------------------------------------------
 // Step 5: Dynamic auth middleware — uses cache for permission checks
@@ -651,11 +660,34 @@ function requestContext(req: express.Request): AuthenticateContext {
   };
 }
 
+/**
+ * Tenant for endpoints reached before authentication (login, social callback). It always comes from the
+ * server's tenant resolver; a `tenantId` sent by the client is never used to choose a tenant and, when it
+ * differs from the resolved one, the request is rejected. Responds and returns null on failure.
+ */
+async function resolveAuthTenant(req: express.Request, res: express.Response, clientTenantId: unknown): Promise<string | null> {
+  const resolved = await tenantResolver.resolve({ hostname: req.hostname });
+  if (resolved === null) {
+    res.status(HttpStatus.FORBIDDEN).json({ error: { code: 'TENANT_NOT_RESOLVED', message: 'Tenant could not be resolved' } });
+    return null;
+  }
+  if (resolved.tenantStatus !== undefined && resolved.tenantStatus !== 'active') {
+    res.status(HttpStatus.FORBIDDEN).json({ error: { code: 'TENANT_INACTIVE', message: 'Tenant is not active' } });
+    return null;
+  }
+  if (clientTenantId !== undefined && clientTenantId !== resolved.tenantId) {
+    log.warn('Rejected a client-supplied tenantId', { path: req.path });
+    res.status(HttpStatus.BAD_REQUEST).json({ error: { code: 'FORBIDDEN_FIELD', message: 'tenantId cannot be supplied by the client' } });
+    return null;
+  }
+  return resolved.tenantId;
+}
+
 app.post('/auth/login', (req, res) => {
   void (async () => {
     try {
-      const { email, password, tenantId, rememberMe } = req.body as {
-        email?: string; password?: string; tenantId?: string; rememberMe?: boolean;
+      const { email, password, tenantId: clientTenantId, rememberMe } = req.body as {
+        email?: string; password?: string; tenantId?: unknown; rememberMe?: boolean;
       };
       if (email === undefined || password === undefined) {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'email and password are required' });
@@ -665,9 +697,12 @@ app.post('/auth/login', (req, res) => {
       const prehashHeader = req.headers[PREHASH_HEADER] as string | undefined;
       const resolvedPassword = resolvePassword(password, prehashHeader, isProduction && DEFAULT_SECURITY_CONFIG.auth.requirePrehash);
 
+      const tenantId = await resolveAuthTenant(req, res, clientTenantId);
+      if (tenantId === null) return;
+
       console.log('Calling authService.authenticate...');
       const result = await authService.authenticate({
-        tenantId: tenantId ?? DEMO_TENANT,
+        tenantId,
         email,
         password: resolvedPassword,
         rememberMe,
@@ -745,6 +780,7 @@ app.use('/auth', createAuthRoutes({
   accountPurgeService,
   requirePrehash: isProduction && DEFAULT_SECURITY_CONFIG.auth.requirePrehash,
   logger: log,
+  tenantResolver,
 }));
 
 // --- Social auth routes ---
@@ -763,7 +799,8 @@ app.get('/auth/social/:provider/callback', async (req, res) => {
   try {
     const provider = req.params.provider as string;
     const code = req.query.code as string | undefined;
-    const tenantId = (req.query.tenantId as string) ?? DEMO_TENANT;
+    const tenantId = await resolveAuthTenant(req, res, req.query.tenantId);
+    if (tenantId === null) return;
     if (!code) { res.status(400).json({ error: 'code is required' }); return; }
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/social/${provider}/callback`;
     const result = await socialAuthService.authenticate(provider, code, redirectUri, tenantId);
