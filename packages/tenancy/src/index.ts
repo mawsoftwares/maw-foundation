@@ -172,3 +172,4 @@ export { HeaderTenantResolver } from './resolvers/header-resolver';
 export { SubdomainTenantResolver } from './resolvers/subdomain-resolver';
 export { JwtTenantResolver } from './resolvers/jwt-resolver';
 export { CompositeTenantResolver } from './resolvers/composite-resolver';
+export { StaticTenantResolver } from './resolvers/static-resolver';

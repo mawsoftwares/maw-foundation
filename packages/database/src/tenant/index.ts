@@ -3,9 +3,14 @@ import { BaseRepository } from '../repository/index';
 import type { RepositoryConfig, FindOptions } from '../repository/index';
 import { QueryBuilder } from '../query/index';
 
-export async function setTenantContext(client: PgClient, tenantId: string): Promise<void> {
-  await client.query(`SET LOCAL app.tenant_id = $1`, [tenantId]);
-}
+export { setTenantContext, withTenantTransaction } from './context';
+export {
+  TENANT_SETTING,
+  appRoleStatements,
+  forceRlsStatements,
+  assertSafeIdentifier,
+  type AppRoleOptions,
+} from './rls';
 
 export abstract class TenantScopedRepository<
   TRow extends Record<string, unknown>,

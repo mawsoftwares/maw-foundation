@@ -32,7 +32,16 @@ export { BaseRepository } from './repository/index';
 export type { FindOptions, RepositoryConfig } from './repository/index';
 
 // Tenant
-export { TenantScopedRepository, setTenantContext } from './tenant/index';
+export {
+  TenantScopedRepository,
+  setTenantContext,
+  withTenantTransaction,
+  TENANT_SETTING,
+  appRoleStatements,
+  forceRlsStatements,
+  assertSafeIdentifier,
+} from './tenant/index';
+export type { AppRoleOptions } from './tenant/index';
 
 // Soft delete
 export { SoftDeleteRepository } from './soft-delete/index';
