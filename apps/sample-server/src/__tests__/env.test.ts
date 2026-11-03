@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { EnvironmentError } from '@mawsoftwares/server-express';
 import { readServerEnv } from '../env';
 
-const KEYS = ['DATABASE_URL', 'PORT', 'JWT_SECRET', 'DISABLED_MODULES'] as const;
+const KEYS = ['DATABASE_URL', 'PORT', 'JWT_SECRET', 'DISABLED_MODULES', 'TENANT_MODE', 'DEFAULT_TENANT_ID'] as const;
 const saved = Object.fromEntries(KEYS.map((k) => [k, process.env[k]]));
 
 afterEach(() => {
@@ -30,5 +30,18 @@ describe('readServerEnv', () => {
     const env = readServerEnv();
     expect(env.port).toBe(4123);
     expect(env.disabledModules).toEqual(['billing', 'reports']);
+  });
+
+  it('reads the single tenant from DEFAULT_TENANT_ID and refuses unsupported TENANT_MODE values', () => {
+    process.env['DATABASE_URL'] = 'postgres://example.invalid/db';
+    process.env['DEFAULT_TENANT_ID'] = ' acme ';
+    expect(readServerEnv().defaultTenantId).toBe('acme');
+
+    process.env['TENANT_MODE'] = 'subdomain';
+    expect(() => readServerEnv()).toThrow(/TENANT_MODE must be "single"/);
+
+    process.env['TENANT_MODE'] = 'single';
+    process.env['DEFAULT_TENANT_ID'] = '  ';
+    expect(() => readServerEnv()).toThrow(/DEFAULT_TENANT_ID must not be empty/);
   });
 });
